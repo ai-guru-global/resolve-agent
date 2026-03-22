@@ -1,0 +1,23 @@
+# ResolveNet Community Skill Registry
+
+version: "1"
+skills:
+  - name: hello-world
+    version: "1.0.0"
+    description: "A simple hello world skill for testing"
+    path: examples/hello-world
+
+  - name: web-search
+    version: "1.0.0"
+    description: "Search the web for information"
+    builtin: true
+
+  - name: code-exec
+    version: "1.0.0"
+    description: "Execute code in a sandboxed environment"
+    builtin: true
+
+  - name: file-ops
+    version: "1.0.0"
+    description: "Read, write, and manage files"
+    builtin: true

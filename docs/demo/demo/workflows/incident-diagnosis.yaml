@@ -1,0 +1,158 @@
+# ============================================
+# 故障诊断 FTA Workflow
+# ============================================
+# 
+# 该工作流使用故障树分析(FTA)方法进行故障诊断，
+# 通过多数据源协同分析，确定故障根因。
+#
+# 工作流结构:
+#   顶层事件: 根因确定
+#     ├── 中间事件: 日志证据
+#     │     ├── 基础事件: 错误日志分析
+#     │     └── 基础事件: 访问日志分析
+#     ├── 中间事件: 指标异常
+#     │     ├── 基础事件: CPU 指标检查
+#     │     └── 基础事件: 内存指标检查
+#     ├── 基础事件: 知识库检索
+#     └── 基础事件: LLM 综合分析
+
+tree:
+  id: incident-diagnosis
+  name: "生产故障根因分析"
+  description: |
+    通过多维度数据分析，包括日志分析、指标检查、
+    知识库检索和 LLM 综合分析，确定生产故障的根本原因。
+  version: "1.0.0"
+  top_event_id: root-cause-identified
+
+  # ========== 事件定义 ==========
+  events:
+    # --- 顶层事件 ---
+    - id: root-cause-identified
+      name: "根因已确定"
+      type: top
+      description: "故障根本原因已被确定，可以进行后续处理"
+
+    # --- 中间事件 ---
+    - id: log-evidence
+      name: "日志证据"
+      type: intermediate
+      description: "从应用日志中发现了故障相关证据"
+
+    - id: metric-anomaly
+      name: "指标异常"
+      type: intermediate
+      description: "系统指标显示异常模式"
+
+    # --- 基础事件（叶子节点，需要实际评估）---
+    
+    # 日志分析事件
+    - id: check-error-logs
+      name: "分析错误日志"
+      type: basic
+      description: "分析应用错误日志，检测异常模式"
+      evaluator: "skill:log-analyzer"
+      parameters:
+        log_source: "/var/log/app/application.log"
+        severity: "error"
+        time_range_minutes: 30
+        pattern_detection: true
+
+    - id: check-access-logs
+      name: "检查访问日志"
+      type: basic
+      description: "分析 Nginx 访问日志，识别异常请求模式"
+      evaluator: "skill:log-analyzer"
+      parameters:
+        log_source: "/var/log/nginx/access.log"
+        severity: "warn"
+        time_range_minutes: 30
+
+    # 指标检查事件
+    - id: check-cpu-metrics
+      name: "检查 CPU 使用率"
+      type: basic
+      description: "检查 CPU 使用率是否超过阈值"
+      evaluator: "skill:metrics-checker"
+      parameters:
+        metric: "cpu_usage"
+        threshold: 90
+        duration_minutes: 15
+
+    - id: check-memory-metrics
+      name: "检查内存使用率"
+      type: basic
+      description: "检查内存使用率是否超过阈值"
+      evaluator: "skill:metrics-checker"
+      parameters:
+        metric: "memory_usage"
+        threshold: 85
+        duration_minutes: 15
+
+    # 知识库检索事件
+    - id: check-runbook
+      name: "检索运维知识库"
+      type: basic
+      description: "从运维知识库中检索相关故障处理方案"
+      evaluator: "rag:support-knowledge-base"
+      parameters:
+        query: "生产故障排查步骤 根因分析"
+        top_k: 5
+        include_metadata: true
+
+    # LLM 综合分析事件
+    - id: llm-analysis
+      name: "LLM 综合分析"
+      type: basic
+      description: "使用 LLM 对收集的上下文进行综合分析"
+      evaluator: "llm:qwen-plus"
+      parameters:
+        prompt_template: "incident_analysis"
+        temperature: 0.3
+        max_tokens: 1024
+        include_context: true
+
+  # ========== 逻辑门定义 ==========
+  gates:
+    # 日志证据门（OR）：任一日志源发现问题即可
+    - id: gate-log-or
+      name: "日志问题门"
+      type: or
+      description: "任一日志分析发现问题，即认为存在日志证据"
+      inputs:
+        - check-error-logs
+        - check-access-logs
+      output: log-evidence
+
+    # 指标异常门（OR）：任一指标异常即可
+    - id: gate-metric-or
+      name: "指标异常门"
+      type: or
+      description: "任一系统指标异常，即认为存在指标问题"
+      inputs:
+        - check-cpu-metrics
+        - check-memory-metrics
+      output: metric-anomaly
+
+    # 最终综合门（OR）：多来源综合分析
+    - id: gate-final-or
+      name: "综合分析门"
+      type: or
+      description: "综合所有证据源，确定根因"
+      inputs:
+        - log-evidence
+        - metric-anomaly
+        - check-runbook
+        - llm-analysis
+      output: root-cause-identified
+
+  # ========== 元数据 ==========
+  metadata:
+    author: "ResolveNet Team"
+    created_at: "2024-01-01"
+    category: "incident-response"
+    tags:
+      - diagnosis
+      - troubleshooting
+      - root-cause-analysis
+    estimated_duration_seconds: 120

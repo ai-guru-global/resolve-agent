@@ -1,0 +1,168 @@
+# ============================================
+# 技术支持 MegaAgent 配置
+# ============================================
+#
+# 该 Agent 是一个智能技术支持助手，能够：
+# - 搜索互联网获取最新信息
+# - 分析日志和指标进行故障排查
+# - 查询知识库获取文档
+# - 执行复杂故障诊断工作流
+#
+# 核心特性：使用 Intelligent Selector 智能路由请求
+
+agent:
+  name: support-agent
+  type: mega
+  description: "智能技术支持 Agent，支持多路径路由"
+  version: "1.0.0"
+  
+  # ========== 基础配置 ==========
+  config:
+    # LLM 配置
+    model_id: qwen-plus
+    system_prompt: |
+      你是一个由 ResolveNet 平台驱动的智能技术支持助手。
+      
+      你的能力：
+      - 搜索互联网获取最新技术信息
+      - 分析日志和系统指标，帮助排查问题
+      - 查询知识库，提供文档和最佳实践
+      - 执行复杂的故障诊断工作流
+      
+      你的原则：
+      - 始终提供准确、有帮助的信息
+      - 对于不确定的问题，明确说明并建议进一步排查
+      - 优先使用结构化的数据和证据支持你的建议
+      - 在处理紧急问题时，提供清晰的优先级和步骤
+    
+    # 对话配置
+    max_context_length: 8192
+    temperature: 0.7
+    
+    # 可用的 Skills
+    skill_names:
+      - web-search
+      - log-analyzer
+      - metrics-checker
+    
+    # 关联的 Workflow
+    workflow_id: incident-diagnosis
+    
+    # 关联的 RAG Collection
+    rag_collection_id: support-knowledge-base
+    
+    # ========== Selector 配置 ==========
+    selector_config:
+      # 路由策略: llm | rule | hybrid
+      # - llm: 使用 LLM 进行意图分类和路由
+      # - rule: 使用关键词规则进行路由
+      # - hybrid: 规则优先，置信度不足时使用 LLM
+      strategy: hybrid
+      
+      # 置信度阈值（仅用于 hybrid 策略）
+      # 当规则匹配的置信度低于此值时，会调用 LLM 进行判断
+      confidence_threshold: 0.7
+      
+      # 规则配置
+      rules:
+        # 关键词匹配规则
+        keyword_rules:
+          # Web 搜索规则
+          - keywords:
+              - "search"
+              - "find"
+              - "lookup"
+              - "搜索"
+              - "查找"
+              - "查一下"
+              - "搜一下"
+            route_type: skill
+            route_target: web-search
+            confidence: 0.9
+            description: "匹配搜索相关请求"
+          
+          # 日志分析规则
+          - keywords:
+              - "log"
+              - "error"
+              - "exception"
+              - "日志"
+              - "错误"
+              - "异常"
+              - "报错"
+            route_type: skill
+            route_target: log-analyzer
+            confidence: 0.85
+            description: "匹配日志分析请求"
+          
+          # 故障诊断规则
+          - keywords:
+              - "incident"
+              - "diagnose"
+              - "troubleshoot"
+              - "故障"
+              - "诊断"
+              - "排查"
+              - "分析问题"
+            route_type: fta
+            route_target: incident-diagnosis
+            confidence: 0.9
+            description: "匹配需要复杂诊断的请求"
+          
+          # 知识库查询规则
+          - keywords:
+              - "how to"
+              - "documentation"
+              - "runbook"
+              - "怎么"
+              - "如何"
+              - "文档"
+              - "手册"
+              - "指南"
+            route_type: rag
+            route_target: support-knowledge-base
+            confidence: 0.8
+            description: "匹配文档和知识库查询"
+        
+        # 意图分类规则（更高级的匹配）
+        intent_rules:
+          - intent: information_retrieval
+            description: "信息检索类请求"
+            route_type: rag
+            confidence: 0.75
+          
+          - intent: task_execution
+            description: "任务执行类请求"
+            route_type: skill
+            confidence: 0.8
+          
+          - intent: complex_analysis
+            description: "复杂分析类请求"
+            route_type: fta
+            confidence: 0.85
+      
+      # LLM 路由配置
+      llm_config:
+        model_id: qwen-plus
+        temperature: 0.1
+        max_tokens: 256
+        system_prompt: |
+          你是一个路由决策助手。根据用户输入，判断应该使用哪个子系统处理。
+          
+          可用的路由类型：
+          - fta: 复杂故障诊断，需要多步骤分析
+          - skill: 单一明确任务，如搜索、日志分析
+          - rag: 文档查询、知识库问答
+          - direct: 简单对话、闲聊
+          
+          返回 JSON 格式：{"route_type": "...", "route_target": "...", "confidence": 0.0-1.0}
+
+  # ========== 元数据 ==========
+  metadata:
+    author: "ResolveNet Team"
+    created_at: "2024-01-01"
+    category: "support"
+    tags:
+      - technical-support
+      - intelligent-routing
+      - multi-skill

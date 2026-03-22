@@ -1,0 +1,31 @@
+name: Docker Publish
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: [platform, runtime, webui]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/docker/${{ matrix.component }}.Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/resolvenet-${{ matrix.component }}:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/resolvenet-${{ matrix.component }}:latest

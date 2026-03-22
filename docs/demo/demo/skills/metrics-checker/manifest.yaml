@@ -1,0 +1,57 @@
+name: metrics-checker
+version: "1.0.0"
+description: "检查系统指标是否超过阈值"
+author: "ResolveNet Team"
+entry_point: "skill:run"
+
+inputs:
+  - name: metric
+    type: string
+    required: true
+    description: "要检查的指标名称"
+    enum:
+      - cpu_usage
+      - memory_usage
+      - disk_usage
+      - network_io
+      - request_latency
+  - name: threshold
+    type: number
+    required: true
+    description: "告警阈值"
+  - name: duration_minutes
+    type: integer
+    required: false
+    default: 5
+    description: "检查的时间窗口（分钟）"
+
+outputs:
+  - name: exceeded
+    type: boolean
+    description: "是否超过阈值"
+  - name: current_value
+    type: number
+    description: "当前指标值"
+  - name: avg_value
+    type: number
+    description: "平均指标值"
+  - name: max_value
+    type: number
+    description: "最大指标值"
+  - name: trend
+    type: string
+    description: "趋势 (increasing, stable, decreasing)"
+
+permissions:
+  network_access: true
+  file_system_read: false
+  file_system_write: false
+  timeout_seconds: 30
+  max_memory_mb: 128
+
+metadata:
+  category: "monitoring"
+  tags:
+    - metrics
+    - monitoring
+    - alerting

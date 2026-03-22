@@ -1,0 +1,22 @@
+tree:
+  id: sample-tree
+  name: "Sample Fault Tree"
+  top_event_id: top
+  events:
+    - id: top
+      name: "System Failure"
+      type: top
+    - id: event-a
+      name: "Sensor Malfunction"
+      type: basic
+      evaluator: "skill:sensor-check"
+    - id: event-b
+      name: "Network Failure"
+      type: basic
+      evaluator: "skill:network-check"
+  gates:
+    - id: gate-1
+      name: "Any Failure"
+      type: or
+      inputs: [event-a, event-b]
+      output: top

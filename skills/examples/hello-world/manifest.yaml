@@ -1,0 +1,20 @@
+name: hello-world
+version: "1.0.0"
+description: "A simple hello world skill for testing"
+author: "ResolveNet"
+entry_point: "skill:run"
+inputs:
+  - name: name
+    type: string
+    description: "Name to greet"
+    required: false
+    default: "World"
+outputs:
+  - name: greeting
+    type: string
+    description: "The greeting message"
+permissions:
+  network_access: false
+  file_system_read: false
+  file_system_write: false
+  timeout_seconds: 10

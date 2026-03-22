@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "resolvenet.name" . }}-runtime
+  labels:
+    {{- include "resolvenet.labels" . | nindent 4 }}
+    {{- include "resolvenet.runtime.selectorLabels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.runtime.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "resolvenet.runtime.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "resolvenet.runtime.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: runtime
+          image: "{{ .Values.runtime.image.repository }}:{{ .Values.runtime.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.runtime.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.runtime.service.port }}
+              name: grpc
+          resources:
+            {{- toYaml .Values.runtime.resources | nindent 12 }}

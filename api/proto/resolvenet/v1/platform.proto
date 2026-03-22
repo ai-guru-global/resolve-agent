@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package resolvenet.v1;
+
+option go_package = "github.com/ai-guru-global/resolve-net/pkg/api/resolvenet/v1;resolvenetv1";
+
+import "google/protobuf/struct.proto";
+
+// PlatformService provides health checks and system configuration.
+service PlatformService {
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+  rpc GetConfig(GetConfigRequest) returns (GetConfigResponse);
+  rpc UpdateConfig(UpdateConfigRequest) returns (UpdateConfigResponse);
+  rpc GetSystemInfo(GetSystemInfoRequest) returns (GetSystemInfoResponse);
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  ServiceHealth overall = 1;
+  map<string, ServiceHealth> components = 2;
+}
+
+message ServiceHealth {
+  HealthStatus status = 1;
+  string message = 2;
+}
+
+enum HealthStatus {
+  HEALTH_STATUS_UNSPECIFIED = 0;
+  HEALTH_STATUS_HEALTHY = 1;
+  HEALTH_STATUS_DEGRADED = 2;
+  HEALTH_STATUS_UNHEALTHY = 3;
+}
+
+message GetConfigRequest {
+  string key = 1; // empty = all config
+}
+
+message GetConfigResponse {
+  google.protobuf.Struct config = 1;
+}
+
+message UpdateConfigRequest {
+  google.protobuf.Struct config = 1;
+}
+
+message UpdateConfigResponse {
+  google.protobuf.Struct config = 1;
+}
+
+message GetSystemInfoRequest {}
+
+message GetSystemInfoResponse {
+  string version = 1;
+  string commit = 2;
+  string build_date = 3;
+  string go_version = 4;
+  string platform = 5;
+}

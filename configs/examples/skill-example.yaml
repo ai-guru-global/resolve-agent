@@ -1,0 +1,22 @@
+# Example Skill Configuration
+
+skill:
+  name: web-search
+  version: "1.0.0"
+  source_type: builtin
+  source_uri: "resolvenet.skills.builtin.web_search"
+  description: "Search the web for information"
+  manifest:
+    entry_point: "resolvenet.skills.builtin.web_search:run"
+    inputs:
+      - name: query
+        type: string
+        required: true
+        description: "Search query"
+      - name: num_results
+        type: number
+        required: false
+        default: 5
+    permissions:
+      network_access: true
+      timeout_seconds: 30

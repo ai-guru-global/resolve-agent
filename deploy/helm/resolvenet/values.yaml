@@ -1,0 +1,65 @@
+# Default values for ResolveNet
+
+platform:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/ai-guru-global/resolvenet-platform
+    tag: ""
+    pullPolicy: IfNotPresent
+  service:
+    httpPort: 8080
+    grpcPort: 9090
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+runtime:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/ai-guru-global/resolvenet-runtime
+    tag: ""
+    pullPolicy: IfNotPresent
+  service:
+    port: 9091
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: "2"
+      memory: 2Gi
+
+webui:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/ai-guru-global/resolvenet-webui
+    tag: ""
+    pullPolicy: IfNotPresent
+  service:
+    port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  hosts:
+    - host: resolvenet.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+postgresql:
+  enabled: true
+  auth:
+    username: resolvenet
+    password: resolvenet
+    database: resolvenet
+
+redis:
+  enabled: true
+
+nats:
+  enabled: true

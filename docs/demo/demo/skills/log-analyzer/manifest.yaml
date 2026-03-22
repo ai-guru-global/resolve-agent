@@ -1,0 +1,63 @@
+name: log-analyzer
+version: "1.0.0"
+description: "分析应用程序日志，检测错误模式和异常"
+author: "ResolveNet Team"
+entry_point: "skill:run"
+
+inputs:
+  - name: log_source
+    type: string
+    required: true
+    description: "日志源路径或标识符"
+  - name: severity
+    type: string
+    required: false
+    default: "error"
+    description: "过滤的日志级别 (debug, info, warn, error)"
+    enum:
+      - debug
+      - info
+      - warn
+      - error
+  - name: time_range_minutes
+    type: integer
+    required: false
+    default: 60
+    description: "分析的时间范围（分钟）"
+  - name: pattern_detection
+    type: boolean
+    required: false
+    default: true
+    description: "是否启用模式检测"
+
+outputs:
+  - name: issues_found
+    type: boolean
+    description: "是否发现问题"
+  - name: error_count
+    type: integer
+    description: "错误数量"
+  - name: patterns
+    type: array
+    description: "检测到的错误模式列表"
+  - name: summary
+    type: string
+    description: "分析摘要"
+  - name: recommendations
+    type: array
+    description: "建议的处理措施"
+
+permissions:
+  network_access: false
+  file_system_read: true
+  file_system_write: false
+  timeout_seconds: 120
+  max_memory_mb: 1024
+
+metadata:
+  category: "diagnostics"
+  tags:
+    - logs
+    - analysis
+    - troubleshooting
+    - monitoring

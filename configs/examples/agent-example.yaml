@@ -1,0 +1,17 @@
+# Example Agent Definition
+
+agent:
+  name: my-assistant
+  type: mega
+  description: "A general-purpose mega agent with intelligent routing"
+  config:
+    model_id: qwen-plus
+    system_prompt: |
+      You are a helpful assistant powered by ResolveNet.
+      You can search the web, analyze documents, and run workflows.
+    skill_names:
+      - web-search
+      - file-ops
+    selector_config:
+      strategy: hybrid
+      confidence_threshold: 0.7

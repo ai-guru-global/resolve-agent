@@ -1,0 +1,49 @@
+# Example FTA Workflow
+
+tree:
+  id: incident-diagnosis
+  name: "Incident Root Cause Analysis"
+  description: "Diagnose the root cause of a production incident"
+  top_event_id: root-cause
+
+  events:
+    - id: root-cause
+      name: "Root Cause Identified"
+      type: top
+
+    - id: log-issue
+      name: "Log Analysis Reveals Issue"
+      type: intermediate
+
+    - id: check-error-logs
+      name: "Check Error Logs"
+      type: basic
+      evaluator: "skill:log-analyzer"
+      parameters:
+        log_source: "/var/log/app"
+        severity: "error"
+
+    - id: check-metrics
+      name: "Check System Metrics"
+      type: basic
+      evaluator: "skill:metrics-checker"
+      parameters:
+        threshold_cpu: 90
+        threshold_memory: 85
+
+    - id: check-runbook
+      name: "Consult Runbook"
+      type: basic
+      evaluator: "rag:runbook-collection"
+      parameters:
+        query: "troubleshooting production incident"
+
+  gates:
+    - id: gate-or-1
+      name: "Any Evidence Found"
+      type: or
+      inputs:
+        - check-error-logs
+        - check-metrics
+        - check-runbook
+      output: root-cause

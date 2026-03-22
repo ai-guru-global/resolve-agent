@@ -1,0 +1,17 @@
+# ResolveNet Agent Runtime Configuration
+
+server:
+  host: "0.0.0.0"
+  port: 9091
+
+agent_pool:
+  max_size: 100
+  eviction_policy: "lru"
+
+selector:
+  default_strategy: "hybrid"
+  confidence_threshold: 0.7
+
+telemetry:
+  enabled: false
+  service_name: "resolvenet-runtime"

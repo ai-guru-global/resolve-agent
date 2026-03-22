@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  platform:
+    build:
+      target: builder
+    volumes:
+      - ../../:/app
+    command: ["go", "run", "./cmd/resolvenet-server"]
+    environment:
+      RESOLVENET_SERVER_HTTP_ADDR: ":8080"
+
+  runtime:
+    volumes:
+      - ../../python:/app
+    command: ["uv", "run", "python", "-m", "resolvenet.runtime.server"]

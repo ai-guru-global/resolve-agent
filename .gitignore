@@ -1,0 +1,109 @@
+# =============================================================================
+# ResolveNet - Comprehensive .gitignore
+# =============================================================================
+
+# ===== Go =====
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of go coverage
+*.out
+coverage.html
+
+# Go workspace
+go.work
+go.work.sum
+
+# Vendor directory (we use modules)
+vendor/
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# UV
+.python-version
+
+# Pytest
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# mypy
+.mypy_cache/
+
+# Ruff
+.ruff_cache/
+
+# ===== Node.js / TypeScript =====
+node_modules/
+web/dist/
+web/build/
+*.tsbuildinfo
+.next/
+
+# pnpm
+.pnpm-debug.log
+
+# ===== IDE =====
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ===== Docker =====
+.docker/
+
+# ===== Environment =====
+.env
+.env.local
+.env.*.local
+!deploy/docker-compose/.env.example
+
+# ===== Build artifacts =====
+*.pb.go
+*_grpc.pb.go
+*.pb.gw.go
+python/src/resolvenet/api/
+
+# ===== Temporary =====
+tmp/
+temp/
+*.tmp
+*.bak
+*.log
+
+# ===== Secrets =====
+*.pem
+*.key
+*.cert
+credentials.json
+secrets.yaml
+
+# ===== Helm =====
+deploy/helm/resolvenet/charts/
+*.tgz

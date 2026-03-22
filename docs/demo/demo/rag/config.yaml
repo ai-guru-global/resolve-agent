@@ -1,0 +1,37 @@
+collection:
+  id: support-knowledge-base
+  name: "技术支持知识库"
+  description: "包含运维手册、故障排查指南、最佳实践文档"
+  
+  # 向量化配置
+  embedding:
+    model: bge-large-zh
+    dimension: 1024
+    batch_size: 32
+  
+  # 分块配置
+  chunking:
+    strategy: semantic    # fixed, sentence, semantic
+    chunk_size: 512
+    chunk_overlap: 50
+    separators:
+      - "\n\n"
+      - "\n"
+      - "。"
+      - "！"
+      - "？"
+  
+  # 检索配置
+  retrieval:
+    default_top_k: 5
+    similarity_threshold: 0.7
+    rerank_enabled: true
+    rerank_model: bge-reranker-large
+  
+  # 文档源
+  sources:
+    - type: directory
+      path: "./documents"
+      patterns:
+        - "*.md"
+        - "*.txt"

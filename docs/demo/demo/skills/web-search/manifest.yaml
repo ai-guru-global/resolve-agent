@@ -1,0 +1,50 @@
+name: web-search
+version: "1.0.0"
+description: "搜索互联网获取相关信息"
+author: "ResolveNet Team"
+entry_point: "skill:run"
+
+inputs:
+  - name: query
+    type: string
+    required: true
+    description: "搜索查询字符串"
+  - name: num_results
+    type: integer
+    required: false
+    default: 5
+    description: "返回结果数量"
+  - name: language
+    type: string
+    required: false
+    default: "zh"
+    description: "搜索语言偏好"
+
+outputs:
+  - name: results
+    type: array
+    description: "搜索结果列表，包含 title, url, snippet"
+  - name: total_found
+    type: integer
+    description: "找到的结果总数"
+  - name: search_time_ms
+    type: integer
+    description: "搜索耗时（毫秒）"
+
+permissions:
+  network_access: true
+  file_system_read: false
+  file_system_write: false
+  allowed_hosts:
+    - "*.google.com"
+    - "*.bing.com"
+    - "*.baidu.com"
+  timeout_seconds: 30
+  max_memory_mb: 256
+
+metadata:
+  category: "information-retrieval"
+  tags:
+    - search
+    - web
+    - information

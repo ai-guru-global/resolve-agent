@@ -1,0 +1,176 @@
+syntax = "proto3";
+
+package resolvenet.v1;
+
+option go_package = "github.com/ai-guru-global/resolve-net/pkg/api/resolvenet/v1;resolvenetv1";
+
+import "resolvenet/v1/common.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+// AgentService manages agent lifecycle and execution.
+service AgentService {
+  // CreateAgent creates a new agent definition.
+  rpc CreateAgent(CreateAgentRequest) returns (Agent);
+  // GetAgent retrieves an agent by ID.
+  rpc GetAgent(GetAgentRequest) returns (Agent);
+  // ListAgents lists agents with filtering and pagination.
+  rpc ListAgents(ListAgentsRequest) returns (ListAgentsResponse);
+  // UpdateAgent updates an existing agent.
+  rpc UpdateAgent(UpdateAgentRequest) returns (Agent);
+  // DeleteAgent removes an agent.
+  rpc DeleteAgent(DeleteAgentRequest) returns (DeleteAgentResponse);
+  // ExecuteAgent runs an agent and streams results.
+  rpc ExecuteAgent(ExecuteAgentRequest) returns (stream ExecuteAgentResponse);
+  // GetExecution retrieves execution details.
+  rpc GetExecution(GetExecutionRequest) returns (Execution);
+  // ListExecutions lists executions for an agent.
+  rpc ListExecutions(ListExecutionsRequest) returns (ListExecutionsResponse);
+}
+
+// Agent type enum
+enum AgentType {
+  AGENT_TYPE_UNSPECIFIED = 0;
+  AGENT_TYPE_MEGA = 1;
+  AGENT_TYPE_SKILL = 2;
+  AGENT_TYPE_FTA = 3;
+  AGENT_TYPE_RAG = 4;
+  AGENT_TYPE_CUSTOM = 5;
+}
+
+// Agent definition
+message Agent {
+  ResourceMeta meta = 1;
+  AgentType type = 2;
+  AgentConfig config = 3;
+  ResourceStatus status = 4;
+}
+
+// Agent configuration
+message AgentConfig {
+  string model_id = 1;
+  string system_prompt = 2;
+  repeated string skill_names = 3;
+  string workflow_id = 4;
+  string rag_collection_id = 5;
+  google.protobuf.Struct parameters = 6;
+  SelectorConfig selector_config = 7;
+}
+
+// Selector configuration for an agent
+message SelectorConfig {
+  string strategy = 1; // "llm", "rule", "hybrid"
+  google.protobuf.Struct rules = 2;
+  string selector_model_id = 3;
+}
+
+// Request/Response messages
+message CreateAgentRequest {
+  Agent agent = 1;
+}
+
+message GetAgentRequest {
+  string id = 1;
+}
+
+message ListAgentsRequest {
+  PaginationRequest pagination = 1;
+  AgentType type_filter = 2;
+  ResourceStatus status_filter = 3;
+}
+
+message ListAgentsResponse {
+  repeated Agent agents = 1;
+  PaginationResponse pagination = 2;
+}
+
+message UpdateAgentRequest {
+  Agent agent = 1;
+}
+
+message DeleteAgentRequest {
+  string id = 1;
+}
+
+message DeleteAgentResponse {}
+
+message ExecuteAgentRequest {
+  string agent_id = 1;
+  string input = 2;
+  string conversation_id = 3;
+  google.protobuf.Struct context = 4;
+}
+
+message ExecuteAgentResponse {
+  oneof response {
+    string content = 1;
+    ExecutionEvent event = 2;
+    ExecutionError error = 3;
+  }
+}
+
+message ExecutionEvent {
+  string type = 1;
+  string message = 2;
+  google.protobuf.Struct data = 3;
+  google.protobuf.Timestamp timestamp = 4;
+}
+
+message ExecutionError {
+  string code = 1;
+  string message = 2;
+}
+
+// Execution record
+message Execution {
+  string id = 1;
+  string agent_id = 2;
+  string input = 3;
+  string output = 4;
+  ExecutionStatus status = 5;
+  RouteDecision route_decision = 6;
+  string trace_id = 7;
+  google.protobuf.Timestamp started_at = 8;
+  google.protobuf.Timestamp completed_at = 9;
+  int64 duration_ms = 10;
+}
+
+enum ExecutionStatus {
+  EXECUTION_STATUS_UNSPECIFIED = 0;
+  EXECUTION_STATUS_PENDING = 1;
+  EXECUTION_STATUS_RUNNING = 2;
+  EXECUTION_STATUS_COMPLETED = 3;
+  EXECUTION_STATUS_FAILED = 4;
+}
+
+// Route decision made by the Intelligent Selector
+message RouteDecision {
+  RouteType route_type = 1;
+  string route_target = 2;
+  float confidence = 3;
+  google.protobuf.Struct parameters = 4;
+  repeated RouteDecision chain = 5;
+}
+
+enum RouteType {
+  ROUTE_TYPE_UNSPECIFIED = 0;
+  ROUTE_TYPE_FTA = 1;
+  ROUTE_TYPE_SKILL = 2;
+  ROUTE_TYPE_RAG = 3;
+  ROUTE_TYPE_MULTI = 4;
+  ROUTE_TYPE_DIRECT = 5;
+}
+
+message GetExecutionRequest {
+  string execution_id = 1;
+}
+
+message ListExecutionsRequest {
+  string agent_id = 1;
+  PaginationRequest pagination = 2;
+}
+
+message ListExecutionsResponse {
+  repeated Execution executions = 1;
+  PaginationResponse pagination = 2;
+}

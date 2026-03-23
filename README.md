@@ -5,7 +5,11 @@
 <h1 align="center">ResolveAgent</h1>
 
 <p align="center">
-  <strong>The Ultimate Agent-Driven AIOps Platform | 终极智能体驱动的 AIOps 平台</strong>
+  <strong>Problem-Solving AIOps Agent | 面向问题解决的 AIOps 智能体</strong>
+</p>
+
+<p align="center">
+  <code>🔧 Expert Skills</code> · <code>🌳 FTA Workflow</code> · <code>📚 RAG Knowledge</code> · <code>💻 Code Analysis</code>
 </p>
 
 <p align="center">
@@ -47,11 +51,25 @@
 
 **English:**
 
-ResolveAgent is the **ultimate Agent-driven AIOps platform** — a **CNCF-grade open-source** solution that combines **Advanced Static Analysis (FTA)**, **Retrieval-Augmented Generation (RAG)**, **Adaptive Workflows**, and **Expert Skills** to deliver intelligent, autonomous operations management. Built on [AgentScope](https://github.com/modelscope/agentscope) for agent orchestration and [Higress](https://github.com/alibaba/higress) for AI gateway capabilities.
+ResolveAgent is a **problem-solving AIOps Agent** — a **CNCF-grade open-source** solution that integrates four core capabilities to resolve real operational challenges:
+
+- **🔧 Expert Skills** — Domain expertise through pluggable skill modules
+- **🌳 FTA Workflow** — Fault Tree Analysis for systematic problem diagnosis
+- **📚 RAG Knowledge** — Retrieval-Augmented Generation for knowledge-based answers
+- **💻 Code Analysis** — Static code analysis as technical foundation
+
+Built on [AgentScope](https://github.com/modelscope/agentscope) for agent orchestration and [Higress](https://github.com/alibaba/higress) for AI gateway capabilities.
 
 **中文：**
 
-ResolveAgent 是**终极智能体驱动的 AIOps 平台** — 一个 **CNCF 级别的开源解决方案**，融合了**高级静态分析（FTA）**、**检索增强生成（RAG）**、**自适应工作流** 和 **专家技能系统**，为企业提供智能化、自主化的运维管理能力。基于 [AgentScope](https://github.com/modelscope/agentscope) 构建 Agent 编排能力，基于 [Higress](https://github.com/alibaba/higress) 构建 AI 网关能力。
+ResolveAgent 是一个**面向问题解决的 AIOps 智能体** — 一个 **CNCF 级别的开源解决方案**，通过四大核心能力协同工作解决真实运维问题：
+
+- **🔧 专家技能** — 通过可插拔技能模块提供领域专业知识
+- **🌳 FTA 工作流** — 故障树分析用于系统性问题诊断
+- **📚 RAG 知识库** — 检索增强生成提供知识支撑
+- **💻 代码分析** — 静态代码分析作为底层技术保障
+
+基于 [AgentScope](https://github.com/modelscope/agentscope) 构建 Agent 编排能力，基于 [Higress](https://github.com/alibaba/higress) 构建 AI 网关能力。
 
 ---
 
@@ -206,24 +224,33 @@ The core AI brain that intelligently routes requests to the optimal processing p
 
 核心 AI 大脑，智能地将请求路由到最优处理路径。
 
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│                      INTELLIGENT SELECTOR                            │
-│                    智能路由与决策引擎                                  │
-├──────────────────────────────────────────────────────────────────────┤
-│  User Input ───────▶ Intent Analyzer ─────▶ Context Enricher           │
-│  用户输入              意图分析器              上下文增强器              │
-│                          │                       │                      │
-│                          ▼                       ▼                      │
-│  ┌───────────────────────────────────────────────────────────────┐ │
-│  │                      ROUTE DECIDER                              │ │
-│  │                      路由决策器                                   │ │
-│  ├─────────────────┬───────────────┬───────────────┬───────────────┤ │
-│  │    Workflow     │     Skills      │      RAG        │ Code Analysis │ │
-│  │    工作流        │     技能        │   知识检索      │   代码分析    │ │
-│  │   (FTA/DAG)     │   (Plugins)    │   (Vector)      │   (AST/LSP)   │ │
-│  └─────────────────┴───────────────┴───────────────┴───────────────┘ │
-└──────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph SELECTOR["<b>🧠 INTELLIGENT SELECTOR</b><br/>智能路由与决策引擎"]
+        direction TB
+        INPUT["📝 User Input<br/>用户输入"]
+        INTENT["🔍 Intent Analyzer<br/>意图分析器"]
+        CONTEXT["📊 Context Enricher<br/>上下文增强器"]
+        DECIDER["🎯 Route Decider<br/>路由决策器"]
+        
+        INPUT --> INTENT --> CONTEXT --> DECIDER
+    end
+    
+    subgraph ROUTES["路由目标"]
+        direction LR
+        WORKFLOW["🌳 Workflow<br/>FTA/DAG"]
+        SKILLS["🔧 Skills<br/>Plugins"]
+        RAG["📚 RAG<br/>Vector"]
+        CODE["💻 Code Analysis<br/>AST/LSP"]
+    end
+    
+    DECIDER --> WORKFLOW
+    DECIDER --> SKILLS
+    DECIDER --> RAG
+    DECIDER --> CODE
+    
+    style SELECTOR fill:#f5f5ff,stroke:#6366f1,stroke-width:2px
+    style DECIDER fill:#6366f1,color:#fff
 ```
 
 | Feature | Description | 描述 |
@@ -243,6 +270,36 @@ The core AI brain that intelligently routes requests to the optimal processing p
 | **INHIBIT** | Conditional gate | 条件门控 |
 | **PRIORITY-AND** | Ordered AND gate | 有序与门 |
 
+```mermaid
+flowchart TB
+    subgraph FTA["<b>🌳 FTA Engine</b><br/>故障树分析引擎"]
+        direction TB
+        ROOT["🚨 Root Event<br/>根事件"]
+        
+        AND_GATE{{"⚠️ AND Gate<br/>与门"}}
+        OR_GATE{{"🔄 OR Gate<br/>或门"}}
+        VOTE_GATE{{"🗳️ VOTING<br/>投票门"}}
+        
+        COND1["📊 Condition 1"]
+        COND2["📊 Condition 2"]
+        COND3["📊 Condition 3"]
+        
+        ROOT --> AND_GATE
+        ROOT --> OR_GATE
+        AND_GATE --> COND1
+        AND_GATE --> COND2
+        OR_GATE --> VOTE_GATE
+        VOTE_GATE --> COND3
+    end
+    
+    subgraph ACTIONS["🎯 Actions"]
+        ACT1["🛠️ Auto Remediation"]
+        ACT2["📢 Alert & Notify"]
+    end
+    
+    FTA --> ACTIONS
+```
+
 ### 📚 RAG Pipeline | 检索增强生成
 
 | Component | Technology | 技术 |
@@ -252,6 +309,31 @@ The core AI brain that intelligently routes requests to the optimal processing p
 | **Reranking** | Cross-encoder | 交叉编码重排序 |
 | **Chunking** | Semantic / Sentence / Fixed | 语义/句子/固定分块 |
 
+```mermaid
+flowchart LR
+    subgraph INGEST["📥 Ingest"]
+        DOC["📄 Documents"]
+        CHUNK["✂️ Chunking"]
+        DOC --> CHUNK
+    end
+    
+    subgraph INDEX["📊 Index"]
+        EMBED["🧠 Embedding<br/>BGE-large-zh"]
+        STORE[("🔮 Vector Store<br/>Milvus")]
+        CHUNK --> EMBED --> STORE
+    end
+    
+    subgraph RETRIEVE["🔍 Retrieve"]
+        QUERY["❓ Query"]
+        SEARCH["🎯 Similarity<br/>Search"]
+        RERANK["📊 Reranking"]
+        RESULT["📝 Results"]
+        QUERY --> SEARCH
+        STORE --> SEARCH
+        SEARCH --> RERANK --> RESULT
+    end
+```
+
 ### 🎯 Expert Skills | 专家技能系统
 
 | Feature | Description | 描述 |
@@ -259,6 +341,32 @@ The core AI brain that intelligently routes requests to the optimal processing p
 | **Manifest-based** | Declarative inputs/outputs/permissions | 声明式输入输出权限 |
 | **Sandboxed** | Resource limits, network isolation | 资源限制、网络隔离 |
 | **Multiple Sources** | Local, Git, OCI, Registry | 多来源支持 |
+
+```mermaid
+flowchart TB
+    subgraph SOURCES["📦 Skill Sources"]
+        direction LR
+        LOCAL["📁 Local"]
+        GIT["🐙 Git Repo"]
+        OCI["📦 OCI Registry"]
+        MARKET["🏪 Marketplace"]
+    end
+    
+    subgraph SKILL["🔧 Skill Runtime"]
+        MANIFEST["📝 Manifest<br/>inputs/outputs"]
+        SANDBOX["🛡️ Sandbox<br/>Isolation"]
+        EXEC["▶️ Executor"]
+        MANIFEST --> SANDBOX --> EXEC
+    end
+    
+    subgraph OUTPUT["📤 Results"]
+        RESULT["✅ Skill Output"]
+        METRICS["📊 Metrics"]
+    end
+    
+    SOURCES --> SKILL
+    SKILL --> OUTPUT
+```
 
 ### 🇨🇳 Chinese LLM Support | 国产大模型支持
 
@@ -274,64 +382,74 @@ The core AI brain that intelligently routes requests to the optimal processing p
 
 ### System Architecture Diagram | 系统架构图
 
-```
-                              ┌─────────────────────────────────────────────────────────────┐
-                              │                        CLIENTS                              │
-                              │  ┌──────────┐   ┌───────────┐   ┌────────────────────────┐ │
-                              │  │  CLI/TUI │   │   WebUI   │   │    External API        │ │
-                              │  │   (Go)   │   │(React+TS) │   │      Consumers         │ │
-                              │  └────┬─────┘   └─────┬─────┘   └───────────┬────────────┘ │
-                              └───────┼───────────────┼─────────────────────┼──────────────┘
-                                      │               │                     │
-                                      ▼               ▼                     ▼
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                    HIGRESS AI/API GATEWAY                                           │
-│                        Authentication | Rate Limiting | Model Routing | Route Rules                 │
-└─────────────────────────────────────────────────────────┬───────────────────────────────────────────┘
-                                                          │
-                                                          ▼
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                              PLATFORM SERVICES (Go - resolveagent-server)                           │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────────────────┐│
-│  │   API Server    │  │ Agent Registry  │  │ Skill Registry  │  │       Workflow Registry         ││
-│  │  (HTTP/gRPC)    │  │ (Single Source) │  │                 │  │                                 ││
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘  └─────────────────────────────────┘│
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────────────────┐│
-│  │  Route Sync     │  │   Event Bus     │  │  Model Router   │  │       Telemetry                 ││
-│  │ (Go→Higress)    │  │    (NATS)       │  │                 │  │    (OpenTelemetry)              ││
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘  └─────────────────────────────────┘│
-└─────────────────────────────────────────────────────────┬───────────────────────────────────────────┘
-                                                          │ gRPC
-                                                          ▼
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                      AGENT RUNTIME (Python - python/src/resolveagent/)                              │
-│  ┌───────────────────────────────────────────────────────────────────────────────────────────────┐ │
-│  │                         INTELLIGENT SELECTOR (Internal Routing)                               │ │
-│  │   ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────────────────────────────┐   │ │
-│  │   │ Intent Analyzer │ →→ │Context Enricher │ →→ │             Route Decider               │   │ │
-│  │   │                 │    │                 │    │    (FTA | Skills | RAG | Direct)        │   │ │
-│  │   └─────────────────┘    └─────────────────┘    └─────────────────────────────────────────┘   │ │
-│  └───────────────────────────────────────────────────────────────────────────────────────────────┘ │
-│  ┌─────────────────────────┐  ┌─────────────────────────┐  ┌─────────────────────────────────────┐ │
-│  │   FTA Engine            │  │    Expert Skills        │  │          RAG Pipeline               │ │
-│  │ (Fault Tree Analysis)   │  │  (Sandboxed Execution)  │  │  (Ingest → Index → Retrieve)       │ │
-│  └─────────────────────────┘  └─────────────────────────┘  └─────────────────────────────────────┘ │
-│  ┌───────────────────────────────────────────────────────────────────────────────────────────────┐ │
-│  │                        HIGRESS LLM PROVIDER (All LLM calls via Gateway)                       │ │
-│  │   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────────────────────────┐   │ │
-│  │   │    Qwen     │   │   Wenxin    │   │    Zhipu    │   │       OpenAI Compatible         │   │ │
-│  │   └─────────────┘   └─────────────┘   └─────────────┘   └─────────────────────────────────┘   │ │
-│  └───────────────────────────────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
-                                                          │
-                                                          ▼
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                       DATA LAYER                                                    │
-│   ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────────────────┐│
-│   │   PostgreSQL    │   │     Redis       │   │      NATS       │   │    Milvus / Qdrant         ││
-│   │    (Storage)    │   │    (Cache)      │   │   (Messaging)   │   │    (Vector Store)          ││
-│   └─────────────────┘   └─────────────────┘   └─────────────────┘   └─────────────────────────────┘│
-└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph CLIENTS["📱 CLIENTS"]
+        direction LR
+        CLI["🖥️ CLI/TUI<br/>Go"]
+        WEBUI["🌐 WebUI<br/>React+TS"]
+        API["🔌 External API"]
+    end
+    
+    subgraph GATEWAY["🛡️ HIGRESS AI/API GATEWAY"]
+        direction LR
+        GW_FUNC["Auth | Rate Limit | Model Routing | Route Rules"]
+    end
+    
+    subgraph PLATFORM["⚙️ PLATFORM SERVICES - Go"]
+        direction TB
+        subgraph REG["Registries"]
+            APISVR["API Server<br/>HTTP/gRPC"]
+            AGENT_REG["Agent Registry<br/>Single Source"]
+            SKILL_REG["Skill Registry"]
+            WF_REG["Workflow Registry"]
+        end
+        subgraph INFRA["Infrastructure"]
+            SYNC["Route Sync<br/>Go→Higress"]
+            EVENT["Event Bus<br/>NATS"]
+            ROUTER["Model Router"]
+            TELE["Telemetry"]
+        end
+    end
+    
+    subgraph RUNTIME["🐍 AGENT RUNTIME - Python"]
+        direction TB
+        subgraph SELECTOR["🧠 Intelligent Selector"]
+            INTENT["Intent Analyzer"]
+            CTX["Context Enricher"]
+            DECIDE["Route Decider"]
+            INTENT --> CTX --> DECIDE
+        end
+        subgraph ENGINES["Execution Engines"]
+            FTA["🌳 FTA Engine"]
+            SKILLS["🔧 Expert Skills"]
+            RAGP["📚 RAG Pipeline"]
+        end
+        subgraph LLM["🤖 LLM via Higress"]
+            QWEN["Qwen"] 
+            WENXIN["Wenxin"]
+            ZHIPU["Zhipu"]
+            OPENAI["OpenAI"]
+        end
+        DECIDE --> FTA & SKILLS & RAGP
+    end
+    
+    subgraph DATA["🗄️ DATA LAYER"]
+        direction LR
+        PG[("🐘 PostgreSQL")]
+        REDIS[("⚡ Redis")]
+        NATS[("📨 NATS")]
+        VECTOR[("🔮 Milvus")]
+    end
+    
+    CLIENTS --> GATEWAY
+    GATEWAY --> PLATFORM
+    PLATFORM -->|gRPC| RUNTIME
+    RUNTIME --> DATA
+    
+    style GATEWAY fill:#f59e0b,color:#000
+    style SELECTOR fill:#6366f1,color:#fff
+    style DATA fill:#10b981,color:#fff
 ```
 
 ### Core Components | 核心组件

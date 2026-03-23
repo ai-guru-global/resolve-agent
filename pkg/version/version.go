@@ -14,6 +14,6 @@ var (
 
 // Info returns formatted version information.
 func Info() string {
-	return fmt.Sprintf("ResolveNet %s (commit: %s, built: %s, %s/%s)",
+	return fmt.Sprintf("ResolveAgent %s (commit: %s, built: %s, %s/%s)",
 		Version, Commit, BuildDate, runtime.GOOS, runtime.GOARCH)
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "==> Setting up ResolveNet development environment..."
+echo "==> Setting up ResolveAgent development environment..."
 
 cd "$(git rev-parse --show-toplevel)"
 
@@ -44,10 +44,10 @@ fi
 cd ..
 
 # Create local config
-if [ ! -f "$HOME/.resolvenet/config.yaml" ]; then
-  mkdir -p "$HOME/.resolvenet"
-  cp configs/resolvenet.yaml "$HOME/.resolvenet/config.yaml"
-  echo "Created default config at ~/.resolvenet/config.yaml"
+if [ ! -f "$HOME/.resolveagent/config.yaml" ]; then
+  mkdir -p "$HOME/.resolveagent"
+  cp configs/resolveagent.yaml "$HOME/.resolveagent/config.yaml"
+  echo "Created default config at ~/.resolveagent/config.yaml"
 fi
 
 echo ""

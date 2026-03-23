@@ -1,4 +1,4 @@
-# ResolveNet Agent Runtime Configuration
+# ResolveAgent Agent Runtime Configuration
 
 server:
   host: "0.0.0.0"
@@ -14,4 +14,4 @@ selector:
 
 telemetry:
   enabled: false
-  service_name: "resolvenet-runtime"
+  service_name: "resolveagent-runtime"

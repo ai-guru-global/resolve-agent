@@ -27,5 +27,5 @@ jobs:
           file: deploy/docker/${{ matrix.component }}.Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/resolvenet-${{ matrix.component }}:${{ github.ref_name }}
-            ghcr.io/${{ github.repository_owner }}/resolvenet-${{ matrix.component }}:latest
+            ghcr.io/${{ github.repository_owner }}/resolveagent-${{ matrix.component }}:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/resolveagent-${{ matrix.component }}:latest

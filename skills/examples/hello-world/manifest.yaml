@@ -1,7 +1,7 @@
 name: hello-world
 version: "1.0.0"
 description: "A simple hello world skill for testing"
-author: "ResolveNet"
+author: "ResolveAgent"
 entry_point: "skill:run"
 inputs:
   - name: name

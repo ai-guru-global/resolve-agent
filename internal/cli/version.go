@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 
-	"github.com/ai-guru-global/resolve-net/pkg/version"
+	"github.com/ai-guru-global/resolve-agent/pkg/version"
 	"github.com/spf13/cobra"
 )
 

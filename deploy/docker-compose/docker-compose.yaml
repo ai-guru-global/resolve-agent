@@ -9,10 +9,10 @@ services:
       - "8080:8080"
       - "9090:9090"
     environment:
-      RESOLVENET_DATABASE_HOST: postgres
-      RESOLVENET_REDIS_ADDR: redis:6379
-      RESOLVENET_NATS_URL: nats://nats:4222
-      RESOLVENET_RUNTIME_GRPC_ADDR: runtime:9091
+      RESOLVEAGENT_DATABASE_HOST: postgres
+      RESOLVEAGENT_REDIS_ADDR: redis:6379
+      RESOLVEAGENT_NATS_URL: nats://nats:4222
+      RESOLVEAGENT_RUNTIME_GRPC_ADDR: runtime:9091
     depends_on:
       - postgres
       - redis
@@ -25,8 +25,8 @@ services:
     ports:
       - "9091:9091"
     environment:
-      RESOLVENET_RUNTIME_HOST: "0.0.0.0"
-      RESOLVENET_RUNTIME_PORT: "9091"
+      RESOLVEAGENT_RUNTIME_HOST: "0.0.0.0"
+      RESOLVEAGENT_RUNTIME_PORT: "9091"
 
   webui:
     build:
@@ -40,9 +40,9 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: resolvenet
-      POSTGRES_PASSWORD: resolvenet
-      POSTGRES_DB: resolvenet
+      POSTGRES_USER: resolveagent
+      POSTGRES_PASSWORD: resolveagent
+      POSTGRES_DB: resolveagent
     ports:
       - "5432:5432"
     volumes:

@@ -11,11 +11,11 @@ COPY python/pyproject.toml python/uv.lock* ./
 RUN uv sync --no-dev || uv pip install -e "."
 
 COPY python/src/ ./src/
-COPY configs/ /etc/resolvenet/
+COPY configs/ /etc/resolveagent/
 
-RUN useradd -m -u 1000 resolvenet
-USER resolvenet
+RUN useradd -m -u 1000 resolveagent
+USER resolveagent
 
 EXPOSE 9091
 
-CMD ["uv", "run", "python", "-m", "resolvenet.runtime.server"]
+CMD ["uv", "run", "python", "-m", "resolveagent.runtime.server"]

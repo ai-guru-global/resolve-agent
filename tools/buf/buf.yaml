@@ -1,7 +1,7 @@
 version: v2
 modules:
   - path: api/proto
-    name: buf.build/ai-guru-global/resolvenet
+    name: buf.build/ai-guru-global/resolveagent
 lint:
   use:
     - DEFAULT

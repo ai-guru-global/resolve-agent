@@ -2,7 +2,7 @@
 
 import pytest
 
-from resolvenet.fta.tree import EventType, FaultTree, FTAEvent, FTAGate, GateType
+from resolveagent.fta.tree import EventType, FaultTree, FTAEvent, FTAGate, GateType
 
 
 @pytest.fixture

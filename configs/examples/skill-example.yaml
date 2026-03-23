@@ -4,10 +4,10 @@ skill:
   name: web-search
   version: "1.0.0"
   source_type: builtin
-  source_uri: "resolvenet.skills.builtin.web_search"
+  source_uri: "resolveagent.skills.builtin.web_search"
   description: "Search the web for information"
   manifest:
-    entry_point: "resolvenet.skills.builtin.web_search:run"
+    entry_point: "resolveagent.skills.builtin.web_search:run"
     inputs:
       - name: query
         type: string

@@ -1,4 +1,4 @@
-# ResolveNet LLM Model Registry
+# ResolveAgent LLM Model Registry
 
 models:
   - id: qwen-turbo

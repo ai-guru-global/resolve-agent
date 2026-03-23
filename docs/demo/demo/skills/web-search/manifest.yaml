@@ -1,7 +1,7 @@
 name: web-search
 version: "1.0.0"
 description: "搜索互联网获取相关信息"
-author: "ResolveNet Team"
+author: "ResolveAgent Team"
 entry_point: "skill:run"
 
 inputs:

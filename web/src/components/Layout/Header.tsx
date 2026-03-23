@@ -13,7 +13,7 @@ const pageTitles: Record<string, string> = {
 
 export function Header() {
   const location = useLocation();
-  const title = pageTitles[location.pathname] || 'ResolveNet';
+  const title = pageTitles[location.pathname] || 'ResolveAgent';
 
   return (
     <header className="h-14 border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm flex items-center justify-between px-6">

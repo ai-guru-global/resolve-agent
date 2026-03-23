@@ -1,19 +1,19 @@
 # CLI 命令参考
 
-ResolveNet CLI 提供完整的命令行管理能力，涵盖 Agent、技能、工作流、RAG 和系统管理。
+ResolveAgent CLI 提供完整的命令行管理能力，涵盖 Agent、技能、工作流、RAG 和系统管理。
 
 ---
 
 ## 安装
 
-CLI 工具随 ResolveNet 一起安装：
+CLI 工具随 ResolveAgent 一起安装：
 
 ```bash
 # 从源码构建
 make build
 
 # 验证安装
-resolvenet version
+resolveagent version
 ```
 
 ### 全局选项
@@ -22,7 +22,7 @@ resolvenet version
 
 | 选项 | 说明 | 示例 |
 |------|------|------|
-| `--config, -c` | 配置文件路径 | `--config ~/.resolvenet/config.yaml` |
+| `--config, -c` | 配置文件路径 | `--config ~/.resolveagent/config.yaml` |
 | `--server` | 服务器地址 | `--server localhost:8080` |
 | `--output, -o` | 输出格式 (json/yaml/table) | `-o json` |
 | `--verbose, -v` | 详细输出 | `-v` |
@@ -33,21 +33,21 @@ resolvenet version
 
 ## Agent 管理
 
-### resolvenet agent create
+### resolveagent agent create
 
 创建新的 Agent。
 
 ```bash
-resolvenet agent create <name> [flags]
+resolveagent agent create <name> [flags]
 
 # 示例
-resolvenet agent create my-assistant \
+resolveagent agent create my-assistant \
   --type mega \
   --model qwen-plus \
   --description "我的智能助手"
 
 # 从配置文件创建
-resolvenet agent create -f agent.yaml
+resolveagent agent create -f agent.yaml
 ```
 
 **选项**:
@@ -62,17 +62,17 @@ resolvenet agent create -f agent.yaml
 | `--rag-collection` | 关联的 RAG 知识库 | - |
 | `-f, --file` | 从 YAML 文件创建 | - |
 
-### resolvenet agent list
+### resolveagent agent list
 
 列出所有 Agent。
 
 ```bash
-resolvenet agent list [flags]
+resolveagent agent list [flags]
 
 # 示例
-resolvenet agent list
-resolvenet agent list --type mega
-resolvenet agent list -o json
+resolveagent agent list
+resolveagent agent list --type mega
+resolveagent agent list -o json
 ```
 
 **选项**:
@@ -83,32 +83,32 @@ resolvenet agent list -o json
 | `--status` | 按状态过滤 (active/inactive) |
 | `--limit` | 限制返回数量 |
 
-### resolvenet agent describe
+### resolveagent agent describe
 
 查看 Agent 详细信息。
 
 ```bash
-resolvenet agent describe <name>
+resolveagent agent describe <name>
 
 # 示例
-resolvenet agent describe my-assistant
+resolveagent agent describe my-assistant
 ```
 
-### resolvenet agent run
+### resolveagent agent run
 
 交互式运行 Agent。
 
 ```bash
-resolvenet agent run <name> [flags]
+resolveagent agent run <name> [flags]
 
 # 交互模式
-resolvenet agent run my-assistant
+resolveagent agent run my-assistant
 
 # 单次执行
-resolvenet agent run my-assistant --input "你好"
+resolveagent agent run my-assistant --input "你好"
 
 # 从文件读取输入
-resolvenet agent run my-assistant --input-file query.txt
+resolveagent agent run my-assistant --input-file query.txt
 ```
 
 **选项**:
@@ -120,92 +120,92 @@ resolvenet agent run my-assistant --input-file query.txt
 | `--conversation` | 会话 ID（续接对话） |
 | `--stream` | 流式输出 |
 
-### resolvenet agent update
+### resolveagent agent update
 
 更新 Agent 配置。
 
 ```bash
-resolvenet agent update <name> [flags]
+resolveagent agent update <name> [flags]
 
 # 示例
-resolvenet agent update my-assistant --model qwen-max
-resolvenet agent update my-assistant -f updated-config.yaml
+resolveagent agent update my-assistant --model qwen-max
+resolveagent agent update my-assistant -f updated-config.yaml
 ```
 
-### resolvenet agent delete
+### resolveagent agent delete
 
 删除 Agent。
 
 ```bash
-resolvenet agent delete <name> [flags]
+resolveagent agent delete <name> [flags]
 
 # 示例
-resolvenet agent delete my-assistant
-resolvenet agent delete my-assistant --force
+resolveagent agent delete my-assistant
+resolveagent agent delete my-assistant --force
 ```
 
-### resolvenet agent logs
+### resolveagent agent logs
 
 查看 Agent 执行日志。
 
 ```bash
-resolvenet agent logs <name> [flags]
+resolveagent agent logs <name> [flags]
 
 # 示例
-resolvenet agent logs my-assistant
-resolvenet agent logs my-assistant --follow
-resolvenet agent logs my-assistant --since 1h
+resolveagent agent logs my-assistant
+resolveagent agent logs my-assistant --follow
+resolveagent agent logs my-assistant --since 1h
 ```
 
 ---
 
 ## 技能管理
 
-### resolvenet skill list
+### resolveagent skill list
 
 列出所有技能。
 
 ```bash
-resolvenet skill list [flags]
+resolveagent skill list [flags]
 
 # 示例
-resolvenet skill list
-resolvenet skill list --source builtin
-resolvenet skill list -o json
+resolveagent skill list
+resolveagent skill list --source builtin
+resolveagent skill list -o json
 ```
 
-### resolvenet skill info
+### resolveagent skill info
 
 查看技能详细信息。
 
 ```bash
-resolvenet skill info <name>
+resolveagent skill info <name>
 
 # 示例
-resolvenet skill info web-search
+resolveagent skill info web-search
 ```
 
-### resolvenet skill install
+### resolveagent skill install
 
 安装技能。
 
 ```bash
-resolvenet skill install <source> [flags]
+resolveagent skill install <source> [flags]
 
 # 从本地目录
-resolvenet skill install ./my-skill
+resolveagent skill install ./my-skill
 
 # 从 Git 仓库
-resolvenet skill install github.com/user/skill
+resolveagent skill install github.com/user/skill
 
 # 从 Git 指定版本
-resolvenet skill install github.com/user/skill@v1.0.0
+resolveagent skill install github.com/user/skill@v1.0.0
 
 # 从 OCI 镜像
-resolvenet skill install oci://ghcr.io/org/skill:latest
+resolveagent skill install oci://ghcr.io/org/skill:latest
 
 # 从社区注册表
-resolvenet skill install registry://web-search
+resolveagent skill install registry://web-search
 ```
 
 **选项**:
@@ -215,16 +215,16 @@ resolvenet skill install registry://web-search
 | `--name` | 安装后的名称（覆盖清单名称） |
 | `--force` | 强制重新安装 |
 
-### resolvenet skill test
+### resolveagent skill test
 
 测试技能执行。
 
 ```bash
-resolvenet skill test <name> [flags]
+resolveagent skill test <name> [flags]
 
 # 示例
-resolvenet skill test web-search --input query="ResolveNet"
-resolvenet skill test web-search --input-file test-data.json
+resolveagent skill test web-search --input query="ResolveAgent"
+resolveagent skill test web-search --input-file test-data.json
 ```
 
 **选项**:
@@ -235,88 +235,88 @@ resolvenet skill test web-search --input-file test-data.json
 | `--input-file` | 从 JSON 文件读取输入 |
 | `--timeout` | 执行超时 |
 
-### resolvenet skill remove
+### resolveagent skill remove
 
 移除技能。
 
 ```bash
-resolvenet skill remove <name> [flags]
+resolveagent skill remove <name> [flags]
 
 # 示例
-resolvenet skill remove my-skill
-resolvenet skill remove my-skill --force
+resolveagent skill remove my-skill
+resolveagent skill remove my-skill --force
 ```
 
-### resolvenet skill init
+### resolveagent skill init
 
 初始化技能项目。
 
 ```bash
-resolvenet skill init <name> [flags]
+resolveagent skill init <name> [flags]
 
 # 示例
-resolvenet skill init my-skill
-resolvenet skill init my-skill --template python
+resolveagent skill init my-skill
+resolveagent skill init my-skill --template python
 ```
 
 ---
 
 ## 工作流管理
 
-### resolvenet workflow create
+### resolveagent workflow create
 
 创建工作流。
 
 ```bash
-resolvenet workflow create <name> [flags]
+resolveagent workflow create <name> [flags]
 
 # 从文件创建
-resolvenet workflow create -f workflow.yaml
+resolveagent workflow create -f workflow.yaml
 
 # 交互式创建
-resolvenet workflow create --interactive
+resolveagent workflow create --interactive
 ```
 
-### resolvenet workflow list
+### resolveagent workflow list
 
 列出所有工作流。
 
 ```bash
-resolvenet workflow list [flags]
+resolveagent workflow list [flags]
 
 # 示例
-resolvenet workflow list
-resolvenet workflow list --status active
+resolveagent workflow list
+resolveagent workflow list --status active
 ```
 
-### resolvenet workflow describe
+### resolveagent workflow describe
 
 查看工作流详情。
 
 ```bash
-resolvenet workflow describe <name>
+resolveagent workflow describe <name>
 
 # 示例
-resolvenet workflow describe incident-diagnosis
+resolveagent workflow describe incident-diagnosis
 ```
 
-### resolvenet workflow run
+### resolveagent workflow run
 
 执行工作流。
 
 ```bash
-resolvenet workflow run <name> [flags]
+resolveagent workflow run <name> [flags]
 
 # 示例
-resolvenet workflow run incident-diagnosis
+resolveagent workflow run incident-diagnosis
 
 # 带参数执行
-resolvenet workflow run incident-diagnosis \
+resolveagent workflow run incident-diagnosis \
   --param log_source=/var/log/app \
   --param time_range=1h
 
 # 从文件读取参数
-resolvenet workflow run incident-diagnosis --param-file params.yaml
+resolveagent workflow run incident-diagnosis --param-file params.yaml
 ```
 
 **选项**:
@@ -328,12 +328,12 @@ resolvenet workflow run incident-diagnosis --param-file params.yaml
 | `--async` | 异步执行 |
 | `--wait` | 等待完成 |
 
-### resolvenet workflow validate
+### resolveagent workflow validate
 
 验证工作流定义。
 
 ```bash
-resolvenet workflow validate -f workflow.yaml
+resolveagent workflow validate -f workflow.yaml
 
 # 示例输出
 ✓ 工作流结构有效
@@ -342,53 +342,53 @@ resolvenet workflow validate -f workflow.yaml
 ✓ 评估器配置正确
 ```
 
-### resolvenet workflow visualize
+### resolveagent workflow visualize
 
 可视化工作流（生成图形）。
 
 ```bash
-resolvenet workflow visualize <name> [flags]
+resolveagent workflow visualize <name> [flags]
 
 # 输出 ASCII 图
-resolvenet workflow visualize incident-diagnosis
+resolveagent workflow visualize incident-diagnosis
 
 # 输出 Mermaid 图
-resolvenet workflow visualize incident-diagnosis --format mermaid
+resolveagent workflow visualize incident-diagnosis --format mermaid
 
 # 输出到文件
-resolvenet workflow visualize incident-diagnosis --format png -o workflow.png
+resolveagent workflow visualize incident-diagnosis --format png -o workflow.png
 ```
 
-### resolvenet workflow executions
+### resolveagent workflow executions
 
 查看工作流执行历史。
 
 ```bash
-resolvenet workflow executions <name> [flags]
+resolveagent workflow executions <name> [flags]
 
 # 示例
-resolvenet workflow executions incident-diagnosis
-resolvenet workflow executions incident-diagnosis --limit 10
+resolveagent workflow executions incident-diagnosis
+resolveagent workflow executions incident-diagnosis --limit 10
 ```
 
 ---
 
 ## RAG 管理
 
-### resolvenet rag collection create
+### resolveagent rag collection create
 
 创建知识库集合。
 
 ```bash
-resolvenet rag collection create <name> [flags]
+resolveagent rag collection create <name> [flags]
 
 # 示例
-resolvenet rag collection create product-docs \
+resolveagent rag collection create product-docs \
   --embedding-model bge-large-zh \
   --description "产品文档知识库"
 
 # 从配置文件创建
-resolvenet rag collection create -f collection.yaml
+resolveagent rag collection create -f collection.yaml
 ```
 
 **选项**:
@@ -401,61 +401,61 @@ resolvenet rag collection create -f collection.yaml
 | `--chunk-size` | 分块大小 | 512 |
 | `-f, --file` | 配置文件 | - |
 
-### resolvenet rag collection list
+### resolveagent rag collection list
 
 列出所有知识库。
 
 ```bash
-resolvenet rag collection list [flags]
+resolveagent rag collection list [flags]
 
 # 示例
-resolvenet rag collection list
-resolvenet rag collection list -o json
+resolveagent rag collection list
+resolveagent rag collection list -o json
 ```
 
-### resolvenet rag collection info
+### resolveagent rag collection info
 
 查看知识库详情。
 
 ```bash
-resolvenet rag collection info <name>
+resolveagent rag collection info <name>
 
 # 示例
-resolvenet rag collection info product-docs
+resolveagent rag collection info product-docs
 ```
 
-### resolvenet rag collection delete
+### resolveagent rag collection delete
 
 删除知识库。
 
 ```bash
-resolvenet rag collection delete <name> [flags]
+resolveagent rag collection delete <name> [flags]
 
 # 示例
-resolvenet rag collection delete product-docs
-resolvenet rag collection delete product-docs --force
+resolveagent rag collection delete product-docs
+resolveagent rag collection delete product-docs --force
 ```
 
-### resolvenet rag ingest
+### resolveagent rag ingest
 
 摄取文档到知识库。
 
 ```bash
-resolvenet rag ingest --collection <name> --path <path> [flags]
+resolveagent rag ingest --collection <name> --path <path> [flags]
 
 # 摄取单个文件
-resolvenet rag ingest --collection product-docs --path ./guide.pdf
+resolveagent rag ingest --collection product-docs --path ./guide.pdf
 
 # 摄取目录
-resolvenet rag ingest --collection product-docs --path ./documents/
+resolveagent rag ingest --collection product-docs --path ./documents/
 
 # 递归摄取
-resolvenet rag ingest --collection product-docs \
+resolveagent rag ingest --collection product-docs \
   --path ./docs/ \
   --recursive
 
 # 指定文件类型
-resolvenet rag ingest --collection product-docs \
+resolveagent rag ingest --collection product-docs \
   --path ./docs/ \
   --include "*.md,*.pdf"
 ```
@@ -472,19 +472,19 @@ resolvenet rag ingest --collection product-docs \
 | `--batch-size` | 批处理大小 |
 | `--metadata` | 文档元数据 (JSON) |
 
-### resolvenet rag query
+### resolveagent rag query
 
 查询知识库。
 
 ```bash
-resolvenet rag query --collection <name> --query <query> [flags]
+resolveagent rag query --collection <name> --query <query> [flags]
 
 # 示例
-resolvenet rag query --collection product-docs \
+resolveagent rag query --collection product-docs \
   --query "如何配置认证"
 
 # 带选项查询
-resolvenet rag query --collection product-docs \
+resolveagent rag query --collection product-docs \
   --query "部署配置" \
   --top-k 10 \
   --score-threshold 0.7 \
@@ -506,45 +506,45 @@ resolvenet rag query --collection product-docs \
 
 ## 系统管理
 
-### resolvenet serve
+### resolveagent serve
 
 启动服务。
 
 ```bash
-resolvenet serve [flags]
+resolveagent serve [flags]
 
 # 启动平台服务
-resolvenet serve
+resolveagent serve
 
 # 指定配置
-resolvenet serve --config /path/to/config.yaml
+resolveagent serve --config /path/to/config.yaml
 
 # 指定端口
-resolvenet serve --http-addr :8080 --grpc-addr :9090
+resolveagent serve --http-addr :8080 --grpc-addr :9090
 ```
 
-### resolvenet dashboard
+### resolveagent dashboard
 
 启动 TUI 仪表板。
 
 ```bash
-resolvenet dashboard [flags]
+resolveagent dashboard [flags]
 
 # 示例
-resolvenet dashboard
-resolvenet dashboard --refresh 5s
+resolveagent dashboard
+resolveagent dashboard --refresh 5s
 ```
 
-### resolvenet health
+### resolveagent health
 
 检查系统健康状态。
 
 ```bash
-resolvenet health [flags]
+resolveagent health [flags]
 
 # 示例
-resolvenet health
-resolvenet health -o json
+resolveagent health
+resolveagent health -o json
 
 # 输出示例
 STATUS: HEALTHY
@@ -557,30 +557,30 @@ Components:
   ✓ NATS              healthy
 ```
 
-### resolvenet config
+### resolveagent config
 
 管理配置。
 
 ```bash
 # 查看当前配置
-resolvenet config get
+resolveagent config get
 
 # 查看特定配置
-resolvenet config get server.http_addr
+resolveagent config get server.http_addr
 
 # 设置配置
-resolvenet config set server.http_addr ":8888"
+resolveagent config set server.http_addr ":8888"
 ```
 
-### resolvenet version
+### resolveagent version
 
 显示版本信息。
 
 ```bash
-resolvenet version
+resolveagent version
 
 # 输出
-ResolveNet CLI v0.1.0
+ResolveAgent CLI v0.1.0
   Commit:     abc1234
   Build Date: 2024-01-15
   Go Version: go1.22.0
@@ -595,32 +595,32 @@ ResolveNet CLI v0.1.0
 
 ```bash
 # 生成补全脚本
-resolvenet completion bash > /etc/bash_completion.d/resolvenet
+resolveagent completion bash > /etc/bash_completion.d/resolveagent
 
 # 或临时启用
-source <(resolvenet completion bash)
+source <(resolveagent completion bash)
 ```
 
 ### Zsh
 
 ```bash
 # 生成补全脚本
-resolvenet completion zsh > "${fpath[1]}/_resolvenet"
+resolveagent completion zsh > "${fpath[1]}/_resolveagent"
 
 # 或添加到 .zshrc
-echo 'source <(resolvenet completion zsh)' >> ~/.zshrc
+echo 'source <(resolveagent completion zsh)' >> ~/.zshrc
 ```
 
 ### Fish
 
 ```bash
-resolvenet completion fish > ~/.config/fish/completions/resolvenet.fish
+resolveagent completion fish > ~/.config/fish/completions/resolveagent.fish
 ```
 
 ### PowerShell
 
 ```powershell
-resolvenet completion powershell | Out-String | Invoke-Expression
+resolveagent completion powershell | Out-String | Invoke-Expression
 ```
 
 ---
@@ -631,10 +631,10 @@ resolvenet completion powershell | Out-String | Invoke-Expression
 
 | 变量 | 说明 | 示例 |
 |------|------|------|
-| `RESOLVENET_SERVER` | 服务器地址 | `localhost:8080` |
-| `RESOLVENET_CONFIG` | 配置文件路径 | `~/.resolvenet/config.yaml` |
-| `RESOLVENET_OUTPUT` | 默认输出格式 | `json` |
-| `RESOLVENET_VERBOSE` | 详细输出 | `true` |
+| `RESOLVEAGENT_SERVER` | 服务器地址 | `localhost:8080` |
+| `RESOLVEAGENT_CONFIG` | 配置文件路径 | `~/.resolveagent/config.yaml` |
+| `RESOLVEAGENT_OUTPUT` | 默认输出格式 | `json` |
+| `RESOLVEAGENT_VERBOSE` | 详细输出 | `true` |
 | `LOG_LEVEL` | 日志级别 | `debug` |
 
 ---
@@ -645,32 +645,32 @@ resolvenet completion powershell | Out-String | Invoke-Expression
 
 ```bash
 # 1. 检查系统状态
-resolvenet health
+resolveagent health
 
 # 2. 安装技能
-resolvenet skill install github.com/user/web-search
+resolveagent skill install github.com/user/web-search
 
 # 3. 创建知识库
-resolvenet rag collection create product-docs --embedding-model bge-large-zh
+resolveagent rag collection create product-docs --embedding-model bge-large-zh
 
 # 4. 摄取文档
-resolvenet rag ingest --collection product-docs --path ./docs/ --recursive
+resolveagent rag ingest --collection product-docs --path ./docs/ --recursive
 
 # 5. 创建工作流
-resolvenet workflow create -f workflow.yaml
+resolveagent workflow create -f workflow.yaml
 
 # 6. 创建 Agent
-resolvenet agent create my-assistant \
+resolveagent agent create my-assistant \
   --type mega \
   --model qwen-plus \
   --skills web-search \
   --rag-collection product-docs
 
 # 7. 运行 Agent
-resolvenet agent run my-assistant
+resolveagent agent run my-assistant
 
 # 8. 查看日志
-resolvenet agent logs my-assistant --follow
+resolveagent agent logs my-assistant --follow
 ```
 
 ### 批量操作
@@ -678,12 +678,12 @@ resolvenet agent logs my-assistant --follow
 ```bash
 # 批量导入技能
 for skill in ./skills/*; do
-  resolvenet skill install "$skill"
+  resolveagent skill install "$skill"
 done
 
 # 批量摄取文档
 find ./docs -name "*.md" | xargs -I {} \
-  resolvenet rag ingest --collection docs --path {}
+  resolveagent rag ingest --collection docs --path {}
 ```
 
 ---

@@ -16,9 +16,9 @@ func Load(configPath string) (*Config, error) {
 	v.SetDefault("server.grpc_addr", ":9090")
 	v.SetDefault("database.host", "localhost")
 	v.SetDefault("database.port", 5432)
-	v.SetDefault("database.user", "resolvenet")
-	v.SetDefault("database.password", "resolvenet")
-	v.SetDefault("database.dbname", "resolvenet")
+	v.SetDefault("database.user", "resolveagent")
+	v.SetDefault("database.password", "resolveagent")
+	v.SetDefault("database.dbname", "resolveagent")
 	v.SetDefault("database.sslmode", "disable")
 	v.SetDefault("redis.addr", "localhost:6379")
 	v.SetDefault("redis.db", 0)
@@ -26,23 +26,33 @@ func Load(configPath string) (*Config, error) {
 	v.SetDefault("runtime.grpc_addr", "localhost:9091")
 	v.SetDefault("gateway.admin_url", "http://localhost:8888")
 	v.SetDefault("gateway.enabled", false)
+	v.SetDefault("gateway.sync_interval", "30s")
+	v.SetDefault("gateway.model_routing.enabled", true)
+	v.SetDefault("gateway.model_routing.default_model", "qwen-plus")
+	v.SetDefault("gateway.model_routing.base_path", "/llm")
+	v.SetDefault("gateway.auth.enabled", false)
+	v.SetDefault("gateway.auth.jwt_issuer", "resolveagent")
+	v.SetDefault("gateway.load_balancer.strategy", "round_robin")
+	v.SetDefault("gateway.load_balancer.health_check", true)
+	v.SetDefault("gateway.load_balancer.check_interval", "10s")
+	v.SetDefault("gateway.load_balancer.unhealthy_count", 3)
 	v.SetDefault("telemetry.enabled", false)
-	v.SetDefault("telemetry.service_name", "resolvenet-platform")
+	v.SetDefault("telemetry.service_name", "resolveagent-platform")
 	v.SetDefault("telemetry.metrics_enabled", true)
 
 	// Config file
 	if configPath != "" {
 		v.SetConfigFile(configPath)
 	} else {
-		v.SetConfigName("resolvenet")
+		v.SetConfigName("resolveagent")
 		v.SetConfigType("yaml")
 		v.AddConfigPath(".")
-		v.AddConfigPath("/etc/resolvenet")
-		v.AddConfigPath("$HOME/.resolvenet")
+		v.AddConfigPath("/etc/resolveagent")
+		v.AddConfigPath("$HOME/.resolveagent")
 	}
 
 	// Environment variables
-	v.SetEnvPrefix("RESOLVENET")
+	v.SetEnvPrefix("RESOLVEAGENT")
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
 

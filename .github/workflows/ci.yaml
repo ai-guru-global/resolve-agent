@@ -58,7 +58,7 @@ jobs:
           python-version: "3.12"
       - run: pip install uv
       - run: cd python && uv sync --extra dev
-      - run: cd python && uv run pytest tests/ -v --cov=resolvenet
+      - run: cd python && uv run pytest tests/ -v --cov=resolveagent
 
   build-go:
     name: Build Go

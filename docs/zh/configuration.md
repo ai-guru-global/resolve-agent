@@ -1,17 +1,17 @@
 # 配置参考
 
-本文档详细说明 ResolveNet 的所有配置选项。
+本文档详细说明 ResolveAgent 的所有配置选项。
 
 ---
 
 ## 配置文件位置
 
-ResolveNet 按以下优先级查找配置文件：
+ResolveAgent 按以下优先级查找配置文件：
 
 1. 命令行指定：`--config /path/to/config.yaml`
-2. 当前目录：`./resolvenet.yaml`
-3. 用户目录：`$HOME/.resolvenet/config.yaml`
-4. 系统目录：`/etc/resolvenet/resolvenet.yaml`
+2. 当前目录：`./resolveagent.yaml`
+3. 用户目录：`$HOME/.resolveagent/config.yaml`
+4. 系统目录：`/etc/resolveagent/resolveagent.yaml`
 
 ---
 
@@ -20,21 +20,21 @@ ResolveNet 按以下优先级查找配置文件：
 所有配置都可以通过环境变量覆盖，格式为：
 
 ```
-RESOLVENET_<SECTION>_<KEY>=value
+RESOLVEAGENT_<SECTION>_<KEY>=value
 ```
 
 示例：
 ```bash
-export RESOLVENET_SERVER_HTTP_ADDR=":8888"
-export RESOLVENET_DATABASE_HOST="db.example.com"
-export RESOLVENET_REDIS_ADDR="redis.example.com:6379"
+export RESOLVEAGENT_SERVER_HTTP_ADDR=":8888"
+export RESOLVEAGENT_DATABASE_HOST="db.example.com"
+export RESOLVEAGENT_REDIS_ADDR="redis.example.com:6379"
 ```
 
 ---
 
 ## 平台服务配置
 
-文件：`resolvenet.yaml`
+文件：`resolveagent.yaml`
 
 ### 服务器配置
 
@@ -84,9 +84,9 @@ database:
   # 连接信息
   host: localhost
   port: 5432
-  user: resolvenet
-  password: resolvenet
-  dbname: resolvenet
+  user: resolveagent
+  password: resolveagent
+  dbname: resolveagent
   
   # SSL 模式: disable, require, verify-ca, verify-full
   sslmode: disable
@@ -207,7 +207,7 @@ telemetry:
   enabled: false
   
   # 服务名称
-  service_name: "resolvenet-platform"
+  service_name: "resolveagent-platform"
   
   # OTLP 端点
   otlp_endpoint: "localhost:4317"
@@ -226,7 +226,7 @@ telemetry:
     level: "info"  # debug, info, warn, error
     format: "json"  # json, text
     output: "stdout"  # stdout, file
-    file_path: "/var/log/resolvenet/platform.log"
+    file_path: "/var/log/resolveagent/platform.log"
 ```
 
 ---
@@ -339,8 +339,8 @@ skill_executor:
   
   # 技能加载路径
   skill_paths:
-    - "/opt/resolvenet/skills"
-    - "~/.resolvenet/skills"
+    - "/opt/resolveagent/skills"
+    - "~/.resolveagent/skills"
 ```
 
 ### RAG 配置
@@ -372,7 +372,7 @@ rag:
 ```yaml
 telemetry:
   enabled: false
-  service_name: "resolvenet-runtime"
+  service_name: "resolveagent-runtime"
   otlp_endpoint: "localhost:4317"
 ```
 
@@ -598,7 +598,7 @@ skill:
   name: web-search
   version: "1.0.0"
   description: "搜索互联网获取信息"
-  author: "ResolveNet Team"
+  author: "ResolveAgent Team"
   
   # 入口配置
   entry_point: "skill:run"
@@ -707,13 +707,13 @@ tree:
 
 ```bash
 # 验证平台配置
-resolvenet config validate -f resolvenet.yaml
+resolveagent config validate -f resolveagent.yaml
 
 # 验证运行时配置
-resolvenet config validate -f runtime.yaml
+resolveagent config validate -f runtime.yaml
 
 # 验证模型配置
-resolvenet config validate -f models.yaml
+resolveagent config validate -f models.yaml
 ```
 
 ---

@@ -1,6 +1,6 @@
 # Intelligent Selector
 
-The Intelligent Selector is the LLM-powered meta-router at the heart of ResolveNet.
+The Intelligent Selector is the LLM-powered meta-router at the heart of ResolveAgent.
 
 ## Routing Strategies
 

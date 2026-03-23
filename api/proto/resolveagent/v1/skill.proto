@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package resolveagent.v1;
+
+option go_package = "github.com/ai-guru-global/resolve-agent/pkg/api/resolveagent/v1;resolveagentv1";
+
+import "resolveagent/v1/common.proto";
+import "google/protobuf/struct.proto";
+
+// SkillService manages skill registration and invocation.
+service SkillService {
+  rpc RegisterSkill(RegisterSkillRequest) returns (Skill);
+  rpc GetSkill(GetSkillRequest) returns (Skill);
+  rpc ListSkills(ListSkillsRequest) returns (ListSkillsResponse);
+  rpc UnregisterSkill(UnregisterSkillRequest) returns (UnregisterSkillResponse);
+  rpc TestSkill(TestSkillRequest) returns (TestSkillResponse);
+}
+
+// Skill definition
+message Skill {
+  ResourceMeta meta = 1;
+  string version = 2;
+  string author = 3;
+  SkillManifest manifest = 4;
+  SkillSourceType source_type = 5;
+  string source_uri = 6;
+  ResourceStatus status = 7;
+}
+
+enum SkillSourceType {
+  SKILL_SOURCE_TYPE_UNSPECIFIED = 0;
+  SKILL_SOURCE_TYPE_LOCAL = 1;
+  SKILL_SOURCE_TYPE_GIT = 2;
+  SKILL_SOURCE_TYPE_OCI = 3;
+  SKILL_SOURCE_TYPE_REGISTRY = 4;
+}
+
+// Skill manifest
+message SkillManifest {
+  string entry_point = 1;
+  repeated SkillParameter inputs = 2;
+  repeated SkillParameter outputs = 3;
+  repeated string dependencies = 4;
+  SkillPermissions permissions = 5;
+}
+
+message SkillParameter {
+  string name = 1;
+  string type = 2;
+  string description = 3;
+  bool required = 4;
+  google.protobuf.Value default_value = 5;
+}
+
+message SkillPermissions {
+  bool network_access = 1;
+  bool file_system_read = 2;
+  bool file_system_write = 3;
+  repeated string allowed_hosts = 4;
+  int64 max_memory_mb = 5;
+  int64 max_cpu_seconds = 6;
+  int64 timeout_seconds = 7;
+}
+
+// Request/Response messages
+message RegisterSkillRequest {
+  Skill skill = 1;
+}
+
+message GetSkillRequest {
+  string name = 1;
+}
+
+message ListSkillsRequest {
+  PaginationRequest pagination = 1;
+}
+
+message ListSkillsResponse {
+  repeated Skill skills = 1;
+  PaginationResponse pagination = 2;
+}
+
+message UnregisterSkillRequest {
+  string name = 1;
+}
+
+message UnregisterSkillResponse {}
+
+message TestSkillRequest {
+  string name = 1;
+  google.protobuf.Struct inputs = 2;
+}
+
+message TestSkillResponse {
+  google.protobuf.Struct outputs = 1;
+  string logs = 2;
+  int64 duration_ms = 3;
+  bool success = 4;
+  string error_message = 5;
+}

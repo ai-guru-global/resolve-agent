@@ -148,7 +148,7 @@ tree:
 
   # ========== 元数据 ==========
   metadata:
-    author: "ResolveNet Team"
+    author: "ResolveAgent Team"
     created_at: "2024-01-01"
     category: "incident-response"
     tags:

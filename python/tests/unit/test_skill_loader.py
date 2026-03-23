@@ -1,6 +1,6 @@
 """Unit tests for the Skill System."""
 
-from resolvenet.skills.manifest import SkillManifest, SkillPermissions
+from resolveagent.skills.manifest import SkillManifest, SkillPermissions
 
 
 def test_skill_manifest_creation():

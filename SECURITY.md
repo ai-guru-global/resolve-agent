@@ -8,11 +8,11 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in ResolveNet, please report it responsibly.
+If you discover a security vulnerability in ResolveAgent, please report it responsibly.
 
 **Do NOT open a public GitHub issue for security vulnerabilities.**
 
-Instead, please send a report to: [security@resolvenet.io](mailto:security@resolvenet.io)
+Instead, please send a report to: [security@resolveagent.io](mailto:security@resolveagent.io)
 
 ### What to include
 
@@ -29,7 +29,7 @@ Instead, please send a report to: [security@resolvenet.io](mailto:security@resol
 
 ## Security Best Practices
 
-When contributing to ResolveNet:
+When contributing to ResolveAgent:
 
 - Never commit secrets, API keys, or credentials
 - Use parameterized queries for database operations

@@ -1,6 +1,6 @@
 # 智能选择器 (Intelligent Selector)
 
-智能选择器是 ResolveNet 的核心组件，作为 LLM 驱动的元路由器，动态决定每个请求的最佳执行路径。
+智能选择器是 ResolveAgent 的核心组件，作为 LLM 驱动的元路由器，动态决定每个请求的最佳执行路径。
 
 ---
 
@@ -18,7 +18,7 @@
 
 传统 AI Agent 系统的问题：
 
-| 问题 | 传统方案 | ResolveNet 方案 |
+| 问题 | 传统方案 | ResolveAgent 方案 |
 |------|----------|-----------------|
 | 固定流程 | 预定义处理管道 | 动态路由决策 |
 | 缺乏灵活性 | 硬编码条件判断 | LLM + 规则混合 |
@@ -503,16 +503,16 @@ selector:
 
 ```prometheus
 # 决策总数
-resolvenet_selector_decisions_total{strategy="hybrid", route_type="fta"} 1234
+resolveagent_selector_decisions_total{strategy="hybrid", route_type="fta"} 1234
 
 # 决策延迟
-resolvenet_selector_decision_latency_seconds{strategy="hybrid"} 0.045
+resolveagent_selector_decision_latency_seconds{strategy="hybrid"} 0.045
 
 # 置信度分布
-resolvenet_selector_confidence_histogram{route_type="skill"} 
+resolveagent_selector_confidence_histogram{route_type="skill"} 
 
 # LLM 回退次数
-resolvenet_selector_llm_fallback_total 56
+resolveagent_selector_llm_fallback_total 56
 ```
 
 ### 调试模式
@@ -520,8 +520,8 @@ resolvenet_selector_llm_fallback_total 56
 启用调试模式获取详细决策过程：
 
 ```bash
-export RESOLVENET_SELECTOR_DEBUG=true
-resolvenet agent run my-assistant
+export RESOLVEAGENT_SELECTOR_DEBUG=true
+resolveagent agent run my-assistant
 ```
 
 调试输出：
@@ -630,7 +630,7 @@ message RouteRequest {
 ### Python SDK
 
 ```python
-from resolvenet.selector import IntelligentSelector, RouteDecision
+from resolveagent.selector import IntelligentSelector, RouteDecision
 
 # 创建选择器
 selector = IntelligentSelector(strategy="hybrid")

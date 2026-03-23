@@ -10,4 +10,4 @@ def run(name: str = "World") -> dict[str, str]:
     Returns:
         Dict with greeting message.
     """
-    return {"greeting": f"Hello, {name}! Welcome to ResolveNet."}
+    return {"greeting": f"Hello, {name}! Welcome to ResolveAgent."}

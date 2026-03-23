@@ -1,0 +1,253 @@
+syntax = "proto3";
+
+package resolveagent.v1;
+
+option go_package = "github.com/ai-guru-global/resolve-agent/pkg/api/resolveagent/v1;resolveagentv1";
+
+import "resolveagent/v1/common.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+// RegistryService provides access to the Go Registry from Python runtime.
+// This service acts as the single source of truth for all service discovery,
+// allowing Python agents to query registered agents, skills, and models
+// without duplicating the discovery logic.
+service RegistryService {
+  // GetAgent retrieves an agent definition by ID.
+  rpc GetAgent(GetRegistryAgentRequest) returns (RegistryAgent);
+  
+  // ListAgents lists all registered agents with optional filtering.
+  rpc ListAgents(ListRegistryAgentsRequest) returns (ListRegistryAgentsResponse);
+  
+  // GetSkill retrieves a skill definition by name.
+  rpc GetSkill(GetRegistrySkillRequest) returns (RegistrySkill);
+  
+  // ListSkills lists all registered skills with optional filtering.
+  rpc ListSkills(ListRegistrySkillsRequest) returns (ListRegistrySkillsResponse);
+  
+  // GetModelRoute retrieves LLM model routing configuration.
+  rpc GetModelRoute(GetModelRouteRequest) returns (ModelRouteInfo);
+  
+  // ListModelRoutes lists all available LLM model routes.
+  rpc ListModelRoutes(ListModelRoutesRequest) returns (ListModelRoutesResponse);
+  
+  // GetWorkflow retrieves a workflow definition by ID.
+  rpc GetWorkflow(GetRegistryWorkflowRequest) returns (RegistryWorkflow);
+  
+  // ListWorkflows lists all registered workflows.
+  rpc ListWorkflows(ListRegistryWorkflowsRequest) returns (ListRegistryWorkflowsResponse);
+  
+  // GetServiceEndpoint returns the endpoint for a registered service.
+  // Used by Python to discover how to reach other services via Higress.
+  rpc GetServiceEndpoint(GetServiceEndpointRequest) returns (ServiceEndpoint);
+  
+  // WatchRegistry streams registry change events to Python runtime.
+  rpc WatchRegistry(WatchRegistryRequest) returns (stream RegistryEvent);
+}
+
+// Agent definition from Go Registry
+message RegistryAgent {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string type = 4;
+  string status = 5;
+  AgentCapabilities capabilities = 6;
+  google.protobuf.Struct config = 7;
+  map<string, string> labels = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+// Agent capabilities for intelligent routing
+message AgentCapabilities {
+  repeated string supported_skills = 1;
+  string selector_strategy = 2;
+  bool fta_enabled = 3;
+  bool rag_enabled = 4;
+  string default_model = 5;
+}
+
+// Skill definition from Go Registry
+message RegistrySkill {
+  string name = 1;
+  string version = 2;
+  string description = 3;
+  string author = 4;
+  string status = 5;
+  SkillManifest manifest = 6;
+  string source_type = 7;
+  string source_uri = 8;
+  map<string, string> labels = 9;
+  google.protobuf.Timestamp registered_at = 10;
+}
+
+// Skill manifest details
+message SkillManifest {
+  repeated SkillInput inputs = 1;
+  repeated SkillOutput outputs = 2;
+  SkillPermissions permissions = 3;
+  SkillResources resources = 4;
+}
+
+message SkillInput {
+  string name = 1;
+  string type = 2;
+  string description = 3;
+  bool required = 4;
+  string default_value = 5;
+}
+
+message SkillOutput {
+  string name = 1;
+  string type = 2;
+  string description = 3;
+}
+
+message SkillPermissions {
+  bool network = 1;
+  bool filesystem = 2;
+  bool env_vars = 3;
+  repeated string allowed_hosts = 4;
+}
+
+message SkillResources {
+  int32 cpu_limit = 1;
+  int32 memory_limit_mb = 2;
+  int32 timeout_seconds = 3;
+}
+
+// LLM Model route information
+message ModelRouteInfo {
+  string model_id = 1;
+  string provider = 2;
+  string gateway_endpoint = 3;  // Higress endpoint for this model
+  bool enabled = 4;
+  int32 priority = 5;
+  ModelRateLimitInfo rate_limit = 6;
+  repeated string fallback_models = 7;
+  map<string, string> labels = 8;
+}
+
+message ModelRateLimitInfo {
+  int32 tokens_per_minute = 1;
+  int32 requests_per_minute = 2;
+}
+
+// Workflow definition from Go Registry
+message RegistryWorkflow {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string type = 4;
+  string status = 5;
+  google.protobuf.Struct definition = 6;
+  map<string, string> labels = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+// Service endpoint information
+message ServiceEndpoint {
+  string name = 1;
+  string host = 2;
+  int32 port = 3;
+  string protocol = 4;
+  string gateway_path = 5;  // Path through Higress gateway
+  bool healthy = 6;
+}
+
+// Registry change event for watch stream
+message RegistryEvent {
+  EventType event_type = 1;
+  ResourceType resource_type = 2;
+  string resource_id = 3;
+  google.protobuf.Struct data = 4;
+  google.protobuf.Timestamp timestamp = 5;
+}
+
+enum EventType {
+  EVENT_TYPE_UNSPECIFIED = 0;
+  EVENT_TYPE_CREATED = 1;
+  EVENT_TYPE_UPDATED = 2;
+  EVENT_TYPE_DELETED = 3;
+}
+
+enum ResourceType {
+  RESOURCE_TYPE_UNSPECIFIED = 0;
+  RESOURCE_TYPE_AGENT = 1;
+  RESOURCE_TYPE_SKILL = 2;
+  RESOURCE_TYPE_WORKFLOW = 3;
+  RESOURCE_TYPE_MODEL = 4;
+}
+
+// Request/Response messages
+
+message GetRegistryAgentRequest {
+  string id = 1;
+}
+
+message ListRegistryAgentsRequest {
+  PaginationRequest pagination = 1;
+  string type_filter = 2;
+  string status_filter = 3;
+  map<string, string> label_filter = 4;
+}
+
+message ListRegistryAgentsResponse {
+  repeated RegistryAgent agents = 1;
+  PaginationResponse pagination = 2;
+}
+
+message GetRegistrySkillRequest {
+  string name = 1;
+}
+
+message ListRegistrySkillsRequest {
+  PaginationRequest pagination = 1;
+  string status_filter = 2;
+  map<string, string> label_filter = 3;
+}
+
+message ListRegistrySkillsResponse {
+  repeated RegistrySkill skills = 1;
+  PaginationResponse pagination = 2;
+}
+
+message GetModelRouteRequest {
+  string model_id = 1;
+}
+
+message ListModelRoutesRequest {
+  string provider_filter = 1;
+  bool enabled_only = 2;
+}
+
+message ListModelRoutesResponse {
+  repeated ModelRouteInfo routes = 1;
+  string default_model = 2;
+  string gateway_base_path = 3;
+}
+
+message GetRegistryWorkflowRequest {
+  string id = 1;
+}
+
+message ListRegistryWorkflowsRequest {
+  PaginationRequest pagination = 1;
+  string type_filter = 2;
+  map<string, string> label_filter = 3;
+}
+
+message ListRegistryWorkflowsResponse {
+  repeated RegistryWorkflow workflows = 1;
+  PaginationResponse pagination = 2;
+}
+
+message GetServiceEndpointRequest {
+  string service_name = 1;
+}
+
+message WatchRegistryRequest {
+  repeated ResourceType resource_types = 1;  // Empty = watch all
+  map<string, string> label_filter = 2;
+}

@@ -1,6 +1,6 @@
 # 快速入门
 
-本指南将帮助您在 **5分钟内** 启动 ResolveNet 并运行您的第一个智能 Agent。
+本指南将帮助您在 **5分钟内** 启动 ResolveAgent 并运行您的第一个智能 Agent。
 
 ---
 
@@ -28,8 +28,8 @@
 ### 1. 克隆仓库
 
 ```bash
-git clone https://github.com/ai-guru-global/resolve-net.git
-cd resolve-net
+git clone https://github.com/ai-guru-global/resolve-agent.git
+cd resolve-agent
 ```
 
 ### 2. 初始化开发环境
@@ -66,8 +66,8 @@ make build
 ```
 
 构建产物：
-- `bin/resolvenet-server`: 平台服务器
-- `bin/resolvenet-cli`: 命令行工具
+- `bin/resolveagent-server`: 平台服务器
+- `bin/resolveagent-cli`: 命令行工具
 
 ### 5. 运行测试
 
@@ -97,11 +97,11 @@ make compose-dev
 
 ```bash
 # 终端 1：启动平台服务
-./bin/resolvenet-server
+./bin/resolveagent-server
 
 # 终端 2：启动 Agent 运行时
 cd python
-uv run python -m resolvenet.runtime.server
+uv run python -m resolveagent.runtime.server
 ```
 
 服务启动后：
@@ -113,18 +113,18 @@ uv run python -m resolvenet.runtime.server
 
 ## 配置大模型
 
-ResolveNet 支持多种国产大模型。编辑配置文件设置您的 API 密钥：
+ResolveAgent 支持多种国产大模型。编辑配置文件设置您的 API 密钥：
 
 ### 创建配置文件
 
 ```bash
-mkdir -p ~/.resolvenet
-cp configs/models.yaml ~/.resolvenet/models.yaml
+mkdir -p ~/.resolveagent
+cp configs/models.yaml ~/.resolveagent/models.yaml
 ```
 
 ### 配置 API 密钥
 
-编辑 `~/.resolvenet/models.yaml`：
+编辑 `~/.resolveagent/models.yaml`：
 
 ```yaml
 models:
@@ -166,7 +166,7 @@ export ZHIPU_API_KEY="your-zhipu-api-key"
 
 ```bash
 # 创建一个 Mega Agent
-resolvenet agent create my-assistant \
+resolveagent agent create my-assistant \
   --type mega \
   --model qwen-plus \
   --description "我的第一个智能助手"
@@ -175,7 +175,7 @@ resolvenet agent create my-assistant \
 ### 查看 Agent 列表
 
 ```bash
-resolvenet agent list
+resolveagent agent list
 ```
 
 输出示例：
@@ -188,16 +188,16 @@ my-assistant    mega    qwen-plus   active    2024-01-15 10:30:00
 
 ```bash
 # 启动交互式对话
-resolvenet agent run my-assistant
+resolveagent agent run my-assistant
 ```
 
 交互示例：
 ```
-ResolveNet Agent Shell - my-assistant
+ResolveAgent Agent Shell - my-assistant
 Type 'exit' to quit, 'help' for commands
 
 > 你好，请介绍一下你自己
-[my-assistant] 你好！我是 my-assistant，一个基于 ResolveNet 平台的智能助手。
+[my-assistant] 你好！我是 my-assistant，一个基于 ResolveAgent 平台的智能助手。
 我可以帮助您：
 - 搜索网络信息
 - 分析文档
@@ -214,10 +214,10 @@ Type 'exit' to quit, 'help' for commands
 
 ## 使用 TUI 仪表板
 
-ResolveNet 提供终端用户界面（TUI）用于监控和管理：
+ResolveAgent 提供终端用户界面（TUI）用于监控和管理：
 
 ```bash
-resolvenet dashboard
+resolveagent dashboard
 ```
 
 TUI 功能：
@@ -236,7 +236,7 @@ TUI 功能：
 
 ## 下一步
 
-恭喜！您已经成功启动了 ResolveNet 并运行了第一个 Agent。
+恭喜！您已经成功启动了 ResolveAgent 并运行了第一个 Agent。
 
 ### 深入学习
 
@@ -259,7 +259,7 @@ TUI 功能：
 **A**: 检查服务是否正常运行：
 ```bash
 # 检查健康状态
-resolvenet health
+resolveagent health
 
 # 查看服务日志
 docker compose -f deploy/docker-compose/docker-compose.deps.yaml logs
@@ -270,10 +270,10 @@ docker compose -f deploy/docker-compose/docker-compose.deps.yaml logs
 **A**: 确保已配置正确的模型和 API 密钥：
 ```bash
 # 验证配置
-resolvenet config get
+resolveagent config get
 
 # 检查模型可用性
-resolvenet config get models
+resolveagent config get models
 ```
 
 ### Q: 如何查看详细日志？
@@ -282,9 +282,9 @@ resolvenet config get models
 ```bash
 # 启用调试日志
 export LOG_LEVEL=debug
-resolvenet agent run my-assistant
+resolveagent agent run my-assistant
 ```
 
 ---
 
-> **提示**: 如果遇到问题，请查阅 [常见问题](./faq.md) 或在 [GitHub Issues](https://github.com/ai-guru-global/resolve-net/issues) 提交问题。
+> **提示**: 如果遇到问题，请查阅 [常见问题](./faq.md) 或在 [GitHub Issues](https://github.com/ai-guru-global/resolve-agent/issues) 提交问题。

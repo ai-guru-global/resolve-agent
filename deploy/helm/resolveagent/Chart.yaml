@@ -1,0 +1,17 @@
+apiVersion: v2
+name: resolveagent
+description: ResolveAgent - Mega Agent Platform
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - agent
+  - ai
+  - llm
+  - fta
+  - rag
+maintainers:
+  - name: AI Guru Global
+    email: dev@resolveagent.io
+sources:
+  - https://github.com/ai-guru-global/resolve-net

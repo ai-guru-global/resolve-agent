@@ -1,11 +1,11 @@
 # =============================================================================
-# ResolveNet - Unified Build System
+# ResolveAgent - Unified Build System
 # =============================================================================
 
 .DEFAULT_GOAL := help
 
 # Project metadata
-PROJECT_NAME := resolvenet
+PROJECT_NAME := resolveagent
 MODULE := github.com/ai-guru-global/resolve-net
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
@@ -36,7 +36,7 @@ DOCKER_TAG ?= $(VERSION)
 
 .PHONY: help
 help: ## Show this help message
-	@echo "ResolveNet - Mega Agent Platform"
+	@echo "ResolveAgent - Mega Agent Platform"
 	@echo ""
 	@echo "Usage: make [target]"
 	@echo ""
@@ -54,8 +54,8 @@ build: build-go build-python build-web ## Build all components
 build-go: ## Build Go binaries
 	@echo "==> Building Go binaries..."
 	@mkdir -p $(BIN_DIR)
-	$(GO_BUILD) -o $(BIN_DIR)/resolvenet-server ./cmd/resolvenet-server
-	$(GO_BUILD) -o $(BIN_DIR)/resolvenet ./cmd/resolvenet-cli
+	$(GO_BUILD) -o $(BIN_DIR)/resolveagent-server ./cmd/resolveagent-server
+	$(GO_BUILD) -o $(BIN_DIR)/resolveagent ./cmd/resolveagent-cli
 
 build-python: ## Build Python package
 	@echo "==> Building Python package..."
@@ -79,7 +79,7 @@ test-go: ## Run Go tests
 
 test-python: ## Run Python tests
 	@echo "==> Running Python tests..."
-	cd $(PYTHON_DIR) && uv run pytest tests/ -v --cov=resolvenet
+	cd $(PYTHON_DIR) && uv run pytest tests/ -v --cov=resolveagent
 
 test-web: ## Run WebUI tests
 	@echo "==> Running WebUI tests..."
@@ -105,7 +105,7 @@ lint-python: ## Lint Python code
 	@echo "==> Linting Python..."
 	cd $(PYTHON_DIR) && uv run ruff check src/ tests/
 	cd $(PYTHON_DIR) && uv run ruff format --check src/ tests/
-	cd $(PYTHON_DIR) && uv run mypy src/resolvenet/
+	cd $(PYTHON_DIR) && uv run mypy src/resolveagent/
 
 lint-web: ## Lint WebUI code
 	@echo "==> Linting WebUI..."
@@ -137,17 +137,17 @@ docker: docker-platform docker-runtime docker-webui ## Build all Docker images
 
 docker-platform: ## Build platform services Docker image
 	@echo "==> Building platform Docker image..."
-	docker build -t $(DOCKER_REGISTRY)/resolvenet-platform:$(DOCKER_TAG) \
+	docker build -t $(DOCKER_REGISTRY)/resolveagent-platform:$(DOCKER_TAG) \
 		-f $(DEPLOY_DIR)/docker/platform.Dockerfile .
 
 docker-runtime: ## Build agent runtime Docker image
 	@echo "==> Building runtime Docker image..."
-	docker build -t $(DOCKER_REGISTRY)/resolvenet-runtime:$(DOCKER_TAG) \
+	docker build -t $(DOCKER_REGISTRY)/resolveagent-runtime:$(DOCKER_TAG) \
 		-f $(DEPLOY_DIR)/docker/runtime.Dockerfile .
 
 docker-webui: ## Build WebUI Docker image
 	@echo "==> Building WebUI Docker image..."
-	docker build -t $(DOCKER_REGISTRY)/resolvenet-webui:$(DOCKER_TAG) \
+	docker build -t $(DOCKER_REGISTRY)/resolveagent-webui:$(DOCKER_TAG) \
 		-f $(DEPLOY_DIR)/docker/webui.Dockerfile .
 
 # =============================================================================
@@ -178,18 +178,18 @@ compose-logs: ## Tail Docker Compose logs
 .PHONY: helm-install helm-upgrade helm-uninstall helm-template
 
 helm-install: ## Install Helm chart
-	helm install resolvenet $(DEPLOY_DIR)/helm/resolvenet \
-		--namespace resolvenet --create-namespace
+	helm install resolveagent $(DEPLOY_DIR)/helm/resolveagent \
+		--namespace resolveagent --create-namespace
 
 helm-upgrade: ## Upgrade Helm chart
-	helm upgrade resolvenet $(DEPLOY_DIR)/helm/resolvenet \
-		--namespace resolvenet
+	helm upgrade resolveagent $(DEPLOY_DIR)/helm/resolveagent \
+		--namespace resolveagent
 
 helm-uninstall: ## Uninstall Helm chart
-	helm uninstall resolvenet --namespace resolvenet
+	helm uninstall resolveagent --namespace resolveagent
 
 helm-template: ## Render Helm templates locally
-	helm template resolvenet $(DEPLOY_DIR)/helm/resolvenet
+	helm template resolveagent $(DEPLOY_DIR)/helm/resolveagent
 
 # =============================================================================
 # Development

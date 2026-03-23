@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-This guide will help you get ResolveNet up and running in **5 minutes**.
+This guide will help you get ResolveAgent up and running in **5 minutes**.
 
 ---
 
@@ -66,8 +66,8 @@ make build
 ```
 
 Build artifacts:
-- `bin/resolvenet-server`: Platform server
-- `bin/resolvenet-cli`: Command-line tool
+- `bin/resolveagent-server`: Platform server
+- `bin/resolveagent-cli`: Command-line tool
 
 ### 5. Run Tests
 
@@ -85,7 +85,7 @@ make test-e2e
 
 ### Configure LLM API Keys
 
-ResolveNet supports multiple Chinese LLM providers. Configure your API keys:
+ResolveAgent supports multiple Chinese LLM providers. Configure your API keys:
 
 #### Option 1: Environment Variables
 
@@ -102,7 +102,7 @@ export ZHIPU_API_KEY="your-zhipu-api-key"
 
 #### Option 2: Configuration File
 
-Create `~/.resolvenet/models.yaml`:
+Create `~/.resolveagent/models.yaml`:
 
 ```yaml
 models:
@@ -131,11 +131,11 @@ make compose-dev
 
 ```bash
 # Terminal 1: Start platform services
-./bin/resolvenet-server
+./bin/resolveagent-server
 
 # Terminal 2: Start agent runtime
 cd python
-uv run python -m resolvenet.runtime.server
+uv run python -m resolveagent.runtime.server
 ```
 
 ### Access Points
@@ -154,7 +154,7 @@ uv run python -m resolvenet.runtime.server
 ### Step 1: Create an Agent
 
 ```bash
-resolvenet agent create my-assistant \
+resolveagent agent create my-assistant \
   --type mega \
   --model qwen-plus \
   --description "My first intelligent assistant"
@@ -163,7 +163,7 @@ resolvenet agent create my-assistant \
 ### Step 2: Verify the Agent
 
 ```bash
-resolvenet agent list
+resolveagent agent list
 ```
 
 Expected output:
@@ -175,16 +175,16 @@ my-assistant    mega    qwen-plus   active    2024-01-15 10:30:00
 ### Step 3: Run the Agent
 
 ```bash
-resolvenet agent run my-assistant
+resolveagent agent run my-assistant
 ```
 
 Example interaction:
 ```
-ResolveNet Agent Shell - my-assistant
+ResolveAgent Agent Shell - my-assistant
 Type 'exit' to quit, 'help' for commands
 
 > Hello, what can you do?
-[my-assistant] Hello! I'm my-assistant, an intelligent assistant powered by ResolveNet.
+[my-assistant] Hello! I'm my-assistant, an intelligent assistant powered by ResolveAgent.
 I can help you with:
 - Searching the web for information
 - Analyzing documents
@@ -201,10 +201,10 @@ Searching for latest AI news...
 
 ## TUI Dashboard
 
-ResolveNet provides a terminal user interface (TUI) for monitoring and management:
+ResolveAgent provides a terminal user interface (TUI) for monitoring and management:
 
 ```bash
-resolvenet dashboard
+resolveagent dashboard
 ```
 
 ### Dashboard Features
@@ -227,11 +227,11 @@ resolvenet dashboard
 
 ## Next Steps
 
-Now that you have ResolveNet running, explore these features:
+Now that you have ResolveAgent running, explore these features:
 
 ### Learn the Concepts
 
-- **[Architecture Overview](../architecture/overview.md)**: Understand how ResolveNet works
+- **[Architecture Overview](../architecture/overview.md)**: Understand how ResolveAgent works
 - **[Intelligent Selector](../architecture/intelligent-selector.md)**: Learn about the routing mechanism
 - **[FTA Engine](../architecture/fta-engine.md)**: Build diagnostic workflows
 
@@ -255,7 +255,7 @@ Now that you have ResolveNet running, explore these features:
 
 ```bash
 # Check health status
-resolvenet health
+resolveagent health
 
 # View service logs
 docker compose -f deploy/docker-compose/docker-compose.deps.yaml logs
@@ -265,17 +265,17 @@ docker compose -f deploy/docker-compose/docker-compose.deps.yaml logs
 
 ```bash
 # Verify configuration
-resolvenet config get
+resolveagent config get
 
 # Check model availability
-resolvenet config get models
+resolveagent config get models
 ```
 
 ### Enable debug logging
 
 ```bash
 export LOG_LEVEL=debug
-resolvenet agent run my-assistant
+resolveagent agent run my-assistant
 ```
 
 ---

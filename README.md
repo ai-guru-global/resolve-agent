@@ -1,19 +1,19 @@
 <p align="center">
-  <img src="docs/assets/logo.png" alt="ResolveNet Logo" width="200">
+  <img src="docs/assets/logo.svg" alt="ResolveAgent Logo" width="200">
 </p>
 
-<h1 align="center">ResolveNet</h1>
+<h1 align="center">ResolveAgent</h1>
 
 <p align="center">
-  <strong>The Ultimate Mega Agent Platform | 终极 Mega Agent 平台</strong>
+  <strong>The Ultimate Agent-Driven AIOps Platform | 终极智能体驱动的 AIOps 平台</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/ai-guru-global/resolve-net/releases"><img src="https://img.shields.io/github/v/release/ai-guru-global/resolve-net?style=flat-square" alt="Release"></a>
+  <a href="https://github.com/ai-guru-global/resolve-agent/releases"><img src="https://img.shields.io/github/v/release/ai-guru-global/resolve-agent?style=flat-square" alt="Release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square" alt="License"></a>
-  <a href="https://github.com/ai-guru-global/resolve-net/actions"><img src="https://img.shields.io/github/actions/workflow/status/ai-guru-global/resolve-net/ci.yaml?branch=main&style=flat-square" alt="CI Status"></a>
-  <a href="https://goreportcard.com/report/github.com/ai-guru-global/resolve-net"><img src="https://goreportcard.com/badge/github.com/ai-guru-global/resolve-net?style=flat-square" alt="Go Report Card"></a>
-  <a href="https://codecov.io/gh/ai-guru-global/resolve-net"><img src="https://img.shields.io/codecov/c/github/ai-guru-global/resolve-net?style=flat-square" alt="Coverage"></a>
+  <a href="https://github.com/ai-guru-global/resolve-agent/actions"><img src="https://img.shields.io/github/actions/workflow/status/ai-guru-global/resolve-agent/ci.yaml?branch=main&style=flat-square" alt="CI Status"></a>
+  <a href="https://goreportcard.com/report/github.com/ai-guru-global/resolve-agent"><img src="https://goreportcard.com/badge/github.com/ai-guru-global/resolve-agent?style=flat-square" alt="Go Report Card"></a>
+  <a href="https://codecov.io/gh/ai-guru-global/resolve-agent"><img src="https://img.shields.io/codecov/c/github/ai-guru-global/resolve-agent?style=flat-square" alt="Coverage"></a>
 </p>
 
 <p align="center">
@@ -24,19 +24,21 @@
 </p>
 
 <p align="center">
-  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-5-minute-quick-start">Quick Start</a> •
   <a href="#-features">Features</a> •
   <a href="#-architecture">Architecture</a> •
-  <a href="#-documentation">Documentation</a> •
-  <a href="#-community">Community</a>
+  <a href="#-best-practices">Best Practices</a> •
+  <a href="#-demo">Demo</a> •
+  <a href="#-documentation">Documentation</a>
 </p>
 
 <p align="center">
-  <a href="#-快速开始">快速开始</a> •
+  <a href="#-5-分钟快速上手">快速开始</a> •
   <a href="#-核心特性">核心特性</a> •
   <a href="#-系统架构">系统架构</a> •
-  <a href="#-中文文档">中文文档</a> •
-  <a href="#-社区">社区</a>
+  <a href="#-生产最佳实践">最佳实践</a> •
+  <a href="#-完整演示">演示</a> •
+  <a href="#-中文文档">文档导航</a>
 </p>
 
 ---
@@ -45,29 +47,154 @@
 
 **English:**
 
-ResolveNet is a **CNCF-grade open-source Mega Agent platform** that unifies **Agent Skills**, **Fault Tree Analysis (FTA) Workflows**, and **Retrieval-Augmented Generation (RAG)** under a single intelligent routing layer. Built on [AgentScope](https://github.com/modelscope/agentscope) for agent orchestration and [Higress](https://github.com/alibaba/higress) for AI gateway capabilities.
+ResolveAgent is the **ultimate Agent-driven AIOps platform** — a **CNCF-grade open-source** solution that combines **Advanced Static Analysis (FTA)**, **Retrieval-Augmented Generation (RAG)**, **Adaptive Workflows**, and **Expert Skills** to deliver intelligent, autonomous operations management. Built on [AgentScope](https://github.com/modelscope/agentscope) for agent orchestration and [Higress](https://github.com/alibaba/higress) for AI gateway capabilities.
 
 **中文：**
 
-ResolveNet 是一个 **CNCF 级别的开源 Mega Agent 平台**，将 **Agent 技能（Skills）**、**故障树分析（FTA）工作流** 和 **检索增强生成（RAG）** 统一在单一的智能路由层下。基于 [AgentScope](https://github.com/modelscope/agentscope) 构建 Agent 编排能力，基于 [Higress](https://github.com/alibaba/higress) 构建 AI 网关能力。
+ResolveAgent 是**终极智能体驱动的 AIOps 平台** — 一个 **CNCF 级别的开源解决方案**，融合了**高级静态分析（FTA）**、**检索增强生成（RAG）**、**自适应工作流** 和 **专家技能系统**，为企业提供智能化、自主化的运维管理能力。基于 [AgentScope](https://github.com/modelscope/agentscope) 构建 Agent 编排能力，基于 [Higress](https://github.com/alibaba/higress) 构建 AI 网关能力。
 
-### 💡 Why ResolveNet? | 为什么选择 ResolveNet？
+---
 
-| Challenge | Traditional Solution | ResolveNet Solution |
-|-----------|---------------------|---------------------|
-| **Fixed Processing Pipelines** | Hard-coded workflows | Dynamic intelligent routing |
-| **Scattered AI Capabilities** | Multiple disconnected tools | Unified platform with Skills, FTA, RAG |
-| **Complex Decision Flows** | Manual orchestration | Visual FTA workflow builder |
-| **Knowledge Management** | Separate RAG systems | Integrated semantic retrieval |
-| **LLM Vendor Lock-in** | Single provider dependency | Multi-provider support (Qwen, ERNIE, GLM) |
+## ⚡ 5-Minute Quick Start
 
-| 挑战 | 传统方案 | ResolveNet 方案 |
-|------|----------|-----------------|
-| **固定处理流程** | 硬编码工作流 | 动态智能路由 |
-| **AI 能力分散** | 多个独立工具 | 统一平台：技能、FTA、RAG |
-| **复杂决策流程** | 手动编排 | 可视化 FTA 工作流构建器 |
-| **知识管理** | 独立 RAG 系统 | 集成语义检索 |
-| **LLM 供应商锁定** | 单一供应商依赖 | 多供应商支持（通义、文心、智谱）|
+### Prerequisites | 环境要求
+
+| Dependency | Version | Purpose |
+|------------|---------|---------|
+| **Go** | >= 1.22 | Platform services, CLI |
+| **Python** | >= 3.11 | Agent runtime |
+| **Docker** | >= 20.10 | Container runtime |
+| **Docker Compose** | >= 2.0 | Local development |
+| Node.js | >= 20 | WebUI (optional) |
+
+### Step 1: Clone & Setup | 克隆与设置
+
+```bash
+# Clone the repository | 克隆仓库
+git clone https://github.com/ai-guru-global/resolve-agent.git
+cd resolve-agent
+
+# One-click development environment setup | 一键设置开发环境
+# This installs Go/Python dependencies, sets up pre-commit hooks, and validates environment
+make setup-dev
+```
+
+### Step 2: Start Dependencies | 启动依赖服务
+
+```bash
+# Start PostgreSQL, Redis, NATS, Milvus | 启动所有依赖服务
+make compose-deps
+
+# Wait for services to be ready (about 30 seconds)
+# 等待服务就绪（约 30 秒）
+```
+
+### Step 3: Build & Start | 构建与启动
+
+```bash
+# Build all components | 构建所有组件
+make build
+
+# Start all services | 启动所有服务
+make compose-up
+
+# Access points | 访问地址:
+# - Platform HTTP API: http://localhost:8080
+# - Platform gRPC:     localhost:9090
+# - WebUI:             http://localhost:3000
+```
+
+### Step 4: Create Your First Agent | 创建第一个智能 Agent
+
+```bash
+# Create a simple intelligent agent | 创建一个简单的智能 Agent
+resolveagent agent create my-first-agent \
+  --type mega \
+  --model qwen-plus \
+  --description "My first ResolveAgent"
+
+# Run the agent interactively | 交互式运行 Agent
+resolveagent agent run my-first-agent
+
+# Example interaction | 示例交互:
+# > Analyze the system health and provide recommendations
+# Agent will use FTA, RAG, and Skills to provide intelligent responses
+```
+
+### Quick Reference | 快速命令参考
+
+```bash
+make setup-dev      # Setup development environment | 设置开发环境
+make compose-deps   # Start dependencies | 启动依赖服务
+make build          # Build all components | 构建所有组件
+make compose-up     # Start all services | 启动所有服务
+make compose-down   # Stop all services | 停止所有服务
+make test           # Run all tests | 运行所有测试
+make lint           # Run linters | 运行代码检查
+```
+
+---
+
+## 🚀 5 分钟快速上手
+
+### 环境要求
+
+| 依赖项 | 版本 | 用途 |
+|--------|------|------|
+| **Go** | >= 1.22 | 平台服务、命令行工具 |
+| **Python** | >= 3.11 | Agent 运行时 |
+| **Docker** | >= 20.10 | 容器运行时 |
+| **Docker Compose** | >= 2.0 | 本地开发 |
+| Node.js | >= 20 | Web 界面（可选） |
+
+### 第一步：克隆与设置
+
+```bash
+# 克隆仓库
+git clone https://github.com/ai-guru-global/resolve-agent.git
+cd resolve-agent
+
+# 一键设置开发环境（安装依赖、配置预提交钩子、验证环境）
+make setup-dev
+```
+
+### 第二步：启动依赖服务
+
+```bash
+# 启动 PostgreSQL、Redis、NATS、Milvus
+make compose-deps
+
+# 等待服务就绪（约 30 秒）
+docker compose -f deploy/docker-compose/docker-compose.deps.yaml ps
+```
+
+### 第三步：构建与启动
+
+```bash
+# 构建所有组件
+make build
+
+# 启动所有服务
+make compose-up
+```
+
+### 第四步：创建第一个智能 Agent
+
+```bash
+# 配置大模型 API 密钥（任选其一）
+export QWEN_API_KEY="your-qwen-api-key"      # 从 dashscope.aliyun.com 获取
+# export WENXIN_API_KEY="your-wenxin-key"   # 从 cloud.baidu.com 获取
+# export ZHIPU_API_KEY="your-zhipu-key"     # 从 open.bigmodel.cn 获取
+
+# 创建智能 Agent
+resolveagent agent create my-first-agent \
+  --type mega \
+  --model qwen-plus \
+  --description "我的第一个智能 Agent"
+
+# 交互式运行
+resolveagent agent run my-first-agent
+```
 
 ---
 
@@ -75,68 +202,77 @@ ResolveNet 是一个 **CNCF 级别的开源 Mega Agent 平台**，将 **Agent �
 
 ### 🧠 Intelligent Selector | 智能选择器
 
-LLM-powered meta-router that dynamically routes requests based on intent analysis.
+The core AI brain that intelligently routes requests to the optimal processing path.
 
-基于 LLM 的元路由器，根据意图分析动态路由请求。
+核心 AI 大脑，智能地将请求路由到最优处理路径。
 
-- **Three Routing Strategies**: Rule-based, LLM-based, Hybrid (default)
-- **Intent Analysis → Context Enrichment → Route Decision**
-- **Supports**: FTA workflows, Skills, RAG, Direct LLM, Multi-step chains
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                      INTELLIGENT SELECTOR                            │
+│                    智能路由与决策引擎                                  │
+├──────────────────────────────────────────────────────────────────────┤
+│  User Input ───────▶ Intent Analyzer ─────▶ Context Enricher           │
+│  用户输入              意图分析器              上下文增强器              │
+│                          │                       │                      │
+│                          ▼                       ▼                      │
+│  ┌───────────────────────────────────────────────────────────────┐ │
+│  │                      ROUTE DECIDER                              │ │
+│  │                      路由决策器                                   │ │
+│  ├─────────────────┬───────────────┬───────────────┬───────────────┤ │
+│  │    Workflow     │     Skills      │      RAG        │ Code Analysis │ │
+│  │    工作流        │     技能        │   知识检索      │   代码分析    │ │
+│  │   (FTA/DAG)     │   (Plugins)    │   (Vector)      │   (AST/LSP)   │ │
+│  └─────────────────┴───────────────┴───────────────┴───────────────┘ │
+└──────────────────────────────────────────────────────────────────────┘
+```
 
-### 🔧 FTA Workflow Engine | FTA 工作流引擎
+| Feature | Description | 描述 |
+|---------|-------------|------|
+| **Intent Analysis** | NLP-powered understanding of user requests | 基于 NLP 的用户请求理解 |
+| **Multi-Strategy Routing** | Rule-based, LLM-based, Hybrid strategies | 规则、LLM、混合多策略路由 |
+| **Context Enrichment** | Memory, history, available resources awareness | 记忆、历史、可用资源感知 |
+| **Confidence Scoring** | Quantified decision confidence for transparency | 量化决策信心度保证透明性 |
 
-Fault Tree Analysis with visual editing and flexible evaluators.
+### 🔬 Advanced Static Analysis (FTA) | 高级静态分析
 
-支持可视化编辑和灵活评估器的故障树分析。
+| Gate Type | Description | 描述 |
+|-----------|-------------|------|
+| **AND Gate** | All inputs must be true | 所有输入必须为真 |
+| **OR Gate** | Any input can be true | 任一输入为真即可 |
+| **VOTING (k-of-n)** | At least k of n inputs | 至少 k 个输入为真 |
+| **INHIBIT** | Conditional gate | 条件门控 |
+| **PRIORITY-AND** | Ordered AND gate | 有序与门 |
 
-- **Gate Types**: AND, OR, VOTING (k-of-n), INHIBIT, PRIORITY-AND
-- **Evaluators**: Skills, RAG queries, LLM judgments
-- **Visual Editor**: React Flow based workflow designer
+### 📚 RAG Pipeline | 检索增强生成
 
-### 🎯 Agent Skill System | Agent 技能系统
+| Component | Technology | 技术 |
+|-----------|------------|------|
+| **Vector Store** | Milvus / Qdrant | 向量数据库 |
+| **Embedding** | BGE-large-zh | 中文优化嵌入模型 |
+| **Reranking** | Cross-encoder | 交叉编码重排序 |
+| **Chunking** | Semantic / Sentence / Fixed | 语义/句子/固定分块 |
 
-Plugin architecture with sandboxed execution and community registry.
+### 🎯 Expert Skills | 专家技能系统
 
-插件化架构，支持沙箱执行和社区注册表。
-
-- **Manifest-based**: Declarative inputs, outputs, permissions
-- **Sandboxed Execution**: Resource limits, network isolation
-- **Multiple Sources**: Local, Git, OCI, Registry
-
-### 📚 RAG Pipeline | RAG 管道
-
-Document ingestion, vector indexing, and semantic retrieval.
-
-文档摄取、向量索引和语义检索。
-
-- **Vector Stores**: Milvus, Qdrant
-- **Chunking Strategies**: Fixed, Sentence, Semantic
-- **Chinese Optimized**: BGE embedding models, cross-encoder reranking
+| Feature | Description | 描述 |
+|---------|-------------|------|
+| **Manifest-based** | Declarative inputs/outputs/permissions | 声明式输入输出权限 |
+| **Sandboxed** | Resource limits, network isolation | 资源限制、网络隔离 |
+| **Multiple Sources** | Local, Git, OCI, Registry | 多来源支持 |
 
 ### 🇨🇳 Chinese LLM Support | 国产大模型支持
 
-First-class support for Chinese LLM providers.
-
-国产大模型优先支持。
-
-- **Qwen (通义千问)**: qwen-turbo, qwen-plus, qwen-max
-- **Wenxin (文心一言)**: ERNIE-4.0
-- **Zhipu (智谱清言)**: GLM-4
-- **OpenAI Compatible**: Extensible to any OpenAI-compatible API
-
-### ☸️ Cloud Native | 云原生
-
-Kubernetes-native deployment with comprehensive observability.
-
-Kubernetes 原生部署，完善的可观测性。
-
-- **Deployment**: Helm charts, Kustomize, Docker Compose
-- **Observability**: OpenTelemetry (Metrics, Logs, Traces)
-- **Gateway**: Higress for auth, rate limiting, model routing
+| Provider | Models | 模型 |
+|----------|--------|------|
+| **Qwen 通义千问** | qwen-turbo, qwen-plus, qwen-max | 阿里云 |
+| **Wenxin 文心一言** | ERNIE-4.0 | 百度云 |
+| **Zhipu 智谱清言** | GLM-4 | 智谱 AI |
 
 ---
 
 ## 🏗️ Architecture | 系统架构
+
+### System Architecture Diagram | 系统架构图
 
 ```
                               ┌─────────────────────────────────────────────────────────────┐
@@ -155,39 +291,35 @@ Kubernetes 原生部署，完善的可观测性。
                                                           │
                                                           ▼
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                    PLATFORM SERVICES (Go)                                           │
+│                              PLATFORM SERVICES (Go - resolveagent-server)                           │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────────────────┐│
 │  │   API Server    │  │ Agent Registry  │  │ Skill Registry  │  │       Workflow Registry         ││
-│  │  (HTTP/gRPC)    │  │                 │  │                 │  │                                 ││
+│  │  (HTTP/gRPC)    │  │ (Single Source) │  │                 │  │                                 ││
 │  └─────────────────┘  └─────────────────┘  └─────────────────┘  └─────────────────────────────────┘│
 │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────────────────┐│
-│  │   Config Mgmt   │  │   Event Bus     │  │  Health Check   │  │       Telemetry                 ││
-│  │                 │  │    (NATS)       │  │                 │  │    (OpenTelemetry)              ││
+│  │  Route Sync     │  │   Event Bus     │  │  Model Router   │  │       Telemetry                 ││
+│  │ (Go→Higress)    │  │    (NATS)       │  │                 │  │    (OpenTelemetry)              ││
 │  └─────────────────┘  └─────────────────┘  └─────────────────┘  └─────────────────────────────────┘│
 └─────────────────────────────────────────────────────────┬───────────────────────────────────────────┘
                                                           │ gRPC
                                                           ▼
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                              AGENT RUNTIME (Python / AgentScope)                                    │
-│                                                                                                     │
+│                      AGENT RUNTIME (Python - python/src/resolveagent/)                              │
 │  ┌───────────────────────────────────────────────────────────────────────────────────────────────┐ │
-│  │                              INTELLIGENT SELECTOR                                              │ │
+│  │                         INTELLIGENT SELECTOR (Internal Routing)                               │ │
 │  │   ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────────────────────────────┐   │ │
 │  │   │ Intent Analyzer │ →→ │Context Enricher │ →→ │             Route Decider               │   │ │
 │  │   │                 │    │                 │    │    (FTA | Skills | RAG | Direct)        │   │ │
 │  │   └─────────────────┘    └─────────────────┘    └─────────────────────────────────────────┘   │ │
 │  └───────────────────────────────────────────────────────────────────────────────────────────────┘ │
-│                                                                                                     │
 │  ┌─────────────────────────┐  ┌─────────────────────────┐  ┌─────────────────────────────────────┐ │
-│  │      FTA Engine         │  │    Skill Executor       │  │          RAG Pipeline               │ │
-│  │  (Fault Tree Analysis)  │  │  (Sandboxed Execution)  │  │  (Ingest → Index → Retrieve)       │ │
+│  │   FTA Engine            │  │    Expert Skills        │  │          RAG Pipeline               │ │
+│  │ (Fault Tree Analysis)   │  │  (Sandboxed Execution)  │  │  (Ingest → Index → Retrieve)       │ │
 │  └─────────────────────────┘  └─────────────────────────┘  └─────────────────────────────────────┘ │
-│                                                                                                     │
 │  ┌───────────────────────────────────────────────────────────────────────────────────────────────┐ │
-│  │                               LLM PROVIDER ABSTRACTION                                         │ │
+│  │                        HIGRESS LLM PROVIDER (All LLM calls via Gateway)                       │ │
 │  │   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────────────────────────┐   │ │
 │  │   │    Qwen     │   │   Wenxin    │   │    Zhipu    │   │       OpenAI Compatible         │   │ │
-│  │   │   (通义)    │   │   (文心)    │   │   (智谱)    │   │                                 │   │ │
 │  │   └─────────────┘   └─────────────┘   └─────────────┘   └─────────────────────────────────┘   │ │
 │  └───────────────────────────────────────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -202,231 +334,514 @@ Kubernetes 原生部署，完善的可观测性。
 └─────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Component Overview | 组件概览
+### Core Components | 核心组件
 
 | Component | Language | Description | 描述 |
 |-----------|----------|-------------|------|
-| **Platform Services** | Go | REST/gRPC API, registries, event bus | REST/gRPC API、注册表、事件总线 |
-| **Agent Runtime** | Python | Agent execution, Intelligent Selector, FTA/Skills/RAG | Agent 执行、智能选择器、FTA/技能/RAG |
-| **CLI/TUI** | Go | Command-line interface with terminal dashboard | 命令行界面与终端仪表板 |
-| **WebUI** | React+TS | Management console with FTA visual editor | 管理控制台与 FTA 可视化编辑器 |
-| **Gateway** | Higress | AI gateway for auth, rate limiting, model routing | AI 网关：认证、限流、模型路由 |
+| **Platform Services** | Go 1.22+ | REST/gRPC API, Registry (Single Source of Truth), Route Sync | 平台服务：API、注册中心（唯一真相源）、路由同步 |
+| **Agent Runtime** | Python 3.11+ | Intelligent Selector, FTA Engine, Skills, RAG | 运行时：智能选择器、FTA引擎、技能、RAG |
+| **Higress Gateway** | External | Authentication, Rate Limiting, Model Routing | AI 网关：认证、限流、模型路由 |
+| **WebUI** | React+TS | Management console with workflow visual editor | 管理控制台与工作流可视化编辑器 |
+
+### Integration Architecture | 集成架构
+
+**Key Design Decisions | 关键架构决策:**
+
+| Decision | Approach | 方案 |
+|----------|----------|------|
+| **Service Registration** | Go Registry as Single Source of Truth | Go Registry 作为唯一真相源 |
+| **External Routing** | Higress handles auth, rate limiting, model routing | Higress 负责认证、限流、模型路由 |
+| **Internal Routing** | Intelligent Selector handles FTA/Skills/RAG routing | 智能选择器负责 FTA/技能/RAG 路由 |
+| **LLM Calls** | All LLM calls through Higress Gateway | 所有 LLM 调用通过 Higress 网关 |
 
 ---
 
-## 🚀 Quick Start | 快速开始
+## 🏆 Best Practices | 生产最佳实践
 
-### Prerequisites | 前置条件
+### Kubernetes Deployment | Kubernetes 部署
 
-| Dependency | Version | Purpose |
-|------------|---------|---------|
-| Go | >= 1.22 | Platform services, CLI |
-| Python | >= 3.11 | Agent runtime |
-| Node.js | >= 20 | WebUI (optional) |
-| Docker | >= 20.10 | Container runtime |
-| Docker Compose | >= 2.0 | Local development |
-
-**Recommended tools | 推荐工具:**
-- [uv](https://github.com/astral-sh/uv) - Fast Python package manager
-- [pnpm](https://pnpm.io/) - Fast Node.js package manager
-
-### Installation | 安装
+#### Using Helm Charts | 使用 Helm Chart
 
 ```bash
-# Clone the repository | 克隆仓库
-git clone https://github.com/ai-guru-global/resolve-net.git
-cd resolve-net
+# Add the ResolveAgent Helm repository | 添加 Helm 仓库
+helm repo add resolveagent https://ai-guru-global.github.io/resolve-agent/charts
+helm repo update
 
-# Set up development environment | 设置开发环境
-make setup-dev
+# Install with default values | 使用默认值安装
+helm install resolveagent resolveagent/resolveagent -n resolveagent --create-namespace
 
-# Start dependencies (PostgreSQL, Redis, NATS) | 启动依赖服务
-make compose-deps
-
-# Build all components | 构建所有组件
-make build
-
-# Run tests | 运行测试
-make test
+# Install with custom values | 使用自定义值安装
+helm install resolveagent resolveagent/resolveagent \
+  -n resolveagent --create-namespace \
+  -f values-production.yaml
 ```
 
-### Configuration | 配置
+#### Production values.yaml | 生产环境配置
 
-1. **Copy and edit the environment file | 复制并编辑环境配置文件:**
+```yaml
+# deploy/helm/resolveagent/values-production.yaml
+platform:
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "2000m"
+      memory: "2Gi"
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
 
-```bash
-cp deploy/docker-compose/.env.example deploy/docker-compose/.env
+runtime:
+  replicaCount: 5
+  resources:
+    requests:
+      cpu: "1000m"
+      memory: "2Gi"
+    limits:
+      cpu: "4000m"
+      memory: "8Gi"
+
+# External dependencies | 外部依赖
+postgresql:
+  external: true
+  host: "your-postgres-host"
+  database: "resolveagent"
+
+redis:
+  external: true
+  host: "your-redis-host"
+
+milvus:
+  external: true
+  host: "your-milvus-host"
 ```
 
-2. **Configure LLM API keys | 配置大模型 API 密钥:**
+### Environment Variables | 环境变量配置
+
+#### Required Variables | 必需变量
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `RESOLVEAGENT_DATABASE_HOST` | PostgreSQL host | `postgres.svc.cluster.local` |
+| `RESOLVEAGENT_DATABASE_PASSWORD` | Database password | `(use secret)` |
+| `RESOLVEAGENT_REDIS_ADDR` | Redis address | `redis.svc.cluster.local:6379` |
+| `RESOLVEAGENT_NATS_URL` | NATS URL | `nats://nats.svc.cluster.local:4222` |
+
+#### LLM API Keys | 大模型 API 密钥
 
 ```bash
-# Edit .env or export environment variables
-export QWEN_API_KEY="your-qwen-api-key"      # 从 dashscope.aliyun.com 获取
-export WENXIN_API_KEY="your-wenxin-api-key"  # 从 cloud.baidu.com 获取
-export ZHIPU_API_KEY="your-zhipu-api-key"    # 从 open.bigmodel.cn 获取
+# Never hardcode API keys! Use Kubernetes Secrets | 永远不要硬编码密钥！使用 K8s Secret
+kubectl create secret generic llm-api-keys \
+  --from-literal=QWEN_API_KEY='your-qwen-key' \
+  --from-literal=WENXIN_API_KEY='your-wenxin-key' \
+  --from-literal=ZHIPU_API_KEY='your-zhipu-key' \
+  -n resolveagent
 ```
 
-3. **Configuration file locations | 配置文件位置:**
+### API Key Security | API 密钥安全管理
 
-```bash
-./resolvenet.yaml                    # Current directory (highest priority)
-$HOME/.resolvenet/config.yaml        # User directory
-/etc/resolvenet/resolvenet.yaml      # System directory
+#### Best Practices | 最佳实践
+
+```yaml
+# 1. Use Kubernetes Secrets | 使用 K8s Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: llm-api-keys
+  namespace: resolveagent
+type: Opaque
+stringData:
+  QWEN_API_KEY: "your-api-key"
+
+# 2. Mount as environment variables | 以环境变量方式挂载
+env:
+  - name: QWEN_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: llm-api-keys
+        key: QWEN_API_KEY
+
+# 3. Use external secret management | 使用外部密钥管理
+# - HashiCorp Vault
+# - AWS Secrets Manager  
+# - Azure Key Vault
+# - GCP Secret Manager
 ```
 
-### Start Services | 启动服务
+#### Key Rotation | 密钥轮换
 
 ```bash
-# Start all services with Docker Compose | 使用 Docker Compose 启动所有服务
-make compose-up
+# Rotate API keys without downtime | 无停机密钥轮换
+kubectl create secret generic llm-api-keys-v2 \
+  --from-literal=QWEN_API_KEY='new-api-key' \
+  -n resolveagent
 
-# Or start in development mode | 或以开发模式启动
-make compose-dev
+# Update deployment to use new secret | 更新部署使用新密钥
+kubectl set env deployment/resolveagent-platform \
+  --from=secret/llm-api-keys-v2 -n resolveagent
+```
 
-# Access points | 访问地址:
-# - Platform HTTP API: http://localhost:8080
-# - Platform gRPC:     localhost:9090
-# - WebUI:             http://localhost:3000
+### Performance Tuning | 性能调优
+
+#### Platform Services (Go) | 平台服务
+
+```yaml
+# configs/resolveagent.yaml
+server:
+  http:
+    addr: ":8080"
+    read_timeout: "30s"
+    write_timeout: "60s"
+    max_header_bytes: 1048576
+  grpc:
+    addr: ":9090"
+    max_recv_msg_size: 16777216  # 16MB
+    max_send_msg_size: 16777216
+
+# Connection pool settings | 连接池设置
+database:
+  max_open_conns: 50
+  max_idle_conns: 10
+  conn_max_lifetime: "30m"
+
+redis:
+  pool_size: 100
+  min_idle_conns: 10
+```
+
+#### Agent Runtime (Python) | Agent 运行时
+
+```yaml
+# configs/runtime.yaml
+runtime:
+  workers: 4                    # Number of worker processes | 工作进程数
+  max_concurrent_tasks: 100     # Max concurrent task execution | 最大并发任务数
+  task_timeout: "5m"            # Default task timeout | 默认任务超时
+
+llm:
+  request_timeout: "60s"        # LLM request timeout | LLM 请求超时
+  max_retries: 3                # Max retry attempts | 最大重试次数
+  retry_delay: "1s"             # Retry delay | 重试延迟
+
+rag:
+  embedding_batch_size: 32      # Batch size for embedding | 嵌入批次大小
+  retrieval_top_k: 10           # Top-k for retrieval | 检索 Top-K
+  rerank_top_k: 5               # Top-k after reranking | 重排序后 Top-K
+```
+
+### Monitoring & Logging | 监控与日志
+
+#### OpenTelemetry Configuration | OpenTelemetry 配置
+
+```yaml
+# configs/resolveagent.yaml
+telemetry:
+  # Tracing | 链路追踪
+  tracing:
+    enabled: true
+    exporter: "otlp"
+    endpoint: "otel-collector.monitoring:4317"
+    sampling_rate: 0.1  # 10% sampling in production
+
+  # Metrics | 指标
+  metrics:
+    enabled: true
+    exporter: "prometheus"
+    endpoint: ":9091"
+
+  # Logging | 日志
+  logging:
+    level: "info"         # debug, info, warn, error
+    format: "json"        # json or text
+    output: "stdout"
+```
+
+#### Prometheus Metrics | Prometheus 指标
+
+```yaml
+# Key metrics to monitor | 关键监控指标
+# - resolveagent_agent_requests_total
+# - resolveagent_agent_request_duration_seconds
+# - resolveagent_skill_executions_total
+# - resolveagent_rag_queries_total
+# - resolveagent_fta_evaluations_total
+# - resolveagent_llm_requests_total
+# - resolveagent_llm_tokens_used_total
+```
+
+#### Grafana Dashboard | Grafana 仪表板
+
+```bash
+# Import the pre-built dashboard | 导入预置仪表板
+kubectl apply -f deploy/k8s/monitoring/grafana-dashboard.yaml
 ```
 
 ---
 
-## 📖 Usage Examples | 使用示例
+## 🎬 Demo | 完整演示
 
-### Agent Management | Agent 管理
+### End-to-End Demo | 端到端演示
+
+This demo showcases the complete ResolveAgent workflow, including Agent creation, Skill installation, RAG configuration, Intelligent Selector routing, and FTA workflow execution.
+
+本演示展示 ResolveAgent 的完整工作流程，包括 Agent 创建、技能安装、RAG 配置、智能选择器路由和 FTA 工作流执行。
+
+#### 1. Agent Creation and Management | Agent 创建与管理
 
 ```bash
-# Create a Mega Agent | 创建 Mega Agent
-resolvenet agent create my-assistant \
+# Create a Mega Agent for AIOps | 创建 AIOps Mega Agent
+resolveagent agent create aiops-assistant \
   --type mega \
-  --model qwen-plus \
-  --description "My intelligent assistant"
+  --model qwen-max \
+  --description "Intelligent AIOps assistant for incident management" \
+  --system-prompt "You are an expert AIOps assistant. Analyze incidents, suggest root causes, and recommend remediation actions."
 
-# List agents | 列出 Agent
-resolvenet agent list
+# List all agents | 列出所有 Agent
+resolveagent agent list
 
-# Run agent interactively | 交互式运行 Agent
-resolvenet agent run my-assistant
+# Output:
+# NAME             TYPE    MODEL      STATUS   CREATED
+# aiops-assistant  mega    qwen-max   ready    2024-01-15 10:30:00
 
 # View agent details | 查看 Agent 详情
-resolvenet agent describe my-assistant
+resolveagent agent describe aiops-assistant
 ```
 
-### Skill Management | 技能管理
+#### 2. Skill Installation and Usage | 技能安装与使用
 
 ```bash
 # List available skills | 列出可用技能
-resolvenet skill list
+resolveagent skill list --available
 
-# Install a skill from local directory | 从本地目录安装技能
-resolvenet skill install ./my-skill
+# Install log analysis skill | 安装日志分析技能
+resolveagent skill install log-analyzer
 
-# Install from Git repository | 从 Git 仓库安装
-resolvenet skill install github.com/user/skill@v1.0.0
+# Install metric correlation skill | 安装指标关联技能
+resolveagent skill install metric-correlator
+
+# Install web search skill | 安装网络搜索技能
+resolveagent skill install web-search
 
 # Test a skill | 测试技能
-resolvenet skill test web-search --input query="ResolveNet"
+resolveagent skill test log-analyzer \
+  --input logs="/var/log/application/*.log" \
+  --input pattern="ERROR|WARN"
+
+# Output:
+# Skill: log-analyzer
+# Status: SUCCESS
+# Results:
+#   - Found 23 ERROR entries
+#   - Found 156 WARN entries
+#   - Top error: "Connection timeout to database"
 ```
 
-### FTA Workflow Management | FTA 工作流管理
+#### 3. RAG Knowledge Base Configuration | RAG 知识库配置
 
 ```bash
-# Create workflow from YAML | 从 YAML 创建工作流
-resolvenet workflow create -f configs/examples/workflow-fta-example.yaml
+# Create a knowledge collection for runbooks | 创建运维手册知识库
+resolveagent rag collection create ops-runbooks \
+  --embedding-model bge-large-zh \
+  --description "Operations runbooks and best practices" \
+  --chunking-strategy semantic \
+  --chunk-size 512
 
-# List workflows | 列出工作流
-resolvenet workflow list
+# Ingest runbook documents | 摄取运维手册文档
+resolveagent rag ingest \
+  --collection ops-runbooks \
+  --path ./runbooks/ \
+  --recursive \
+  --file-types "md,txt,pdf"
 
-# Run a workflow | 运行工作流
-resolvenet workflow run incident-diagnosis
+# Output:
+# Ingested 47 documents
+# Created 1,234 chunks
+# Vector embeddings stored in Milvus
+
+# Query the knowledge base | 查询知识库
+resolveagent rag query \
+  --collection ops-runbooks \
+  --query "How to handle database connection timeout?" \
+  --top-k 5
+
+# Output:
+# Top 5 relevant documents:
+# 1. [0.92] runbooks/database/connection-issues.md
+# 2. [0.87] runbooks/troubleshooting/timeouts.md
+# ...
+```
+
+#### 4. Intelligent Selector Routing | 智能选择器路由
+
+```bash
+# Start interactive session with routing visualization | 启动带路由可视化的交互会话
+resolveagent agent run aiops-assistant --verbose
+
+# Example interaction showing intelligent routing:
+# > The database is showing high latency. What should I do?
+
+# [Intelligent Selector]
+# Intent: troubleshooting/performance
+# Confidence: 0.94
+# Route Decision: MULTI (RAG + Skills)
+# - RAG: Query ops-runbooks for "database high latency"
+# - Skill: metric-correlator for database metrics
+
+# Agent Response:
+# Based on the runbook and current metrics analysis:
+# 1. Current database connection pool is 95% utilized
+# 2. Query response time increased by 340% in the last hour
+# 3. Recommended actions:
+#    a. Scale up connection pool size
+#    b. Review slow query logs
+#    c. Check for lock contention
+```
+
+#### 5. FTA Workflow Execution | FTA 故障树分析工作流
+
+```bash
+# Create FTA workflow for incident diagnosis | 创建故障诊断 FTA 工作流
+cat > incident-diagnosis-workflow.yaml << 'EOF'
+apiVersion: resolveagent/v1
+kind: Workflow
+metadata:
+  name: incident-diagnosis
+  description: "Automated incident diagnosis workflow"
+spec:
+  trigger:
+    type: alert
+    source: prometheus
+  
+  fta:
+    root:
+      id: "incident-root"
+      name: "Incident Detected"
+      gate: OR
+      children:
+        - id: "infra-issue"
+          name: "Infrastructure Issue"
+          gate: AND
+          children:
+            - id: "cpu-high"
+              name: "High CPU"
+              type: condition
+              skill: metric-checker
+              params:
+                metric: "cpu_usage"
+                threshold: 80
+            - id: "memory-high"
+              name: "High Memory"
+              type: condition
+              skill: metric-checker
+              params:
+                metric: "memory_usage"
+                threshold: 90
+        - id: "app-issue"
+          name: "Application Issue"
+          gate: OR
+          children:
+            - id: "error-spike"
+              name: "Error Rate Spike"
+              type: condition
+              skill: log-analyzer
+              params:
+                pattern: "ERROR"
+                threshold: 100
+            - id: "latency-high"
+              name: "High Latency"
+              type: condition
+              skill: metric-checker
+              params:
+                metric: "response_time_p99"
+                threshold: 1000
+  
+  actions:
+    - condition: "infra-issue"
+      action: "scale-resources"
+      params:
+        target: "kubernetes"
+        scale_factor: 1.5
+    - condition: "app-issue"
+      action: "notify-oncall"
+      params:
+        channel: "slack"
+        urgency: "high"
+EOF
+
+# Create the workflow | 创建工作流
+resolveagent workflow create -f incident-diagnosis-workflow.yaml
 
 # Validate workflow definition | 验证工作流定义
-resolvenet workflow validate -f workflow.yaml
+resolveagent workflow validate -f incident-diagnosis-workflow.yaml
 
-# Visualize workflow | 可视化工作流
-resolvenet workflow visualize incident-diagnosis --format mermaid
+# Visualize workflow as Mermaid diagram | 可视化工作流
+resolveagent workflow visualize incident-diagnosis --format mermaid
+
+# Output:
+# graph TB
+#     incident-root[Incident Detected]
+#     incident-root --> infra-issue[Infrastructure Issue]
+#     incident-root --> app-issue[Application Issue]
+#     infra-issue --> cpu-high[High CPU]
+#     infra-issue --> memory-high[High Memory]
+#     app-issue --> error-spike[Error Rate Spike]
+#     app-issue --> latency-high[High Latency]
+
+# Run workflow manually | 手动运行工作流
+resolveagent workflow run incident-diagnosis \
+  --input alert_name="HighLatency" \
+  --input severity="critical"
+
+# Output:
+# Workflow: incident-diagnosis
+# Status: COMPLETED
+# FTA Evaluation:
+#   - incident-root: TRUE
+#     - infra-issue: FALSE
+#       - cpu-high: FALSE (45%)
+#       - memory-high: FALSE (62%)
+#     - app-issue: TRUE
+#       - error-spike: FALSE (23 errors)
+#       - latency-high: TRUE (1,523ms)
+# Actions Triggered:
+#   - notify-oncall (slack, urgency=high)
 ```
 
-### RAG Operations | RAG 操作
+#### 6. Complete Demo Script | 完整演示脚本
 
 ```bash
-# Create a knowledge collection | 创建知识库
-resolvenet rag collection create product-docs \
-  --embedding-model bge-large-zh \
-  --description "Product documentation"
+# Run the full demo | 运行完整演示
+cd docs/demo/demo
+./deploy.sh
 
-# Ingest documents | 摄取文档
-resolvenet rag ingest --collection product-docs --path ./documents/ --recursive
+# This script will:
+# 1. Create sample agents
+# 2. Install demo skills
+# 3. Set up RAG collection with sample docs
+# 4. Create and run FTA workflow
+# 5. Show intelligent routing in action
 
-# Query the collection | 查询知识库
-resolvenet rag query --collection product-docs --query "How to configure authentication"
-```
-
-### TUI Dashboard | TUI 仪表板
-
-```bash
-# Launch the terminal dashboard | 启动终端仪表板
-resolvenet dashboard
+# Clean up demo resources | 清理演示资源
+./deploy.sh cleanup
 ```
 
 ---
 
-## 📁 Project Structure | 项目结构
-
-```
-resolve-net/
-├── api/proto/           # Protocol Buffer definitions | Proto 定义
-│   └── resolvenet/v1/   # API v1 definitions
-├── cmd/                 # Go entry points | Go 入口
-│   ├── resolvenet-cli/  # CLI application
-│   └── resolvenet-server/ # Platform server
-├── pkg/                 # Go shared libraries (public API) | 公共 Go 库
-│   ├── config/          # Configuration management
-│   ├── gateway/         # Higress integration
-│   ├── registry/        # Agent/Skill/Workflow registries
-│   ├── server/          # HTTP/gRPC server
-│   ├── store/           # Database abstraction
-│   └── telemetry/       # Observability
-├── internal/            # Go internal packages | 内部 Go 包
-│   ├── cli/             # CLI commands
-│   └── tui/             # Terminal UI
-├── python/              # Python agent runtime | Python 运行时
-│   └── src/resolvenet/
-│       ├── agent/       # Agent definitions (BaseAgent, MegaAgent)
-│       ├── selector/    # Intelligent Selector
-│       ├── fta/         # FTA Workflow Engine
-│       ├── skills/      # Skill System
-│       ├── rag/         # RAG Pipeline
-│       ├── llm/         # LLM provider abstraction
-│       └── runtime/     # Execution engine
-├── web/                 # React + TypeScript WebUI | Web 界面
-├── deploy/              # Deployment configurations | 部署配置
-│   ├── docker/          # Dockerfiles
-│   ├── docker-compose/  # Docker Compose files
-│   ├── helm/            # Helm charts
-│   └── k8s/             # Kustomize configurations
-├── configs/             # Default configurations | 默认配置
-│   └── examples/        # Example configurations
-├── skills/              # Community skill registry | 社区技能注册表
-├── docs/                # Documentation | 文档
-│   ├── zh/              # Chinese documentation | 中文文档
-│   ├── architecture/    # Architecture docs
-│   └── user-guide/      # User guides
-├── hack/                # Development scripts | 开发脚本
-└── test/                # End-to-end tests | 端到端测试
-```
-
----
-
-## 📚 Documentation | 文档
+## 📚 Documentation | 文档导航
 
 ### English Documentation
 
-- [Architecture Overview](docs/architecture/overview.md)
-- [Intelligent Selector](docs/architecture/intelligent-selector.md)
-- [FTA Engine](docs/architecture/fta-engine.md)
-- [Quick Start Guide](docs/user-guide/quickstart.md)
+| Document | Description |
+|----------|-------------|
+| [Architecture Overview](docs/architecture/overview.md) | System architecture and design |
+| [Intelligent Selector](docs/architecture/intelligent-selector.md) | Adaptive workflow routing engine |
+| [FTA Engine](docs/architecture/fta-engine.md) | Fault Tree Analysis engine |
+| [AgentScope-Higress Integration](docs/architecture/agentscope-higress-integration.md) | Deep integration architecture |
+| [Quick Start Guide](docs/user-guide/quickstart.md) | Get started in 5 minutes |
 
 ### 中文文档
 
@@ -437,14 +852,63 @@ resolve-net/
 | [README.md](docs/zh/README.md) | 文档索引 |
 | [快速入门](docs/zh/quickstart.md) | 5分钟上手指南 |
 | [架构设计](docs/zh/architecture.md) | 系统架构详解 |
-| [智能选择器](docs/zh/intelligent-selector.md) | 路由引擎详解 |
-| [FTA 工作流引擎](docs/zh/fta-engine.md) | 故障树分析详解 |
-| [技能系统](docs/zh/skill-system.md) | 技能开发指南 |
-| [RAG 管道](docs/zh/rag-pipeline.md) | 知识检索系统 |
+| [智能选择器](docs/zh/intelligent-selector.md) | 自适应工作流路由引擎 |
+| [FTA 工作流引擎](docs/zh/fta-engine.md) | 高级静态分析引擎 |
+| [技能系统](docs/zh/skill-system.md) | 专家技能开发指南 |
+| [RAG 管道](docs/zh/rag-pipeline.md) | 检索增强生成系统 |
 | [CLI 参考](docs/zh/cli-reference.md) | 命令行完整参考 |
 | [配置参考](docs/zh/configuration.md) | 配置选项详解 |
 | [部署指南](docs/zh/deployment.md) | 生产环境部署 |
-| [最佳实践](docs/zh/best-practices.md) | 使用建议与技巧 |
+| [最佳实践](docs/zh/best-practices.md) | AIOps 使用建议与技巧 |
+| [AgentScope-Higress 集成](docs/zh/agentscope-higress-integration.md) | 深度集成架构文档 |
+
+---
+
+## 📁 Project Structure | 项目结构
+
+```
+resolve-agent/
+├── api/                    # API definitions | API 定义
+│   ├── jsonschema/         # JSON Schema (skill-manifest)
+│   └── proto/resolveagent/v1/  # Protocol Buffers (agent, skill, workflow, rag, selector, registry)
+├── cmd/                    # Go entry points | Go 入口
+│   ├── resolveagent-cli/   # CLI application
+│   └── resolveagent-server/ # Platform server
+├── pkg/                    # Go shared libraries | 公共 Go 库
+│   ├── config/             # Configuration management
+│   ├── event/              # Event system (NATS)
+│   ├── gateway/            # Higress integration (client, route_sync, model_router)
+│   ├── registry/           # Registries (agent, skill, workflow)
+│   ├── server/             # HTTP/gRPC server + middleware (auth)
+│   ├── service/            # Business services (registry_service)
+│   ├── store/              # Database (PostgreSQL, Redis)
+│   └── telemetry/          # Observability
+├── internal/               # Go internal packages | 内部 Go 包
+│   ├── cli/                # CLI commands
+│   └── tui/                # Terminal UI
+├── python/                 # Python Agent Runtime | Python 运行时
+│   └── src/resolveagent/
+│       ├── agent/          # Agent definitions
+│       ├── selector/       # Intelligent Selector
+│       ├── fta/            # FTA Engine
+│       ├── skills/         # Expert Skills
+│       ├── rag/            # RAG Pipeline
+│       ├── llm/            # LLM providers (including higress_provider)
+│       └── runtime/        # Execution engine (registry_client)
+├── web/                    # React + TypeScript WebUI
+├── deploy/                 # Deployment configs
+│   ├── docker/             # Dockerfiles
+│   ├── docker-compose/     # Docker Compose
+│   ├── helm/resolveagent/  # Helm charts
+│   └── k8s/                # Kustomize
+├── configs/                # Default configurations
+├── skills/                 # Community skill registry
+├── docs/                   # Documentation
+│   ├── architecture/       # Architecture docs
+│   ├── user-guide/         # User guides
+│   └── zh/                 # Chinese documentation
+└── test/e2e/               # End-to-end tests
+```
 
 ---
 
@@ -454,21 +918,24 @@ resolve-net/
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `RESOLVENET_SERVER_HTTP_ADDR` | HTTP API address | `:8080` |
-| `RESOLVENET_SERVER_GRPC_ADDR` | gRPC API address | `:9090` |
-| `RESOLVENET_DATABASE_HOST` | PostgreSQL host | `localhost` |
-| `RESOLVENET_REDIS_ADDR` | Redis address | `localhost:6379` |
-| `RESOLVENET_NATS_URL` | NATS URL | `nats://localhost:4222` |
+| `RESOLVEAGENT_SERVER_HTTP_ADDR` | HTTP API address | `:8080` |
+| `RESOLVEAGENT_SERVER_GRPC_ADDR` | gRPC API address | `:9090` |
+| `RESOLVEAGENT_DATABASE_HOST` | PostgreSQL host | `localhost` |
+| `RESOLVEAGENT_DATABASE_PASSWORD` | PostgreSQL password | - |
+| `RESOLVEAGENT_REDIS_ADDR` | Redis address | `localhost:6379` |
+| `RESOLVEAGENT_NATS_URL` | NATS URL | `nats://localhost:4222` |
+| `RESOLVEAGENT_GATEWAY_ADMIN_URL` | Higress admin URL | `http://localhost:8001` |
 | `QWEN_API_KEY` | Qwen API key | - |
 | `WENXIN_API_KEY` | Wenxin API key | - |
 | `ZHIPU_API_KEY` | Zhipu API key | - |
 
 ### Configuration Files | 配置文件
 
-See [`configs/`](configs/) for example configurations:
-- `resolvenet.yaml` - Platform services configuration
-- `runtime.yaml` - Agent runtime configuration
-- `models.yaml` - LLM model registry
+| File | Description | 描述 |
+|------|-------------|------|
+| `configs/resolveagent.yaml` | Platform services configuration | 平台服务配置 |
+| `configs/runtime.yaml` | Agent runtime configuration | Agent 运行时配置 |
+| `configs/models.yaml` | LLM model registry | 大模型注册表 |
 
 ---
 
@@ -480,11 +947,9 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 
 我们欢迎贡献！请参阅 [CONTRIBUTING.md](CONTRIBUTING.md) 了解贡献指南。
 
-**Quick contribution steps | 快速贡献步骤:**
-
 ```bash
 # 1. Fork and clone | Fork 并克隆
-git clone https://github.com/YOUR_USERNAME/resolve-net.git
+git clone https://github.com/YOUR_USERNAME/resolve-agent.git
 
 # 2. Create a branch | 创建分支
 git checkout -b feature/your-feature
@@ -496,31 +961,10 @@ make lint
 # 4. Submit PR | 提交 PR
 ```
 
-### Code of Conduct | 行为准则
-
-This project follows the [CNCF Code of Conduct](https://github.com/cncf/foundation/blob/main/code-of-conduct.md). Please read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
-
-本项目遵循 [CNCF 行为准则](https://github.com/cncf/foundation/blob/main/code-of-conduct.md)。请阅读 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)。
-
-### Governance | 治理
-
-See [GOVERNANCE.md](GOVERNANCE.md) for the project governance model.
-
-项目治理模型请参阅 [GOVERNANCE.md](GOVERNANCE.md)。
-
-### Maintainers | 维护者
-
-| Name | GitHub | Role |
-|------|--------|------|
-| Allen Galler | [@allengaller](https://github.com/allengaller) | Lead Maintainer |
-
-See [MAINTAINERS.md](MAINTAINERS.md) for the full list.
-
 ### Communication | 沟通渠道
 
 - **GitHub Issues**: Bug reports and feature requests | 问题反馈和功能请求
 - **GitHub Discussions**: General discussions and Q&A | 一般讨论和问答
-- **Slack**: [Join our Slack workspace](#) (coming soon)
 
 ---
 
@@ -534,44 +978,29 @@ See [MAINTAINERS.md](MAINTAINERS.md) for the full list.
 
 ### Version Compatibility | 版本兼容性
 
-| ResolveNet | Go | Python | Kubernetes |
-|------------|-----|--------|------------|
+| ResolveAgent | Go | Python | Kubernetes |
+|--------------|-----|--------|------------|
 | v0.1.x | 1.22+ | 3.11+ | 1.25+ |
 
 ### Roadmap | 路线图
 
 - [x] Core platform services
-- [x] Intelligent Selector with three strategies
-- [x] FTA Workflow Engine
-- [x] Agent Skill System
+- [x] Adaptive Workflows (Intelligent Selector)
+- [x] Advanced Static Analysis (FTA Engine)
+- [x] Expert Skills System
 - [x] RAG Pipeline
 - [x] Chinese LLM support (Qwen, Wenxin, Zhipu)
-- [ ] WebUI visual FTA editor
+- [x] AgentScope-Higress deep integration
+- [ ] WebUI visual workflow editor
 - [ ] Multi-agent collaboration
 - [ ] Skill marketplace
-- [ ] Enterprise features
+- [ ] Enterprise AIOps features
 
 ---
 
 ## 📜 License | 许可证
 
-ResolveNet is licensed under the [Apache License 2.0](LICENSE).
-
-```
-Copyright 2024 AI Guru Global
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-```
+ResolveAgent is licensed under the [Apache License 2.0](LICENSE).
 
 ---
 
@@ -585,7 +1014,7 @@ Please see [SECURITY.md](SECURITY.md) for reporting security vulnerabilities.
 
 ## 🙏 Acknowledgements | 致谢
 
-ResolveNet is built upon the shoulders of giants:
+ResolveAgent is built upon the shoulders of giants:
 
 - [AgentScope](https://github.com/modelscope/agentscope) - Agent orchestration framework
 - [Higress](https://github.com/alibaba/higress) - Cloud-native AI gateway

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://resolvenet.io/schemas/skill-manifest.json",
-  "title": "ResolveNet Skill Manifest",
+  "$id": "https://resolveagent.io/schemas/skill-manifest.json",
+  "title": "ResolveAgent Skill Manifest",
   "type": "object",
   "required": ["name", "version", "entry_point"],
   "properties": {

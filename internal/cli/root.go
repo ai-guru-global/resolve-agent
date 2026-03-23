@@ -7,19 +7,19 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	agentcmd "github.com/ai-guru-global/resolve-net/internal/cli/agent"
-	configcmd "github.com/ai-guru-global/resolve-net/internal/cli/config"
-	ragcmd "github.com/ai-guru-global/resolve-net/internal/cli/rag"
-	skillcmd "github.com/ai-guru-global/resolve-net/internal/cli/skill"
-	workflowcmd "github.com/ai-guru-global/resolve-net/internal/cli/workflow"
+	agentcmd "github.com/ai-guru-global/resolve-agent/internal/cli/agent"
+	configcmd "github.com/ai-guru-global/resolve-agent/internal/cli/config"
+	ragcmd "github.com/ai-guru-global/resolve-agent/internal/cli/rag"
+	skillcmd "github.com/ai-guru-global/resolve-agent/internal/cli/skill"
+	workflowcmd "github.com/ai-guru-global/resolve-agent/internal/cli/workflow"
 )
 
 var cfgFile string
 
 var rootCmd = &cobra.Command{
-	Use:   "resolvenet",
-	Short: "ResolveNet - Mega Agent Platform",
-	Long: `ResolveNet is a CNCF-grade Mega Agent platform that integrates
+	Use:   "resolveagent",
+	Short: "ResolveAgent - Mega Agent Platform",
+	Long: `ResolveAgent is a CNCF-grade Mega Agent platform that integrates
 Agent Skills, FTA Workflows, RAG, and intelligent routing.
 
 Built on AgentScope and Higress for enterprise-grade agent orchestration.`,
@@ -34,9 +34,9 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "",
-		"config file (default is $HOME/.resolvenet/config.yaml)")
+		"config file (default is $HOME/.resolveagent/config.yaml)")
 	rootCmd.PersistentFlags().String("server", "localhost:8080",
-		"ResolveNet platform server address")
+		"ResolveAgent platform server address")
 
 	_ = viper.BindPFlag("server", rootCmd.PersistentFlags().Lookup("server"))
 
@@ -60,12 +60,12 @@ func initConfig() {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
-		viper.AddConfigPath(home + "/.resolvenet")
+		viper.AddConfigPath(home + "/.resolveagent")
 		viper.SetConfigName("config")
 		viper.SetConfigType("yaml")
 	}
 
-	viper.SetEnvPrefix("RESOLVENET")
+	viper.SetEnvPrefix("RESOLVEAGENT")
 	viper.AutomaticEnv()
 	_ = viper.ReadInConfig()
 }

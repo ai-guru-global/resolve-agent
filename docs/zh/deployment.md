@@ -1,12 +1,12 @@
 # 部署指南
 
-本文档详细说明 ResolveNet 在各种环境下的部署方案。
+本文档详细说明 ResolveAgent 在各种环境下的部署方案。
 
 ---
 
 ## 部署概览
 
-ResolveNet 支持多种部署方式：
+ResolveAgent 支持多种部署方式：
 
 | 部署方式 | 适用场景 | 复杂度 |
 |----------|----------|--------|
@@ -32,8 +32,8 @@ ResolveNet 支持多种部署方式：
 
 ```bash
 # 克隆仓库
-git clone https://github.com/ai-guru-global/resolve-net.git
-cd resolve-net
+git clone https://github.com/ai-guru-global/resolve-agent.git
+cd resolve-agent
 
 # 复制环境变量配置
 cp deploy/docker-compose/.env.example deploy/docker-compose/.env
@@ -51,15 +51,15 @@ docker compose -f deploy/docker-compose/docker-compose.yaml up -d
 
 ```bash
 # 数据库配置
-POSTGRES_USER=resolvenet
+POSTGRES_USER=resolveagent
 POSTGRES_PASSWORD=your-secure-password
-POSTGRES_DB=resolvenet
+POSTGRES_DB=resolveagent
 
 # Redis 配置
 REDIS_PASSWORD=your-redis-password
 
 # NATS 配置
-NATS_USER=resolvenet
+NATS_USER=resolveagent
 NATS_PASSWORD=your-nats-password
 
 # 大模型 API Key
@@ -139,8 +139,8 @@ docker compose -f deploy/docker-compose/docker-compose.deps.yaml up -d
 #### 添加 Helm 仓库
 
 ```bash
-# 添加 ResolveNet Helm 仓库
-helm repo add resolvenet https://charts.resolvenet.io
+# 添加 ResolveAgent Helm 仓库
+helm repo add resolveagent https://charts.resolveagent.io
 helm repo update
 ```
 
@@ -148,14 +148,14 @@ helm repo update
 
 ```bash
 # 创建命名空间
-kubectl create namespace resolvenet
+kubectl create namespace resolveagent
 
 # 使用默认配置安装
-helm install resolvenet resolvenet/resolvenet -n resolvenet
+helm install resolveagent resolveagent/resolveagent -n resolveagent
 
 # 使用自定义配置安装
-helm install resolvenet resolvenet/resolvenet \
-  -n resolvenet \
+helm install resolveagent resolveagent/resolveagent \
+  -n resolveagent \
   -f my-values.yaml
 ```
 
@@ -174,7 +174,7 @@ platform:
   replicas: 2
   
   image:
-    repository: resolve-net/platform
+    repository: resolve-agent/platform
     tag: v0.1.0
     pullPolicy: IfNotPresent
   
@@ -195,21 +195,21 @@ platform:
     enabled: true
     className: nginx
     hosts:
-      - host: api.resolvenet.example.com
+      - host: api.resolveagent.example.com
         paths:
           - path: /
             pathType: Prefix
     tls:
-      - secretName: resolvenet-tls
+      - secretName: resolveagent-tls
         hosts:
-          - api.resolvenet.example.com
+          - api.resolveagent.example.com
 
 # Agent 运行时配置
 runtime:
   replicas: 3
   
   image:
-    repository: resolve-net/runtime
+    repository: resolve-agent/runtime
     tag: v0.1.0
   
   resources:
@@ -232,21 +232,21 @@ webui:
   replicas: 1
   
   image:
-    repository: resolve-net/webui
+    repository: resolve-agent/webui
     tag: v0.1.0
   
   ingress:
     enabled: true
     hosts:
-      - host: app.resolvenet.example.com
+      - host: app.resolveagent.example.com
 
 # PostgreSQL 配置
 postgresql:
   enabled: true
   auth:
-    username: resolvenet
+    username: resolveagent
     password: ""  # 使用 Secret
-    database: resolvenet
+    database: resolveagent
   primary:
     persistence:
       size: 20Gi
@@ -291,21 +291,21 @@ monitoring:
 
 ```bash
 # 查看部署状态
-helm status resolvenet -n resolvenet
+helm status resolveagent -n resolveagent
 
 # 查看 Pod 状态
-kubectl get pods -n resolvenet
+kubectl get pods -n resolveagent
 
 # 升级
-helm upgrade resolvenet resolvenet/resolvenet \
-  -n resolvenet \
+helm upgrade resolveagent resolveagent/resolveagent \
+  -n resolveagent \
   -f my-values.yaml
 
 # 回滚
-helm rollback resolvenet 1 -n resolvenet
+helm rollback resolveagent 1 -n resolveagent
 
 # 卸载
-helm uninstall resolvenet -n resolvenet
+helm uninstall resolveagent -n resolveagent
 ```
 
 ### 使用 Kustomize
@@ -376,7 +376,7 @@ runtime:
           podAffinityTerm:
             labelSelector:
               matchLabels:
-                app: resolvenet-runtime
+                app: resolveagent-runtime
             topologyKey: kubernetes.io/hostname
 ```
 
@@ -399,9 +399,9 @@ platform:
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-prod
     tls:
-      - secretName: resolvenet-platform-tls
+      - secretName: resolveagent-platform-tls
         hosts:
-          - api.resolvenet.example.com
+          - api.resolveagent.example.com
 ```
 
 ### 网络策略
@@ -410,12 +410,12 @@ platform:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: resolvenet-platform
-  namespace: resolvenet
+  name: resolveagent-platform
+  namespace: resolveagent
 spec:
   podSelector:
     matchLabels:
-      app: resolvenet-platform
+      app: resolveagent-platform
   policyTypes:
     - Ingress
     - Egress
@@ -431,7 +431,7 @@ spec:
     - to:
         - podSelector:
             matchLabels:
-              app: resolvenet-runtime
+              app: resolveagent-runtime
       ports:
         - protocol: TCP
           port: 9091
@@ -468,16 +468,16 @@ monitoring:
 ### 关键指标
 
 **系统指标**：
-- `resolvenet_platform_requests_total` - 请求总数
-- `resolvenet_platform_request_duration_seconds` - 请求延迟
+- `resolveagent_platform_requests_total` - 请求总数
+- `resolveagent_platform_request_duration_seconds` - 请求延迟
 
 **Agent 指标**：
-- `resolvenet_agent_executions_total` - 执行总数
-- `resolvenet_agent_execution_duration_seconds` - 执行时长
+- `resolveagent_agent_executions_total` - 执行总数
+- `resolveagent_agent_execution_duration_seconds` - 执行时长
 
 **选择器指标**：
-- `resolvenet_selector_decisions_total` - 决策总数
-- `resolvenet_selector_confidence_histogram` - 置信度分布
+- `resolveagent_selector_decisions_total` - 决策总数
+- `resolveagent_selector_confidence_histogram` - 置信度分布
 
 ### 日志聚合
 
@@ -514,22 +514,22 @@ telemetry:
 
 ```bash
 # 创建备份
-kubectl exec -n resolvenet postgresql-0 -- \
-  pg_dump -U resolvenet resolvenet | gzip > backup.sql.gz
+kubectl exec -n resolveagent postgresql-0 -- \
+  pg_dump -U resolveagent resolveagent | gzip > backup.sql.gz
 
 # 恢复备份
-gunzip -c backup.sql.gz | kubectl exec -i -n resolvenet postgresql-0 -- \
-  psql -U resolvenet resolvenet
+gunzip -c backup.sql.gz | kubectl exec -i -n resolveagent postgresql-0 -- \
+  psql -U resolveagent resolveagent
 ```
 
 ### Milvus 备份
 
 ```bash
 # 使用 Milvus Backup 工具
-milvus-backup create -n resolvenet-backup
+milvus-backup create -n resolveagent-backup
 
 # 恢复
-milvus-backup restore -n resolvenet-backup
+milvus-backup restore -n resolveagent-backup
 ```
 
 ### 定期备份 CronJob
@@ -538,8 +538,8 @@ milvus-backup restore -n resolvenet-backup
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: resolvenet-backup
-  namespace: resolvenet
+  name: resolveagent-backup
+  namespace: resolveagent
 spec:
   schedule: "0 2 * * *"  # 每天凌晨2点
   jobTemplate:
@@ -548,7 +548,7 @@ spec:
         spec:
           containers:
             - name: backup
-              image: resolvenet/backup:latest
+              image: resolveagent/backup:latest
               command: ["/backup.sh"]
           restartPolicy: OnFailure
 ```
@@ -572,16 +572,16 @@ platform:
 
 ```bash
 # 部署新版本到蓝环境
-helm install resolvenet-blue resolvenet/resolvenet \
-  -n resolvenet \
+helm install resolveagent-blue resolveagent/resolveagent \
+  -n resolveagent \
   --set platform.tag=v0.2.0
 
 # 切换流量
-kubectl patch ingress resolvenet -n resolvenet \
-  -p '{"spec":{"rules":[{"host":"api.resolvenet.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"resolvenet-blue-platform","port":{"number":8080}}}}]}}]}}'
+kubectl patch ingress resolveagent -n resolveagent \
+  -p '{"spec":{"rules":[{"host":"api.resolveagent.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"resolveagent-blue-platform","port":{"number":8080}}}}]}}]}}'
 
 # 确认无误后删除旧版本
-helm uninstall resolvenet-green -n resolvenet
+helm uninstall resolveagent-green -n resolveagent
 ```
 
 ### 金丝雀发布
@@ -591,17 +591,17 @@ helm uninstall resolvenet-green -n resolvenet
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: resolvenet-platform
+  name: resolveagent-platform
 spec:
   hosts:
-    - api.resolvenet.example.com
+    - api.resolveagent.example.com
   http:
     - route:
         - destination:
-            host: resolvenet-platform-stable
+            host: resolveagent-platform-stable
           weight: 90
         - destination:
-            host: resolvenet-platform-canary
+            host: resolveagent-platform-canary
           weight: 10
 ```
 
@@ -615,45 +615,45 @@ spec:
 
 ```bash
 # 查看 Pod 事件
-kubectl describe pod <pod-name> -n resolvenet
+kubectl describe pod <pod-name> -n resolveagent
 
 # 查看日志
-kubectl logs <pod-name> -n resolvenet --previous
+kubectl logs <pod-name> -n resolveagent --previous
 ```
 
 #### 数据库连接问题
 
 ```bash
 # 检查数据库连接
-kubectl exec -it resolvenet-platform-xxx -n resolvenet -- \
+kubectl exec -it resolveagent-platform-xxx -n resolveagent -- \
   nc -zv postgresql 5432
 
 # 检查密钥配置
-kubectl get secret resolvenet-postgresql -n resolvenet -o yaml
+kubectl get secret resolveagent-postgresql -n resolveagent -o yaml
 ```
 
 #### 服务发现问题
 
 ```bash
 # 检查服务
-kubectl get svc -n resolvenet
+kubectl get svc -n resolveagent
 
 # 检查端点
-kubectl get endpoints -n resolvenet
+kubectl get endpoints -n resolveagent
 
 # 测试服务连接
 kubectl run curl --rm -it --image=curlimages/curl -- \
-  curl http://resolvenet-platform:8080/health
+  curl http://resolveagent-platform:8080/health
 ```
 
 ### 日志收集
 
 ```bash
 # 收集诊断信息
-kubectl get all -n resolvenet > diagnosis/resources.txt
-kubectl describe pods -n resolvenet > diagnosis/pods.txt
-kubectl logs -l app=resolvenet-platform -n resolvenet > diagnosis/platform.log
-kubectl logs -l app=resolvenet-runtime -n resolvenet > diagnosis/runtime.log
+kubectl get all -n resolveagent > diagnosis/resources.txt
+kubectl describe pods -n resolveagent > diagnosis/pods.txt
+kubectl logs -l app=resolveagent-platform -n resolveagent > diagnosis/platform.log
+kubectl logs -l app=resolveagent-runtime -n resolveagent > diagnosis/runtime.log
 ```
 
 ---
@@ -668,18 +668,18 @@ kubectl logs -l app=resolvenet-runtime -n resolvenet > diagnosis/runtime.log
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: resolvenet-llm-keys
-  namespace: resolvenet
+  name: resolveagent-llm-keys
+  namespace: resolveagent
 spec:
   secretStoreRef:
     kind: ClusterSecretStore
     name: vault-backend
   target:
-    name: resolvenet-llm-keys
+    name: resolveagent-llm-keys
   data:
     - secretKey: qwen-api-key
       remoteRef:
-        key: resolvenet/llm
+        key: resolveagent/llm
         property: qwen-api-key
 ```
 
@@ -689,8 +689,8 @@ spec:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: resolvenet-platform
-  namespace: resolvenet
+  name: resolveagent-platform
+  namespace: resolveagent
 rules:
   - apiGroups: [""]
     resources: ["configmaps", "secrets"]
@@ -703,7 +703,7 @@ rules:
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
-  name: resolvenet-restricted
+  name: resolveagent-restricted
 spec:
   privileged: false
   runAsUser:

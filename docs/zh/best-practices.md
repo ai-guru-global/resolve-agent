@@ -1,6 +1,6 @@
 # 最佳实践
 
-本文档汇总 ResolveNet 的使用建议与优化技巧。
+本文档汇总 ResolveAgent 的使用建议与优化技巧。
 
 ---
 
@@ -20,7 +20,7 @@
 ```yaml
 system_prompt: |
   # 角色定义
-  你是一个专业的技术支持助手，服务于 ResolveNet 用户。
+  你是一个专业的技术支持助手，服务于 ResolveAgent 用户。
   
   # 能力说明
   你可以：
@@ -183,10 +183,10 @@ results = await pipeline.query(
 
 ```bash
 # 定期重建索引（大量更新后）
-resolvenet rag collection rebuild product-docs
+resolveagent rag collection rebuild product-docs
 
 # 清理过期文档
-resolvenet rag collection cleanup product-docs --older-than 90d
+resolveagent rag collection cleanup product-docs --older-than 90d
 ```
 
 ---
@@ -352,10 +352,10 @@ def run(query: str, limit: int = 10) -> dict:
 ```yaml
 # Prometheus AlertManager 规则
 groups:
-  - name: resolvenet
+  - name: resolveagent
     rules:
       - alert: HighErrorRate
-        expr: rate(resolvenet_errors_total[5m]) > 0.01
+        expr: rate(resolveagent_errors_total[5m]) > 0.01
         for: 5m
         labels:
           severity: warning
@@ -363,7 +363,7 @@ groups:
           summary: "错误率过高"
           
       - alert: SlowResponse
-        expr: histogram_quantile(0.99, resolvenet_request_duration_seconds) > 5
+        expr: histogram_quantile(0.99, resolveagent_request_duration_seconds) > 5
         for: 5m
         labels:
           severity: warning

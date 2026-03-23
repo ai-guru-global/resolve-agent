@@ -56,8 +56,35 @@ type RuntimeConfig struct {
 
 // GatewayConfig holds Higress gateway settings.
 type GatewayConfig struct {
-	AdminURL string `mapstructure:"admin_url"`
-	Enabled  bool   `mapstructure:"enabled"`
+	AdminURL     string             `mapstructure:"admin_url"`
+	Enabled      bool               `mapstructure:"enabled"`
+	SyncInterval string             `mapstructure:"sync_interval"` // Route sync interval (e.g., "30s")
+	ModelRouting ModelRoutingConfig `mapstructure:"model_routing"`
+	Auth         GatewayAuthConfig  `mapstructure:"auth"`
+	LoadBalancer LoadBalancerConfig `mapstructure:"load_balancer"`
+}
+
+// ModelRoutingConfig configures LLM model routing through Higress.
+type ModelRoutingConfig struct {
+	Enabled      bool   `mapstructure:"enabled"`
+	DefaultModel string `mapstructure:"default_model"`
+	BasePath     string `mapstructure:"base_path"` // API base path for LLM routes (e.g., "/llm")
+}
+
+// GatewayAuthConfig configures authentication at the gateway level.
+type GatewayAuthConfig struct {
+	Enabled     bool     `mapstructure:"enabled"`
+	JWTSecret   string   `mapstructure:"jwt_secret"`
+	JWTIssuer   string   `mapstructure:"jwt_issuer"`
+	APIKeyNames []string `mapstructure:"api_key_names"` // Header names for API keys
+}
+
+// LoadBalancerConfig configures load balancing strategy.
+type LoadBalancerConfig struct {
+	Strategy       string `mapstructure:"strategy"` // "round_robin", "least_conn", "random"
+	HealthCheck    bool   `mapstructure:"health_check"`
+	CheckInterval  string `mapstructure:"check_interval"`
+	UnhealthyCount int    `mapstructure:"unhealthy_count"`
 }
 
 // TelemetryConfig holds observability settings.

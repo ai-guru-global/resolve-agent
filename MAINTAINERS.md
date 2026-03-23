@@ -1,4 +1,4 @@
-# ResolveNet Maintainers
+# ResolveAgent Maintainers
 
 ## Current Maintainers
 

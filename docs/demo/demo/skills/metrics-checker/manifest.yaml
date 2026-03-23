@@ -1,7 +1,7 @@
 name: metrics-checker
 version: "1.0.0"
 description: "检查系统指标是否超过阈值"
-author: "ResolveNet Team"
+author: "ResolveAgent Team"
 entry_point: "skill:run"
 
 inputs:

@@ -1,0 +1,69 @@
+# ResolveAgent Platform Services Configuration
+# This configuration supports deep integration with Higress AI Gateway
+# and AgentScope runtime framework.
+
+server:
+  http_addr: ":8080"
+  grpc_addr: ":9090"
+
+database:
+  host: localhost
+  port: 5432
+  user: resolveagent
+  password: resolveagent
+  dbname: resolveagent
+  sslmode: disable
+
+redis:
+  addr: "localhost:6379"
+  db: 0
+
+nats:
+  url: "nats://localhost:4222"
+
+runtime:
+  grpc_addr: "localhost:9091"
+
+# Higress AI Gateway Integration
+# Go Registry serves as single source of truth, synced to Higress
+gateway:
+  # Enable Higress gateway integration
+  enabled: false
+  
+  # Higress admin API URL
+  admin_url: "http://localhost:8888"
+  
+  # Route synchronization interval (Go Registry -> Higress)
+  sync_interval: "30s"
+  
+  # LLM Model Routing Configuration
+  # All LLM calls from Python runtime go through Higress
+  model_routing:
+    enabled: true
+    default_model: "qwen-plus"
+    base_path: "/llm"
+  
+  # Gateway Authentication
+  # Higress handles external auth, platform validates forwarded headers
+  auth:
+    enabled: false
+    jwt_secret: ""  # Set via RESOLVEAGENT_GATEWAY_AUTH_JWT_SECRET
+    jwt_issuer: "resolveagent"
+    api_key_names:
+      - "X-API-Key"
+      - "Authorization"
+  
+  # Load Balancer Configuration
+  # Higress handles external LB, this configures internal behavior
+  load_balancer:
+    strategy: "round_robin"  # round_robin, least_conn, random
+    health_check: true
+    check_interval: "10s"
+    unhealthy_count: 3
+
+# Telemetry Configuration
+telemetry:
+  enabled: false
+  otlp_endpoint: "localhost:4317"
+  service_name: "resolveagent-platform"
+  metrics_enabled: true

@@ -35,7 +35,7 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "agent",
 		Short: "Manage agents",
-		Long:  "Create, list, run, and manage ResolveNet agents.",
+		Long:  "Create, list, run, and manage ResolveAgent agents.",
 	}
 
 	cmd.AddCommand(newCreateCmd())

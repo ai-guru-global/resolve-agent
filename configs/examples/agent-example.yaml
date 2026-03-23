@@ -7,7 +7,7 @@ agent:
   config:
     model_id: qwen-plus
     system_prompt: |
-      You are a helpful assistant powered by ResolveNet.
+      You are a helpful assistant powered by ResolveAgent.
       You can search the web, analyze documents, and run workflows.
     skill_names:
       - web-search

@@ -21,7 +21,7 @@ agent:
     # LLM 配置
     model_id: qwen-plus
     system_prompt: |
-      你是一个由 ResolveNet 平台驱动的智能技术支持助手。
+      你是一个由 ResolveAgent 平台驱动的智能技术支持助手。
       
       你的能力：
       - 搜索互联网获取最新技术信息
@@ -159,7 +159,7 @@ agent:
 
   # ========== 元数据 ==========
   metadata:
-    author: "ResolveNet Team"
+    author: "ResolveAgent Team"
     created_at: "2024-01-01"
     category: "support"
     tags:

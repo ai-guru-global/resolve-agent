@@ -1,6 +1,6 @@
 # Agent 技能系统
 
-技能系统是 ResolveNet 的核心扩展机制，提供插件化的功能扩展能力。
+技能系统是 ResolveAgent 的核心扩展机制，提供插件化的功能扩展能力。
 
 ---
 
@@ -19,11 +19,11 @@
 
 | 来源 | 说明 | 示例 |
 |------|------|------|
-| **内置** | 随 ResolveNet 安装的技能 | web-search, file-ops |
+| **内置** | 随 ResolveAgent 安装的技能 | web-search, file-ops |
 | **本地** | 从本地目录加载 | ./my-skill |
 | **Git** | 从 Git 仓库安装 | github.com/user/skill |
 | **OCI** | 从容器镜像安装 | ghcr.io/org/skill:v1 |
-| **注册表** | 从社区注册表安装 | registry.resolvenet.io/skill |
+| **注册表** | 从社区注册表安装 | registry.resolveagent.io/skill |
 
 ---
 
@@ -52,7 +52,7 @@ skill:
   name: web-search
   version: "1.0.0"
   description: "搜索互联网获取信息"
-  author: "ResolveNet Team"
+  author: "ResolveAgent Team"
   license: "Apache-2.0"
   
   # 入口点配置
@@ -177,7 +177,7 @@ def perform_search(query: str, num_results: int, language: str) -> list:
 安装技能时会显示权限请求：
 
 ```
-$ resolvenet skill install ./my-skill
+$ resolveagent skill install ./my-skill
 
 技能: my-skill v1.0.0
 作者: Example Author
@@ -225,26 +225,26 @@ $ resolvenet skill install ./my-skill
 
 ```bash
 # 从本地目录安装
-resolvenet skill install ./my-skill
+resolveagent skill install ./my-skill
 
 # 从 Git 仓库安装
-resolvenet skill install github.com/user/my-skill
+resolveagent skill install github.com/user/my-skill
 
 # 从 Git 安装指定版本
-resolvenet skill install github.com/user/my-skill@v1.2.0
+resolveagent skill install github.com/user/my-skill@v1.2.0
 
 # 从 OCI 镜像安装
-resolvenet skill install oci://ghcr.io/org/my-skill:latest
+resolveagent skill install oci://ghcr.io/org/my-skill:latest
 
 # 从社区注册表安装
-resolvenet skill install registry://web-search
+resolveagent skill install registry://web-search
 ```
 
 ### 列出技能
 
 ```bash
 # 列出已安装的技能
-resolvenet skill list
+resolveagent skill list
 
 输出:
 NAME           VERSION   SOURCE    STATUS    DESCRIPTION
@@ -256,7 +256,7 @@ my-skill       0.1.0     git       active    自定义技能
 ### 查看技能详情
 
 ```bash
-resolvenet skill info web-search
+resolveagent skill info web-search
 
 输出:
 名称: web-search
@@ -285,8 +285,8 @@ resolvenet skill info web-search
 
 ```bash
 # 测试技能执行
-resolvenet skill test web-search \
-  --input query="ResolveNet" \
+resolveagent skill test web-search \
+  --input query="ResolveAgent" \
   --input num_results=3
 
 输出:
@@ -296,9 +296,9 @@ resolvenet skill test web-search \
 输出:
 {
   "results": [
-    {"title": "ResolveNet Official", "url": "..."},
-    {"title": "ResolveNet GitHub", "url": "..."},
-    {"title": "ResolveNet Docs", "url": "..."}
+    {"title": "ResolveAgent Official", "url": "..."},
+    {"title": "ResolveAgent GitHub", "url": "..."},
+    {"title": "ResolveAgent Docs", "url": "..."}
   ],
   "total_count": 3
 }
@@ -308,10 +308,10 @@ resolvenet skill test web-search \
 
 ```bash
 # 移除技能
-resolvenet skill remove my-skill
+resolveagent skill remove my-skill
 
 # 强制移除（跳过确认）
-resolvenet skill remove my-skill --force
+resolveagent skill remove my-skill --force
 ```
 
 ---
@@ -324,7 +324,7 @@ resolvenet skill remove my-skill --force
 
 ```bash
 # 使用模板创建
-resolvenet skill init my-skill
+resolveagent skill init my-skill
 
 cd my-skill
 ```
@@ -406,17 +406,17 @@ cd my-skill
 pytest tests/
 
 # 使用 CLI 测试
-resolvenet skill test ./my-skill --input message="测试"
+resolveagent skill test ./my-skill --input message="测试"
 ```
 
 #### 6. 安装使用
 
 ```bash
-# 安装到 ResolveNet
-resolvenet skill install ./my-skill
+# 安装到 ResolveAgent
+resolveagent skill install ./my-skill
 
 # 在 Agent 中使用
-resolvenet agent create my-agent --skills my-skill
+resolveagent agent create my-agent --skills my-skill
 ```
 
 ### 高级开发
@@ -524,7 +524,7 @@ def run(data: dict) -> dict:
 
 ## 内置技能
 
-ResolveNet 提供以下内置技能：
+ResolveAgent 提供以下内置技能：
 
 ### web-search
 
@@ -617,7 +617,7 @@ service SkillService {
 ### Python SDK
 
 ```python
-from resolvenet.skills import SkillLoader, SkillExecutor
+from resolveagent.skills import SkillLoader, SkillExecutor
 
 # 加载技能
 loader = SkillLoader()
@@ -627,7 +627,7 @@ skill = loader.load_from_directory("./my-skill")
 executor = SkillExecutor()
 result = await executor.execute(
     skill=skill,
-    inputs={"query": "ResolveNet"}
+    inputs={"query": "ResolveAgent"}
 )
 
 print(result.outputs)

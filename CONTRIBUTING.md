@@ -1,6 +1,6 @@
-# Contributing to ResolveNet
+# Contributing to ResolveAgent
 
-Thank you for your interest in contributing to ResolveNet! This document provides guidelines and information about contributing to this project.
+Thank you for your interest in contributing to ResolveAgent! This document provides guidelines and information about contributing to this project.
 
 ## Code of Conduct
 
@@ -89,4 +89,4 @@ For significant architectural changes, we use an RFC (Request for Comments) proc
 
 ## License
 
-By contributing to ResolveNet, you agree that your contributions will be licensed under the Apache License 2.0.
+By contributing to ResolveAgent, you agree that your contributions will be licensed under the Apache License 2.0.

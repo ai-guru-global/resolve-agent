@@ -1,8 +1,8 @@
-# ResolveNet Intelligent Selector Demo
+# ResolveAgent Intelligent Selector Demo
 
 ## 前言
 
-本文档是 ResolveNet 平台 **Intelligent Selector（智能选择器）** 功能的完整演示指南。通过本 Demo，您将学习如何：
+本文档是 ResolveAgent 平台 **Intelligent Selector（智能选择器）** 功能的完整演示指南。通过本 Demo，您将学习如何：
 
 1. 理解 Intelligent Selector 的核心概念和设计理念
 2. 创建和配置 Agent、Workflow、Skills、RAG 等核心组件
@@ -17,7 +17,7 @@
 
 ### 1.1 什么是 Intelligent Selector？
 
-**Intelligent Selector（智能选择器）** 是 ResolveNet 平台的核心路由引擎。它负责分析用户输入，理解用户意图，并智能地将请求路由到最合适的执行子系统。
+**Intelligent Selector（智能选择器）** 是 ResolveAgent 平台的核心路由引擎。它负责分析用户输入，理解用户意图，并智能地将请求路由到最合适的执行子系统。
 
 **核心价值**：
 - **统一入口**：用户只需与一个 Agent 交互，无需关心底层实现
@@ -132,7 +132,7 @@ graph TB
 
 #### 2.2.1 MegaAgent
 
-**MegaAgent** 是 ResolveNet 的顶层协调者，它：
+**MegaAgent** 是 ResolveAgent 的顶层协调者，它：
 - 接收用户请求
 - 管理 Intelligent Selector
 - 协调各子系统的执行
@@ -287,7 +287,7 @@ Web Search Skill 用于搜索互联网获取最新信息。
 name: web-search
 version: "1.0.0"
 description: "搜索互联网获取相关信息"
-author: "ResolveNet Team"
+author: "ResolveAgent Team"
 entry_point: "skill:run"
 
 inputs:
@@ -513,7 +513,7 @@ Log Analyzer Skill 用于分析应用程序日志。
 name: log-analyzer
 version: "1.0.0"
 description: "分析应用程序日志，检测错误模式和异常"
-author: "ResolveNet Team"
+author: "ResolveAgent Team"
 entry_point: "skill:run"
 
 inputs:
@@ -864,7 +864,7 @@ if __name__ == "__main__":
 name: metrics-checker
 version: "1.0.0"
 description: "检查系统指标是否超过阈值"
-author: "ResolveNet Team"
+author: "ResolveAgent Team"
 entry_point: "skill:run"
 
 inputs:
@@ -1517,7 +1517,7 @@ tree:
 
   # ========== 元数据 ==========
   metadata:
-    author: "ResolveNet Team"
+    author: "ResolveAgent Team"
     created_at: "2024-01-01"
     category: "incident-response"
     tags:
@@ -1559,7 +1559,7 @@ agent:
     # LLM 配置
     model_id: qwen-plus
     system_prompt: |
-      你是一个由 ResolveNet 平台驱动的智能技术支持助手。
+      你是一个由 ResolveAgent 平台驱动的智能技术支持助手。
       
       你的能力：
       - 搜索互联网获取最新技术信息
@@ -1697,7 +1697,7 @@ agent:
 
   # ========== 元数据 ==========
   metadata:
-    author: "ResolveNet Team"
+    author: "ResolveAgent Team"
     created_at: "2024-01-01"
     category: "support"
     tags:
@@ -1715,7 +1715,7 @@ agent:
 ```python
 # demo/main.py
 
-"""ResolveNet Intelligent Selector Demo
+"""ResolveAgent Intelligent Selector Demo
 
 这是 Intelligent Selector 功能的完整演示程序。
 通过本 Demo，您可以了解：
@@ -1742,12 +1742,12 @@ from pathlib import Path
 from typing import Any
 from dataclasses import dataclass
 
-# ResolveNet 组件导入
-from resolvenet.agent.mega import MegaAgent
-from resolvenet.skills.loader import SkillLoader
-from resolvenet.rag.pipeline import RAGPipeline
-from resolvenet.fta.serializer import load_tree_from_yaml
-from resolvenet.fta.engine import FTAEngine
+# ResolveAgent 组件导入
+from resolveagent.agent.mega import MegaAgent
+from resolveagent.skills.loader import SkillLoader
+from resolveagent.rag.pipeline import RAGPipeline
+from resolveagent.fta.serializer import load_tree_from_yaml
+from resolveagent.fta.engine import FTAEngine
 
 
 @dataclass
@@ -1778,7 +1778,7 @@ class DemoRunner:
     async def setup(self) -> None:
         """初始化所有组件"""
         print("=" * 60)
-        print("ResolveNet Intelligent Selector Demo")
+        print("ResolveAgent Intelligent Selector Demo")
         print("=" * 60)
         print()
         
@@ -2024,7 +2024,7 @@ class DemoRunner:
 async def main():
     """主函数"""
     parser = argparse.ArgumentParser(
-        description="ResolveNet Intelligent Selector Demo",
+        description="ResolveAgent Intelligent Selector Demo",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
@@ -2116,7 +2116,7 @@ python main.py --skills-dir ./my-skills
 
 ```
 ============================================================
-ResolveNet Intelligent Selector Demo
+ResolveAgent Intelligent Selector Demo
 ============================================================
 
 [1/4] 加载 Skills...
@@ -2225,8 +2225,8 @@ ResolveNet Intelligent Selector Demo
 
 ## 参考资料
 
-- [ResolveNet 架构概述](../architecture/overview.md)
+- [ResolveAgent 架构概述](../architecture/overview.md)
 - [FTA 引擎设计](../architecture/fta-engine.md)
 - [Intelligent Selector 机制](../architecture/intelligent-selector.md)
-- [API Proto 定义](../../api/proto/resolvenet/v1/)
+- [API Proto 定义](../../api/proto/resolveagent/v1/)
 - [用户快速入门指南](../user-guide/quickstart.md)

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "resolveagent.name" . }}-platform
+  labels:
+    {{- include "resolveagent.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.platform.service.httpPort }}
+      targetPort: http
+      name: http
+    - port: {{ .Values.platform.service.grpcPort }}
+      targetPort: grpc
+      name: grpc
+  selector:
+    {{- include "resolveagent.platform.selectorLabels" . | nindent 4 }}

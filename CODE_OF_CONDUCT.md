@@ -43,7 +43,7 @@ an individual is officially representing the community in public spaces.
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the community leaders responsible for enforcement at
-[conduct@resolvenet.io](mailto:conduct@resolvenet.io).
+[conduct@resolveagent.io](mailto:conduct@resolveagent.io).
 
 ## Attribution
 

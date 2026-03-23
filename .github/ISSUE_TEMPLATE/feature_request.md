@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest a feature for ResolveNet
+about: Suggest a feature for ResolveAgent
 title: "[Feature] "
 labels: enhancement
 assignees: ""

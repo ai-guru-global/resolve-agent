@@ -1,7 +1,7 @@
 name: log-analyzer
 version: "1.0.0"
 description: "分析应用程序日志，检测错误模式和异常"
-author: "ResolveNet Team"
+author: "ResolveAgent Team"
 entry_point: "skill:run"
 
 inputs:

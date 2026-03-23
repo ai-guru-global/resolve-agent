@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package resolveagent.v1;
+
+option go_package = "github.com/ai-guru-global/resolve-agent/pkg/api/resolveagent/v1;resolveagentv1";
+
+import "google/protobuf/timestamp.proto";
+
+// Pagination request parameters
+message PaginationRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+// Pagination response metadata
+message PaginationResponse {
+  string next_page_token = 1;
+  int32 total_count = 2;
+}
+
+// Standard error detail
+message ErrorDetail {
+  string code = 1;
+  string message = 2;
+  map<string, string> metadata = 3;
+}
+
+// Resource metadata common to all entities
+message ResourceMeta {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  map<string, string> labels = 4;
+  map<string, string> annotations = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+  string created_by = 8;
+  int64 version = 9;
+}
+
+// Status enum for resources
+enum ResourceStatus {
+  RESOURCE_STATUS_UNSPECIFIED = 0;
+  RESOURCE_STATUS_ACTIVE = 1;
+  RESOURCE_STATUS_INACTIVE = 2;
+  RESOURCE_STATUS_ERROR = 3;
+  RESOURCE_STATUS_DELETING = 4;
+}

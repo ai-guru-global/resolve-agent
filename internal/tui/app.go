@@ -9,12 +9,12 @@ import (
 
 var (
 	titleStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#7C3AED")).
-		MarginBottom(1)
+			Bold(true).
+			Foreground(lipgloss.Color("#7C3AED")).
+			MarginBottom(1)
 
 	statusStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#6B7280"))
+			Foreground(lipgloss.Color("#6B7280"))
 )
 
 // Model is the main TUI application model.
@@ -68,7 +68,7 @@ func (m Model) View() string {
 		return "Goodbye!\n"
 	}
 
-	s := titleStyle.Render("ResolveNet Dashboard")
+	s := titleStyle.Render("ResolveAgent Dashboard")
 	s += "\n"
 	s += statusStyle.Render(fmt.Sprintf("View: %s | Size: %dx%d", m.currentView, m.width, m.height))
 	s += "\n\n"

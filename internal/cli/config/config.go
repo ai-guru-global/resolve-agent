@@ -75,7 +75,7 @@ func newInitCmd() *cobra.Command {
 		Use:   "init",
 		Short: "Initialize default configuration",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println("Initializing default ResolveNet configuration...")
+			fmt.Println("Initializing default ResolveAgent configuration...")
 			// TODO: Create default config file
 			return nil
 		},

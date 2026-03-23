@@ -4,9 +4,9 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: resolvenet
-      POSTGRES_PASSWORD: resolvenet
-      POSTGRES_DB: resolvenet
+      POSTGRES_USER: resolveagent
+      POSTGRES_PASSWORD: resolveagent
+      POSTGRES_DB: resolveagent
     ports:
       - "5432:5432"
     volumes:

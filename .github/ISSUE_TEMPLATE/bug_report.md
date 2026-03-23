@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a bug in ResolveNet
+about: Report a bug in ResolveAgent
 title: "[Bug] "
 labels: bug
 assignees: ""
@@ -16,7 +16,7 @@ Steps to reproduce the behavior.
 What you expected to happen.
 
 **Environment**
-- ResolveNet version:
+- ResolveAgent version:
 - OS:
 - Deployment: (Docker/K8s/local)
 

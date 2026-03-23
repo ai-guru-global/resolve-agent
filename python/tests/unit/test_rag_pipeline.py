@@ -1,6 +1,6 @@
 """Unit tests for the RAG Pipeline."""
 
-from resolvenet.rag.ingest.chunker import TextChunker
+from resolveagent.rag.ingest.chunker import TextChunker
 
 
 def test_fixed_chunking():

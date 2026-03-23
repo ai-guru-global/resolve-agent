@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/ai-guru-global/resolve-net/pkg/version"
+	"github.com/ai-guru-global/resolve-agent/pkg/version"
 )
 
 // registerHTTPRoutes sets up REST API routes.

@@ -6,11 +6,11 @@ services:
       target: builder
     volumes:
       - ../../:/app
-    command: ["go", "run", "./cmd/resolvenet-server"]
+    command: ["go", "run", "./cmd/resolveagent-server"]
     environment:
-      RESOLVENET_SERVER_HTTP_ADDR: ":8080"
+      RESOLVEAGENT_SERVER_HTTP_ADDR: ":8080"
 
   runtime:
     volumes:
       - ../../python:/app
-    command: ["uv", "run", "python", "-m", "resolvenet.runtime.server"]
+    command: ["uv", "run", "python", "-m", "resolveagent.runtime.server"]

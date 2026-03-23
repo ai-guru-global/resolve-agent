@@ -1,8 +1,8 @@
-# ResolveNet Governance
+# ResolveAgent Governance
 
 ## Overview
 
-ResolveNet follows a transparent, community-driven governance model aligned with CNCF best practices.
+ResolveAgent follows a transparent, community-driven governance model aligned with CNCF best practices.
 
 ## Roles
 

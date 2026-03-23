@@ -1,6 +1,6 @@
 # FTA 工作流引擎
 
-故障树分析（Fault Tree Analysis, FTA）工作流引擎是 ResolveNet 的核心组件之一，支持构建和执行复杂的多步骤决策流程。
+故障树分析（Fault Tree Analysis, FTA）工作流引擎是 ResolveAgent 的核心组件之一，支持构建和执行复杂的多步骤决策流程。
 
 ---
 
@@ -8,7 +8,7 @@
 
 ### 什么是 FTA？
 
-故障树分析是一种**自顶向下的演绎分析方法**，通过逻辑门将顶级事件分解为基本事件，形成树状结构。在 ResolveNet 中，我们扩展了传统 FTA 的概念，使其能够：
+故障树分析是一种**自顶向下的演绎分析方法**，通过逻辑门将顶级事件分解为基本事件，形成树状结构。在 ResolveAgent 中，我们扩展了传统 FTA 的概念，使其能够：
 
 - 使用**技能（Skills）**作为叶节点评估器
 - 使用**RAG 管道**进行知识检索
@@ -376,16 +376,16 @@ async for event in fta_engine.execute(tree, context):
 
 ```bash
 # 从 YAML 文件创建
-resolvenet workflow create -f workflow.yaml
+resolveagent workflow create -f workflow.yaml
 
 # 交互式创建
-resolvenet workflow create --interactive
+resolveagent workflow create --interactive
 ```
 
 #### API 方式
 
 ```python
-from resolvenet import WorkflowClient
+from resolveagent import WorkflowClient
 
 client = WorkflowClient()
 
@@ -407,21 +407,21 @@ workflow = client.create_workflow({
 
 ```bash
 # 执行工作流
-resolvenet workflow run incident-diagnosis
+resolveagent workflow run incident-diagnosis
 
 # 带参数执行
-resolvenet workflow run incident-diagnosis \
+resolveagent workflow run incident-diagnosis \
   --param "log_source=/var/log/myapp" \
   --param "time_range=2h"
 
 # 查看执行详情
-resolvenet workflow executions incident-diagnosis
+resolveagent workflow executions incident-diagnosis
 ```
 
 #### API 方式
 
 ```python
-from resolvenet import WorkflowClient
+from resolveagent import WorkflowClient
 
 client = WorkflowClient()
 
@@ -440,7 +440,7 @@ async for event in client.execute_workflow(
 
 ```bash
 # 验证工作流定义
-resolvenet workflow validate -f workflow.yaml
+resolveagent workflow validate -f workflow.yaml
 ```
 
 验证内容：
@@ -453,7 +453,7 @@ resolvenet workflow validate -f workflow.yaml
 
 ## 可视化编辑器
 
-ResolveNet WebUI 提供可视化的 FTA 工作流编辑器（基于 React Flow）。
+ResolveAgent WebUI 提供可视化的 FTA 工作流编辑器（基于 React Flow）。
 
 ### 功能特性
 
@@ -539,26 +539,26 @@ client.execute_workflow(
 
 ```bash
 # 查看工作流执行历史
-resolvenet workflow executions my-workflow
+resolveagent workflow executions my-workflow
 
 # 查看特定执行详情
-resolvenet workflow execution <execution-id>
+resolveagent workflow execution <execution-id>
 ```
 
 ### 指标
 
 ```prometheus
 # 工作流执行总数
-resolvenet_workflow_executions_total{workflow_id="incident-diagnosis"} 100
+resolveagent_workflow_executions_total{workflow_id="incident-diagnosis"} 100
 
 # 执行耗时
-resolvenet_workflow_execution_duration_seconds{workflow_id="incident-diagnosis"} 
+resolveagent_workflow_execution_duration_seconds{workflow_id="incident-diagnosis"} 
 
 # 节点评估耗时
-resolvenet_workflow_node_evaluation_seconds{node_id="check-error-logs"}
+resolveagent_workflow_node_evaluation_seconds{node_id="check-error-logs"}
 
 # 门评估结果
-resolvenet_workflow_gate_results_total{gate_id="gate-evidence", result="true"} 85
+resolveagent_workflow_gate_results_total{gate_id="gate-evidence", result="true"} 85
 ```
 
 ---
@@ -615,7 +615,7 @@ service WorkflowService {
 ### Python SDK
 
 ```python
-from resolvenet.fta import FTAEngine, FaultTree
+from resolveagent.fta import FTAEngine, FaultTree
 
 # 创建引擎
 engine = FTAEngine()

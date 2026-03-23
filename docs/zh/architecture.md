@@ -1,16 +1,16 @@
 # 架构设计
 
-本文档深入介绍 ResolveNet 的系统架构、设计理念和核心组件。
+本文档深入介绍 ResolveAgent 的系统架构、设计理念和核心组件。
 
 ---
 
 ## 设计理念
 
-ResolveNet 的设计遵循以下核心原则：
+ResolveAgent 的设计遵循以下核心原则：
 
 ### 1. 统一智能路由
 
-传统的 AI Agent 系统通常采用固定的处理流程，而 ResolveNet 通过**智能选择器（Intelligent Selector）**实现动态路由，根据用户意图自动选择最优的执行路径。
+传统的 AI Agent 系统通常采用固定的处理流程，而 ResolveAgent 通过**智能选择器（Intelligent Selector）**实现动态路由，根据用户意图自动选择最优的执行路径。
 
 ### 2. 可组合的能力层
 
@@ -405,7 +405,7 @@ class MegaAgent(BaseAgent):
 
 ### OpenTelemetry 集成
 
-ResolveNet 全面集成 OpenTelemetry，提供三大支柱：
+ResolveAgent 全面集成 OpenTelemetry，提供三大支柱：
 
 | 类型 | 工具 | 用途 |
 |------|------|------|
@@ -417,22 +417,22 @@ ResolveNet 全面集成 OpenTelemetry，提供三大支柱：
 
 ```
 # Agent 执行指标
-resolvenet_agent_executions_total          # 执行总数
-resolvenet_agent_execution_duration_seconds # 执行耗时
-resolvenet_agent_execution_errors_total     # 错误数
+resolveagent_agent_executions_total          # 执行总数
+resolveagent_agent_execution_duration_seconds # 执行耗时
+resolveagent_agent_execution_errors_total     # 错误数
 
 # 选择器指标
-resolvenet_selector_decisions_total         # 决策总数
-resolvenet_selector_decision_latency_seconds # 决策延迟
-resolvenet_selector_confidence_histogram    # 置信度分布
+resolveagent_selector_decisions_total         # 决策总数
+resolveagent_selector_decision_latency_seconds # 决策延迟
+resolveagent_selector_confidence_histogram    # 置信度分布
 
 # 技能指标
-resolvenet_skill_invocations_total          # 调用总数
-resolvenet_skill_duration_seconds           # 执行时长
+resolveagent_skill_invocations_total          # 调用总数
+resolveagent_skill_duration_seconds           # 执行时长
 
 # RAG 指标
-resolvenet_rag_queries_total                # 查询总数
-resolvenet_rag_retrieval_latency_seconds   # 检索延迟
+resolveagent_rag_queries_total                # 查询总数
+resolveagent_rag_retrieval_latency_seconds   # 检索延迟
 ```
 
 ---

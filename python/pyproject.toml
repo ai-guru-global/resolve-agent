@@ -28,6 +28,9 @@ dependencies = [
     "opentelemetry-sdk>=1.28.0",
 ]
 
+[project.scripts]
+resolveagent-docsync = "resolveagent.docsync.cli:main"
+
 [project.optional-dependencies]
 rag = [
     "pymilvus>=2.4.0",

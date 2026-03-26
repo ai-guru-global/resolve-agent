@@ -1,0 +1,61 @@
+terms:
+  - zh: 一致性感知的层次化效用校准路由框架
+    en: consistency-aware hierarchical utility-calibrated routing framework
+    category: paper-title
+  - zh: 智能选择器
+    en: Intelligent Selector
+    category: architecture
+  - zh: 单一真相源
+    en: Single Source of Truth
+    category: architecture
+    en_aliases:
+      - single source of truth
+  - zh: 控制平面一致性
+    en: control-plane consistency
+    category: architecture
+  - zh: 一致性感知正则
+    en: consistency-aware regularization
+    category: method
+  - zh: 反事实稳定性
+    en: counterfactual stability
+    category: method
+  - zh: 路线翻转率
+    en: route flip rate
+    category: metric
+  - zh: 首次响应质量
+    en: first-response quality
+    category: metric
+  - zh: 结构化故障诊断
+    en: structured fault diagnosis
+    category: method
+    en_aliases:
+      - structured diagnosis
+  - zh: 运维知识检索
+    en: operational knowledge retrieval
+    category: method
+  - zh: 权限受限技能执行
+    en: permission-bounded skill execution
+    category: runtime
+  - zh: 证据覆盖率
+    en: evidence coverage
+    category: method
+  - zh: 有界 Multi
+    en: bounded Multi route
+    category: method
+    en_aliases:
+      - budget-bounded Multi
+      - budget-bounded multi-route composition
+      - guarded multi-route composition
+      - budgeted multi route
+      - bounded multi fallback
+  - zh: 故障树分析
+    en: fault-tree analysis
+    category: method
+    en_aliases:
+      - fault-tree diagnosis
+  - zh: 工具调用
+    en: tool invocation
+    category: method
+  - zh: 运维知识库
+    en: operations knowledge base
+    category: corpus

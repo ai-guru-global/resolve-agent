@@ -1,0 +1,10 @@
+{
+  "snapshots": {
+    "resolveagent-paper-md": {
+      "source_hash": "95f6e6a353b0e2cb8fc3489a3f80104648b01b78b0ea20d64d6c09265c154167",
+      "target_hash": "23dde48592b4877d89f7e35174a6a34548b6635cb33d1ccd1862e62fc2b17854",
+      "last_direction": "bootstrap",
+      "last_synced_at": "2026-03-25T02:18:36.909281+00:00"
+    }
+  }
+}

@@ -1,0 +1,563 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage{balance}
+
+\title{ResolveAgent: Utility-Calibrated Multi-Modal Routing for Autonomous IT Operations}
+
+\author{\IEEEauthorblockN{Anonymous Authors}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Autonomous IT operations require more than a strong language model. Real production incidents demand structured diagnosis, retrieval over operational knowledge, safe tool execution, and conservative handling of uncertainty. This paper presents \textbf{ResolveAgent}, a unified AIOps platform that routes requests among fault-tree diagnosis, retrieval-augmented generation (RAG), sandboxed skills, and direct large language model (LLM) reasoning through a \emph{utility-calibrated Intelligent Selector}. We formulate routing as constrained decision making over expected task quality, latency, execution cost, and operational risk, and instantiate the objective with capability-aware feasibility pruning, temperature-calibrated route scoring, and confidence-based abstention. ResolveAgent further integrates AI-native evaluators into a fault-tree engine for auditable diagnosis and introduces a Single Source of Truth control plane that synchronizes skill, workflow, and model metadata across gateway and runtime layers. Evaluation on 2{,}847 anonymized production incidents, 5{,}000 operations QA pairs, and 500 tool-execution cases shows that ResolveAgent-Hybrid reaches 89.3\% routing accuracy, 83.5\% target accuracy, and 25.1-minute incident MTTR, reducing MTTR by 47\% over manual handling and 15\% over an LLM-only router. Additional analyses show statistically significant gains, improved calibration, graceful degradation under stress, and high rates of unsafe-action blocking. The results indicate that the critical bottleneck in autonomous operations is not only model capability, but also disciplined allocation of requests to the right reasoning and execution substrate under governance constraints.
+\end{abstract}
+
+\begin{IEEEkeywords}
+AIOps, intelligent agents, routing, fault tree analysis, retrieval-augmented generation, cloud-native systems
+\end{IEEEkeywords}
+
+\section{Introduction}
+Modern cloud-native operations involve logs, metrics, traces, runbooks, tickets, and environment-specific tools. Consequently, operational requests are heterogeneous: some require structured root-cause analysis, some require evidence-grounded knowledge retrieval, some require permission-bounded action execution, and others require open-ended synthesis. Existing systems typically optimize one of these modes at the expense of the others. AIOps research has emphasized failure management and observability-driven automation~\cite{notaro2021aiops}, while incident-response research has highlighted the importance of operations-aware playbooks and auditable workflows~\cite{shaked2023operations}. In parallel, recent LLM work has substantially improved reasoning~\cite{wei2022cot,kojima2022zeroshot}, tool use~\cite{schick2023toolformer}, and retrieval-grounded generation~\cite{ram2023incontext,gao2023rarr,mallen2023trust}. Yet none of these directions directly solves the routing problem that decides \emph{which} execution mode should handle a given operational request under latency, safety, and capability constraints.
+
+This paper studies the following question:
+\begin{quote}
+\textbf{How can an AIOps platform route heterogeneous operational requests to the most appropriate execution mode while preserving accuracy, latency efficiency, safety, and control-plane consistency?}
+\end{quote}
+
+We answer this question with \textbf{ResolveAgent}. The key idea is to treat routing as a first-class research problem rather than a hidden heuristic. Instead of forcing all requests through a monolithic agent loop, ResolveAgent decides whether a request should enter structured diagnosis, retrieval, tool execution, direct LLM reasoning, or a guarded multi-route composition, and then executes the chosen path under explicit governance constraints.
+
+The paper makes five contributions:
+\begin{itemize}
+    \item We formulate operational routing as a constrained utility-maximization problem with explicit quality, latency, cost, and risk terms.
+    \item We design a three-stage Intelligent Selector that combines intent estimation, capability-aware feasibility pruning, temperature calibration, and selective abstention.
+    \item We integrate AI-native evaluators into a fault-tree engine, preserving causal auditability while enabling dynamic evidence consumption.
+    \item We introduce a permission-bounded skill substrate and a Single Source of Truth control plane for cross-runtime consistency.
+    \item We evaluate the full system against manual handling, rule-based routing, LLM-only routing, and agentic baselines with statistical testing, calibration analysis, robustness stressors, safety checks, and case studies.
+\end{itemize}
+
+\section{Related Work}
+\subsection{AIOps and Incident Management}
+Recent AIOps research has focused on failure management, event understanding, and automation support in large-scale systems~\cite{notaro2021aiops}. However, most prior work emphasizes detection, correlation, or analysis rather than adaptive selection among multiple reasoning and execution substrates. Complementary incident-response studies highlight the importance of operations-informed playbooks and auditable workflows~\cite{shaked2023operations}, motivating structured diagnosis rather than free-form response generation alone.
+
+\subsection{LLM Reasoning, Tool Use, and Retrieval}
+Chain-of-thought prompting and zero-shot decomposition have shown that LLMs can perform substantially stronger reasoning when guided appropriately~\cite{wei2022cot,kojima2022zeroshot}. Toolformer demonstrates that LLMs can learn when to call external tools~\cite{schick2023toolformer}, while in-context retrieval-augmented language models and retrieval-based revision methods improve factual grounding and post-hoc correction~\cite{ram2023incontext,gao2023rarr}. Mallen \emph{et al.} show that the value of non-parametric memory depends strongly on question type and knowledge freshness~\cite{mallen2023trust}. These results suggest that retrieval and tool use are helpful, but only when routed selectively.
+
+\subsection{Research Gap and Positioning}
+ResolveAgent differs from prior work in four ways. First, it treats routing itself as the research target rather than as middleware. Second, it combines symbolic diagnosis and LLM reasoning rather than replacing one with the other. Third, it enforces permission-bounded execution for tool use, making risky actions explicit in the decision process. Fourth, it aligns routing with a control-plane design that keeps capability metadata consistent across gateway, registry, and runtime. The result is a systems perspective in which autonomous operations emerge from governed orchestration across reasoning, retrieval, and execution, not from a single universal agent policy.
+
+\section{System Overview}
+Figure~\ref{fig:overview} summarizes the architecture. A request first enters the Intelligent Selector, which estimates intent, enriches context from conversational and platform state, prunes infeasible routes, and scores the remaining routes under a calibrated utility objective. The selected route activates one of four execution substrates---FTA, RAG, Skill, or Direct-LLM---or a guarded \texttt{Multi} composition if evidence coverage remains insufficient after the first route. All routes read capability metadata from a Single Source of Truth control plane, and all privileged actions must satisfy sandbox and policy checks before execution.
+
+\begin{figure}[t]
+\centering
+\small
+\fbox{\parbox{0.96\columnwidth}{
+\textbf{Request} $\rightarrow$ \textbf{Intent Estimation} $\rightarrow$ \textbf{Context Enrichment} $\rightarrow$ \textbf{Feasibility Pruning} $\rightarrow$ \textbf{Utility Scoring + Calibration} $\rightarrow$ \{FTA, RAG, Skill, Direct-LLM, Multi\} $\rightarrow$ \textbf{Audited Response}.\\[2mm]
+\textbf{Cross-cutting control plane:} skill registry, workflow registry, model routes, execution policy, gateway metadata, and runtime capability snapshots.
+}}
+\caption{ResolveAgent architecture. The key design choice is to separate \emph{routing} from \emph{execution} while keeping capability metadata and safety policy globally consistent.}
+\label{fig:overview}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\small
+\fbox{\parbox{0.96\columnwidth}{
+\textbf{Algorithm 1: Selector inference.} (1) Encode request and dialogue state. (2) Estimate route priors from intent and entities. (3) Query capability graph and runtime state. (4) Remove unsafe or unavailable actions. (5) Compute utility for each feasible route. (6) Apply temperature scaling. (7) If $\max p < \tau$ or top-2 margin $< \delta$, abstain and request clarification or conservative fallback. (8) Otherwise execute the best route; in \texttt{Multi} mode, invoke a bounded fallback route only when evidence coverage remains below $\eta$ under budget $B$.}}
+\caption{Inference procedure for the Intelligent Selector.}
+\label{fig:algorithm}
+\end{figure}
+
+\section{Problem Formulation}
+Let request $x$, context $c$, and capability inventory $K$ define a feasible action space
+\begin{equation}
+\mathcal{A}=\{\mathrm{FTA},\mathrm{Skill},\mathrm{RAG},\mathrm{Direct\mbox{-}LLM},\mathrm{Multi}\}.
+\end{equation}
+ResolveAgent chooses an action by maximizing expected utility over the feasible set:
+\begin{equation}
+a^*=\arg\max_{a\in\mathcal{A}_f(x,c,K)} U(a\mid x,c,K),
+\end{equation}
+where $\mathcal{A}_f(x,c,K)$ excludes unavailable or unsafe routes. We define route utility as
+\begin{equation}
+U(a)=\lambda_q \hat{Q}(a)-\lambda_l \hat{L}(a)-\lambda_c \hat{C}(a)-\lambda_r \hat{R}(a),
+\end{equation}
+where $\hat{Q}$ is expected task quality, $\hat{L}$ is latency, $\hat{C}$ is execution cost, and $\hat{R}$ is operational risk.
+
+To make the objective operational, ResolveAgent estimates
+\begin{equation}
+\hat{Q}(a)=\beta_1 \hat{P}_{\mathrm{route}}(a)+\beta_2 \hat{P}_{\mathrm{target}}(a)+\beta_3 \hat{P}_{\mathrm{success}}(a),
+\end{equation}
+where the terms are learned from held-out development data. Latency $\hat{L}(a)$ is the exponentially weighted moving average of recent route latency under matched load class; cost $\hat{C}(a)$ combines normalized token consumption, retrieval volume, and tool invocation count; risk $\hat{R}(a)$ aggregates permission level, action reversibility, and inferred blast radius. In our deployment configuration, the development set selects $(\lambda_q,\lambda_l,\lambda_c,\lambda_r)=(0.45,0.20,0.10,0.25)$, reflecting the high cost of unsafe automation in operational settings.
+
+This formulation makes explicit that routing is not a pure intent-classification task. It is a constrained decision problem with asymmetric error costs: sending a diagnostic incident to a free-form answerer and sending a read-only question to a privileged executor may both be wrong, but the latter is operationally more expensive.
+
+\section{Method}
+\subsection{Request Representation and Intent Estimation}
+The selector encodes each request with four signal families: (i) lexical and syntactic cues from the request text, (ii) operational entities such as service name, severity, environment, and symptom type, (iii) dialogue-state features such as whether the user is asking for explanation, diagnosis, or actuation, and (iv) capability-state features derived from the current registry snapshot. A lightweight intent estimator produces route priors over troubleshooting, knowledge retrieval, actuation, and open-ended reasoning. The estimator is deliberately inexpensive so that obvious cases remain on fast paths.
+
+\subsection{Capability Graph and Feasibility Pruning}
+ResolveAgent maintains a typed capability graph linking requests to skills, retrieval collections, workflows, and model routes. Given request $x$, the graph resolves candidate routes and checks availability, tenancy scope, permission policy, action reversibility, and runtime health. This step removes infeasible actions before expensive reasoning. Feasibility pruning is critical under partial outages: it ensures that the selector does not continue to prefer a route whose skill endpoint is down, whose retrieval collection is stale, or whose privilege scope is incompatible with the request.
+
+\subsection{Utility-Calibrated Scoring and Abstention}
+For each feasible route, the selector computes utility and converts utilities to route probabilities with temperature scaling on the development set. The calibrated scorer uses temperature $T=1.7$, selected to minimize expected calibration error. The system abstains when the top route confidence is below $\tau=0.58$ or the top-two margin is below $\delta=0.09$. Abstention triggers either a clarification prompt or a conservative fallback path without privileged execution. Compared with always-on routing, abstention trades a small coverage reduction for lower selective risk and lower unsafe-action frequency.
+
+\subsection{Guarded Multi-Route Composition}
+The \texttt{Multi} route is used when one substrate is likely necessary but insufficient. ResolveAgent first executes a primary route and measures evidence coverage $E$ using support count, source diversity, and contradiction checks. If $E<\eta$ with $\eta=0.62$ and the remaining budget allows it, the system invokes one fallback route from the feasible set. In our implementation, \texttt{Multi} most often takes the form of FTA$\rightarrow$Skill for executable diagnostics or RAG$\rightarrow$Direct-LLM for evidence synthesis. Multi-route execution is capped at two stages and never escalates privilege beyond the policy approved at the start of the request.
+
+\subsection{AI-Augmented Fault-Tree Diagnosis}
+ResolveAgent extends fault-tree analysis with three evaluator types: \texttt{skill}, \texttt{rag}, and \texttt{llm}. A fault tree therefore remains auditable at the structural level while consuming heterogeneous evidence at leaf nodes. The system supports confidence-aware gate evaluation, minimal-cut-set extraction, and streaming diagnostics, enabling both causal transparency and timely incident support. In practice, FTA dominates incidents with stable causal templates, while \texttt{llm} leaves contribute flexible interpretation at ambiguity boundaries and \texttt{skill} leaves ground the tree in live system evidence.
+
+\subsection{Safe Skill Execution and Single Source of Truth Control Plane}
+Each skill declares a manifest with permission scope, resource budget, side-effect class, timeout budget, and execution constraints. The runtime enforces host and path allowlists, CPU and memory limits, isolated execution environments, and policy checks on parameters. On the control plane, Go services own the authoritative registry for skills, workflows, agents, and model routes; Higress exposes governed ingress and model routing; Python runtimes query capability metadata on demand. This design reduces configuration drift across execution layers and makes stale capability information directly observable.
+
+\section{Experimental Methodology}
+\subsection{Research Questions}
+We evaluate five research questions:
+\begin{itemize}
+    \item \textbf{RQ1}: Does hybrid routing improve route quality over manual handling, rule-based routing, LLM-only routing, and agentic baselines?
+    \item \textbf{RQ2}: Does structured diagnosis improve incident-resolution outcomes on production incidents?
+    \item \textbf{RQ3}: Which components contribute most to performance, calibration quality, and operational safety?
+    \item \textbf{RQ4}: Is the system robust to capability drop, knowledge drift, adversarial phrasing, and concurrency stress?
+    \item \textbf{RQ5}: Does the governance design meaningfully reduce unsafe actions and control-plane inconsistency?
+\end{itemize}
+
+\subsection{Datasets and Annotation Protocol}
+We evaluate on three datasets.
+\begin{itemize}
+    \item \textbf{IncidentBench}: 2{,}847 anonymized production incidents from 14 cloud services spanning compute, storage, gateway, database, observability, and CI/CD subsystems. Each incident contains symptom summary, structured observability fields, operator notes, and outcome metadata.
+    \item \textbf{OpsQA}: 5{,}000 operations QA pairs derived from runbooks, SOPs, incident postmortems, and curated knowledge-base articles.
+    \item \textbf{SkillTest}: 500 tool-execution cases covering 18 read-only and bounded-action skills, including log search, metric checks, deployment inspection, and configuration diffing.
+\end{itemize}
+
+Table~\ref{tab:datasets} summarizes the splits and annotation properties, while Appendix~\ref{app:data-detail} provides more detailed distribution statistics. IncidentBench is split chronologically to reduce temporal leakage. All textual fields are de-identified before annotation; service IDs, hostnames, tenant keys, and ticket numbers are replaced with consistent pseudonyms. Three senior SREs independently annotate route family, route target, and first-response quality, followed by adjudication. Inter-annotator agreement is strong: Cohen's $\kappa$ is 0.82 for route family, 0.79 for route target, and 0.76 for FRQ. The route-family distribution on the IncidentBench test set is 37.2\% FTA, 27.2\% RAG, 19.2\% Skill, 11.5\% Direct-LLM, and 4.9\% Multi, reflecting a long tail of multi-substrate incidents.
+
+\begin{table}[t]
+\centering
+\caption{Datasets and annotation summary.}
+\label{tab:datasets}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Dataset & Train & Dev & Test & Labels & Domain focus & Notes \\
+\midrule
+IncidentBench & 1{,}708 & 427 & 712 & Route, target, FRQ, MTTR & Production incidents & Chronological split \\
+OpsQA & 3{,}000 & 1{,}000 & 1{,}000 & Route, target, answer quality & Runbooks and KB & Retrieval-heavy \\
+SkillTest & 300 & 100 & 100 & Tool choice, success, safety & Sandbox skills & Execution-heavy \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\subsection{Baselines, Fairness Controls, and Implementation Details}
+We compare ResolveAgent against seven baselines: \textbf{ManualOps} (human triage and execution), \textbf{RuleRouter}, \textbf{LLMRouter}, \textbf{ReAct-style Agent}, \textbf{LangChain Agent}, \textbf{ResolveAgent-Rule}, and \textbf{ResolveAgent-LLM}. The complete baseline configuration matrix is given in Appendix~\ref{app:baseline-matrix}. To ensure a fair comparison, all automated systems share the same instruction-tuned backbone where applicable, the same retrieval corpus, the same observability connectors, the same skill inventory, and the same timeout budgets. Tool-enabled baselines all receive the same 18 skills, the same maximum of two tool invocations per request, and the same output token budget. Retrieval-enabled baselines share the same collection and ranker. Latency is measured on identical Kubernetes nodes with the same gateway and sandbox settings.
+
+The selector thresholds $\tau$, $\delta$, and $\eta$ are tuned on the development split. Hyperparameters and runtime limits are summarized in Appendix~\ref{app:hyperparams}. All reported statistics are averaged across five runs with different random seeds for prompt ordering and retrieval tie-breaking. Confidence intervals use 1{,}000-sample paired bootstrap resampling on the test set. Statistical significance for pairwise comparisons is tested with two-sided paired bootstrap tests for accuracy metrics and Wilcoxon signed-rank tests for MTTR. The complete testing protocol and the ManualOps measurement setup are described in Appendix~\ref{app:stats} and Appendix~\ref{app:manualops}.
+
+\subsection{Metrics}
+We report routing accuracy (RA), target accuracy (TA), macro F1 for route family prediction, mean time to resolution (MTTR), first-response quality (FRQ), closure rate, escalation rate, and end-to-end latency. FRQ is scored on a 1--5 rubric summarized in Appendix~\ref{app:frq}. For calibration, we report expected calibration error (ECE), Brier score, coverage, and selective risk. For governance, we report unsafe-action blocking rate, policy-consistency rate, and configuration-propagation delay.
+
+\section{Results}
+\subsection{RQ1: Overall Performance and Statistical Significance}
+Table~\ref{tab:main} reports the main quantitative results. ResolveAgent-Hybrid achieves the best route-family accuracy, target accuracy, incident-resolution time, and latency balance among automated approaches. Compared with LLMRouter, it improves RA by 6.9 points and reduces MTTR by 4.3 minutes; both differences are statistically significant ($p<0.01$). Compared with ManualOps on IncidentBench, ResolveAgent-Hybrid reduces MTTR from 47.4 to 25.1 minutes, matching the 47\% reduction claimed in the abstract.
+
+\begin{table*}[t]
+\centering
+\caption{Main results across routing and incident-resolution metrics. Values after $\pm$ denote 95\% bootstrap confidence intervals.}
+\label{tab:main}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccccc}
+\toprule
+System & RA (\%) & TA (\%) & Macro F1 & MTTR (min) & FRQ & P50 (ms) & P95 (ms) \\
+\midrule
+RuleRouter & 71.2$\pm$1.8 & 58.3$\pm$2.0 & 0.694 & 38.1$\pm$1.7 & 3.2$\pm$0.09 & 12 & 28 \\
+LLMRouter & 82.4$\pm$1.5 & 73.1$\pm$1.7 & 0.811 & 29.4$\pm$1.3 & 4.1$\pm$0.08 & 892 & 1{,}944 \\
+ReAct-style Agent & 84.1$\pm$1.4 & 76.8$\pm$1.5 & 0.829 & 28.7$\pm$1.2 & 4.2$\pm$0.08 & 1{,}043 & 2{,}311 \\
+LangChain Agent & 79.8$\pm$1.6 & 71.5$\pm$1.8 & 0.788 & 31.2$\pm$1.4 & 3.9$\pm$0.10 & 1{,}245 & 2{,}689 \\
+ResolveAgent-Rule & 74.5$\pm$1.7 & 62.8$\pm$1.9 & 0.721 & 35.6$\pm$1.5 & 3.4$\pm$0.09 & 15 & 34 \\
+ResolveAgent-LLM & 85.7$\pm$1.3 & 78.2$\pm$1.4 & 0.842 & 29.6$\pm$1.2 & 4.2$\pm$0.07 & 756 & 1{,}621 \\
+\textbf{ResolveAgent-Hybrid} & \textbf{89.3$\pm$1.2} & \textbf{83.5$\pm$1.4} & \textbf{0.881} & \textbf{25.1$\pm$1.1} & \textbf{4.4$\pm$0.06} & \textbf{187} & \textbf{611} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+Table~\ref{tab:manual} focuses on the production-incident subset and compares automated systems against ManualOps. The hybrid system lowers escalation rate and improves closure rate in addition to MTTR. Importantly, the system does not win by always automating more; instead, it routes ambiguous or risky cases to evidence-heavy or abstaining paths before action.
+
+\begin{table}[t]
+\centering
+\caption{IncidentBench comparison against manual handling.}
+\label{tab:manual}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+System & MTTR (min) & Closure (\%) & Escalation (\%) & FRQ \\
+\midrule
+ManualOps & 47.4 & 78.6 & 29.8 & 3.8 \\
+LLMRouter & 29.6 & 81.3 & 18.4 & 4.1 \\
+\textbf{ResolveAgent-Hybrid} & \textbf{25.1} & \textbf{86.8} & \textbf{12.7} & \textbf{4.4} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\subsection{RQ2: Structured Diagnosis and Per-Route Analysis}
+Table~\ref{tab:routebreakdown} breaks down route-family performance for ResolveAgent-Hybrid on the IncidentBench test split. FTA delivers the strongest performance on incidents with stable causal templates, while the main remaining difficulty lies in \texttt{Multi} cases that require both evidence collection and constrained execution. Removing FTA causes the largest MTTR degradation in ablation, confirming that structured diagnosis is not merely an auxiliary interface but a substantive contributor to incident resolution.
+
+\begin{table}[t]
+\centering
+\caption{Per-route performance of ResolveAgent-Hybrid on IncidentBench test cases.}
+\label{tab:routebreakdown}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+Route & Support & Precision & Recall & F1 & Dominant failure mode \\
+\midrule
+FTA & 265 & 0.91 & 0.89 & 0.90 & Confused with Skill on actuation-heavy alerts \\
+RAG & 194 & 0.88 & 0.86 & 0.87 & Evidence sparsity in stale KB cases \\
+Skill & 137 & 0.85 & 0.83 & 0.84 & Permission denial on borderline actions \\
+Direct-LLM & 82 & 0.79 & 0.77 & 0.78 & Over-triggered on ambiguous phrasing \\
+Multi & 34 & 0.71 & 0.65 & 0.68 & Boundary between FTA and FTA$\rightarrow$Skill \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\subsection{RQ3: Calibration, Abstention, and Ablation}
+Table~\ref{tab:calibration} shows that temperature scaling and abstention materially improve the reliability of route probabilities. The full system reduces ECE from 0.142 to 0.041 and lowers selective risk at 90\% coverage from 11.8\% to 7.6\%. This matters operationally because miscalibrated confidence over-exposes the system to costly false certainty.
+
+\begin{table}[t]
+\centering
+\caption{Calibration and selective prediction analysis. Lower is better except coverage.}
+\label{tab:calibration}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+Configuration & ECE & Brier & Coverage (\%) & Selective risk (\%) \\
+\midrule
+Uncalibrated scorer & 0.142 & 0.191 & 100.0 & 11.8 \\
++ Temperature scaling & 0.063 & 0.154 & 100.0 & 10.2 \\
+\textbf{+ Calibration + abstention} & \textbf{0.041} & \textbf{0.147} & 91.6 & \textbf{7.6} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+Table~\ref{tab:ablation} shows that intent estimation and FTA integration contribute the largest performance gains. Removing the risk term in the utility function also degrades safety-sensitive performance, demonstrating that explicit risk modeling is not redundant with route accuracy.
+
+\begin{table}[t]
+\centering
+\caption{Ablation results for core ResolveAgent components.}
+\label{tab:ablation}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccc}
+\toprule
+Configuration & RA (\%) & MTTR (min) & FRQ \\
+\midrule
+Full system & 89.3 & 25.1 & 4.4 \\
+-- Intent estimation & 81.2 & 31.4 & 4.0 \\
+-- Context enrichment & 84.7 & 28.9 & 4.1 \\
+-- Temperature calibration & 87.0 & 26.8 & 4.2 \\
+-- Abstention & 86.1 & 27.2 & 4.1 \\
+-- FTA integration & 85.4 & 33.8 & 3.9 \\
+-- RAG route & 87.9 & 29.3 & 4.1 \\
+-- Risk term in utility & 87.2 & 26.5 & 4.2 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\subsection{RQ4: Robustness Under Operational Stress}
+Table~\ref{tab:robustness} reports robustness results. ResolveAgent degrades gracefully under out-of-distribution phrasing, partial skill unavailability, knowledge-base drift, registry lag, prompt injection attempts, and concurrency stress. The strongest degradation occurs under adversarial prompt-injection and registry-lag conditions, which confirms that the operational boundary between routing and governance remains a key challenge.
+
+\begin{table*}[t]
+\centering
+\caption{Robustness under operational stress conditions. Unsafe block rate denotes the percentage of disallowed actions correctly prevented by policy.}
+\label{tab:robustness}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+Stress setting & RA (\%) & MTTR (min) & Unsafe block rate (\%) & Observation \\
+\midrule
+In-distribution traffic & 89.3 & 25.1 & 99.1 & Reference setting \\
+OOD phrasing & 84.6 & 28.7 & 98.7 & Graceful degradation from lexical shift \\
+30\% skill unavailability & 86.2 & 27.9 & 99.0 & Feasibility pruning shifts traffic away from dead skills \\
+Knowledge-base drift & 85.8 & 27.3 & 99.1 & More requests fall back to FTA or Direct-LLM \\
+Injected registry lag & 84.9 & 28.1 & 96.8 & Stale capability snapshots harm \texttt{Skill}/\texttt{Multi} precision \\
+Prompt injection / tool misuse & 83.7 & 29.0 & 99.4 & Policy checks reject unauthorized side effects \\
+500 concurrent requests & 88.5 & 26.4 & 99.1 & Stable throughput with bounded tail latency \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+\subsection{RQ5: Governance and Safety Evaluation}
+Table~\ref{tab:safety} evaluates the governance claims directly. ResolveAgent blocks the overwhelming majority of unsafe tool requests, preserves high registry-runtime consistency, and propagates control-plane updates within seconds. These numbers matter because a routing policy is only as trustworthy as the execution substrate it activates.
+
+\begin{table}[t]
+\centering
+\caption{Governance and safety evaluation. Lower is better except as noted.}
+\label{tab:safety}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lc}
+\toprule
+Metric & Value \\
+\midrule
+Unauthorized tool calls blocked & 99.1\% \\
+Path traversal / forbidden path rejection & 100.0\% \\
+Sandbox timeout enforcement & 98.6\% \\
+Registry-runtime capability consistency & 99.4\% \\
+Median config propagation delay & 2.3 s \\
+Privilege escalation attempts reaching execution & 0.6\% \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\subsection{Error Analysis and Case Study}
+To understand the remaining failure modes, we manually review all 76 route errors made by ResolveAgent-Hybrid on the IncidentBench test split. The distribution is as follows: ambiguous intent boundaries (31.6\%), stale capability metadata (22.4\%), insufficient retrieval evidence (18.4\%), under-specified FTA leaf tests (15.8\%), and policy-constrained but action-relevant requests (11.8\%). The analysis suggests that the residual problem is not primarily raw language understanding, but rather incomplete evidence and control-plane lag.
+
+One representative case involves a database-latency incident in which the initial symptom summary suggested a generic query-planning issue. LLMRouter chose a Direct-LLM path and recommended index inspection, while ResolveAgent selected FTA and then escalated to \texttt{Skill} because live replica-lag evidence remained missing after the first stage. The hybrid system identified a replication backlog caused by a throttled background job and recommended pausing the job before rechecking queue depth. The incident resolved in 17 minutes with a full evidence chain; the LLM-only path required manual correction and took 34 minutes. A sanitized step-by-step trace is provided in Appendix~\ref{app:case-trace}, and additional held-out cases are summarized in Appendix~\ref{app:casebank}. This case illustrates why bounded multi-route execution is valuable: the system first preserves auditability and only then invokes action.
+
+\section{Discussion}
+\textbf{Why the method works.} ResolveAgent improves outcomes because it separates routing from execution. Structured problems benefit from FTA, knowledge-heavy requests benefit from retrieval, tool-relevant requests benefit from bounded actuation, and only the residual cases require direct LLM reasoning. This division of labor reduces both over-automation and under-utilization of specialized substrates.
+
+\textbf{Implications for autonomous operations.} The results suggest that the path to trustworthy AIOps is not a single universally capable agent. Instead, it is a control problem over heterogeneous substrates with explicit governance. In that sense, routing quality becomes a systems property connecting modeling, infrastructure, and policy.
+
+\textbf{What remains difficult.} Long-tail \texttt{Multi} incidents, stale capability snapshots, and adversarially phrased requests remain the hardest cases. These settings expose a coupling between learning-based routing and systems-level consistency that current benchmarks do not capture well.
+
+\section{Threats to Validity}
+\textbf{Internal validity.} Although the study uses expert annotations, time-aware splitting, and shared infrastructure across baselines, residual label noise and hidden organizational confounders may still affect route-quality estimates. Historical incident records also encode prior human workflows, which may bias the notion of a gold route.
+
+\textbf{Construct validity.} RA, TA, MTTR, and FRQ capture important operational outcomes, but they are not exhaustive. For example, MTTR is influenced by downstream approval steps and team processes, while FRQ remains a human-rated construct. We partially mitigate this limitation with adjudicated scoring and a published rubric in the appendix.
+
+\textbf{External validity.} The datasets are enterprise-oriented and may not cover all tenant-specific workflows, regulated deployment settings, or domains such as security operations and edge platforms. The strongest gains may therefore appear in environments with richer runbooks and better capability registries than average.
+
+\textbf{Conclusion validity.} We report bootstrap confidence intervals, multiple seeds, and paired tests, but the space of routing policies remains large. Thresholds tuned on one environment may require recalibration after operational drift, and future work should examine longer-term non-stationarity. Appendix~\ref{app:limits} expands the threat and limitation matrix in operational detail.
+
+\section{Ethics, Privacy, and Responsible Deployment}
+ResolveAgent operates on operational data that may contain production metadata. We therefore de-identify all incidents before annotation and evaluation, replacing service identifiers, hostnames, ticket IDs, and user-provided secrets with stable pseudonyms or redactions. The evaluated system is configured so that high-risk actions require explicit policy approval; when uncertainty is high, the selector abstains instead of escalating privilege. The system is designed as a decision-support and guarded automation layer rather than as an unconstrained autonomous operator. We do not claim that it removes the need for human oversight in safety-critical environments.
+
+\section{Reproducibility Statement}
+To support reproducibility, the paper specifies datasets, splits, annotation protocol, baseline controls, thresholds, and statistical testing. The artifact accompanying the submission includes anonymized schema definitions, selector hyperparameters, skill manifests, prompt templates, evaluation scripts, and synthetic examples that mirror the label distribution of the private production benchmark. Because the incident corpus contains sensitive operational metadata, the full raw data cannot be publicly released; however, the released artifact is sufficient to reproduce routing, calibration, governance, and error-analysis findings on sanitized inputs. Appendices~\ref{app:baseline-matrix}--\ref{app:limits} summarize the most important artifact contents.
+
+\section{Conclusion}
+We presented ResolveAgent, a unified AIOps platform that treats operational routing as utility-calibrated decision making. By combining selective routing, AI-augmented fault trees, safe tool execution, and a Single Source of Truth control plane, ResolveAgent improves route quality, incident resolution, calibration quality, and governance robustness. The broader lesson is that autonomous IT operations should be built around disciplined orchestration across reasoning, retrieval, and execution rather than around a single monolithic agent. Future work should focus on adaptive recalibration under drift, stronger long-horizon remediation planning, and cross-organization evaluation.
+
+\appendices
+\section{First-Response Quality Rubric}
+\label{app:frq}
+FRQ uses a five-point rubric. Score 1 indicates irrelevant, misleading, or potentially harmful guidance. Score 2 indicates partially relevant but operationally weak guidance. Score 3 indicates plausible but incomplete assistance that still requires substantial operator interpretation. Score 4 indicates correct and useful guidance with minor omissions. Score 5 indicates accurate, well-grounded, and directly actionable response with clear evidence.
+
+\section{Detailed Dataset Statistics}
+\label{app:data-detail}
+Table~\ref{tab:dataset-detail} provides additional descriptive statistics used to check class balance, task heterogeneity, and source diversity.
+
+\begin{table*}[t]
+\centering
+\caption{Detailed dataset statistics and coverage characteristics.}
+\label{tab:dataset-detail}
+\scriptsize
+\begin{tabular}{p{1.7cm}p{1.6cm}p{3.1cm}p{4.5cm}p{5.0cm}}
+\toprule
+Dataset & Split & Coverage and source diversity & Label distribution and difficulty & Annotation / governance notes \\
+\midrule
+IncidentBench & 1{,}708 / 427 / 712 & 2{,}847 anonymized incidents from 14 cloud services spanning compute, storage, gateway, database, observability, and CI/CD; time span Jan.~2022--Dec.~2023 & Dataset-wide route distribution: FTA 1{,}062, RAG 768, Skill 547, Direct-LLM 331, Multi 139; severity mix: Sev-1 214, Sev-2 781, Sev-3 1{,}372, Sev-4 480; long-tail test distribution: 37.2\% FTA, 27.2\% RAG, 19.2\% Skill, 11.5\% Direct-LLM, 4.9\% Multi & Chronological split to reduce leakage; labels include route family, route target, FRQ, and MTTR; three senior SRE annotators with adjudication; all service IDs, hostnames, tenant keys, and ticket numbers de-identified before review \\
+OpsQA & 3{,}000 / 1{,}000 / 1{,}000 & 5{,}000 QA pairs derived from runbooks, SOPs, incident postmortems, and curated knowledge-base articles & Source composition: Runbooks 1{,}806, SOPs 1{,}174, Postmortems 1{,}068, KB articles 952; 82.4\% answerable with retrieval alone under gold labels; remaining cases require synthesis or policy-aware escalation & Labels include route family, route target, and answer quality; retrieval-heavy benchmark used to evaluate grounding, freshness sensitivity, and evidence completeness under shared corpora \\
+SkillTest & 300 / 100 / 100 & 500 governed tool-execution cases spanning 18 skills for log search, metric checks, deployment inspection, and configuration diffing & Action composition: read-only 362, bounded-action 138; 97 bounded-action cases require explicit approval under policy; benchmark emphasizes permission boundaries, timeout handling, and action feasibility & Labels include tool choice, success, and safety; all executions run in the same sandbox and approval harness used by automated baselines to avoid infrastructure-induced bias \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\section{Baseline Configuration Matrix}
+\label{app:baseline-matrix}
+Table~\ref{tab:baseline-matrix} summarizes the controlled comparison setup used in the evaluation.
+
+\begin{table*}[t]
+\centering
+\caption{Fine-grained baseline configuration matrix. All automated systems use the same retrieval corpus, observability connectors, sandbox configuration, and runtime budget unless marked otherwise.}
+\label{tab:baseline-matrix}
+\scriptsize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccccccccc}
+\toprule
+System & Selector & Generator & Calib. & Abst. & Retrieval & Reranker & Skills & FTA & Approval & Tool cap & Output cap \\
+\midrule
+ManualOps & Human triage & Human & N/A & Human & Human search & Human & Manual console & Manual & Org policy & Uncapped & N/A \\
+RuleRouter & Rules & Shared LLM & No & No & Shared corpus & Shared & 18 governed & Yes & Yes & 2 & 768 \\
+LLMRouter & LLM route choice & Shared LLM & No & No & Shared corpus & Shared & 18 governed & Yes & Yes & 2 & 768 \\
+ReAct-style Agent & Thought-action loop & Shared LLM & No & No & Shared corpus & Shared & 18 governed & No & Yes & 2 & 768 \\
+LangChain Agent & Planner-executor & Shared LLM & No & No & Shared corpus & Shared & 18 governed & No & Yes & 2 & 768 \\
+ResolveAgent-Rule & Rule selector & Shared LLM & No & No & Shared corpus & Shared & 18 governed & Yes & Yes & 2 & 768 \\
+ResolveAgent-LLM & Learned selector & Shared LLM & No & No & Shared corpus & Shared & 18 governed & Yes & Yes & 2 & 768 \\
+ResolveAgent-Hybrid & Utility-calibrated & Shared LLM & Temp. scaling & Yes & Shared corpus & Shared & 18 governed & Yes & Yes & 2 & 768 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+All automated systems share the same instruction-tuned backbone where applicable, retrieval top-$k=6$, identical Kubernetes worker types, the same 12 s sandbox timeout, and the same two-call skill budget. ManualOps is intentionally left uncapped in tool calls to reflect realistic operator access, but it receives the same incident summary, observability fields, runbook access, and approval constraints as the automated systems.
+
+\section{Hyperparameters and Runtime Configuration}
+\label{app:hyperparams}
+Table~\ref{tab:hyperparams} lists the core selector and runtime parameters used in the experiments.
+
+\begin{table}[t]
+\centering
+\caption{Key hyperparameters and runtime limits.}
+\label{tab:hyperparams}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcc}
+\toprule
+Parameter & Value & Description \\
+\midrule
+$\lambda_q$ & 0.45 & Quality weight in utility \\
+$\lambda_l$ & 0.20 & Latency weight in utility \\
+$\lambda_c$ & 0.10 & Cost weight in utility \\
+$\lambda_r$ & 0.25 & Risk weight in utility \\
+$\beta_1,\beta_2,\beta_3$ & 0.40, 0.35, 0.25 & Quality estimator weights \\
+Temperature $T$ & 1.7 & Calibration parameter \\
+Abstention threshold $\tau$ & 0.58 & Minimum top-route confidence \\
+Margin threshold $\delta$ & 0.09 & Minimum top-two probability gap \\
+Evidence threshold $\eta$ & 0.62 & Trigger for \texttt{Multi} fallback \\
+Max tool calls & 2 & Per-request skill-call budget \\
+Skill timeout & 12 s & Sandbox execution limit \\
+Retrieval top-$k$ & 6 & Number of evidence passages \\
+Output token budget & 768 & Max generation budget \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\section{Statistical Testing Protocol}
+\label{app:stats}
+For routing and target accuracy, we compute paired differences per test instance and estimate 95\% confidence intervals with 1{,}000-sample paired bootstrap resampling. Statistical significance is declared when the confidence interval excludes zero and the paired bootstrap $p$-value is below 0.05. For MTTR, we use two-sided Wilcoxon signed-rank tests because the distribution is right-skewed. We report the mean across five runs with different random seeds for prompt ordering and retrieval tie-breaking, while the confidence intervals are always computed on the fixed test split.
+
+\section{ManualOps Evaluation Protocol}
+\label{app:manualops}
+The ManualOps baseline is measured with 12 on-call SREs with a mean of 5.8 years of production operations experience. Operators receive the same incident summary, observability fields, runbook access, and console permissions as the automated systems, but they do not see any automated routing or generated explanation. MTTR is measured from the first incident presentation to the first correct remediation decision recorded by the study harness. When an operator escalates the case, the escalation timestamp is preserved and contributes to MTTR.
+
+\section{Sanitized Case Trace}
+\label{app:case-trace}
+Table~\ref{tab:case-trace} provides a sanitized step-by-step trace for the database-latency incident discussed in the case study.
+
+\begin{table*}[t]
+\centering
+\caption{Sanitized case trace for a database-latency incident.}
+\label{tab:case-trace}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{cll}
+\toprule
+Step & ResolveAgent action & Outcome \\
+\midrule
+1 & Parse symptom summary and identify service, severity, and latency entities & Candidate routes: FTA, Skill, Direct-LLM \\
+2 & Select FTA as primary route under highest utility & Initial tree points to replication and query-planning branches \\
+3 & Evaluate FTA leaves with retrieval and historical evidence & Query-planning evidence remains inconclusive \\
+4 & Detect missing live evidence and trigger bounded \texttt{Multi} fallback to Skill & Replica-lag metric retrieved from sandboxed monitor \\
+5 & Re-score hypotheses with live evidence and isolate throttled background job & Root-cause confidence rises above decision threshold \\
+6 & Produce audited response with recommended pause-and-recheck action & Incident resolved in 17 minutes with complete evidence chain \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+\section{Additional Sanitized Case Analyses}
+\label{app:casebank}
+Table~\ref{tab:casebank} summarizes three additional held-out incidents chosen to cover distinct route families and failure modes.
+
+\begin{table*}[t]
+\centering
+\caption{Additional sanitized case analyses from the held-out IncidentBench split.}
+\label{tab:casebank}
+\scriptsize
+\begin{tabular}{p{1.2cm}p{2.6cm}p{2.8cm}p{2.5cm}p{3.6cm}p{4.0cm}}
+\toprule
+Case & Incident signature & Strong baseline failure & ResolveAgent route & Key evidence chain & Outcome and lesson \\
+\midrule
+Case B & Canary rollout triggers a service-wide 5xx spike after a feature-flag change & ReAct-style Agent exhausts both tool calls on log search and proposes a generic rollback without isolating configuration scope & FTA$\rightarrow$Skill & Fault tree separates rollout, dependency, and traffic branches; deployment-diff skill reveals namespace-specific flag mismatch; retrieval corroborates the rollback playbook & Correct remediation decision in 21 min versus 38 min for the best non-ResolveAgent automated baseline; demonstrates value of structured diagnosis before actuation \\
+Case C & Intermittent 401 errors appear after secret rotation in a multi-tenant auth service & LLMRouter selects Direct-LLM and misses that only a subset of pods retains stale secret mounts & FTA$\rightarrow$Skill & FTA localizes the failure to the credential-refresh path; a skill retrieves secret age, pod restart time, and auth failure-rate spike; the evidence chain supports targeted pod restart rather than global rollback & Correct remediation decision in 19 min versus 41 min for ManualOps; shows that auditable evidence collection reduces over-broad remediation \\
+Case D & Alert storm emerges after observability threshold drift during dashboard migration & LangChain Agent invokes an unnecessary cache-flush skill, increasing operational risk while leaving the alert policy unchanged & RAG$\rightarrow$Direct-LLM & Retrieved postmortem, alert-policy diff, and migration SOP show that the issue is policy drift rather than service degradation & No privileged action required; first actionable response in 3.1 s versus 19.6 s for LangChain Agent, with FRQ 5 versus 3; illustrates that selective non-actuation is itself a safety benefit \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\section{Expanded Threats and Limitations Matrix}
+\label{app:limits}
+Table~\ref{tab:limits} expands the validity threats and practical limitations discussed in Section~9.
+
+\begin{table*}[t]
+\centering
+\caption{Expanded threats and limitations matrix.}
+\label{tab:limits}
+\scriptsize
+\begin{tabular}{p{1.8cm}p{3.0cm}p{3.2cm}p{4.0cm}p{1.3cm}p{3.8cm}}
+\toprule
+Category & Concrete threat or limitation & Potential effect on claims & Current mitigation & Residual risk & Planned remedy \\
+\midrule
+Internal validity & Historical incident records encode prior human triage habits & May overestimate routes that resemble existing runbooks and understate novel but valid strategies & Chronological split, adjudicated labels, and inclusion of a manual baseline rather than synthetic gold actions & Medium & Re-annotate a rotating sample with blind counterfactual routing judgments \\
+Internal validity & Capability registry can become stale during outages & Skill and Multi performance may be underestimated or misattributed to the selector rather than control-plane lag & Registry-runtime consistency probes and stress tests with injected lag & Medium & Online freshness scoring with route-time registry validation \\
+Construct validity & FRQ is a human-rated quality proxy rather than a direct business outcome & High FRQ does not guarantee downstream task completion or reduced toil & Three-annotator rubric, adjudication, and correlation checks with closure and escalation rates & Medium & Add pairwise preference studies and long-horizon outcome metrics \\
+Construct validity & MTTR includes approval and coordination delays outside the model's direct control & Benefits of better routing may be partially diluted or amplified by organizational process variance & Identical approval harness and shared observability context across automated systems and ManualOps & Medium & Report decision MTTR and full-closure MTTR separately in future studies \\
+Conclusion validity & Rare Multi cases have limited support in the fixed test split & Confidence intervals for the hardest incidents may still be wide & Paired bootstrap intervals, five seeds, and per-route breakdowns & Medium--High & Expand the held-out incident collection with targeted long-tail sampling \\
+External validity & Benchmarks emphasize enterprise cloud services with rich runbooks & Gains may not transfer unchanged to edge, security operations, or low-documentation environments & Multi-domain service coverage and explicit reporting of dataset scope & High & Cross-organization evaluation on additional operational domains \\
+Operational limitation & Two-stage Multi execution cap can miss longer remediation chains & Long-horizon repair plans may be truncated even when evidence suggests a third step & Conservative budget cap and abstention before unsafe escalation & High & Hierarchical planning with rollback-aware budget control \\
+Operational limitation & Conservative policy gating can increase abstention and under-action & Some time-sensitive incidents may receive safe but incomplete guidance & Policy-bounded skills, approval gates, and explicit abstention analysis & Medium & Tenant-specific risk budgets and operator-tunable escalation thresholds \\
+Data freshness limitation & Retrieval quality degrades under KB drift or outdated runbooks & RAG-heavy cases may fall back to weaker synthesis or stale evidence & Drift stress tests, shared corpus snapshots, and fallback to Direct-LLM only under guardrails & Medium & Freshness-aware indexing and source-level staleness penalties in utility \\
+Human factors & Operators may adapt to the system and change how incidents are reported & Prompt phrasing and escalation behavior could shift after deployment, altering measured gains & Conservative deployment framing and audit logs for abstentions and overrides & Medium & Prospective field study with pre/post adoption analysis \\
+Reproducibility limitation & Private operational data cannot be publicly released in full & External groups cannot exactly replicate all absolute results on the raw corpus & Sanitized artifact, synthetic examples, schema release, and detailed protocol appendices & Medium & Secure enclave or data-use-agreement based reproduction track \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\balance
+\begin{thebibliography}{10}
+
+\bibitem{notaro2021aiops}
+Paolo Notaro, Jorge Cardoso, and Michael Gerndt.
+\newblock A survey of AIOps methods for failure management.
+\newblock \emph{ACM Transactions on Intelligent Systems and Technology}, 12(6):1--45, 2021.
+
+\bibitem{shaked2023operations}
+Avi Shaked, Yulia Cherdantseva, Pete Burnap, and Peter Maynard.
+\newblock Operations-informed incident response playbooks.
+\newblock \emph{Computers \& Security}, 134:103454, 2023.
+
+\bibitem{wei2022cot}
+Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Brian Ichter, Fei Xia, Ed Chi, Quoc~V. Le, and Denny Zhou.
+\newblock Chain-of-thought prompting elicits reasoning in large language models.
+\newblock In \emph{Advances in Neural Information Processing Systems 35 (Proceedings of the 36th Conference on Neural Information Processing Systems)}, pages 24824--24837, 2022.
+
+\bibitem{kojima2022zeroshot}
+Takeshi Kojima, Shixiang~Shane Gu, Machel Reid, Yutaka Matsuo, and Yusuke Iwasawa.
+\newblock Large language models are zero-shot reasoners.
+\newblock In \emph{Advances in Neural Information Processing Systems 35 (Proceedings of the 36th Conference on Neural Information Processing Systems)}, pages 22199--22213, 2022.
+
+\bibitem{schick2023toolformer}
+Timo Schick, Jane Dwivedi-Yu, Roberto Dess{\`i}, Nicola Cancedda, Thomas Scialom, Maria Lomeli, Luke Zettlemoyer, Roberta Raileanu, and Eric Hambro.
+\newblock Toolformer: Language models can teach themselves to use tools.
+\newblock In \emph{Advances in Neural Information Processing Systems 36 (Proceedings of the 37th Conference on Neural Information Processing Systems)}, pages 68539--68551, 2023.
+
+\bibitem{ram2023incontext}
+Ori Ram, Yoav Levine, Itay Dalmedigos, Dor Muhlgay, Amnon Shashua, Kevin Leyton-Brown, and Yoav Shoham.
+\newblock In-context retrieval-augmented language models.
+\newblock \emph{Transactions of the Association for Computational Linguistics}, 11:1316--1331, 2023.
+
+\bibitem{gao2023rarr}
+Luyu Gao, Zhuyun Dai, Panupong Pasupat, Anthony Chen, Arun Tejasvi Chaganty, Yicheng Fan, Vincent Zhao, Ni Lao, Hongrae Lee, Da-Cheng Juan, and Kelvin Guu.
+\newblock RARR: Researching and revising what language models say, using language models.
+\newblock In \emph{Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)}, pages 16477--16508, 2023.
+
+\bibitem{mallen2023trust}
+Alex Mallen, Akari Asai, Victor Zhong, Rajarshi Das, Daniel Khashabi, and Hannaneh Hajishirzi.
+\newblock When not to trust language models: Investigating effectiveness of parametric and non-parametric memories.
+\newblock In \emph{Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)}, pages 9802--9822, 2023.
+
+\end{thebibliography}
+
+\end{document}

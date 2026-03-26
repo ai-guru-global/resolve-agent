@@ -195,11 +195,23 @@ helm-template: ## Render Helm templates locally
 # Development
 # =============================================================================
 
-.PHONY: setup-dev clean fmt
+.PHONY: setup-dev clean fmt docs-sync docs-sync-watch docs-proofread
 
 setup-dev: ## Set up development environment
 	@echo "==> Setting up development environment..."
 	bash hack/setup-dev.sh
+
+docs-sync: ## Synchronize bilingual document pairs
+	@echo "==> Syncing bilingual docs..."
+	cd $(PYTHON_DIR) && uv run resolveagent-docsync --workspace-root $(ROOT_DIR) sync
+
+docs-sync-watch: ## Watch bilingual document pairs and sync continuously
+	@echo "==> Watching bilingual docs..."
+	cd $(PYTHON_DIR) && uv run resolveagent-docsync --workspace-root $(ROOT_DIR) watch
+
+docs-proofread: ## Proofread bilingual document pairs
+	@echo "==> Proofreading bilingual docs..."
+	cd $(PYTHON_DIR) && uv run resolveagent-docsync --workspace-root $(ROOT_DIR) proofread
 
 clean: ## Clean build artifacts
 	@echo "==> Cleaning..."

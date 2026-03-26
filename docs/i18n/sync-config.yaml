@@ -1,0 +1,22 @@
+defaults:
+  glossary_file: docs/i18n/glossary.yaml
+  memory_file: docs/i18n/translation-memory.yaml
+  state_file: docs/i18n/.sync-state.json
+  review_file: docs/i18n/review-queue.yaml
+  poll_interval_seconds: 1.0
+  translator:
+    kind: memory
+    command:
+    timeout_seconds: 120
+pairs:
+  - id: resolveagent-paper-md
+    source: docs/papers/resolveagent-unified-aiops-platform-zh.md
+    target: docs/papers/resolveagent-unified-aiops-platform.md
+    file_type: markdown
+    source_lang: zh
+    target_lang: en
+    sync_mode: bidirectional
+    proofread:
+      terminology: true
+      structure: true
+      untranslated_source_chars: true

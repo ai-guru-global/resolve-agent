@@ -1,0 +1,73 @@
+# =============================================================================
+# ResolveAgent - Development Docker Compose Override
+# =============================================================================
+# Use with: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# Features:
+#   - Source code volume mounts for hot reload
+#   - Debug ports exposed
+#   - Milvus vector database for RAG development
+#   - Relaxed resource limits
+# =============================================================================
+
+services:
+  platform:
+    build:
+      target: builder
+    volumes:
+      - ../../:/app
+      - go_mod_cache:/go/pkg/mod
+    command: ["go", "run", "./cmd/resolveagent-server", "--config", "/app/configs/resolveagent.yaml"]
+    environment:
+      RESOLVEAGENT_SERVER_HTTP_ADDR: ":8080"
+      RESOLVEAGENT_DATABASE_HOST: postgres
+      RESOLVEAGENT_REDIS_ADDR: redis:6379
+      RESOLVEAGENT_NATS_URL: nats://nats:4222
+      RESOLVEAGENT_RUNTIME_GRPC_ADDR: runtime:9091
+      # Development overrides
+      RESOLVEAGENT_GATEWAY_ENABLED: "false"
+      RESOLVEAGENT_TELEMETRY_ENABLED: "false"
+
+  runtime:
+    volumes:
+      - ../../python:/app
+      - ../../configs:/etc/resolveagent:ro
+    command: ["uv", "run", "python", "-m", "resolveagent.runtime.server"]
+    environment:
+      RESOLVEAGENT_RUNTIME_HOST: "0.0.0.0"
+      RESOLVEAGENT_RUNTIME_PORT: "9091"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+
+  webui:
+    build:
+      context: ../../web
+      dockerfile: ../deployment/docker/webui.dev.Dockerfile
+    volumes:
+      - ../../web/src:/app/src:ro
+    ports:
+      - "5173:5173"
+
+  # ---------------------------------------------------------------------------
+  # Additional Development Services
+  # ---------------------------------------------------------------------------
+
+  milvus:
+    image: milvusdb/milvus:v2.4-latest
+    container_name: resolveagent-milvus
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    environment:
+      ETCD_USE_EMBED: "true"
+      COMMON_STORAGETYPE: local
+    volumes:
+      - milvus_data:/var/lib/milvus
+    networks:
+      - resolveagent-net
+
+volumes:
+  go_mod_cache:
+    driver: local
+  milvus_data:
+    driver: local

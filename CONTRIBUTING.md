@@ -10,7 +10,7 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ### Reporting Issues
 
-- Use the [GitHub issue tracker](https://github.com/ai-guru-global/resolve-net/issues) to report bugs or suggest features.
+- Use the [GitHub issue tracker](https://github.com/ai-guru-global/resolve-agent/issues) to report bugs or suggest features.
 - Before creating a new issue, search existing issues to avoid duplicates.
 - Use the provided issue templates when available.
 
@@ -26,8 +26,8 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ```bash
 # Clone the repository
-git clone https://github.com/ai-guru-global/resolve-net.git
-cd resolve-net
+git clone https://github.com/ai-guru-global/resolve-agent.git
+cd resolve-agent
 
 # Set up the development environment
 make setup-dev

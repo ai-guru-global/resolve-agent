@@ -1,5 +1,7 @@
 package config
 
+import "strconv"
+
 // Config holds the complete platform configuration.
 type Config struct {
 	Server    ServerConfig    `mapstructure:"server"`
@@ -30,7 +32,7 @@ type DatabaseConfig struct {
 // DSN returns the PostgreSQL connection string.
 func (d DatabaseConfig) DSN() string {
 	return "host=" + d.Host +
-		" port=" + string(rune(d.Port)) +
+		" port=" + strconv.Itoa(d.Port) +
 		" user=" + d.User +
 		" password=" + d.Password +
 		" dbname=" + d.DBName +

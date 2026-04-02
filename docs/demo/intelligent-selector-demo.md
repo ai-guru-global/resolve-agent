@@ -2090,7 +2090,7 @@ if __name__ == "__main__":
 
 ```bash
 # 1. 进入项目根目录
-cd /path/to/resolve-net
+cd /path/to/resolve-agent
 
 # 2. 安装 Python 依赖
 pip install -e "./python[dev]"

@@ -376,6 +376,63 @@ flowchart TB
 | **Wenxin 文心一言** | ERNIE-4.0 | 百度云 |
 | **Zhipu 智谱清言** | GLM-4 | 智谱 AI |
 
+### 📝 Ticket Summary Agent | 工单总结 Agent
+
+A **knowledge production engine** that transforms every ticket into organizational capability increments.
+
+知识生产引擎，将每一张工单转化为组织能力增量。
+
+| Feature | Description | 描述 |
+|---------|-------------|------|
+| **Three Knowledge Types** | Resolution, Prevention (Gotchas), System Gap identification | 三类知识产出：处置型、预防型、维护型 |
+| **Evidence Chain** | Every conclusion backed by replayable evidence | 结论必须证据化，证据链可回放 |
+| **Incremental Accumulation** | Only novel knowledge promoted; dedup via RAG | 增量沉淀，通过 RAG 去重 |
+| **Gap Detection** | Background engine identifying doc/skill gaps | 后台识别文档与技能缺口 |
+| **Knowledge Flywheel** | Summaries feed back into RAG & Skills for reuse | 知识飞轮：总结回流 RAG 与 Skill 库 |
+
+---
+
+## 📊 Feature Status | 功能完成度
+
+> 当前版本：v0.1.0-alpha
+
+### 核心组件状态
+
+| 组件 | 状态 | 完成度 | 说明 |
+|------|------|--------|------|
+| **平台服务 (Go)** | 🟡 In Progress | 60% | 基础框架就绪，API 路由待完善 |
+| **Agent 运行时 (Python)** | 🟡 In Progress | 70% | 核心功能实现中，部分 TODO 待完成 |
+| **CLI/TUI** | 🟢 Ready | 85% | 基本功能可用，持续优化中 |
+| **WebUI** | 🟡 In Progress | 40% | 基础页面就绪，可视化编辑器开发中 |
+| **Higress 网关集成** | 🟢 Ready | 90% | 完整集成，生产就绪 |
+
+### 功能模块状态
+
+| 功能 | 模块 | 状态 | 备注 |
+|------|------|------|------|
+| **智能选择器** | `selector/` | 🟢 Ready | 路由决策完整，策略待完善 |
+| **FTA 引擎** | `fta/` | 🟢 Ready | 故障树分析完整 |
+| **RAG 管道** | `rag/` | 🟡 In Progress | 框架就绪，具体实现待完成 |
+| **技能系统** | `skills/` | 🟢 Ready | Manifest + 沙箱完整 |
+| **LLM 提供器** | `llm/` | 🟢 Ready | 多模型支持完整 |
+| **文档同步** | `docsync/` | 🟢 Ready | 中英双语同步完整 |
+| **注册中心** | `registry/` | 🟡 In Progress | 接口定义完成，实现待完善 |
+| **事件总线** | `event/` | 🟢 Ready | NATS 集成完整 |
+
+### 部署与运维状态
+
+| 能力 | 状态 | 备注 |
+|------|------|------|
+| Docker Compose | 🟢 Ready | 完整可用 |
+| Helm Charts | 🟡 In Progress | 基础配置就绪，生产配置待完善 |
+| 监控/告警 | 🔴 Planned | 框架就绪，具体指标待实现 |
+| 日志收集 | 🟡 In Progress | 结构化日志就绪，聚合待配置 |
+
+图例说明：
+- 🟢 Ready - 功能完整，可用于生产
+- 🟡 In Progress - 开发中，核心功能可用
+- 🔴 Planned - 计划中，尚未开始
+
 ---
 
 ## 🏗️ Architecture | 系统架构
@@ -457,7 +514,7 @@ flowchart TB
 | Component | Language | Description | 描述 |
 |-----------|----------|-------------|------|
 | **Platform Services** | Go 1.22+ | REST/gRPC API, Registry (Single Source of Truth), Route Sync | 平台服务：API、注册中心（唯一真相源）、路由同步 |
-| **Agent Runtime** | Python 3.11+ | Intelligent Selector, FTA Engine, Skills, RAG | 运行时：智能选择器、FTA引擎、技能、RAG |
+| **Agent Runtime** | Python 3.11+ | Intelligent Selector, FTA Engine, Skills, RAG, Ticket Summary | 运行时：智能选择器、FTA引擎、技能、RAG、工单总结 |
 | **Higress Gateway** | External | Authentication, Rate Limiting, Model Routing | AI 网关：认证、限流、模型路由 |
 | **WebUI** | React+TS | Management console with workflow visual editor | 管理控制台与工作流可视化编辑器 |
 
@@ -1092,6 +1149,21 @@ Assistant: 我是 support-agent，很高兴为您服务！
 
 ## 📚 Documentation | 文档导航
 
+### 在线文档站点
+
+我们提供基于 Docusaurus 的在线文档站点：
+
+- **中文文档**: https://ai-guru-global.github.io/resolve-agent/zh/
+- **English Docs**: https://ai-guru-global.github.io/resolve-agent/
+
+本地启动文档站点：
+
+```bash
+cd docs-site
+pnpm install
+pnpm start
+```
+
 ### English Documentation
 
 | Document | Description |
@@ -1099,6 +1171,8 @@ Assistant: 我是 support-agent，很高兴为您服务！
 | [Architecture Overview](docs/architecture/overview.md) | System architecture and design |
 | [Intelligent Selector](docs/architecture/intelligent-selector.md) | Adaptive workflow routing engine |
 | [FTA Engine](docs/architecture/fta-engine.md) | Fault Tree Analysis engine |
+| [Ticket Summary Agent](docs/architecture/ticket-summary-agent.md) | Knowledge production engine for ticket summarization |
+| [Ticket Summary Agent Integration](docs/architecture/ticket-summary-agent-integration-analysis.md) | Integration feasibility and implementation plan |
 | [AgentScope-Higress Integration](docs/architecture/agentscope-higress-integration.md) | Deep integration architecture |
 | [Quick Start Guide](docs/user-guide/quickstart.md) | Get started in 5 minutes |
 
@@ -1153,6 +1227,7 @@ resolve-agent/
 │       ├── skills/         # Expert Skills
 │       ├── rag/            # RAG Pipeline
 │       ├── llm/            # LLM providers (including higress_provider)
+│       ├── docsync/        # Bilingual doc synchronization
 │       └── runtime/        # Execution engine (registry_client)
 ├── web/                    # React + TypeScript WebUI
 ├── deploy/                 # Deployment configs

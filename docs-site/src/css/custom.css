@@ -1,0 +1,83 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* You can override the default Infima variables here. */
+:root {
+  --ifm-color-primary: #2563eb;
+  --ifm-color-primary-dark: #1d4ed8;
+  --ifm-color-primary-darker: #1e40af;
+  --ifm-color-primary-darkest: #1e3a8a;
+  --ifm-color-primary-light: #3b82f6;
+  --ifm-color-primary-lighter: #60a5fa;
+  --ifm-color-primary-lightest: #93c5fd;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  --ifm-color-primary: #60a5fa;
+  --ifm-color-primary-dark: #3b82f6;
+  --ifm-color-primary-darker: #2563eb;
+  --ifm-color-primary-darkest: #1d4ed8;
+  --ifm-color-primary-light: #93c5fd;
+  --ifm-color-primary-lighter: #bfdbfe;
+  --ifm-color-primary-lightest: #dbeafe;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
+
+/* Custom styles for ResolveAgent docs */
+.hero {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+}
+
+.hero__title,
+.hero__subtitle {
+  color: white;
+}
+
+/* Table styles */
+table {
+  display: table;
+  width: 100%;
+}
+
+th {
+  background-color: var(--ifm-table-head-background);
+  font-weight: 600;
+}
+
+/* Code block improvements */
+pre {
+  border-radius: 8px;
+}
+
+/* Status badges */
+.status-ready {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.status-progress {
+  color: #ca8a04;
+  font-weight: 600;
+}
+
+.status-planned {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+/* Custom admonitions */
+.alert--feature {
+  --ifm-alert-background-color: #dbeafe;
+  --ifm-alert-border-color: #3b82f6;
+}
+
+.alert--status {
+  --ifm-alert-background-color: #f0fdf4;
+  --ifm-alert-border-color: #22c55e;
+}

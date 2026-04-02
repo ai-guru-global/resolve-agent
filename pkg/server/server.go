@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/ai-guru-global/resolve-agent/pkg/config"
+	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -18,17 +19,23 @@ import (
 
 // Server is the main platform services server.
 type Server struct {
-	cfg        *config.Config
-	logger     *slog.Logger
-	httpServer *http.Server
-	grpcServer *grpc.Server
+	cfg           *config.Config
+	logger        *slog.Logger
+	httpServer    *http.Server
+	grpcServer    *grpc.Server
+	agentRegistry registry.AgentRegistry
+	skillRegistry registry.SkillRegistry
+	workflowRegistry registry.WorkflowRegistry
 }
 
 // New creates a new Server instance.
 func New(cfg *config.Config, logger *slog.Logger) (*Server, error) {
 	s := &Server{
-		cfg:    cfg,
-		logger: logger,
+		cfg:              cfg,
+		logger:           logger,
+		agentRegistry:    registry.NewInMemoryAgentRegistry(),
+		skillRegistry:    registry.NewInMemorySkillRegistry(),
+		workflowRegistry: registry.NewInMemoryWorkflowRegistry(),
 	}
 
 	// Initialize gRPC server

@@ -1,9 +1,13 @@
 package agent
 
 import (
+	"context"
 	"fmt"
+	"os"
 
+	"github.com/ai-guru-global/resolve-agent/internal/cli/client"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 func newCreateCmd() *cobra.Command {
@@ -15,9 +19,48 @@ func newCreateCmd() *cobra.Command {
 			name := args[0]
 			agentType, _ := cmd.Flags().GetString("type")
 			model, _ := cmd.Flags().GetString("model")
+			prompt, _ := cmd.Flags().GetString("prompt")
+			file, _ := cmd.Flags().GetString("file")
 
-			fmt.Printf("Creating agent '%s' (type: %s, model: %s)...\n", name, agentType, model)
-			// TODO: Call API to create agent
+			var agent *client.Agent
+			var err error
+
+			if file != "" {
+				// Create from config file
+				agent, err = createFromFile(file)
+				if err != nil {
+					return err
+				}
+			} else {
+				// Create from flags
+				agent = &client.Agent{
+					ID:          name,
+					Name:        name,
+					Type:        agentType,
+					Description: "",
+					Config: map[string]interface{}{
+						"model":       model,
+						"system_prompt": prompt,
+					},
+					Status: "active",
+				}
+			}
+
+			// Create API client
+			c := client.New()
+			ctx := context.Background()
+
+			// Call API to create agent
+			created, err := c.CreateAgent(ctx, agent)
+			if err != nil {
+				return fmt.Errorf("failed to create agent: %w", err)
+			}
+
+			fmt.Printf("✓ Agent '%s' created successfully\n", created.Name)
+			fmt.Printf("  ID: %s\n", created.ID)
+			fmt.Printf("  Type: %s\n", created.Type)
+			fmt.Printf("  Status: %s\n", created.Status)
+
 			return nil
 		},
 	}
@@ -30,19 +73,16 @@ func newCreateCmd() *cobra.Command {
 	return cmd
 }
 
-// NewCmd returns the agent command group.
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "agent",
-		Short: "Manage agents",
-		Long:  "Create, list, run, and manage ResolveAgent agents.",
+func createFromFile(path string) (*client.Agent, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 
-	cmd.AddCommand(newCreateCmd())
-	cmd.AddCommand(newListCmd())
-	cmd.AddCommand(newRunCmd())
-	cmd.AddCommand(newDeleteCmd())
-	cmd.AddCommand(newLogsCmd())
+	var agent client.Agent
+	if err := yaml.Unmarshal(data, &agent); err != nil {
+		return nil, fmt.Errorf("failed to parse config file: %w", err)
+	}
 
-	return cmd
+	return &agent, nil
 }

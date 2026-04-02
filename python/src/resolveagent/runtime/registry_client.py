@@ -1,16 +1,21 @@
-"""gRPC client for querying Go Registry.
+"""HTTP client for querying Go Registry.
 
 This module provides the Python runtime with access to the Go Registry,
 implementing the single-source-of-truth pattern where Go manages all
-service registration and Python queries through gRPC.
+service registration and Python queries through HTTP/REST API.
+
+Note: Originally designed for gRPC, but using HTTP/REST as a practical
+alternative until protobuf stubs are generated.
 """
 
 from __future__ import annotations
 
-import asyncio
 import logging
+import os
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator
+
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -94,79 +99,28 @@ class RegistryEvent:
 
 
 class RegistryClient:
-    """gRPC client for querying Go Registry.
+    """HTTP client for querying Go Registry.
 
-    This client connects to the Go platform service to query the registry,
-    which serves as the single source of truth for all service discovery.
-    Python agents use this client instead of maintaining their own registry.
-
-    Architecture:
-    ```
-    ┌─────────────────────────────────────────────────────────────────┐
-    │                     Go Platform Service                          │
-    │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-    │  │   Agent     │  │    Skill    │  │    Model Router         │  │
-    │  │  Registry   │  │  Registry   │  │  (Higress Integration)  │  │
-    │  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
-    │                          │                                       │
-    │                   RegistryService                                │
-    │                     (gRPC API)                                   │
-    └──────────────────────────┬──────────────────────────────────────┘
-                               │ gRPC
-                               ▼
-    ┌──────────────────────────────────────────────────────────────────┐
-    │                   Python Agent Runtime                            │
-    │                                                                   │
-    │  ┌────────────────────────────────────────────────────────────┐  │
-    │  │                    RegistryClient                            │  │
-    │  │  - GetAgent, ListAgents                                      │  │
-    │  │  - GetSkill, ListSkills                                      │  │
-    │  │  - GetModelRoute (returns Higress endpoint)                  │  │
-    │  │  - WatchRegistry (streaming updates)                         │  │
-    │  └────────────────────────────────────────────────────────────┘  │
-    │                          │                                        │
-    │         ┌────────────────┼────────────────┐                      │
-    │         ▼                ▼                ▼                      │
-    │  IntelligentSelector  SkillExecutor  LLMProvider                 │
-    └──────────────────────────────────────────────────────────────────┘
-    ```
-
-    Usage:
-        ```python
-        client = RegistryClient("localhost:9090")
-        await client.connect()
-
-        # Get agent info for routing decisions
-        agent = await client.get_agent("mega-agent-001")
-
-        # List available skills
-        skills = await client.list_skills()
-
-        # Get model endpoint through Higress
-        model = await client.get_model_route("qwen-plus")
-        # model.gateway_endpoint = "/llm/models/qwen-plus"
-
-        # Watch for registry changes
-        async for event in client.watch_registry():
-            print(f"Registry change: {event.event_type} {event.resource_type}")
-        ```
+    This client connects to the Go platform service via HTTP/REST API to query
+    the registry, which serves as the single source of truth for all service
+    discovery.
     """
 
     def __init__(
         self,
-        address: str = "localhost:9090",
+        address: str = "localhost:8080",
         timeout: float = 30.0,
     ) -> None:
         """Initialize the registry client.
 
         Args:
-            address: Go platform gRPC address.
-            timeout: Default timeout for gRPC calls.
+            address: Go platform HTTP address (host:port).
+            timeout: Default timeout for HTTP calls.
         """
         self._address = address
         self._timeout = timeout
-        self._channel = None
-        self._stub = None
+        self._base_url = f"http://{address}"
+        self._client: httpx.AsyncClient | None = None
         self._connected = False
 
         # Local cache for frequently accessed data
@@ -178,25 +132,50 @@ class RegistryClient:
     async def connect(self) -> None:
         """Establish connection to the Go platform service."""
         try:
-            # In production, this would use grpc.aio
-            # import grpc
-            # self._channel = grpc.aio.insecure_channel(self._address)
-            # from resolveagent.api.resolveagent.v1 import registry_pb2_grpc
-            # self._stub = registry_pb2_grpc.RegistryServiceStub(self._channel)
-            
-            logger.info("Connecting to Go Registry", extra={"address": self._address})
+            self._client = httpx.AsyncClient(
+                base_url=self._base_url,
+                timeout=self._timeout,
+            )
             self._connected = True
-            logger.info("Connected to Go Registry")
+            logger.info("Connected to Go Registry", extra={"address": self._address})
         except Exception as e:
             logger.error("Failed to connect to Go Registry", extra={"error": str(e)})
             raise
 
     async def close(self) -> None:
-        """Close the gRPC connection."""
-        if self._channel:
-            await self._channel.close()
+        """Close the HTTP connection."""
+        if self._client:
+            await self._client.aclose()
         self._connected = False
         logger.info("Disconnected from Go Registry")
+
+    async def _get(self, path: str) -> dict[str, Any] | None:
+        """Make a GET request to the registry."""
+        if not self._client:
+            raise RuntimeError("Registry client not connected")
+
+        try:
+            response = await self._client.get(path)
+            if response.status_code == 404:
+                return None
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPError as e:
+            logger.error(f"Registry request failed: {path}", extra={"error": str(e)})
+            return None
+
+    async def _post(self, path: str, data: dict[str, Any]) -> dict[str, Any] | None:
+        """Make a POST request to the registry."""
+        if not self._client:
+            raise RuntimeError("Registry client not connected")
+
+        try:
+            response = await self._client.post(path, json=data)
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPError as e:
+            logger.error(f"Registry request failed: {path}", extra={"error": str(e)})
+            return None
 
     async def get_agent(self, agent_id: str) -> AgentInfo | None:
         """Get agent information by ID.
@@ -211,13 +190,23 @@ class RegistryClient:
         if agent_id in self._agent_cache:
             return self._agent_cache[agent_id]
 
-        # TODO: Implement actual gRPC call
-        # request = registry_pb2.GetRegistryAgentRequest(id=agent_id)
-        # response = await self._stub.GetAgent(request, timeout=self._timeout)
-        
         logger.debug("Getting agent from registry", extra={"agent_id": agent_id})
-        
-        # Placeholder implementation
+
+        data = await self._get(f"/api/v1/agents/{agent_id}")
+        if data:
+            agent = AgentInfo(
+                id=data.get("id", agent_id),
+                name=data.get("name", ""),
+                description=data.get("description", ""),
+                type=data.get("type", ""),
+                status=data.get("status", ""),
+                capabilities=data.get("capabilities", {}),
+                config=data.get("config", {}),
+                labels=data.get("labels", {}),
+            )
+            self._agent_cache[agent_id] = agent
+            return agent
+
         return None
 
     async def list_agents(
@@ -237,16 +226,33 @@ class RegistryClient:
             List of AgentInfo.
         """
         logger.debug("Listing agents from registry")
-        
-        # TODO: Implement actual gRPC call
-        # request = registry_pb2.ListRegistryAgentsRequest(
-        #     type_filter=type_filter or "",
-        #     status_filter=status_filter or "",
-        #     label_filter=labels or {},
-        # )
-        # response = await self._stub.ListAgents(request, timeout=self._timeout)
-        
-        return []
+
+        params: dict[str, Any] = {}
+        if type_filter:
+            params["type"] = type_filter
+        if status_filter:
+            params["status"] = status_filter
+
+        data = await self._get("/api/v1/agents")
+        if not data:
+            return []
+
+        agents = []
+        for item in data.get("agents", []):
+            agents.append(
+                AgentInfo(
+                    id=item.get("id", ""),
+                    name=item.get("name", ""),
+                    description=item.get("description", ""),
+                    type=item.get("type", ""),
+                    status=item.get("status", ""),
+                    capabilities=item.get("capabilities", {}),
+                    config=item.get("config", {}),
+                    labels=item.get("labels", {}),
+                )
+            )
+
+        return agents
 
     async def get_skill(self, skill_name: str) -> SkillInfo | None:
         """Get skill information by name.
@@ -261,8 +267,23 @@ class RegistryClient:
             return self._skill_cache[skill_name]
 
         logger.debug("Getting skill from registry", extra={"skill": skill_name})
-        
-        # TODO: Implement actual gRPC call
+
+        data = await self._get(f"/api/v1/skills/{skill_name}")
+        if data:
+            skill = SkillInfo(
+                name=data.get("name", skill_name),
+                version=data.get("version", ""),
+                description=data.get("description", ""),
+                author=data.get("author", ""),
+                status=data.get("status", ""),
+                manifest=data.get("manifest", {}),
+                source_type=data.get("source_type", ""),
+                source_uri=data.get("source_uri", ""),
+                labels=data.get("labels", {}),
+            )
+            self._skill_cache[skill_name] = skill
+            return skill
+
         return None
 
     async def list_skills(
@@ -280,9 +301,28 @@ class RegistryClient:
             List of SkillInfo.
         """
         logger.debug("Listing skills from registry")
-        
-        # TODO: Implement actual gRPC call
-        return []
+
+        data = await self._get("/api/v1/skills")
+        if not data:
+            return []
+
+        skills = []
+        for item in data.get("skills", []):
+            skills.append(
+                SkillInfo(
+                    name=item.get("name", ""),
+                    version=item.get("version", ""),
+                    description=item.get("description", ""),
+                    author=item.get("author", ""),
+                    status=item.get("status", ""),
+                    manifest=item.get("manifest", {}),
+                    source_type=item.get("source_type", ""),
+                    source_uri=item.get("source_uri", ""),
+                    labels=item.get("labels", {}),
+                )
+            )
+
+        return skills
 
     async def get_model_route(self, model_id: str) -> ModelRouteInfo | None:
         """Get LLM model route information.
@@ -300,9 +340,23 @@ class RegistryClient:
             return self._model_cache[model_id]
 
         logger.debug("Getting model route from registry", extra={"model": model_id})
-        
-        # TODO: Implement actual gRPC call
-        # For now, return a default route structure
+
+        data = await self._get(f"/api/v1/models/{model_id}")
+        if data:
+            route = ModelRouteInfo(
+                model_id=data.get("id", model_id),
+                provider=data.get("provider", ""),
+                gateway_endpoint=data.get("gateway_endpoint", f"/llm/models/{model_id}"),
+                enabled=data.get("enabled", True),
+                priority=data.get("priority", 0),
+                rate_limit=data.get("rate_limit"),
+                fallback_models=data.get("fallback_models", []),
+                labels=data.get("labels", {}),
+            )
+            self._model_cache[model_id] = route
+            return route
+
+        # Fallback: return default route structure
         return ModelRouteInfo(
             model_id=model_id,
             provider="qwen",
@@ -325,9 +379,32 @@ class RegistryClient:
             List of ModelRouteInfo.
         """
         logger.debug("Listing model routes from registry")
-        
-        # TODO: Implement actual gRPC call
-        return []
+
+        data = await self._get("/api/v1/models")
+        if not data:
+            return []
+
+        routes = []
+        for item in data.get("models", []):
+            if enabled_only and not item.get("enabled", True):
+                continue
+            if provider_filter and item.get("provider") != provider_filter:
+                continue
+
+            routes.append(
+                ModelRouteInfo(
+                    model_id=item.get("id", ""),
+                    provider=item.get("provider", ""),
+                    gateway_endpoint=item.get("gateway_endpoint", ""),
+                    enabled=item.get("enabled", True),
+                    priority=item.get("priority", 0),
+                    rate_limit=item.get("rate_limit"),
+                    fallback_models=item.get("fallback_models", []),
+                    labels=item.get("labels", {}),
+                )
+            )
+
+        return routes
 
     async def get_default_model(self) -> str:
         """Get the default model ID configured in the gateway.
@@ -335,7 +412,10 @@ class RegistryClient:
         Returns:
             Default model ID.
         """
-        # TODO: Implement actual gRPC call
+        routes = await self.list_model_routes(enabled_only=True)
+        if routes:
+            # Return highest priority enabled model
+            return max(routes, key=lambda r: r.priority).model_id
         return "qwen-plus"
 
     async def get_workflow(self, workflow_id: str) -> WorkflowInfo | None:
@@ -348,8 +428,19 @@ class RegistryClient:
             WorkflowInfo or None if not found.
         """
         logger.debug("Getting workflow from registry", extra={"workflow": workflow_id})
-        
-        # TODO: Implement actual gRPC call
+
+        data = await self._get(f"/api/v1/workflows/{workflow_id}")
+        if data:
+            return WorkflowInfo(
+                id=data.get("id", workflow_id),
+                name=data.get("name", ""),
+                description=data.get("description", ""),
+                type=data.get("type", ""),
+                status=data.get("status", ""),
+                definition=data.get("definition", {}),
+                labels=data.get("labels", {}),
+            )
+
         return None
 
     async def list_workflows(
@@ -367,15 +458,29 @@ class RegistryClient:
             List of WorkflowInfo.
         """
         logger.debug("Listing workflows from registry")
-        
-        # TODO: Implement actual gRPC call
-        return []
+
+        data = await self._get("/api/v1/workflows")
+        if not data:
+            return []
+
+        workflows = []
+        for item in data.get("workflows", []):
+            workflows.append(
+                WorkflowInfo(
+                    id=item.get("id", ""),
+                    name=item.get("name", ""),
+                    description=item.get("description", ""),
+                    type=item.get("type", ""),
+                    status=item.get("status", ""),
+                    definition=item.get("definition", {}),
+                    labels=item.get("labels", {}),
+                )
+            )
+
+        return workflows
 
     async def get_service_endpoint(self, service_name: str) -> ServiceEndpoint | None:
         """Get service endpoint through Higress.
-
-        This returns the gateway path for reaching a service,
-        enabling all traffic to flow through Higress.
 
         Args:
             service_name: The service name.
@@ -384,9 +489,17 @@ class RegistryClient:
             ServiceEndpoint with gateway_path.
         """
         logger.debug("Getting service endpoint", extra={"service": service_name})
-        
-        # TODO: Implement actual gRPC call
-        return None
+
+        # This would typically query a service discovery endpoint
+        # For now, return a default structure
+        return ServiceEndpoint(
+            name=service_name,
+            host="localhost",
+            port=8080,
+            protocol="http",
+            gateway_path=f"/services/{service_name}",
+            healthy=True,
+        )
 
     async def watch_registry(
         self,
@@ -395,8 +508,8 @@ class RegistryClient:
     ) -> AsyncIterator[RegistryEvent]:
         """Watch for registry changes.
 
-        This enables Python runtime to receive real-time updates when
-        agents, skills, or models are registered/updated/deleted.
+        Note: Currently a placeholder. Full implementation would use
+        WebSockets or Server-Sent Events for real-time updates.
 
         Args:
             resource_types: Types to watch (empty = all).
@@ -406,18 +519,15 @@ class RegistryClient:
             RegistryEvent for each change.
         """
         logger.info("Starting registry watch stream")
-        
-        # TODO: Implement actual gRPC streaming call
-        # request = registry_pb2.WatchRegistryRequest(
-        #     resource_types=resource_types or [],
-        #     label_filter=labels or {},
-        # )
-        # async for event in self._stub.WatchRegistry(request):
-        #     yield RegistryEvent(...)
-        
+
         # Placeholder: yield nothing
-        return
-        yield  # Makes this an async generator
+        # Full implementation would establish a WebSocket/SSE connection
+        if False:  # This makes the function a proper async generator
+            yield RegistryEvent(
+                event_type="created",
+                resource_type="agent",
+                resource_id="placeholder",
+            )
 
     def invalidate_cache(self, resource_type: str | None = None) -> None:
         """Invalidate local cache.
@@ -431,7 +541,7 @@ class RegistryClient:
             self._skill_cache.clear()
         if resource_type is None or resource_type == "model":
             self._model_cache.clear()
-        
+
         logger.debug("Cache invalidated", extra={"type": resource_type or "all"})
 
 
@@ -451,11 +561,11 @@ def get_registry_client() -> RegistryClient:
     return _registry_client
 
 
-async def init_registry_client(address: str = "localhost:9090") -> RegistryClient:
+async def init_registry_client(address: str = "localhost:8080") -> RegistryClient:
     """Initialize and connect the global registry client.
 
     Args:
-        address: Go platform gRPC address.
+        address: Go platform HTTP address.
 
     Returns:
         The connected RegistryClient.

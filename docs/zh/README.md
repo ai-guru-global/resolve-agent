@@ -23,6 +23,8 @@
 | [部署指南](./deployment.md) | 生产环境部署方案 | 运维 |
 | [API参考](./api-reference.md) | gRPC/REST API 完整文档 | 开发者 |
 | [最佳实践](./best-practices.md) | AIOps 使用建议与优化技巧 | 所有用户 |
+| [工单总结 Agent](../architecture/ticket-summary-agent.md) | 知识生产引擎设计哲学 | 架构师、开发者 |
+| [工单总结集成分析](../architecture/ticket-summary-agent-integration-analysis.md) | 集成可行性与实施计划 | 架构师、开发者 |
 
 ---
 
@@ -143,6 +145,7 @@ resolve-agent/
 │   │   ├── skills/         # 专家技能系统
 │   │   ├── rag/            # RAG 管道 (知识检索)
 │   │   ├── llm/            # LLM 提供商抽象 (Qwen, ERNIE, GLM)
+│   │   ├── docsync/        # 双语文档同步引擎
 │   │   ├── runtime/        # 执行引擎
 │   │   └── telemetry/      # Python 可观测性
 │   └── tests/              # Python 单元测试

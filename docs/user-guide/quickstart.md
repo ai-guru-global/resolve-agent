@@ -28,8 +28,8 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/ai-guru-global/resolve-net.git
-cd resolve-net
+git clone https://github.com/ai-guru-global/resolve-agent.git
+cd resolve-agent
 ```
 
 ### 2. Set Up Development Environment
@@ -234,6 +234,7 @@ Now that you have ResolveAgent running, explore these features:
 - **[Architecture Overview](../architecture/overview.md)**: Understand how ResolveAgent works
 - **[Intelligent Selector](../architecture/intelligent-selector.md)**: Learn about the routing mechanism
 - **[FTA Engine](../architecture/fta-engine.md)**: Build diagnostic workflows
+- **[Ticket Summary Agent](../architecture/ticket-summary-agent.md)**: Knowledge production engine for ticket summarization
 
 ### Hands-on Practice
 
@@ -283,5 +284,5 @@ resolveagent agent run my-assistant
 ## Getting Help
 
 - **Documentation**: Check the [docs/zh/](../zh/) directory for comprehensive Chinese documentation
-- **Issues**: Report bugs on [GitHub Issues](https://github.com/ai-guru-global/resolve-net/issues)
-- **Discussions**: Ask questions on [GitHub Discussions](https://github.com/ai-guru-global/resolve-net/discussions)
+- **Issues**: Report bugs on [GitHub Issues](https://github.com/ai-guru-global/resolve-agent/issues)
+- **Discussions**: Ask questions on [GitHub Discussions](https://github.com/ai-guru-global/resolve-agent/discussions)

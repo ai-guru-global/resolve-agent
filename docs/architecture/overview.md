@@ -12,6 +12,7 @@ ResolveAgent integrates four key technologies to provide comprehensive AIOps cap
 | **RAG** | Semantic knowledge retrieval from operations documentation | `python/src/resolveagent/rag/` |
 | **Adaptive Workflows** | Dynamic, context-aware routing and orchestration | `python/src/resolveagent/selector/` |
 | **Expert Skills** | Pluggable domain expertise for AIOps scenarios | `python/src/resolveagent/skills/` |
+| **Ticket Summary** | Knowledge production engine for organizational capability increments | `python/src/resolveagent/summary/` |
 
 ## System Architecture
 
@@ -94,6 +95,7 @@ The Python runtime powered by AgentScope provides:
 - **Skills System** (`skills/`): Expert skills with sandboxed execution
 - **RAG Pipeline** (`rag/`): Knowledge ingestion, indexing, and retrieval
 - **LLM Abstraction** (`llm/`): Multi-provider LLM support via Higress gateway
+- **Doc Sync** (`docsync/`): Bilingual document synchronization
 - **Registry Client** (`runtime/registry_client.py`): gRPC client to query Go Registry
 
 ### CLI/TUI (Go)
@@ -127,3 +129,5 @@ The Python runtime powered by AgentScope provides:
 - [AgentScope & Higress Integration](agentscope-higress-integration.md) - Deep integration architecture
 - [Intelligent Selector](intelligent-selector.md) - Adaptive workflow routing engine
 - [FTA Engine](fta-engine.md) - Advanced static analysis capabilities
+- [Ticket Summary Agent](ticket-summary-agent.md) - Knowledge production engine for ticket summarization
+- [Ticket Summary Agent Integration](ticket-summary-agent-integration-analysis.md) - Integration feasibility and implementation plan

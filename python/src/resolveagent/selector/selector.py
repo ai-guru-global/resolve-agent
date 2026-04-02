@@ -110,11 +110,12 @@ class IntelligentSelector:
 
     VALID_STRATEGIES = ("llm", "rule", "hybrid")
 
-    def __init__(self, strategy: str = "hybrid") -> None:
+    def __init__(self, strategy: str = "hybrid", registry_client: Any | None = None) -> None:
         """Initialize the Intelligent Selector.
 
         Args:
             strategy: Routing strategy - 'llm', 'rule', or 'hybrid'.
+            registry_client: Optional registry client for querying resources.
         """
         if strategy not in self.VALID_STRATEGIES:
             logger.warning(
@@ -129,7 +130,8 @@ class IntelligentSelector:
             "hybrid": self._route_hybrid,
         }
         self._intent_analyzer = None
-        self._context_enricher = None
+        self._context_enricher: ContextEnricher | None = None
+        self._registry_client = registry_client
 
     async def route(
         self,
@@ -224,7 +226,7 @@ class IntelligentSelector:
         """Enrich context with additional information."""
         if self._context_enricher is None:
             from resolveagent.selector.context_enricher import ContextEnricher
-            self._context_enricher = ContextEnricher()
+            self._context_enricher = ContextEnricher(registry_client=self._registry_client)
 
         enriched = await self._context_enricher.enrich(
             input_text, agent_id, context

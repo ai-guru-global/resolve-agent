@@ -1,4 +1,4 @@
-"""Baidu Wenxin (ERNIE Bot) LLM provider."""
+"""Baidu Wenxin (ERNIE) LLM provider."""
 
 from __future__ import annotations
 
@@ -15,46 +15,43 @@ logger = logging.getLogger(__name__)
 
 
 class WenxinProvider(LLMProvider):
-    """LLM provider for Baidu Wenxin (ERNIE Bot) models.
+    """LLM provider for Baidu Wenxin (ERNIE) models.
 
-    Supports: ernie-4.0, ernie-3.5-turbo, ernie-speed, ernie-lite
-    API: Baidu Qianfan Platform
+    Supports: ernie-4.0, ernie-3.5, ernie-speed, etc.
+    API: Baidu Qianfan (千帆) Platform
     """
 
     DEFAULT_MODEL = "ernie-4.0"
     BASE_URL = "https://qianfan.baidubce.com/v2"
-    AUTH_URL = "https://aip.baidubce.com/oauth/2.0/token"
 
     def __init__(self, api_key: str = "", secret_key: str = "") -> None:
         """Initialize Wenxin provider.
 
         Args:
-            api_key: API Key from Baidu Cloud.
-            secret_key: Secret Key from Baidu Cloud.
+            api_key: API Key from Baidu Qianfan.
+            secret_key: Secret Key from Baidu Qianfan.
         """
         self.api_key = api_key or os.getenv("WENXIN_API_KEY", "")
         self.secret_key = secret_key or os.getenv("WENXIN_SECRET_KEY", "")
         self._access_token: str | None = None
 
         if not self.api_key or not self.secret_key:
-            logger.warning("Wenxin API key or secret key not configured")
+            logger.warning("Wenxin API credentials not configured")
 
     async def _get_access_token(self) -> str:
-        """Get access token for authentication."""
+        """Get Baidu access token."""
         if self._access_token:
             return self._access_token
 
-        if not self.api_key or not self.secret_key:
-            raise RuntimeError("Wenxin API key and secret key are required")
-
+        url = "https://aip.baidubce.com/oauth/2.0/token"
         params = {
             "grant_type": "client_credentials",
             "client_id": self.api_key,
             "client_secret": self.secret_key,
         }
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(self.AUTH_URL, params=params)
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, params=params)
             response.raise_for_status()
             data = response.json()
 
@@ -62,20 +59,20 @@ class WenxinProvider(LLMProvider):
                 raise RuntimeError(f"Failed to get access token: {data}")
 
             self._access_token = data["access_token"]
-            logger.debug("Got Wenxin access token")
             return self._access_token
 
     def _get_model_endpoint(self, model: str) -> str:
         """Get the API endpoint for a model."""
-        # Map model names to endpoints
-        model_endpoints = {
-            "ernie-4.0": "chat/completions",
-            "ernie-3.5-turbo": "chat/completions",
-            "ernie-speed": "chat/ernie-speed",
-            "ernie-lite": "chat/ernie-lite",
+        model_map = {
+            "ernie-4.0": "completions_pro",
+            "ernie-4.0-turbo": "completions_pro_preemptible",
+            "ernie-3.5": "completions",
+            "ernie-speed": "ernie-speed",
+            "ernie-lite": "ernie-lite",
+            "ernie-tiny": "ernie-tiny",
         }
-        endpoint = model_endpoints.get(model, "chat/completions")
-        return f"{self.BASE_URL}/{endpoint}"
+        endpoint = model_map.get(model, "completions_pro")
+        return f"https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/{endpoint}"
 
     async def chat(
         self,
@@ -85,27 +82,18 @@ class WenxinProvider(LLMProvider):
         max_tokens: int = 2048,
         **kwargs: Any,
     ) -> ChatResponse:
-        """Generate completion via Wenxin API.
-
-        Args:
-            messages: List of chat messages.
-            model: Model name (ernie-4.0, ernie-3.5-turbo, etc).
-            temperature: Sampling temperature.
-            max_tokens: Maximum tokens to generate.
-            **kwargs: Additional parameters.
-
-        Returns:
-            ChatResponse with generated content.
-        """
+        """Generate completion via Baidu Wenxin API."""
         model = model or self.DEFAULT_MODEL
         logger.debug("Wenxin chat", extra={"model": model, "messages": len(messages)})
 
-        # Get access token
+        if not self.api_key or not self.secret_key:
+            raise RuntimeError("Wenxin API credentials not configured")
+
         access_token = await self._get_access_token()
+        endpoint = self._get_model_endpoint(model)
 
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {access_token}",
         }
 
         # Convert messages to Wenxin format
@@ -117,19 +105,16 @@ class WenxinProvider(LLMProvider):
             })
 
         payload = {
-            "model": model,
             "messages": wenxin_messages,
             "temperature": temperature,
-            "max_tokens": max_tokens,
+            "max_output_tokens": max_tokens,
         }
         payload.update(kwargs)
-
-        endpoint = self._get_model_endpoint(model)
 
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
                 response = await client.post(
-                    endpoint,
+                    f"{endpoint}?access_token={access_token}",
                     headers=headers,
                     json=payload,
                 )
@@ -138,23 +123,20 @@ class WenxinProvider(LLMProvider):
 
                 # Parse response
                 if "error_code" in data:
-                    raise RuntimeError(f"Wenxin API error: {data}")
+                    raise RuntimeError(f"Wenxin API error: {data['error_msg']}")
 
-                choice = data.get("choices", [{}])[0]
-                message = choice.get("message", {})
-                content = message.get("content", "")
-                finish_reason = choice.get("finish_reason", "stop")
-
+                content = data.get("result", "")
+                finish_reason = "stop" if data.get("is_end", True) else "length"
                 usage = data.get("usage", {})
 
                 logger.debug(
                     "Wenxin chat response",
-                    extra={"model": data.get("model", model), "usage": usage},
+                    extra={"model": model, "usage": usage},
                 )
 
                 return ChatResponse(
                     content=content,
-                    model=data.get("model", model),
+                    model=model,
                     usage={
                         "prompt_tokens": usage.get("prompt_tokens", 0),
                         "completion_tokens": usage.get("completion_tokens", 0),
@@ -181,51 +163,38 @@ class WenxinProvider(LLMProvider):
         max_tokens: int = 2048,
         **kwargs: Any,
     ) -> AsyncIterator[str]:
-        """Stream completion via Wenxin API.
-
-        Args:
-            messages: List of chat messages.
-            model: Model name.
-            temperature: Sampling temperature.
-            max_tokens: Maximum tokens to generate.
-            **kwargs: Additional parameters.
-
-        Yields:
-            Content chunks as they are generated.
-        """
+        """Stream completion via Baidu Wenxin API."""
         model = model or self.DEFAULT_MODEL
         logger.debug("Wenxin streaming chat", extra={"model": model})
 
-        # Get access token
+        if not self.api_key or not self.secret_key:
+            raise RuntimeError("Wenxin API credentials not configured")
+
         access_token = await self._get_access_token()
+        endpoint = self._get_model_endpoint(model)
 
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {access_token}",
         }
 
-        # Convert messages
         wenxin_messages = [
             {"role": msg.role, "content": msg.content}
             for msg in messages
         ]
 
         payload = {
-            "model": model,
             "messages": wenxin_messages,
             "temperature": temperature,
-            "max_tokens": max_tokens,
+            "max_output_tokens": max_tokens,
             "stream": True,
         }
         payload.update(kwargs)
-
-        endpoint = self._get_model_endpoint(model)
 
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
                 async with client.stream(
                     "POST",
-                    endpoint,
+                    f"{endpoint}?access_token={access_token}",
                     headers=headers,
                     json=payload,
                 ) as response:
@@ -239,17 +208,16 @@ class WenxinProvider(LLMProvider):
                         if line.startswith("data: "):
                             data_str = line[6:]
 
-                            if data_str == "[DONE]":
-                                break
-
                             try:
                                 data = json.loads(data_str)
-                                choice = data.get("choices", [{}])[0]
-                                delta = choice.get("delta", {})
-                                content = delta.get("content", "")
+                                content = data.get("result", "")
+                                is_end = data.get("is_end", False)
 
                                 if content:
                                     yield content
+
+                                if is_end:
+                                    break
 
                             except json.JSONDecodeError:
                                 continue

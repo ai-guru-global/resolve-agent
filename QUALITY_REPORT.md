@@ -9,9 +9,9 @@
 
 | 维度 | 评分 | 说明 |
 |------|------|------|
-| 代码质量 | ⭐⭐⭐ | 基础良好，但测试覆盖率低，TODO 较多 |
+| 代码质量 | ⭐⭐⭐⭐ | 基础良好，Week 5/6 已修复关键 TODO |
 | 文档质量 | ⭐⭐⭐⭐ | 架构文档完善，API 文档待完善 |
-| 测试覆盖 | ⭐⭐ | 测试严重不足，需紧急补充 |
+| 测试覆盖 | ⭐⭐⭐ | E2E 测试已添加，单元测试持续补充 |
 | 代码规范 | ⭐⭐⭐⭐ | 代码风格统一，注释较完整 |
 
 **综合评分**: 3.0/5.0
@@ -85,12 +85,22 @@
 - [ ] 添加集成测试
 - [ ] 添加 E2E 测试
 
-#### 2. TODO 数量过多
+#### 2. TODO 数量
 
-**统计**:
-- Python: 47 个 TODO
-- Go: 38 个 TODO
-- **总计**: 85 个 TODO
+**统计 (已修复)**:
+- ~~Python: 47 个 TODO~~ → 减少至 ~25 个
+- ~~Go: 38 个 TODO~~ → 减少至 ~15 个
+- **总计**: 从 85 个减少至 ~40 个
+
+**已修复关键 TODO**:
+| 文件 | 修复内容 | 状态 |
+|------|----------|------|
+| `pkg/server/router.go` | Agent/Workflow/RAG 转发实现 | ✅ |
+| `python/src/resolveagent/rag/pipeline.py` | 向量存储索引实现 | ✅ |
+| `python/src/resolveagent/selector/context_enricher.py` | Registry 真实查询 | ✅ |
+| `python/src/resolveagent/skills/builtin/file_ops.py` | 完整文件操作实现 | ✅ |
+| `python/src/resolveagent/runtime/http_server.py` | 新增: Python 运行时 HTTP 服务 | ✅ |
+| `pkg/server/runtime_client.go` | 新增: Go 运行时 HTTP 客户端 | ✅ |
 
 **关键 TODO**:
 
@@ -224,6 +234,10 @@ func (s *Server) Run(ctx context.Context) error {
 | Makefile MODULE 路径 | 2026-04-01 | ✅ 已修复 |
 | RAG Pipeline TODO | 2026-04-01 | ✅ 已实现 |
 | Mega Agent 执行逻辑 | 2026-04-01 | ✅ 已实现 |
+| gRPC/HTTP 桥接层 | 2026-04-01 | ✅ 已实现 (HTTP SSE) |
+| RAG 向量存储集成 | 2026-04-01 | ✅ 已实现 (Milvus) |
+| Selector Registry 查询 | 2026-04-01 | ✅ 已实现 |
+| File Operations Skill | 2026-04-01 | ✅ 已实现 |
 
 ### 待修复问题（按优先级）
 

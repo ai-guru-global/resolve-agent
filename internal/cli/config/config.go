@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -76,7 +78,41 @@ func newInitCmd() *cobra.Command {
 		Short: "Initialize default configuration",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Println("Initializing default ResolveAgent configuration...")
-			// TODO: Create default config file
+
+			// Set default values
+			viper.Set("server", "localhost:8080")
+			viper.Set("api_version", "v1")
+
+			// Create config directory
+			home, err := os.UserHomeDir()
+			if err != nil {
+				return fmt.Errorf("failed to get home directory: %w", err)
+			}
+
+			configDir := filepath.Join(home, ".resolveagent")
+			if err := os.MkdirAll(configDir, 0755); err != nil {
+				return fmt.Errorf("failed to create config directory: %w", err)
+			}
+
+			// Write config file
+			configFile := filepath.Join(configDir, "config.yaml")
+			viper.SetConfigFile(configFile)
+
+			if err := viper.WriteConfig(); err != nil {
+				if os.IsNotExist(err) {
+					if err := viper.SafeWriteConfig(); err != nil {
+						return fmt.Errorf("failed to write config: %w", err)
+					}
+				} else {
+					return fmt.Errorf("failed to write config: %w", err)
+				}
+			}
+
+			fmt.Printf("✓ Configuration initialized at %s\n", configFile)
+			fmt.Println("\nYou can now use:")
+			fmt.Println("  resolveagent config set server <address>")
+			fmt.Println("  resolveagent config view")
+
 			return nil
 		},
 	}

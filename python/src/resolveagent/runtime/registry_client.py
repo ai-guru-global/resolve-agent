@@ -77,6 +77,20 @@ class WorkflowInfo:
 
 
 @dataclass
+class RAGCollectionInfo:
+    """RAG collection information from Go Registry."""
+
+    id: str
+    name: str
+    description: str
+    embedding_model: str
+    status: str
+    document_count: int = 0
+    vector_count: int = 0
+    labels: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass
 class ServiceEndpoint:
     """Service endpoint information."""
 
@@ -500,6 +514,43 @@ class RegistryClient:
             gateway_path=f"/services/{service_name}",
             healthy=True,
         )
+
+    async def list_rag_collections(
+        self,
+        status_filter: str | None = None,
+        labels: dict[str, str] | None = None,
+    ) -> list[RAGCollectionInfo]:
+        """List all registered RAG collections.
+
+        Args:
+            status_filter: Filter by status.
+            labels: Filter by labels.
+
+        Returns:
+            List of RAGCollectionInfo.
+        """
+        logger.debug("Listing RAG collections from registry")
+
+        data = await self._get("/api/v1/rag/collections")
+        if not data:
+            return []
+
+        collections = []
+        for item in data.get("collections", []):
+            collections.append(
+                RAGCollectionInfo(
+                    id=item.get("id", ""),
+                    name=item.get("name", ""),
+                    description=item.get("description", ""),
+                    embedding_model=item.get("embedding_model", ""),
+                    status=item.get("status", ""),
+                    document_count=item.get("document_count", 0),
+                    vector_count=item.get("vector_count", 0),
+                    labels=item.get("labels", {}),
+                )
+            )
+
+        return collections
 
     async def watch_registry(
         self,

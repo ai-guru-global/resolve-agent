@@ -171,11 +171,16 @@ class ContextEnricher:
         r"SELECT\s+\*\s+FROM": "sql_select_all",
     }
 
-    def __init__(self) -> None:
-        """Initialize the context enricher."""
+    def __init__(self, registry_client: Any | None = None) -> None:
+        """Initialize the context enricher.
+        
+        Args:
+            registry_client: Optional registry client for querying resources.
+        """
         self._compiled_lang_patterns: dict[str, list[re.Pattern[str]]] = {}
         self._compiled_issue_patterns: list[tuple[re.Pattern[str], str]] = []
         self._compile_patterns()
+        self._registry_client = registry_client
 
     def _compile_patterns(self) -> None:
         """Pre-compile patterns for efficiency."""
@@ -244,10 +249,27 @@ class ContextEnricher:
     async def _get_available_skills(self, agent_id: str) -> list[dict[str, Any]]:
         """Get available skills for the agent.
 
-        In production, this would query the skill registry.
+        Queries the skill registry via registry_client if available,
+        otherwise returns default skills.
         """
-        # TODO: Query actual skill registry
-        # Placeholder skills for demonstration
+        if self._registry_client:
+            try:
+                skills = await self._registry_client.list_skills()
+                return [
+                    {
+                        "name": skill.name,
+                        "description": skill.description,
+                        "version": skill.version,
+                        "capabilities": skill.manifest.get("capabilities", []),
+                        "status": skill.status,
+                    }
+                    for skill in skills
+                ]
+            except Exception as e:
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Failed to query skill registry: {e}")
+        
+        # Fallback to default skills
         return [
             {
                 "name": "web-search",
@@ -279,9 +301,28 @@ class ContextEnricher:
     async def _get_active_workflows(self, agent_id: str) -> list[dict[str, Any]]:
         """Get active workflows for the agent.
 
-        In production, this would query the workflow registry.
+        Queries the workflow registry via registry_client if available,
+        otherwise returns default workflows.
         """
-        # TODO: Query actual workflow registry
+        if self._registry_client:
+            try:
+                workflows = await self._registry_client.list_workflows()
+                return [
+                    {
+                        "id": workflow.id,
+                        "name": workflow.name,
+                        "description": workflow.description,
+                        "type": workflow.type,
+                        "status": workflow.status,
+                    }
+                    for workflow in workflows
+                    if workflow.status == "active"
+                ]
+            except Exception as e:
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Failed to query workflow registry: {e}")
+        
+        # Fallback to default workflows
         return [
             {
                 "id": "incident-diagnosis",
@@ -308,9 +349,28 @@ class ContextEnricher:
     ) -> list[dict[str, Any]]:
         """Get available RAG collections for the agent.
 
-        In production, this would query the RAG registry.
+        Queries the RAG registry via registry_client if available,
+        otherwise returns default collections.
         """
-        # TODO: Query actual RAG registry
+        if self._registry_client:
+            try:
+                collections = await self._registry_client.list_rag_collections()
+                return [
+                    {
+                        "id": coll.id,
+                        "name": coll.name,
+                        "description": coll.description,
+                        "doc_count": coll.document_count,
+                        "vector_count": coll.vector_count,
+                        "status": coll.status,
+                    }
+                    for coll in collections
+                ]
+            except Exception as e:
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Failed to query RAG registry: {e}")
+        
+        # Fallback to default collections
         return [
             {
                 "id": "product-docs",

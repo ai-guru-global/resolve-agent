@@ -13,8 +13,6 @@ import (
 )
 
 // AuthConfig holds authentication configuration.
-// This configuration is synchronized with Higress gateway auth settings
-// to ensure consistent authentication across the platform.
 type AuthConfig struct {
 	Enabled     bool     `mapstructure:"enabled"`
 	JWTSecret   string   `mapstructure:"jwt_secret"`
@@ -34,44 +32,9 @@ func DefaultAuthConfig() AuthConfig {
 }
 
 // AuthMiddleware provides unified authentication for the platform.
-// It supports multiple authentication methods that work in concert
-// with Higress gateway authentication:
-//
-// Architecture:
-//
-//	┌─────────────────────────────────────────────────────────────────┐
-//	│                         CLIENT                                   │
-//	│           (with JWT token or API key)                           │
-//	└───────────────────────────┬─────────────────────────────────────┘
-//	                            │
-//	                            ▼
-//	┌─────────────────────────────────────────────────────────────────┐
-//	│                    HIGRESS GATEWAY                               │
-//	│  ┌──────────────────────────────────────────────────────────┐   │
-//	│  │                  Gateway Auth Plugin                       │   │
-//	│  │  - JWT validation (optional)                               │   │
-//	│  │  - API key validation (optional)                           │   │
-//	│  │  - Rate limiting by identity                               │   │
-//	│  └──────────────────────────────────────────────────────────┘   │
-//	│                          │                                       │
-//	│           Forwards: X-Auth-User, X-Auth-Roles                   │
-//	└───────────────────────────┬─────────────────────────────────────┘
-//	                            │
-//	                            ▼
-//	┌─────────────────────────────────────────────────────────────────┐
-//	│                   PLATFORM SERVICE                               │
-//	│  ┌──────────────────────────────────────────────────────────┐   │
-//	│  │                   AuthMiddleware                           │   │
-//	│  │  - Validates X-Auth-User header from gateway               │   │
-//	│  │  - Or performs full JWT/API key validation                 │   │
-//	│  │  - Sets auth context for downstream handlers               │   │
-//	│  └──────────────────────────────────────────────────────────┘   │
-//	└─────────────────────────────────────────────────────────────────┘
 type AuthMiddleware struct {
-	config AuthConfig
-	logger *slog.Logger
-
-	// API key store (in production, use Redis or database)
+	config  AuthConfig
+	logger  *slog.Logger
 	apiKeys map[string]APIKeyInfo
 }
 
@@ -90,7 +53,7 @@ type AuthContext struct {
 	UserID    string
 	Username  string
 	Roles     []string
-	AuthType  string // "jwt", "apikey", "gateway"
+	AuthType  string
 	ExpiresAt time.Time
 }
 
@@ -113,19 +76,16 @@ func (m *AuthMiddleware) RegisterAPIKey(key APIKeyInfo) {
 // Middleware returns the HTTP middleware function.
 func (m *AuthMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Skip authentication for health/metrics endpoints
 		if m.shouldSkip(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// Check if auth is disabled
 		if !m.config.Enabled {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// Try authentication methods in order
 		authCtx, err := m.authenticate(r)
 		if err != nil {
 			m.logger.Warn("Authentication failed",
@@ -137,7 +97,6 @@ func (m *AuthMiddleware) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Add auth context to request context
 		ctx := context.WithValue(r.Context(), authContextKey{}, authCtx)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -153,20 +112,16 @@ func (m *AuthMiddleware) shouldSkip(path string) bool {
 }
 
 func (m *AuthMiddleware) authenticate(r *http.Request) (*AuthContext, error) {
-	// 1. Check for gateway-forwarded auth headers first
-	// Higress forwards authenticated user info in headers
 	if user := r.Header.Get("X-Auth-User"); user != "" {
 		return m.authFromGatewayHeaders(r)
 	}
 
-	// 2. Try JWT authentication
 	if authHeader := r.Header.Get("Authorization"); authHeader != "" {
 		if strings.HasPrefix(authHeader, "Bearer ") {
 			return m.authFromJWT(authHeader[7:])
 		}
 	}
 
-	// 3. Try API key authentication
 	for _, keyName := range m.config.APIKeyNames {
 		if key := r.Header.Get(keyName); key != "" {
 			return m.authFromAPIKey(key)
@@ -216,14 +171,12 @@ func (m *AuthMiddleware) authFromJWT(tokenStr string) (*AuthContext, error) {
 		return nil, fmt.Errorf("invalid JWT claims")
 	}
 
-	// Validate issuer
 	if m.config.JWTIssuer != "" {
 		if iss, _ := claims["iss"].(string); iss != m.config.JWTIssuer {
 			return nil, fmt.Errorf("invalid JWT issuer")
 		}
 	}
 
-	// Extract user info
 	userID, _ := claims["sub"].(string)
 	username, _ := claims["name"].(string)
 	if username == "" {
@@ -254,7 +207,6 @@ func (m *AuthMiddleware) authFromJWT(tokenStr string) (*AuthContext, error) {
 }
 
 func (m *AuthMiddleware) authFromAPIKey(key string) (*AuthContext, error) {
-	// Remove "Bearer " prefix if present
 	key = strings.TrimPrefix(key, "Bearer ")
 
 	keyInfo, ok := m.apiKeys[key]
@@ -262,7 +214,6 @@ func (m *AuthMiddleware) authFromAPIKey(key string) (*AuthContext, error) {
 		return nil, fmt.Errorf("invalid API key")
 	}
 
-	// Check expiration
 	if !keyInfo.ExpiresAt.IsZero() && time.Now().After(keyInfo.ExpiresAt) {
 		return nil, fmt.Errorf("API key expired")
 	}
@@ -296,19 +247,6 @@ func HasRole(ctx context.Context, role string) bool {
 		}
 	}
 	return false
-}
-
-// RequireRole returns a middleware that checks for a specific role.
-func (m *AuthMiddleware) RequireRole(role string) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if !HasRole(r.Context(), role) {
-				http.Error(w, "Forbidden", http.StatusForbidden)
-				return
-			}
-			next.ServeHTTP(w, r)
-		})
-	}
 }
 
 // GenerateJWT generates a JWT token for a user.

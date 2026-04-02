@@ -264,3 +264,382 @@ func (c *Client) GetAgentLogs(ctx context.Context, agentID, executionID string, 
 
 	return logs, nil
 }
+
+// Skill represents a skill definition.
+type Skill struct {
+	ID          string                 `json:"id"`
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
+	Version     string                 `json:"version"`
+	Type        string                 `json:"type"`
+	Status      string                 `json:"status"`
+	Source      string                 `json:"source"`
+	Config      map[string]interface{} `json:"config"`
+	Labels      map[string]string      `json:"labels"`
+	CreatedAt   time.Time              `json:"created_at"`
+	UpdatedAt   time.Time              `json:"updated_at"`
+}
+
+// ListSkillsResponse is the response for listing skills.
+type ListSkillsResponse struct {
+	Skills []*Skill `json:"skills"`
+	Total  int      `json:"total"`
+}
+
+// ListSkills returns all skills.
+func (c *Client) ListSkills(ctx context.Context) (*ListSkillsResponse, error) {
+	body, err := c.Get(ctx, "/skills")
+	if err != nil {
+		return nil, err
+	}
+
+	var resp ListSkillsResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// GetSkill returns a single skill.
+func (c *Client) GetSkill(ctx context.Context, id string) (*Skill, error) {
+	body, err := c.Get(ctx, fmt.Sprintf("/skills/%s", id))
+	if err != nil {
+		return nil, err
+	}
+
+	var skill Skill
+	if err := json.Unmarshal(body, &skill); err != nil {
+		return nil, err
+	}
+
+	return &skill, nil
+}
+
+// InstallSkillRequest is the request to install a skill.
+type InstallSkillRequest struct {
+	Source string                 `json:"source"`
+	Type   string                 `json:"type"`
+	Config map[string]interface{} `json:"config,omitempty"`
+}
+
+// InstallSkill installs a skill from source.
+func (c *Client) InstallSkill(ctx context.Context, req *InstallSkillRequest) (*Skill, error) {
+	body, err := c.Post(ctx, "/skills", req)
+	if err != nil {
+		return nil, err
+	}
+
+	var skill Skill
+	if err := json.Unmarshal(body, &skill); err != nil {
+		return nil, err
+	}
+
+	return &skill, nil
+}
+
+// DeleteSkill removes a skill.
+func (c *Client) DeleteSkill(ctx context.Context, id string) error {
+	_, err := c.Delete(ctx, fmt.Sprintf("/skills/%s", id))
+	return err
+}
+
+// TestSkillRequest is the request to test a skill.
+type TestSkillRequest struct {
+	Input map[string]interface{} `json:"input"`
+}
+
+// TestSkillResponse is the response from testing a skill.
+type TestSkillResponse struct {
+	SkillID string                 `json:"skill_id"`
+	Output  map[string]interface{} `json:"output"`
+	Error   string                 `json:"error,omitempty"`
+	Duration float64               `json:"duration"`
+}
+
+// TestSkill tests a skill with input.
+func (c *Client) TestSkill(ctx context.Context, id string, req *TestSkillRequest) (*TestSkillResponse, error) {
+	body, err := c.Post(ctx, fmt.Sprintf("/skills/%s/test", id), req)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp TestSkillResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// Workflow represents a workflow definition.
+type Workflow struct {
+	ID          string                 `json:"id"`
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
+	Version     string                 `json:"version"`
+	Status      string                 `json:"status"`
+	Definition  map[string]interface{} `json:"definition"`
+	Labels      map[string]string      `json:"labels"`
+	CreatedAt   time.Time              `json:"created_at"`
+	UpdatedAt   time.Time              `json:"updated_at"`
+}
+
+// ListWorkflowsResponse is the response for listing workflows.
+type ListWorkflowsResponse struct {
+	Workflows []*Workflow `json:"workflows"`
+	Total     int         `json:"total"`
+}
+
+// ListWorkflows returns all workflows.
+func (c *Client) ListWorkflows(ctx context.Context) (*ListWorkflowsResponse, error) {
+	body, err := c.Get(ctx, "/workflows")
+	if err != nil {
+		return nil, err
+	}
+
+	var resp ListWorkflowsResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// GetWorkflow returns a single workflow.
+func (c *Client) GetWorkflow(ctx context.Context, id string) (*Workflow, error) {
+	body, err := c.Get(ctx, fmt.Sprintf("/workflows/%s", id))
+	if err != nil {
+		return nil, err
+	}
+
+	var workflow Workflow
+	if err := json.Unmarshal(body, &workflow); err != nil {
+		return nil, err
+	}
+
+	return &workflow, nil
+}
+
+// CreateWorkflow creates a new workflow.
+func (c *Client) CreateWorkflow(ctx context.Context, workflow *Workflow) (*Workflow, error) {
+	body, err := c.Post(ctx, "/workflows", workflow)
+	if err != nil {
+		return nil, err
+	}
+
+	var created Workflow
+	if err := json.Unmarshal(body, &created); err != nil {
+		return nil, err
+	}
+
+	return &created, nil
+}
+
+// DeleteWorkflow deletes a workflow.
+func (c *Client) DeleteWorkflow(ctx context.Context, id string) error {
+	_, err := c.Delete(ctx, fmt.Sprintf("/workflows/%s", id))
+	return err
+}
+
+// ValidateWorkflowRequest is the request to validate a workflow.
+type ValidateWorkflowRequest struct {
+	Definition map[string]interface{} `json:"definition"`
+}
+
+// ValidateWorkflowResponse is the response from validating a workflow.
+type ValidateWorkflowResponse struct {
+	Valid   bool     `json:"valid"`
+	Errors  []string `json:"errors,omitempty"`
+	Warnings []string `json:"warnings,omitempty"`
+}
+
+// ValidateWorkflow validates a workflow definition.
+func (c *Client) ValidateWorkflow(ctx context.Context, req *ValidateWorkflowRequest) (*ValidateWorkflowResponse, error) {
+	body, err := c.Post(ctx, "/workflows/validate", req)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp ValidateWorkflowResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// ExecuteWorkflowRequest is the request to execute a workflow.
+type ExecuteWorkflowRequest struct {
+	Input map[string]interface{} `json:"input,omitempty"`
+	Async bool                   `json:"async,omitempty"`
+	Wait  bool                   `json:"wait,omitempty"`
+}
+
+// ExecuteWorkflowResponse is the response from executing a workflow.
+type ExecuteWorkflowResponse struct {
+	ExecutionID string                 `json:"execution_id"`
+	WorkflowID  string                 `json:"workflow_id"`
+	Status      string                 `json:"status"`
+	Output      map[string]interface{} `json:"output,omitempty"`
+	Error       string                 `json:"error,omitempty"`
+	Duration    float64                `json:"duration"`
+}
+
+// ExecuteWorkflow executes a workflow.
+func (c *Client) ExecuteWorkflow(ctx context.Context, id string, req *ExecuteWorkflowRequest) (*ExecuteWorkflowResponse, error) {
+	body, err := c.Post(ctx, fmt.Sprintf("/workflows/%s/execute", id), req)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp ExecuteWorkflowResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// Collection represents a RAG collection.
+type Collection struct {
+	ID              string            `json:"id"`
+	Name            string            `json:"name"`
+	Description     string            `json:"description"`
+	EmbeddingModel  string            `json:"embedding_model"`
+	ChunkStrategy   string            `json:"chunk_strategy"`
+	DocumentCount   int               `json:"document_count"`
+	VectorCount     int               `json:"vector_count"`
+	Status          string            `json:"status"`
+	Labels          map[string]string `json:"labels"`
+	CreatedAt       time.Time         `json:"created_at"`
+	UpdatedAt       time.Time         `json:"updated_at"`
+}
+
+// ListCollectionsResponse is the response for listing collections.
+type ListCollectionsResponse struct {
+	Collections []*Collection `json:"collections"`
+	Total       int           `json:"total"`
+}
+
+// ListCollections returns all RAG collections.
+func (c *Client) ListCollections(ctx context.Context) (*ListCollectionsResponse, error) {
+	body, err := c.Get(ctx, "/rag/collections")
+	if err != nil {
+		return nil, err
+	}
+
+	var resp ListCollectionsResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// GetCollection returns a single collection.
+func (c *Client) GetCollection(ctx context.Context, id string) (*Collection, error) {
+	body, err := c.Get(ctx, fmt.Sprintf("/rag/collections/%s", id))
+	if err != nil {
+		return nil, err
+	}
+
+	var collection Collection
+	if err := json.Unmarshal(body, &collection); err != nil {
+		return nil, err
+	}
+
+	return &collection, nil
+}
+
+// CreateCollection creates a new RAG collection.
+func (c *Client) CreateCollection(ctx context.Context, collection *Collection) (*Collection, error) {
+	body, err := c.Post(ctx, "/rag/collections", collection)
+	if err != nil {
+		return nil, err
+	}
+
+	var created Collection
+	if err := json.Unmarshal(body, &created); err != nil {
+		return nil, err
+	}
+
+	return &created, nil
+}
+
+// DeleteCollection deletes a RAG collection.
+func (c *Client) DeleteCollection(ctx context.Context, id string) error {
+	_, err := c.Delete(ctx, fmt.Sprintf("/rag/collections/%s", id))
+	return err
+}
+
+// IngestDocumentRequest is the request to ingest documents.
+type IngestDocumentRequest struct {
+	CollectionID string                 `json:"collection_id"`
+	Content      string                 `json:"content,omitempty"`
+	FilePath     string                 `json:"file_path,omitempty"`
+	Metadata     map[string]interface{} `json:"metadata,omitempty"`
+}
+
+// IngestDocumentResponse is the response from ingesting documents.
+type IngestDocumentResponse struct {
+	DocumentID      string  `json:"document_id"`
+	CollectionID    string  `json:"collection_id"`
+	ChunksCreated   int     `json:"chunks_created"`
+	VectorsInserted int     `json:"vectors_inserted"`
+	Duration        float64 `json:"duration"`
+}
+
+// IngestDocument ingests a document into a collection.
+func (c *Client) IngestDocument(ctx context.Context, req *IngestDocumentRequest) (*IngestDocumentResponse, error) {
+	body, err := c.Post(ctx, "/rag/ingest", req)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp IngestDocumentResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// QueryRequest is the request to query a collection.
+type QueryRequest struct {
+	Query        string                 `json:"query"`
+	CollectionID string                 `json:"collection_id"`
+	TopK         int                    `json:"top_k"`
+	Filters      map[string]interface{} `json:"filters,omitempty"`
+}
+
+// QueryResult represents a single query result.
+type QueryResult struct {
+	Content    string                 `json:"content"`
+	Score      float64                `json:"score"`
+	Metadata   map[string]interface{} `json:"metadata"`
+	DocumentID string                 `json:"document_id"`
+}
+
+// QueryResponse is the response from querying a collection.
+type QueryResponse struct {
+	Query    string         `json:"query"`
+	Results  []*QueryResult `json:"results"`
+	Total    int            `json:"total"`
+	Duration float64        `json:"duration"`
+}
+
+// QueryCollection queries a RAG collection.
+func (c *Client) QueryCollection(ctx context.Context, req *QueryRequest) (*QueryResponse, error) {
+	body, err := c.Post(ctx, "/rag/query", req)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp QueryResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}

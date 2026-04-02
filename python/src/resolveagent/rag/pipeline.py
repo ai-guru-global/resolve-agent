@@ -109,16 +109,45 @@ class RAGPipeline:
             embeddings: Embedding vectors.
             metadata: Document metadata.
         """
-        # TODO: Implement actual vector store indexing
-        # This is a placeholder for the actual implementation
-        logger.debug(
-            "Indexing chunks",
-            extra={
-                "collection": collection_id,
-                "chunk_count": len(chunks),
-                "embedding_dim": len(embeddings[0]) if embeddings else 0,
-            },
-        )
+        from resolveagent.rag.index.milvus import MilvusStore
+
+        # Initialize vector store connection
+        store = MilvusStore()
+        await store.connect()
+
+        try:
+            # Ensure collection exists
+            embedding_dim = len(embeddings[0]) if embeddings else 1024
+            await store.create_collection(
+                collection_name=collection_id,
+                dimension=embedding_dim,
+                metric_type="COSINE",
+            )
+
+            # Prepare metadata for each chunk
+            chunk_metadata = [
+                {**metadata, "chunk_index": i, "total_chunks": len(chunks)}
+                for i in range(len(chunks))
+            ]
+
+            # Insert chunks into vector store
+            await store.insert(
+                collection_name=collection_id,
+                vectors=embeddings,
+                texts=chunks,
+                metadata=chunk_metadata,
+            )
+
+            logger.debug(
+                "Indexed chunks",
+                extra={
+                    "collection": collection_id,
+                    "chunk_count": len(chunks),
+                    "embedding_dim": embedding_dim,
+                },
+            )
+        finally:
+            await store.disconnect()
 
     async def query(
         self,

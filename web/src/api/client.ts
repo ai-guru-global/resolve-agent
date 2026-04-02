@@ -40,6 +40,16 @@ export const api = {
   listCollections: () =>
     request<{ collections: Collection[]; total: number }>('/rag/collections'),
 
+  // Agents - additional methods
+  executeAgent: (id: string, message: string) =>
+    request<{ agent_id: string; response?: string; content?: string; metadata?: Record<string, unknown> }>(
+      `/agents/${id}/execute`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ message }),
+      },
+    ),
+
   // System
   systemInfo: () =>
     request<{ version: string; commit: string; build_date: string }>(

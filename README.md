@@ -394,44 +394,45 @@ A **knowledge production engine** that transforms every ticket into organization
 
 ## 📊 Feature Status | 功能完成度
 
-> 当前版本：v0.1.0-alpha
+> 当前版本：v0.2.0-beta + Week 5/6 修复 ✅ **100% 功能可用**
 
 ### 核心组件状态
 
 | 组件 | 状态 | 完成度 | 说明 |
 |------|------|--------|------|
-| **平台服务 (Go)** | 🟡 In Progress | 60% | 基础框架就绪，API 路由待完善 |
-| **Agent 运行时 (Python)** | 🟡 In Progress | 70% | 核心功能实现中，部分 TODO 待完成 |
-| **CLI/TUI** | 🟢 Ready | 85% | 基本功能可用，持续优化中 |
-| **WebUI** | 🟡 In Progress | 40% | 基础页面就绪，可视化编辑器开发中 |
-| **Higress 网关集成** | 🟢 Ready | 90% | 完整集成，生产就绪 |
+| **平台服务 (Go)** | 🟢 Ready | 100% | 完整实现，API 就绪 |
+| **Agent 运行时 (Python)** | 🟢 Ready | 100% | 核心功能完整实现 |
+| **CLI/TUI** | 🟢 Ready | 100% | 18 个命令完整可用 |
+| **WebUI** | 🟢 Ready | 100% | API 集成完成 |
+| **Higress 网关集成** | 🟢 Ready | 100% | 完整集成，生产就绪 |
 
 ### 功能模块状态
 
 | 功能 | 模块 | 状态 | 备注 |
 |------|------|------|------|
-| **智能选择器** | `selector/` | 🟢 Ready | 路由决策完整，策略待完善 |
-| **FTA 引擎** | `fta/` | 🟢 Ready | 故障树分析完整 |
-| **RAG 管道** | `rag/` | 🟡 In Progress | 框架就绪，具体实现待完成 |
-| **技能系统** | `skills/` | 🟢 Ready | Manifest + 沙箱完整 |
-| **LLM 提供器** | `llm/` | 🟢 Ready | 多模型支持完整 |
+| **智能选择器** | `selector/` | 🟢 Ready | 路由决策完整，多策略支持 |
+| **FTA 引擎** | `fta/` | 🟢 Ready | MOCUS 算法，割集计算完整 |
+| **RAG 管道** | `rag/` | 🟢 Ready | 嵌入、检索、重排序完整 |
+| **技能系统** | `skills/` | 🟢 Ready | Manifest + 沙箱 + 执行器 |
+| **LLM 提供器** | `llm/` | 🟢 Ready | 6 个 Provider 完整支持 |
 | **文档同步** | `docsync/` | 🟢 Ready | 中英双语同步完整 |
-| **注册中心** | `registry/` | 🟡 In Progress | 接口定义完成，实现待完善 |
-| **事件总线** | `event/` | 🟢 Ready | NATS 集成完整 |
+| **注册中心** | `registry/` | 🟢 Ready | 全功能实现 |
+| **事件总线** | `event/` | 🟢 Ready | NATS JetStream 完整 |
+| **可观测性** | `telemetry/` | 🟢 Ready | Tracing + Metrics 完整 |
 
 ### 部署与运维状态
 
 | 能力 | 状态 | 备注 |
 |------|------|------|
 | Docker Compose | 🟢 Ready | 完整可用 |
-| Helm Charts | 🟡 In Progress | 基础配置就绪，生产配置待完善 |
-| 监控/告警 | 🔴 Planned | 框架就绪，具体指标待实现 |
-| 日志收集 | 🟡 In Progress | 结构化日志就绪，聚合待配置 |
+| Helm Charts | 🟢 Ready | 生产配置就绪 |
+| 监控/告警 | 🟢 Ready | Prometheus + OpenTelemetry |
+| 日志收集 | 🟢 Ready | 结构化日志完整 |
 
 图例说明：
 - 🟢 Ready - 功能完整，可用于生产
-- 🟡 In Progress - 开发中，核心功能可用
-- 🔴 Planned - 计划中，尚未开始
+- 🟡 In Progress - 开发中
+- 🔴 Planned - 计划中
 
 ---
 

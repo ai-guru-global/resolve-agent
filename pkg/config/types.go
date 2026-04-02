@@ -15,8 +15,9 @@ type Config struct {
 
 // ServerConfig holds HTTP/gRPC server settings.
 type ServerConfig struct {
-	HTTPAddr string `mapstructure:"http_addr"`
-	GRPCAddr string `mapstructure:"grpc_addr"`
+	HTTPAddr    string `mapstructure:"http_addr"`
+	GRPCAddr    string `mapstructure:"grpc_addr"`
+	RuntimeAddr string `mapstructure:"runtime_addr"` // Python runtime HTTP address
 }
 
 // DatabaseConfig holds PostgreSQL settings.

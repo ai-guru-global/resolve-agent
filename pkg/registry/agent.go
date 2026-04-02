@@ -99,4 +99,6 @@ type ListOptions struct {
 	PageSize  int
 	PageToken string
 	Filter    map[string]string
+	Limit     int
+	Offset    int
 }

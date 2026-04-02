@@ -1,25 +1,49 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../../api/client';
 
 export default function AgentCreate() {
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [agentType, setAgentType] = useState('mega');
   const [model, setModel] = useState('qwen-plus');
+  const [systemPrompt, setSystemPrompt] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Call API to create agent
-    navigate('/agents');
+    setLoading(true);
+    setError(null);
+
+    try {
+      await api.createAgent({
+        name,
+        type: agentType,
+        model,
+        system_prompt: systemPrompt,
+      });
+      navigate('/agents');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create agent');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="max-w-2xl">
       <h2 className="text-xl font-semibold mb-6">Create New Agent</h2>
 
+      {error && (
+        <div className="mb-4 p-4 bg-red-900/50 border border-red-800 rounded-lg text-red-200 text-sm">
+          {error}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm text-gray-400 mb-1">Name</label>
+          <label className="block text-sm text-gray-400 mb-1">Name *</label>
           <input
             type="text"
             value={name}
@@ -27,6 +51,7 @@ export default function AgentCreate() {
             className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
             placeholder="my-agent"
             required
+            disabled={loading}
           />
         </div>
 
@@ -36,6 +61,7 @@ export default function AgentCreate() {
             value={agentType}
             onChange={(e) => setAgentType(e.target.value)}
             className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
+            disabled={loading}
           >
             <option value="mega">Mega Agent</option>
             <option value="skill">Skill Agent</option>
@@ -51,6 +77,7 @@ export default function AgentCreate() {
             value={model}
             onChange={(e) => setModel(e.target.value)}
             className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
+            disabled={loading}
           >
             <option value="qwen-turbo">Qwen Turbo</option>
             <option value="qwen-plus">Qwen Plus</option>
@@ -63,21 +90,26 @@ export default function AgentCreate() {
         <div>
           <label className="block text-sm text-gray-400 mb-1">System Prompt</label>
           <textarea
+            value={systemPrompt}
+            onChange={(e) => setSystemPrompt(e.target.value)}
             className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-primary-500 focus:outline-none h-32 resize-y"
             placeholder="You are a helpful assistant..."
+            disabled={loading}
           />
         </div>
 
         <div className="flex gap-3 pt-4">
           <button
             type="submit"
-            className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg text-sm transition-colors"
+            disabled={loading || !name.trim()}
+            className="bg-primary-600 hover:bg-primary-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg text-sm transition-colors"
           >
-            Create Agent
+            {loading ? 'Creating...' : 'Create Agent'}
           </button>
           <button
             type="button"
             onClick={() => navigate('/agents')}
+            disabled={loading}
             className="bg-gray-800 hover:bg-gray-700 text-gray-300 px-6 py-2 rounded-lg text-sm transition-colors"
           >
             Cancel

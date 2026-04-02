@@ -207,17 +207,31 @@ Respond ONLY with the JSON object, no additional text.'''
     async def _call_llm(self, prompt: str) -> str:
         """Call the LLM with the routing prompt.
 
-        In production, this would call the actual LLM provider.
-        For now, returns a simulated response based on heuristics.
+        Integrates with the actual LLM provider for intelligent routing.
+        Falls back to simulated response if LLM call fails.
         """
-        # TODO: Integrate with actual LLM provider
-        # from resolveagent.llm.provider import LLMProvider
-        # provider = get_provider(self.model_id)
-        # response = await provider.chat([ChatMessage(role="user", content=prompt)])
-        # return response.content
+        try:
+            from resolveagent.llm.higress_provider import create_llm_provider
+            from resolveagent.llm.provider import ChatMessage
 
-        # Simulated response for demonstration
-        return self._simulate_llm_response(prompt)
+            # Create LLM provider (uses default model from config)
+            llm = create_llm_provider(model=self.model_id)
+
+            # Call LLM
+            response = await llm.chat(
+                messages=[ChatMessage(role="user", content=prompt)],
+                model=self.model_id,
+                temperature=0.3,  # Lower temperature for more deterministic routing
+                max_tokens=500,
+            )
+
+            logger.debug("LLM routing response received", extra={"model": response.model})
+            return response.content
+
+        except Exception as e:
+            logger.warning(f"LLM call failed, using fallback: {e}")
+            # Fallback to simulated response
+            return self._simulate_llm_response(prompt)
 
     def _simulate_llm_response(self, prompt: str) -> str:
         """Simulate LLM response based on keywords in the prompt.

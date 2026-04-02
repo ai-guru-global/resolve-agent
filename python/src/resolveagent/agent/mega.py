@@ -310,8 +310,24 @@ class MegaAgent(BaseAgent):
                 },
             }
 
-        # TODO: Load workflow definition from registry
-        # For now, return a placeholder
+        # Load workflow definition from registry or use default
+        workflow_def = None
+        try:
+            from resolveagent.runtime.registry_client import get_registry_client
+            registry = get_registry_client()
+            workflow_info = await registry.get_workflow(workflow_name)
+            if workflow_info:
+                workflow_def = workflow_info.definition
+        except Exception as e:
+            logger.debug(f"Could not load workflow from registry: {e}")
+
+        # Execute workflow
+        if workflow_def:
+            # Use workflow definition to execute
+            result = await self._execute_defined_workflow(content, workflow_def, decision)
+            return result
+
+        # Fallback: simple workflow execution
         return {
             "role": "assistant",
             "content": f"工作流 '{workflow_name}' 已启动分析:\n{content}",
@@ -323,14 +339,84 @@ class MegaAgent(BaseAgent):
             },
         }
 
+    async def _execute_defined_workflow(
+        self,
+        content: str,
+        workflow_def: dict[str, Any],
+        decision: RouteDecision,
+    ) -> dict[str, Any]:
+        """Execute a defined workflow.
+
+        Args:
+            content: Input content.
+            workflow_def: Workflow definition.
+            decision: Route decision.
+
+        Returns:
+            Execution result.
+        """
+        workflow_name = workflow_def.get("name", "unnamed")
+        nodes = workflow_def.get("nodes", [])
+        edges = workflow_def.get("edges", [])
+
+        logger.info(
+            "Executing defined workflow",
+            extra={
+                "workflow": workflow_name,
+                "nodes": len(nodes),
+                "edges": len(edges),
+            },
+        )
+
+        # Simple workflow execution: process through nodes
+        results = []
+        current_data = content
+
+        for node in nodes:
+            node_type = node.get("type")
+            node_id = node.get("id")
+
+            if node_type == "start":
+                continue
+            elif node_type == "end":
+                break
+            elif node_type == "agent":
+                # Process with LLM
+                result = await self.reply({"content": current_data})
+                current_data = result.get("content", "")
+                results.append({"node": node_id, "result": current_data})
+            elif node_type == "skill":
+                # Execute skill
+                skill_name = node.get("config", {}).get("skill_name")
+                if skill_name:
+                    from resolveagent.skills.executor import SkillExecutor
+                    executor = SkillExecutor()
+                    skill_result = await executor.execute(
+                        skill_name=skill_name,
+                        parameters={"input": current_data},
+                        context={},
+                    )
+                    current_data = str(skill_result.output) if skill_result.success else str(skill_result.error)
+                    results.append({"node": node_id, "skill": skill_name, "result": current_data})
+
+        return {
+            "role": "assistant",
+            "content": current_data,
+            "metadata": {
+                "route_type": decision.route_type,
+                "route_target": decision.route_target,
+                "workflow": workflow_name,
+                "workflow_results": results,
+            },
+        }
+
     async def _execute_code_analysis(
         self,
         content: str,
         decision: RouteDecision,
     ) -> dict[str, Any]:
-        """Execute code analysis."""
-        # TODO: Implement actual code analysis
-        # For now, use LLM to analyze code
+        """Execute code analysis using LLM and optional static analysis tools."""
+        # Use LLM to analyze code with structured prompts
 
         from resolveagent.llm.higress_provider import create_llm_provider
         from resolveagent.llm.provider import ChatMessage

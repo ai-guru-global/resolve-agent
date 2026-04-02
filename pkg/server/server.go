@@ -19,13 +19,15 @@ import (
 
 // Server is the main platform services server.
 type Server struct {
-	cfg           *config.Config
-	logger        *slog.Logger
-	httpServer    *http.Server
-	grpcServer    *grpc.Server
-	agentRegistry registry.AgentRegistry
-	skillRegistry registry.SkillRegistry
+	cfg              *config.Config
+	logger           *slog.Logger
+	httpServer       *http.Server
+	grpcServer       *grpc.Server
+	agentRegistry    registry.AgentRegistry
+	skillRegistry    registry.SkillRegistry
 	workflowRegistry registry.WorkflowRegistry
+	ragRegistry      registry.RAGRegistry
+	runtimeClient    *RuntimeClient
 }
 
 // New creates a new Server instance.
@@ -36,6 +38,8 @@ func New(cfg *config.Config, logger *slog.Logger) (*Server, error) {
 		agentRegistry:    registry.NewInMemoryAgentRegistry(),
 		skillRegistry:    registry.NewInMemorySkillRegistry(),
 		workflowRegistry: registry.NewInMemoryWorkflowRegistry(),
+		ragRegistry:      registry.NewInMemoryRAGRegistry(),
+		runtimeClient:    NewRuntimeClient(cfg),
 	}
 
 	// Initialize gRPC server

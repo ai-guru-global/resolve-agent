@@ -7,7 +7,7 @@
 # ---------------------
 # Stage 1: Build
 # ---------------------
-FROM node:20-alpine AS builder
+FROM node:25-alpine AS builder
 
 RUN npm install -g pnpm
 

@@ -1,15 +1,24 @@
-# ResolveAgent Maintainers
+# Maintainers
 
-## Current Maintainers
+This file lists the maintainers of the ResolveAgent project.
 
-| Name | GitHub | Affiliation | Role |
-|------|--------|-------------|------|
-| Allen Galler | [@allengaller](https://github.com/allengaller) | AI Guru Global | Lead Maintainer |
+## Core Maintainers
 
-## Emeritus Maintainers
+| Name | GitHub | Area |
+|------|--------|------|
+| AI Guru Global Team | [@ai-guru-global](https://github.com/ai-guru-global) | Overall |
 
-_None yet._
+## Component Owners
+
+| Component | Owner | Description |
+|-----------|-------|-------------|
+| `cmd/`, `pkg/`, `internal/` | Core Team | Go platform services |
+| `python/` | Core Team | Python agent runtime |
+| `web/` | Core Team | WebUI dashboard |
+| `deploy/` | Core Team | Deployment & infrastructure |
+| `docs/`, `docs-site/` | Core Team | Documentation |
 
 ## Becoming a Maintainer
 
-See [GOVERNANCE.md](GOVERNANCE.md) for the process of becoming a maintainer.
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for details on the contribution
+process and how to become a maintainer.

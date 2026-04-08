@@ -16,6 +16,22 @@ export function useAgent(id: string) {
   });
 }
 
+export function useAgentExecutions(id: string) {
+  return useQuery({
+    queryKey: ['agents', id, 'executions'],
+    queryFn: () => api.getAgentExecutions(id),
+    enabled: !!id,
+  });
+}
+
+export function useAgentRuntimeStatus(id: string) {
+  return useQuery({
+    queryKey: ['agents', id, 'status'],
+    queryFn: () => api.getAgentStatus(id),
+    enabled: !!id,
+  });
+}
+
 export function useCreateAgent() {
   const queryClient = useQueryClient();
 

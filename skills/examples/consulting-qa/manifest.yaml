@@ -1,0 +1,35 @@
+name: consulting-qa
+version: "1.0.0"
+description: "运维咨询问答技能 - 基于知识库的智能问答"
+author: "ResolveNet"
+entry_point: "skill:run"
+inputs:
+  - name: question
+    type: string
+    description: "咨询问题"
+    required: true
+  - name: context
+    type: string
+    description: "上下文信息"
+    required: false
+    default: ""
+  - name: category
+    type: string
+    description: "问题分类 (general/ecs/network/database/k8s/storage)"
+    required: false
+    default: "general"
+outputs:
+  - name: answer
+    type: string
+    description: "回答内容"
+  - name: references
+    type: string
+    description: "参考来源"
+  - name: confidence
+    type: number
+    description: "置信度 (0-1)"
+permissions:
+  network_access: true
+  file_system_read: false
+  file_system_write: false
+  timeout_seconds: 30

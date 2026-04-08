@@ -1,0 +1,9 @@
+# Third Party
+
+This directory contains third-party protocol definitions and licenses
+used by the ResolveAgent project.
+
+## Structure
+
+- `protobuf/` - Third-party .proto files (e.g., google/api annotations)
+- `licenses/` - Collected licenses for bundled dependencies

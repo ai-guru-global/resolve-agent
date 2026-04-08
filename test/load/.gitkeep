@@ -1,0 +1,18 @@
+# Load / Performance Tests
+
+This directory contains load testing scripts for the ResolveAgent platform.
+
+## Tools
+
+- [k6](https://k6.io/) for HTTP/gRPC load testing
+- [locust](https://locust.io/) for Python-based load testing
+
+## Usage
+
+```bash
+# k6 example
+k6 run test/load/k6-api-benchmark.js
+
+# locust example
+locust -f test/load/locustfile.py --host=http://localhost:8080
+```

@@ -1,0 +1,25 @@
+# Quickstart: FTA Workflow
+tree:
+  id: quickstart-diagnosis
+  name: "Quickstart Incident Diagnosis"
+  description: "Simple FTA workflow for the quickstart example"
+  top_event_id: root-cause
+
+  events:
+    - id: root-cause
+      name: "Root Cause Identified"
+      type: top
+    - id: check-logs
+      name: "Check Application Logs"
+      type: basic
+      evaluator: "skill:hello-world"
+      parameters:
+        message: "Checking application logs..."
+
+  gates:
+    - id: gate-1
+      name: "Evidence Found"
+      type: or
+      inputs:
+        - check-logs
+      output: root-cause

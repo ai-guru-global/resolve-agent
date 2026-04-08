@@ -1,0 +1,34 @@
+name: ticket-handler
+version: "1.0.0"
+description: "智能工单处理技能 - 自动分析、摘要和建议变更方案"
+author: "ResolveNet"
+entry_point: "skill:run"
+inputs:
+  - name: ticket_id
+    type: string
+    description: "工单编号"
+    required: true
+  - name: ticket_content
+    type: string
+    description: "工单内容"
+    required: true
+  - name: action_type
+    type: string
+    description: "操作类型 (analyze/summarize/suggest)"
+    required: true
+    default: "analyze"
+outputs:
+  - name: analysis_result
+    type: string
+    description: "分析结果"
+  - name: change_plan
+    type: string
+    description: "变更方案"
+  - name: summary
+    type: string
+    description: "工单摘要"
+permissions:
+  network_access: true
+  file_system_read: false
+  file_system_write: false
+  timeout_seconds: 30

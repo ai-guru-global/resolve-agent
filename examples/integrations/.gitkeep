@@ -1,0 +1,10 @@
+# Integration Examples
+
+This directory contains examples for integrating ResolveAgent with
+third-party services.
+
+## Planned examples
+
+- `higress/` - API gateway integration with Higress
+- `milvus/` - RAG pipeline with Milvus vector database
+- `prometheus/` - Monitoring with Prometheus & Grafana

@@ -1,10 +1,12 @@
 # =============================================================================
-# ResolveNet - Comprehensive .gitignore
+# ResolveAgent - Comprehensive .gitignore
 # =============================================================================
 
 # ===== Go =====
 # Binaries
 bin/
+resolveagent-cli
+resolveagent-server
 *.exe
 *.exe~
 *.dll
@@ -83,12 +85,13 @@ Thumbs.db
 .env.local
 .env.*.local
 !deploy/docker-compose/.env.example
+!.env.example
 
 # ===== Build artifacts =====
 *.pb.go
 *_grpc.pb.go
 *.pb.gw.go
-python/src/resolvenet/api/
+python/src/resolveagent/api/
 
 # ===== Temporary =====
 tmp/
@@ -105,5 +108,5 @@ credentials.json
 secrets.yaml
 
 # ===== Helm =====
-deploy/helm/resolvenet/charts/
+deploy/helm/resolveagent/charts/
 *.tgz

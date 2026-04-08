@@ -1,0 +1,4 @@
+# Test Data
+
+This directory contains static test data files referenced by Go tests
+via the `testdata` convention (automatically ignored by `go build`).

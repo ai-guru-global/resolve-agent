@@ -1,0 +1,15 @@
+# Quickstart: Agent Configuration
+agent:
+  name: quickstart-agent
+  type: mega
+  description: "A quickstart demo agent with intelligent routing"
+  config:
+    model_id: qwen-plus
+    system_prompt: |
+      You are a helpful assistant powered by ResolveAgent.
+      You can search the web, analyze documents, and run workflows.
+    skill_names:
+      - hello-world
+    selector_config:
+      strategy: hybrid
+      confidence_threshold: 0.7

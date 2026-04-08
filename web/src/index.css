@@ -2,7 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-gray-950 text-gray-100;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+@layer base {
+  :root {
+    /* Argo CD Dark Theme — HSL channels (no hsl() wrapper) */
+    --background: 215 28% 7%;       /* #0D1117 */
+    --foreground: 210 29% 93%;      /* #E6EDF3 */
+
+    --card: 215 17% 11%;            /* #161B22 */
+    --card-foreground: 210 29% 93%; /* #E6EDF3 */
+
+    --popover: 215 19% 13%;         /* #1C2128 */
+    --popover-foreground: 210 29% 93%;
+
+    --primary: 217 91% 60%;         /* #3B82F6 */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 215 19% 13%;       /* #1C2128 */
+    --secondary-foreground: 210 29% 93%;
+
+    --muted: 215 17% 11%;           /* #161B22 */
+    --muted-foreground: 211 9% 58%; /* #8B949E */
+
+    --accent: 215 19% 13%;          /* #1C2128 */
+    --accent-foreground: 210 29% 93%;
+
+    --destructive: 0 84% 60%;       /* #EF4444 */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 213 12% 21%;          /* #30363D */
+    --input: 213 12% 21%;           /* #30363D */
+    --ring: 217 91% 60%;            /* #3B82F6 */
+
+    --radius: 0.5rem;
+
+    /* Status colors — Argo CD / CNCF standard */
+    --status-healthy: 142 71% 45%;     /* #22C55E */
+    --status-degraded: 38 92% 50%;     /* #F59E0B */
+    --status-failed: 0 84% 60%;        /* #EF4444 */
+    --status-progressing: 217 91% 60%; /* #3B82F6 */
+    --status-unknown: 220 5% 46%;      /* #6B7280 */
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }

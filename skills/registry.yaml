@@ -1,4 +1,4 @@
-# ResolveAgent Community Skill Registry
+# ResolveNet 现场助手技能注册表
 
 version: "1"
 skills:
@@ -6,6 +6,16 @@ skills:
     version: "1.0.0"
     description: "A simple hello world skill for testing"
     path: examples/hello-world
+
+  - name: ticket-handler
+    version: "1.0.0"
+    description: "智能工单处理技能 - 自动分析、摘要和建议变更方案"
+    path: examples/ticket-handler
+
+  - name: consulting-qa
+    version: "1.0.0"
+    description: "运维咨询问答技能 - 基于知识库的智能问答"
+    path: examples/consulting-qa
 
   - name: web-search
     version: "1.0.0"

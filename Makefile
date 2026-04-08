@@ -7,7 +7,7 @@
 # Project metadata
 PROJECT_NAME := resolveagent
 MODULE := github.com/ai-guru-global/resolve-agent
-VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || cat VERSION 2>/dev/null || echo "dev")
 COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_DATE := $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
 
@@ -18,6 +18,7 @@ PYTHON_DIR := $(ROOT_DIR)/python
 WEB_DIR := $(ROOT_DIR)/web
 DEPLOY_DIR := $(ROOT_DIR)/deploy
 PROTO_DIR := $(ROOT_DIR)/api/proto
+SCRIPTS_DIR := $(ROOT_DIR)/scripts
 
 # Go build flags
 GO_LDFLAGS := -ldflags "\
@@ -69,7 +70,7 @@ build-web: ## Build WebUI
 # Test
 # =============================================================================
 
-.PHONY: test test-go test-python test-web test-e2e
+.PHONY: test test-go test-python test-web test-e2e test-integration
 
 test: test-go test-python test-web ## Run all tests
 
@@ -88,6 +89,34 @@ test-web: ## Run WebUI tests
 test-e2e: ## Run end-to-end tests
 	@echo "==> Running E2E tests..."
 	go test -tags=e2e -v ./test/e2e/...
+
+test-integration: ## Run integration tests
+	@echo "==> Running integration tests..."
+	go test -tags=integration -v ./test/integration/...
+
+# =============================================================================
+# Database Migration
+# =============================================================================
+
+.PHONY: migrate-up migrate-down seed
+
+migrate-up: ## Apply database migrations (requires DATABASE_URL)
+	@echo "==> Applying migrations..."
+	@for f in $(SCRIPTS_DIR)/migration/*.up.sql; do \
+		echo "  Applying $$(basename $$f)..."; \
+		psql "$(DATABASE_URL)" -f "$$f"; \
+	done
+
+migrate-down: ## Rollback database migrations (requires DATABASE_URL)
+	@echo "==> Rolling back migrations..."
+	@for f in $$(ls -r $(SCRIPTS_DIR)/migration/*.down.sql); do \
+		echo "  Rolling back $$(basename $$f)..."; \
+		psql "$(DATABASE_URL)" -f "$$f"; \
+	done
+
+seed: ## Load seed data into database (requires DATABASE_URL)
+	@echo "==> Loading seed data..."
+	psql "$(DATABASE_URL)" -f $(SCRIPTS_DIR)/seed/seed.sql
 
 # =============================================================================
 # Lint

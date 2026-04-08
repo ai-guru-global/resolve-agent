@@ -1,0 +1,10 @@
+# Sample agent configuration for testing
+agent:
+  name: test-agent
+  type: mega
+  description: "Test agent for integration testing"
+  config:
+    model_id: qwen-plus
+    system_prompt: "You are a test agent."
+    skill_names:
+      - hello-world

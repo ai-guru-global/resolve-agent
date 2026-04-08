@@ -1,0 +1,7 @@
+# Sample skill manifest for testing
+skill:
+  name: test-skill
+  version: "0.1.0"
+  description: "A test skill for integration testing"
+  author: "test"
+  entry_point: "main.py"

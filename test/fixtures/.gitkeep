@@ -1,0 +1,13 @@
+# Test Fixtures
+
+This directory contains shared test data and configuration fixtures used
+across integration and e2e tests.
+
+## Structure
+
+```
+fixtures/
+├── agents/       # Sample agent configurations
+├── skills/       # Sample skill manifests
+└── workflows/    # Sample workflow definitions
+```

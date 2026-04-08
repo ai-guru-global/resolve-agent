@@ -1,0 +1,162 @@
+openapi: "3.1.0"
+info:
+  title: ResolveAgent Platform API
+  description: |
+    REST API for the ResolveAgent Mega Agent Platform.
+    This API provides endpoints for managing agents, skills, workflows,
+    and model routing.
+  version: "0.3.0"
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+  contact:
+    name: AI Guru Global
+    url: https://github.com/ai-guru-global/resolve-agent
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+tags:
+  - name: Agents
+    description: Agent lifecycle management
+  - name: Skills
+    description: Skill registry and management
+  - name: Workflows
+    description: Workflow orchestration
+  - name: Models
+    description: Model routing and configuration
+  - name: Health
+    description: Health and readiness endpoints
+
+paths:
+  /healthz:
+    get:
+      tags: [Health]
+      summary: Liveness probe
+      operationId: getLiveness
+      responses:
+        "200":
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+
+  /readyz:
+    get:
+      tags: [Health]
+      summary: Readiness probe
+      operationId: getReadiness
+      responses:
+        "200":
+          description: Service is ready
+        "503":
+          description: Service is not ready
+
+  /api/v1/agents:
+    get:
+      tags: [Agents]
+      summary: List all agents
+      operationId: listAgents
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of agents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Agent"
+
+  /api/v1/agents/{id}:
+    get:
+      tags: [Agents]
+      summary: Get agent by ID
+      operationId: getAgent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Agent details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Agent"
+        "404":
+          description: Agent not found
+
+  /api/v1/skills:
+    get:
+      tags: [Skills]
+      summary: List all skills
+      operationId: listSkills
+      responses:
+        "200":
+          description: List of skills
+
+  /api/v1/workflows:
+    get:
+      tags: [Workflows]
+      summary: List all workflows
+      operationId: listWorkflows
+      responses:
+        "200":
+          description: List of workflows
+
+  /api/v1/models:
+    get:
+      tags: [Models]
+      summary: List model routes
+      operationId: listModelRoutes
+      responses:
+        "200":
+          description: List of model routes
+
+components:
+  schemas:
+    Agent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+          enum: [inactive, active, error]
+        config:
+          type: object
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time

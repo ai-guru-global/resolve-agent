@@ -1,0 +1,21 @@
+# Sample FTA workflow for testing
+tree:
+  id: test-workflow
+  name: "Test Workflow"
+  description: "A test FTA workflow"
+  top_event_id: top
+  events:
+    - id: top
+      name: "Top Event"
+      type: top
+    - id: basic-check
+      name: "Basic Check"
+      type: basic
+      evaluator: "skill:test-skill"
+  gates:
+    - id: gate-1
+      name: "Gate"
+      type: or
+      inputs:
+        - basic-check
+      output: top

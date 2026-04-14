@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import MainLayout from './components/Layout/MainLayout';
+import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import AgentList from './pages/Agents/AgentList';
 import AgentDetail from './pages/Agents/AgentDetail';
@@ -18,7 +19,8 @@ export default function App() {
   return (
     <MainLayout>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/agents" element={<AgentList />} />
         <Route path="/agents/new" element={<AgentCreate />} />
         <Route path="/agents/:id" element={<AgentDetail />} />

@@ -18,11 +18,29 @@ import type {
   ModelConfig,
   SystemSettings,
   FaultTree,
+  HarnessConfig,
+  AgentOverview,
+  ActivityEvent,
+  ExecutionStats,
+  AlertItem,
 } from '../types';
 
 // ─── 延迟模拟，让体验更真实 ───
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const randomDelay = () => delay(200 + Math.random() * 400);
+
+// ─── Default Harness Configs ───
+const defaultHarness: HarnessConfig = {
+  system_prompt: '',
+  tools: [],
+  skills: [],
+  memory_enabled: true,
+  hooks: [
+    { name: '执行日志', type: 'post_execution', action: 'log_trace', enabled: true },
+  ],
+  sandbox_type: 'container',
+  context_strategy: 'default',
+};
 
 // ─── Agents ───
 let mockAgents: Agent[] = [
@@ -31,9 +49,22 @@ let mockAgents: Agent[] = [
     name: 'ACK 集群运维助手',
     type: 'mega',
     status: 'active',
+    mode: 'selector',
+    harness: {
+      system_prompt: '你是一个专注于阿里云 ACK 容器服务的运维助手。负责集群健康巡检、Pod 异常诊断、节点扩缩容决策。',
+      tools: ['kubectl', 'prometheus-query', 'helm'],
+      skills: ['log-analyzer', 'metric-alerter', 'consulting-qa'],
+      memory_enabled: true,
+      hooks: [
+        { name: '执行日志', type: 'post_execution', action: 'log_trace', enabled: true },
+        { name: '错误自动重试', type: 'on_error', action: 'auto_retry', enabled: true },
+        { name: '上下文压缩', type: 'pre_execution', action: 'compaction', enabled: true },
+      ],
+      sandbox_type: 'container',
+      context_strategy: 'compaction',
+    },
     config: {
       model: 'qwen-max',
-      system_prompt: '你是一个专注于阿里云 ACK 容器服务的运维助手。负责集群健康巡检、Pod 异常诊断、节点扩缩容决策。',
       max_tokens: 4096,
       temperature: 0.3,
       created_at: '2026-03-01T08:00:00Z',
@@ -44,6 +75,19 @@ let mockAgents: Agent[] = [
     name: '故障根因分析引擎',
     type: 'fta',
     status: 'active',
+    mode: 'selector',
+    harness: {
+      system_prompt: '你是一个故障树分析引擎，基于 FTA 方法论进行系统性根因定位。',
+      tools: ['fault-tree-engine', 'log-query', 'metric-query'],
+      skills: ['log-analyzer', 'metric-alerter'],
+      memory_enabled: true,
+      hooks: [
+        { name: '执行日志', type: 'post_execution', action: 'log_trace', enabled: true },
+        { name: '测试验证', type: 'post_execution', action: 'test_suite', enabled: true },
+      ],
+      sandbox_type: 'container',
+      context_strategy: 'offloading',
+    },
     config: {
       model: 'qwen-plus',
       fault_tree_id: 'ft-k8s-node-notready',
@@ -57,6 +101,18 @@ let mockAgents: Agent[] = [
     name: '运维知识问答',
     type: 'rag',
     status: 'active',
+    mode: 'selector',
+    harness: {
+      system_prompt: '你是运维知识问答助手，基于 RAG 语义检索提供精准的运维知识回答。',
+      tools: ['vector-search', 'cross-encoder-rerank'],
+      skills: ['consulting-qa'],
+      memory_enabled: true,
+      hooks: [
+        { name: '执行日志', type: 'post_execution', action: 'log_trace', enabled: true },
+      ],
+      sandbox_type: 'local',
+      context_strategy: 'default',
+    },
     config: {
       model: 'qwen-turbo',
       collection_id: 'col-ops-kb-001',
@@ -70,9 +126,21 @@ let mockAgents: Agent[] = [
     name: '工单自动处理',
     type: 'skill',
     status: 'active',
+    mode: 'all_skills',
+    harness: {
+      system_prompt: '你是工单自动处理引擎，并行调用所有绑定技能处理运维工单。',
+      tools: ['ticket-api', 'notification-api'],
+      skills: ['ticket-handler', 'consulting-qa'],
+      memory_enabled: false,
+      hooks: [
+        { name: '执行日志', type: 'post_execution', action: 'log_trace', enabled: true },
+        { name: '结果通知', type: 'post_execution', action: 'notify', enabled: true },
+      ],
+      sandbox_type: 'container',
+      context_strategy: 'default',
+    },
     config: {
       model: 'qwen-plus',
-      skills: ['ticket-handler', 'consulting-qa'],
       auto_assign: true,
       created_at: '2026-03-12T09:00:00Z',
     },
@@ -82,9 +150,20 @@ let mockAgents: Agent[] = [
     name: 'SLB 流量分析',
     type: 'custom',
     status: 'inactive',
+    mode: 'all_skills',
+    harness: {
+      system_prompt: '分析 SLB 实例的流量模式，识别异常流量峰值，给出弹性伸缩建议。',
+      tools: ['prometheus-query', 'slb-api'],
+      skills: ['metric-alerter'],
+      memory_enabled: false,
+      hooks: [
+        { name: '执行日志', type: 'post_execution', action: 'log_trace', enabled: true },
+      ],
+      sandbox_type: 'remote',
+      context_strategy: 'default',
+    },
     config: {
       model: 'qwen-turbo',
-      system_prompt: '分析 SLB 实例的流量模式，识别异常流量峰值，给出弹性伸缩建议。',
       data_source: 'prometheus',
       created_at: '2026-03-15T11:00:00Z',
     },
@@ -94,9 +173,22 @@ let mockAgents: Agent[] = [
     name: '变更风险评估',
     type: 'mega',
     status: 'error',
+    mode: 'selector',
+    harness: {
+      system_prompt: '评估运维变更操作的风险等级，检查变更窗口合规性，生成变更审批建议。',
+      tools: ['change-management-api', 'compliance-checker'],
+      skills: ['change-reviewer'],
+      memory_enabled: true,
+      hooks: [
+        { name: '执行日志', type: 'post_execution', action: 'log_trace', enabled: true },
+        { name: '合规校验', type: 'pre_execution', action: 'lint_check', enabled: true },
+        { name: '错误自动重试', type: 'on_error', action: 'auto_retry', enabled: false },
+      ],
+      sandbox_type: 'container',
+      context_strategy: 'compaction',
+    },
     config: {
       model: 'qwen-max',
-      system_prompt: '评估运维变更操作的风险等级，检查变更窗口合规性，生成变更审批建议。',
       risk_threshold: 0.6,
       created_at: '2026-03-18T16:00:00Z',
     },
@@ -106,6 +198,18 @@ let mockAgents: Agent[] = [
     name: 'RDS 主从同步诊断',
     type: 'fta',
     status: 'active',
+    mode: 'selector',
+    harness: {
+      system_prompt: '专注于 RDS MySQL 主从同步延迟的故障树分析诊断。',
+      tools: ['fault-tree-engine', 'rds-api', 'metric-query'],
+      skills: ['log-analyzer'],
+      memory_enabled: true,
+      hooks: [
+        { name: '执行日志', type: 'post_execution', action: 'log_trace', enabled: true },
+      ],
+      sandbox_type: 'container',
+      context_strategy: 'offloading',
+    },
     config: {
       model: 'qwen-plus',
       fault_tree_id: 'ft-rds-replication-lag',
@@ -549,6 +653,13 @@ const mockDashboardMetrics: DashboardMetrics = {
   knowledge_entries: 2847,
   ticket_trend: { value: 12, direction: 'up' },
   execution_trend: { value: 5, direction: 'up' },
+  total_agents: 7,
+  active_agents: 5,
+  error_agents: 1,
+  today_executions: 347,
+  success_rate: 0.946,
+  avg_latency_ms: 2450,
+  execution_trend_24h: [12, 18, 8, 5, 3, 2, 4, 9, 15, 22, 28, 35, 42, 38, 31, 27, 24, 33, 41, 29, 18, 14, 11, 8],
 };
 
 const mockTickets: OpsTicket[] = [
@@ -569,6 +680,10 @@ const mockPlatformStatus: PlatformStatus = {
   region: 'alibaba-cloud-east-01',
   latency_ms: 12,
   last_sync_at: '2026-04-08T09:45:00Z',
+  cpu_usage_percent: 34,
+  memory_usage_percent: 62,
+  goroutines: 128,
+  uptime_seconds: 172800,
 };
 
 // ─── Agent Execution History ───
@@ -746,6 +861,84 @@ RDS MySQL 主从同步延迟超过阈值（通常 > 1s）的常见原因：
   }),
 };
 
+// ─── Agent Overview ───
+const mockAgentOverviews: AgentOverview[] = [
+  { id: 'agent-mega-001', name: 'ACK 集群运维助手', type: 'mega', status: 'active', success_rate: 0.96, total_executions: 1247, avg_latency_ms: 1180, last_execution_at: '2026-04-08T09:12:00Z', error_count_24h: 3, uptime_seconds: 172800, memory_mb: 256 },
+  { id: 'agent-fta-002', name: '故障根因分析引擎', type: 'fta', status: 'active', success_rate: 0.91, total_executions: 523, avg_latency_ms: 15600, last_execution_at: '2026-04-08T08:15:00Z', error_count_24h: 5, uptime_seconds: 172800, memory_mb: 512 },
+  { id: 'agent-rag-003', name: '运维知识问答', type: 'rag', status: 'active', success_rate: 0.98, total_executions: 2891, avg_latency_ms: 550, last_execution_at: '2026-04-08T09:00:00Z', error_count_24h: 1, uptime_seconds: 172800, memory_mb: 384 },
+  { id: 'agent-skill-004', name: '工单自动处理', type: 'skill', status: 'active', success_rate: 0.97, total_executions: 1893, avg_latency_ms: 760, last_execution_at: '2026-04-08T09:12:00Z', error_count_24h: 2, uptime_seconds: 172800, memory_mb: 192 },
+  { id: 'agent-custom-005', name: 'SLB 流量分析', type: 'custom', status: 'inactive', success_rate: 0.85, total_executions: 89, avg_latency_ms: 2100, last_execution_at: '2026-03-28T18:00:00Z', error_count_24h: 0, uptime_seconds: 0, memory_mb: 0 },
+  { id: 'agent-mega-006', name: '变更风险评估', type: 'mega', status: 'error', success_rate: 0.42, total_executions: 342, avg_latency_ms: 8900, last_execution_at: '2026-04-08T06:00:00Z', error_count_24h: 37, uptime_seconds: 3600, memory_mb: 890 },
+  { id: 'agent-fta-007', name: 'RDS 主从同步诊断', type: 'fta', status: 'active', success_rate: 0.94, total_executions: 267, avg_latency_ms: 20100, last_execution_at: '2026-04-07T16:20:00Z', error_count_24h: 1, uptime_seconds: 172800, memory_mb: 480 },
+];
+
+// ─── Activity Events ───
+const mockActivityEvents: ActivityEvent[] = [
+  { id: 'evt-001', agent_id: 'agent-mega-001', agent_name: 'ACK 集群运维助手', agent_type: 'mega', event_type: 'execution', description: 'ACK 集群 cn-hangzhou-prod 节点池扩容评估完成', status: 'completed', timestamp: '2026-04-08T09:12:00Z', duration_ms: 1230, route_type: 'multi' },
+  { id: 'evt-002', agent_id: 'agent-skill-004', agent_name: '工单自动处理', agent_type: 'skill', event_type: 'execution', description: 'INC-2024-0891 ECS CPU 高负载工单分析完成', status: 'completed', timestamp: '2026-04-08T09:12:00Z', duration_ms: 820, route_type: 'skill' },
+  { id: 'evt-003', agent_id: 'agent-mega-006', agent_name: '变更风险评估', agent_type: 'mega', event_type: 'error', description: '合规检查 API 超时，连续第 3 次失败', status: 'failed', timestamp: '2026-04-08T09:05:00Z', duration_ms: 30000 },
+  { id: 'evt-004', agent_id: 'agent-rag-003', agent_name: '运维知识问答', agent_type: 'rag', event_type: 'execution', description: 'RDS MySQL 主从同步延迟排查知识检索', status: 'completed', timestamp: '2026-04-08T09:00:00Z', duration_ms: 650, route_type: 'rag' },
+  { id: 'evt-005', agent_id: 'agent-fta-002', agent_name: '故障根因分析引擎', agent_type: 'fta', event_type: 'execution', description: 'K8s 节点 NotReady 故障树分析完成', status: 'completed', timestamp: '2026-04-08T08:15:00Z', duration_ms: 12340, route_type: 'fta' },
+  { id: 'evt-006', agent_id: 'agent-fta-002', agent_name: '故障根因分析引擎', agent_type: 'fta', event_type: 'execution', description: 'K8s 节点 cn-hz-03 NotReady 诊断中', status: 'running', timestamp: '2026-04-08T09:50:00Z' },
+  { id: 'evt-007', agent_id: 'agent-mega-006', agent_name: '变更风险评估', agent_type: 'mega', event_type: 'alert', description: 'Agent 错误率超过阈值 (42% > 10%)', status: 'warning', timestamp: '2026-04-08T06:00:00Z' },
+  { id: 'evt-008', agent_id: 'agent-skill-004', agent_name: '工单自动处理', agent_type: 'skill', event_type: 'execution', description: 'INC-2024-0890 SLB 健康检查失败工单处理', status: 'completed', timestamp: '2026-04-08T08:45:00Z', duration_ms: 750, route_type: 'skill' },
+  { id: 'evt-009', agent_id: 'agent-custom-005', agent_name: 'SLB 流量分析', agent_type: 'custom', event_type: 'status_change', description: 'Agent 已停止，最后执行于 2026-03-28', status: 'info', timestamp: '2026-03-28T18:00:00Z' },
+  { id: 'evt-010', agent_id: 'agent-fta-007', agent_name: 'RDS 主从同步诊断', agent_type: 'fta', event_type: 'execution', description: 'RDS rm-2ze-001 同步延迟诊断完成', status: 'completed', timestamp: '2026-04-07T16:20:00Z', duration_ms: 25100, route_type: 'fta' },
+  { id: 'evt-011', agent_id: 'agent-mega-001', agent_name: 'ACK 集群运维助手', agent_type: 'mega', event_type: 'execution', description: 'etcd 集群健康检查完成', status: 'completed', timestamp: '2026-04-07T16:00:00Z', duration_ms: 890, route_type: 'direct' },
+  { id: 'evt-012', agent_id: 'agent-mega-006', agent_name: '变更风险评估', agent_type: 'mega', event_type: 'deployment', description: 'Agent 重启 (v0.9.2 → v0.9.3)', status: 'info', timestamp: '2026-04-08T05:00:00Z' },
+];
+
+// ─── Execution Stats ───
+const mockExecutionStats: ExecutionStats = {
+  total: 7262,
+  success: 6841,
+  failed: 237,
+  running: 3,
+  avg_duration_ms: 3450,
+  p99_duration_ms: 25100,
+  by_route_type: [
+    { route_type: 'skill', count: 2891, percentage: 39.8, avg_confidence: 0.93 },
+    { route_type: 'fta', count: 1790, percentage: 24.6, avg_confidence: 0.87 },
+    { route_type: 'rag', count: 1520, percentage: 20.9, avg_confidence: 0.89 },
+    { route_type: 'multi', count: 812, percentage: 11.2, avg_confidence: 0.91 },
+    { route_type: 'direct', count: 249, percentage: 3.5, avg_confidence: 0.95 },
+  ],
+  by_hour: [
+    { hour: '00', count: 12, success_count: 12, failed_count: 0 },
+    { hour: '01', count: 18, success_count: 17, failed_count: 1 },
+    { hour: '02', count: 8, success_count: 8, failed_count: 0 },
+    { hour: '03', count: 5, success_count: 5, failed_count: 0 },
+    { hour: '04', count: 3, success_count: 3, failed_count: 0 },
+    { hour: '05', count: 2, success_count: 2, failed_count: 0 },
+    { hour: '06', count: 4, success_count: 4, failed_count: 0 },
+    { hour: '07', count: 9, success_count: 8, failed_count: 1 },
+    { hour: '08', count: 15, success_count: 14, failed_count: 1 },
+    { hour: '09', count: 22, success_count: 21, failed_count: 1 },
+    { hour: '10', count: 28, success_count: 26, failed_count: 2 },
+    { hour: '11', count: 35, success_count: 33, failed_count: 2 },
+    { hour: '12', count: 42, success_count: 40, failed_count: 2 },
+    { hour: '13', count: 38, success_count: 36, failed_count: 2 },
+    { hour: '14', count: 31, success_count: 29, failed_count: 2 },
+    { hour: '15', count: 27, success_count: 26, failed_count: 1 },
+    { hour: '16', count: 24, success_count: 23, failed_count: 1 },
+    { hour: '17', count: 33, success_count: 31, failed_count: 2 },
+    { hour: '18', count: 41, success_count: 38, failed_count: 3 },
+    { hour: '19', count: 29, success_count: 27, failed_count: 2 },
+    { hour: '20', count: 18, success_count: 17, failed_count: 1 },
+    { hour: '21', count: 14, success_count: 13, failed_count: 1 },
+    { hour: '22', count: 11, success_count: 10, failed_count: 1 },
+    { hour: '23', count: 8, success_count: 8, failed_count: 0 },
+  ],
+};
+
+// ─── Alerts ───
+const mockAlerts: AlertItem[] = [
+  { id: 'alert-001', severity: 'critical', agent_id: 'agent-mega-006', agent_name: '变更风险评估', title: 'Agent 错误率过高', description: '过去 24h 错误率 42%，远超 10% 阈值。合规检查 API 连续超时。', created_at: '2026-04-08T06:00:00Z', acknowledged: false },
+  { id: 'alert-002', severity: 'high', agent_id: 'agent-fta-002', agent_name: '故障根因分析引擎', title: '根因分析执行失败', description: '多节点 NotReady 告警时无法连接 API Server，分析中断。', created_at: '2026-04-06T22:00:00Z', acknowledged: false },
+  { id: 'alert-003', severity: 'medium', agent_id: 'agent-mega-001', agent_name: 'ACK 集群运维助手', title: '内存使用接近阈值', description: 'Agent 进程内存 256MB，接近 300MB 警戒线。', created_at: '2026-04-08T04:30:00Z', acknowledged: true },
+  { id: 'alert-004', severity: 'low', agent_id: 'agent-custom-005', agent_name: 'SLB 流量分析', title: 'Agent 已停止超过 10 天', description: '最后执行时间 2026-03-28，建议检查是否需要重启。', created_at: '2026-04-07T09:00:00Z', acknowledged: true },
+];
+
 // ─── Mock API 实现 ───
 export const mockApi = {
   health: async () => {
@@ -773,9 +966,13 @@ export const mockApi = {
       name: data.name,
       type: data.type,
       status: 'active',
+      mode: 'selector',
+      harness: {
+        ...defaultHarness,
+        system_prompt: data.system_prompt ?? '',
+      },
       config: {
         model: data.model,
-        system_prompt: data.system_prompt ?? '',
         created_at: new Date().toISOString(),
       },
     };
@@ -917,5 +1114,26 @@ export const mockApi = {
       commit: 'a3f7c2e',
       build_date: '2026-04-07T10:00:00Z',
     };
+  },
+
+  // ── Dashboard Extensions ──
+  getAgentOverviews: async () => {
+    await randomDelay();
+    return { agents: [...mockAgentOverviews], total: mockAgentOverviews.length };
+  },
+
+  getActivityEvents: async () => {
+    await randomDelay();
+    return { events: [...mockActivityEvents], total: mockActivityEvents.length };
+  },
+
+  getExecutionStats: async () => {
+    await randomDelay();
+    return { ...mockExecutionStats, by_route_type: [...mockExecutionStats.by_route_type], by_hour: [...mockExecutionStats.by_hour] };
+  },
+
+  getAlerts: async () => {
+    await randomDelay();
+    return { alerts: [...mockAlerts], total: mockAlerts.length };
   },
 };

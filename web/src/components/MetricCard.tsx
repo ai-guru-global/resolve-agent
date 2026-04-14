@@ -11,14 +11,14 @@ export interface MetricCardProps {
   className?: string;
 }
 
-export function MetricCard({ icon: Icon, value, label, trend, accentColor, className }: MetricCardProps) {
+export function MetricCard({ icon: Icon, value, label, trend, className }: MetricCardProps) {
   return (
-    <Card className={cn('border-l-2', accentColor ?? 'border-l-primary', className)}>
+    <Card className={cn('border-border/30', className)}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">{label}</p>
-            <p className="text-2xl font-semibold font-mono tabular-nums">{value}</p>
+            <p className="text-2xl font-display font-bold tabular-nums">{value}</p>
             {trend && (
               <p
                 className={cn(
@@ -33,8 +33,8 @@ export function MetricCard({ icon: Icon, value, label, trend, accentColor, class
               </p>
             )}
           </div>
-          <div className="rounded-md bg-muted p-2.5">
-            <Icon className="h-5 w-5 text-muted-foreground" />
+          <div className="rounded-lg bg-accent/40 p-2.5">
+            <Icon className="h-5 w-5 text-primary" />
           </div>
         </div>
       </CardContent>

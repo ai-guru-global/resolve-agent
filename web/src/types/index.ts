@@ -3,8 +3,32 @@ export type AgentType = 'mega' | 'skill' | 'fta' | 'rag' | 'custom';
 export type AgentStatus = 'active' | 'inactive' | 'error';
 export type ExecutionStatus = 'pending' | 'running' | 'completed' | 'failed';
 
+// Agent Harness types (Agent = Model + Harness)
+export type AgentMode = 'all_skills' | 'selector';
+export type SandboxType = 'local' | 'container' | 'remote';
+export type ContextStrategy = 'default' | 'compaction' | 'offloading';
+export type HookType = 'pre_execution' | 'post_execution' | 'on_error' | 'on_exit';
+export type HookAction = 'lint_check' | 'test_suite' | 'auto_retry' | 'compaction' | 'log_trace' | 'notify';
+
+export interface HarnessHook {
+  name: string;
+  type: HookType;
+  action: HookAction;
+  enabled: boolean;
+}
+
+export interface HarnessConfig {
+  system_prompt: string;
+  tools: string[];
+  skills: string[];
+  memory_enabled: boolean;
+  hooks: HarnessHook[];
+  sandbox_type: SandboxType;
+  context_strategy: ContextStrategy;
+}
+
 // Route types from Intelligent Selector
-export type RouteType = 'fta' | 'skill' | 'rag' | 'multi' | 'direct';
+export type RouteType = 'fta' | 'skill' | 'rag' | 'code_analysis' | 'multi' | 'direct';
 
 export interface RouteDecision {
   route_type: RouteType;
@@ -12,6 +36,47 @@ export interface RouteDecision {
   confidence: number;
   parameters: Record<string, unknown>;
   reasoning: string;
+  chain?: RouteDecision[];
+}
+
+// Intelligent Selector pipeline types
+export type SelectorStrategy = 'hybrid' | 'llm' | 'rule';
+
+export type IntentType = 'workflow' | 'skill' | 'rag' | 'code_analysis' | 'direct' | 'multi';
+
+export interface IntentClassification {
+  intent_type: IntentType;
+  confidence: number;
+  entities: string[];
+  metadata: Record<string, unknown>;
+  sub_intents: IntentType[];
+  suggested_target: string;
+}
+
+export interface CorpusMatch {
+  collection_id: string;
+  collection_name: string;
+  relevance_score: number;
+  matched_keywords: string[];
+  document_count: number;
+}
+
+export interface SelectorPipelineTrace {
+  input: string;
+  strategy: SelectorStrategy;
+  intent: IntentClassification;
+  enriched_context: {
+    available_skills: string[];
+    active_workflows: string[];
+    rag_collections: CorpusMatch[];
+    code_context: {
+      language: string;
+      has_code_blocks: boolean;
+      detected_patterns: string[];
+    } | null;
+  };
+  decision: RouteDecision;
+  pipeline_latency_ms: number;
 }
 
 // FTA types
@@ -129,6 +194,13 @@ export interface DashboardMetrics {
   knowledge_entries: number;
   ticket_trend: TrendInfo;
   execution_trend: TrendInfo;
+  total_agents: number;
+  active_agents: number;
+  error_agents: number;
+  today_executions: number;
+  success_rate: number;
+  avg_latency_ms: number;
+  execution_trend_24h: number[];
 }
 
 export interface PlatformStatus {
@@ -138,6 +210,73 @@ export interface PlatformStatus {
   region: string;
   latency_ms: number;
   last_sync_at: string;
+  cpu_usage_percent: number;
+  memory_usage_percent: number;
+  goroutines: number;
+  uptime_seconds: number;
+}
+
+export interface AgentOverview {
+  id: string;
+  name: string;
+  type: AgentType;
+  status: AgentStatus;
+  success_rate: number;
+  total_executions: number;
+  avg_latency_ms: number;
+  last_execution_at: string;
+  error_count_24h: number;
+  uptime_seconds: number;
+  memory_mb: number;
+}
+
+export interface ActivityEvent {
+  id: string;
+  agent_id: string;
+  agent_name: string;
+  agent_type: AgentType;
+  event_type: 'execution' | 'error' | 'status_change' | 'deployment' | 'alert';
+  description: string;
+  status: ExecutionStatus | 'info' | 'warning';
+  timestamp: string;
+  duration_ms?: number;
+  route_type?: RouteType;
+}
+
+export interface ExecutionStats {
+  total: number;
+  success: number;
+  failed: number;
+  running: number;
+  avg_duration_ms: number;
+  p99_duration_ms: number;
+  by_route_type: RouteDistribution[];
+  by_hour: HourlyExecution[];
+}
+
+export interface RouteDistribution {
+  route_type: RouteType;
+  count: number;
+  percentage: number;
+  avg_confidence: number;
+}
+
+export interface HourlyExecution {
+  hour: string;
+  count: number;
+  success_count: number;
+  failed_count: number;
+}
+
+export interface AlertItem {
+  id: string;
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  agent_id: string;
+  agent_name: string;
+  title: string;
+  description: string;
+  created_at: string;
+  acknowledged: boolean;
 }
 
 // Extended Skill types

@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  Home,
   LayoutDashboard,
   Bot,
   Zap,
@@ -23,14 +24,15 @@ import {
 } from '@/components/ui/command';
 
 const navigationItems = [
-  { name: '运维概览', href: '/', icon: LayoutDashboard },
-  { name: '智能体管理', href: '/agents', icon: Bot },
-  { name: '运维技能', href: '/skills', icon: Zap },
-  { name: '故障分析工作流', href: '/workflows', icon: GitBranch },
-  { name: '知识库集合', href: '/rag/collections', icon: Database },
-  { name: '运维文档', href: '/rag/documents', icon: Database },
-  { name: '对话测试', href: '/playground', icon: MessageSquare },
-  { name: '平台设置', href: '/settings', icon: Settings },
+  { name: '首页', href: '/', icon: Home },
+  { name: 'Harness 概览', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Agent 管理', href: '/agents', icon: Bot },
+  { name: 'Skills 技能', href: '/skills', icon: Zap },
+  { name: '故障分析', href: '/workflows', icon: GitBranch },
+  { name: 'Knowledge 知识库', href: '/rag/collections', icon: Database },
+  { name: '知识文档', href: '/rag/documents', icon: Database },
+  { name: 'Playground', href: '/playground', icon: MessageSquare },
+  { name: '系统设置', href: '/settings', icon: Settings },
 ];
 
 export default function MainLayout({ children }: { children: ReactNode }) {

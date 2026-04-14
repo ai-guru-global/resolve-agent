@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
+  Home,
   LayoutDashboard,
   Bot,
   Zap,
-  GitBranch,
   Database,
+  GitBranch,
   MessageSquare,
   Settings,
   ChevronsLeft,
@@ -30,29 +31,35 @@ interface NavGroup {
 
 const navGroups: NavGroup[] = [
   {
-    label: '运维管理',
+    label: 'Harness 概览',
     items: [
-      { name: '运维概览', href: '/', icon: LayoutDashboard },
-      { name: '智能体管理', href: '/agents', icon: Bot },
+      { name: '首页', href: '/', icon: Home },
+      { name: 'Harness 概览', href: '/dashboard', icon: LayoutDashboard },
     ],
   },
   {
-    label: '技能 & 知识',
+    label: 'Agent 管理',
     items: [
-      { name: '运维技能', href: '/skills', icon: Zap },
-      { name: '知识库', href: '/rag/collections', icon: Database },
+      { name: 'Agent 管理', href: '/agents', icon: Bot },
+    ],
+  },
+  {
+    label: 'Harness 组件',
+    items: [
+      { name: 'Skills 技能', href: '/skills', icon: Zap },
+      { name: 'Knowledge 知识库', href: '/rag/collections', icon: Database },
     ],
   },
   {
     label: '分析 & 测试',
     items: [
       { name: '故障分析', href: '/workflows', icon: GitBranch },
-      { name: '对话测试', href: '/playground', icon: MessageSquare },
+      { name: 'Playground', href: '/playground', icon: MessageSquare },
     ],
   },
   {
     label: '系统',
-    items: [{ name: '平台设置', href: '/settings', icon: Settings }],
+    items: [{ name: '系统设置', href: '/settings', icon: Settings }],
   },
 ];
 
@@ -85,21 +92,21 @@ export default function Sidebar() {
       )}
     >
       {/* Brand */}
-      <div className={cn('flex h-12 items-center border-b border-border px-4', !sidebarExpanded && 'justify-center px-0')}>
+      <div className={cn('flex h-14 items-center border-b border-border px-4', !sidebarExpanded && 'justify-center px-0')}>
         {sidebarExpanded ? (
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground text-xs font-bold">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-foreground text-background text-xs font-display font-extrabold">
               R
-            </div>
+            </span>
             <div className="leading-tight">
-              <p className="text-sm font-semibold">ResolveNet</p>
-              <p className="text-[10px] text-muted-foreground">现场助手</p>
+              <p className="text-sm font-display font-bold tracking-tight">Resolve Agent</p>
+              <p className="text-[10px] text-muted-foreground leading-tight">面向问题解决的综合智能体</p>
             </div>
           </div>
         ) : (
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground text-xs font-bold">
+          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-foreground text-background text-xs font-display font-extrabold">
             R
-          </div>
+          </span>
         )}
       </div>
 
@@ -109,7 +116,7 @@ export default function Sidebar() {
           {navGroups.map((group) => (
             <div key={group.label}>
               {sidebarExpanded && (
-                <p className="px-2 mb-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                <p className="px-2 mb-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                   {group.label}
                 </p>
               )}
@@ -123,12 +130,12 @@ export default function Sidebar() {
                       className={cn(
                         'flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors',
                         active
-                          ? 'bg-primary/10 text-primary border-l-2 border-l-primary -ml-[1px]'
-                          : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                          ? 'bg-accent text-accent-foreground font-medium'
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                         !sidebarExpanded && 'justify-center px-0 py-2',
                       )}
                     >
-                      <item.icon className="h-4 w-4 shrink-0" />
+                      <item.icon className={cn('h-4 w-4 shrink-0', active && 'text-accent-foreground')} />
                       {sidebarExpanded && <span>{item.name}</span>}
                     </Link>
                   );
@@ -154,7 +161,7 @@ export default function Sidebar() {
       <div className="border-t border-border p-2">
         <button
           onClick={toggleSidebar}
-          className="flex w-full items-center justify-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          className="flex w-full items-center justify-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
         >
           {sidebarExpanded ? (
             <>
@@ -166,7 +173,7 @@ export default function Sidebar() {
           )}
         </button>
         {sidebarExpanded && (
-          <p className="mt-1 text-center text-[10px] text-muted-foreground/50">v1.0.0 | ResolveNet</p>
+          <p className="mt-1 text-center text-[10px] text-muted-foreground/50">v1.0.0 | Resolve Agent</p>
         )}
       </div>
     </aside>

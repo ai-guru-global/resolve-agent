@@ -12,6 +12,12 @@ import type {
   AgentRuntimeStatus,
   SystemSettings,
   FaultTree,
+  AgentMode,
+  HarnessConfig,
+  AgentOverview,
+  ActivityEvent,
+  ExecutionStats,
+  AlertItem,
 } from '../types';
 
 const API_BASE = '/api/v1';
@@ -113,6 +119,14 @@ const realApi = {
     ),
   systemInfo: () =>
     request<{ version: string; commit: string; build_date: string }>('/system/info'),
+  getAgentOverviews: () =>
+    request<{ agents: AgentOverview[]; total: number }>('/dashboard/agents'),
+  getActivityEvents: () =>
+    request<{ events: ActivityEvent[]; total: number }>('/dashboard/activity'),
+  getExecutionStats: () =>
+    request<ExecutionStats>('/dashboard/execution-stats'),
+  getAlerts: () =>
+    request<{ alerts: AlertItem[]; total: number }>('/dashboard/alerts'),
 };
 
 // 导出的 api 会先探测后端，不可用就无缝切换到 mock
@@ -157,6 +171,8 @@ export interface Agent {
   name: string;
   type: string;
   status: string;
+  mode: AgentMode;
+  harness: HarnessConfig;
   config: Record<string, unknown>;
 }
 

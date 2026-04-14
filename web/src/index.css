@@ -3,44 +3,82 @@
 @tailwind utilities;
 
 @layer base {
+  /* ─── Light Theme (Default — Minimal White) ─── */
   :root {
-    /* Argo CD Dark Theme — HSL channels (no hsl() wrapper) */
-    --background: 215 28% 7%;       /* #0D1117 */
-    --foreground: 210 29% 93%;      /* #E6EDF3 */
+    --background: 0 0% 99%;
+    --foreground: 220 14% 10%;
 
-    --card: 215 17% 11%;            /* #161B22 */
-    --card-foreground: 210 29% 93%; /* #E6EDF3 */
+    --card: 0 0% 100%;
+    --card-foreground: 220 14% 10%;
 
-    --popover: 215 19% 13%;         /* #1C2128 */
-    --popover-foreground: 210 29% 93%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 14% 10%;
 
-    --primary: 217 91% 60%;         /* #3B82F6 */
-    --primary-foreground: 0 0% 100%;
+    --primary: 220 14% 10%;
+    --primary-foreground: 0 0% 99%;
 
-    --secondary: 215 19% 13%;       /* #1C2128 */
-    --secondary-foreground: 210 29% 93%;
+    --secondary: 220 6% 95%;
+    --secondary-foreground: 220 14% 10%;
 
-    --muted: 215 17% 11%;           /* #161B22 */
-    --muted-foreground: 211 9% 58%; /* #8B949E */
+    --muted: 220 6% 95%;
+    --muted-foreground: 220 6% 44%;
 
-    --accent: 215 19% 13%;          /* #1C2128 */
-    --accent-foreground: 210 29% 93%;
+    --accent: 220 6% 93%;
+    --accent-foreground: 220 14% 10%;
 
-    --destructive: 0 84% 60%;       /* #EF4444 */
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 213 12% 21%;          /* #30363D */
-    --input: 213 12% 21%;           /* #30363D */
-    --ring: 217 91% 60%;            /* #3B82F6 */
+    --border: 220 6% 90%;
+    --input: 220 6% 90%;
+    --ring: 220 14% 10%;
 
     --radius: 0.5rem;
 
-    /* Status colors — Argo CD / CNCF standard */
-    --status-healthy: 142 71% 45%;     /* #22C55E */
-    --status-degraded: 38 92% 50%;     /* #F59E0B */
-    --status-failed: 0 84% 60%;        /* #EF4444 */
-    --status-progressing: 217 91% 60%; /* #3B82F6 */
-    --status-unknown: 220 5% 46%;      /* #6B7280 */
+    /* Status colors */
+    --status-healthy: 142 71% 38%;
+    --status-degraded: 38 92% 44%;
+    --status-failed: 0 72% 51%;
+    --status-progressing: 220 14% 10%;
+    --status-unknown: 220 5% 58%;
+  }
+
+  /* ─── Dark Theme (Deep Black) ─── */
+  .dark {
+    --background: 220 14% 4%;
+    --foreground: 220 6% 93%;
+
+    --card: 220 12% 7%;
+    --card-foreground: 220 6% 93%;
+
+    --popover: 220 12% 8%;
+    --popover-foreground: 220 6% 93%;
+
+    --primary: 0 0% 98%;
+    --primary-foreground: 220 14% 4%;
+
+    --secondary: 220 10% 12%;
+    --secondary-foreground: 220 6% 85%;
+
+    --muted: 220 10% 12%;
+    --muted-foreground: 220 6% 50%;
+
+    --accent: 220 10% 14%;
+    --accent-foreground: 220 6% 93%;
+
+    --destructive: 0 62% 58%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 10% 15%;
+    --input: 220 10% 15%;
+    --ring: 0 0% 98%;
+
+    /* Status colors */
+    --status-healthy: 142 71% 45%;
+    --status-degraded: 38 92% 50%;
+    --status-failed: 0 62% 58%;
+    --status-progressing: 0 0% 98%;
+    --status-unknown: 220 5% 46%;
   }
 
   * {
@@ -49,8 +87,59 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Source Sans 3', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* ─── Utility Animations (purposeful motion only) ─── */
+
+@keyframes slide-up-fade {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes flow-dash {
+  to { stroke-dashoffset: -20; }
+}
+
+@keyframes data-pulse {
+  0% { transform: translateX(-100%); opacity: 0; }
+  30% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translateX(200%); opacity: 0; }
+}
+
+@keyframes subtle-breathe {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes shimmer-line {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+@keyframes node-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.2); }
+  50% { box-shadow: 0 0 0 6px hsl(var(--primary) / 0); }
+}
+
+@keyframes confidence-fill {
+  from { width: 0%; }
+}
+
+@keyframes scan-line {
+  0% { top: -2px; }
+  100% { top: calc(100% + 2px); }
+}
+
+.animate-flow-dash { animation: flow-dash 1.5s linear infinite; }
+.animate-data-pulse { animation: data-pulse 2.5s cubic-bezier(0.25, 0, 0.25, 1) infinite; }
+.animate-subtle-breathe { animation: subtle-breathe 5s ease-in-out infinite; }
+.animate-slide-up { animation: slide-up-fade 0.5s cubic-bezier(0.25, 0, 0.25, 1) both; }
+.animate-shimmer { animation: shimmer-line 3s cubic-bezier(0.25, 0, 0.25, 1) infinite; }
+.animate-node-pulse { animation: node-pulse 2.5s ease-in-out infinite; }
+.animate-confidence { animation: confidence-fill 0.8s cubic-bezier(0.25, 0, 0.25, 1) both; }
+.animate-scan { animation: scan-line 3s linear infinite; }

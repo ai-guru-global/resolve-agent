@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Bot, Send, Loader2 } from 'lucide-react';
+import { Bot, Send, Loader2, Layers, Brain, Zap, Shield } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -77,15 +77,17 @@ export default function Playground() {
     }
   };
 
+  const currentAgent = agents.find((a) => a.id === selectedAgent);
+
   return (
     <div className="flex h-[calc(100vh-7.5rem)] flex-col space-y-4">
       <PageHeader
-        title="对话测试"
+        title="Playground"
         actions={
           <div className="w-56">
             <Select value={selectedAgent} onValueChange={setSelectedAgent} disabled={loadingAgents}>
               <SelectTrigger>
-                <SelectValue placeholder={loadingAgents ? '加载中...' : '选择智能体'} />
+                <SelectValue placeholder={loadingAgents ? '加载中...' : '选择 Agent'} />
               </SelectTrigger>
               <SelectContent>
                 {agents.map((a) => (
@@ -99,6 +101,25 @@ export default function Playground() {
         }
       />
 
+      {/* Harness summary for selected agent */}
+      {currentAgent && (
+        <div className="flex items-center gap-3 rounded-lg border border-border/20 bg-card/20 px-4 py-2.5">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Harness</span>
+          <Badge variant="secondary" className="text-[10px] gap-1 border border-primary/20 bg-primary/5 text-primary">
+            {currentAgent.mode === 'all_skills' ? <Layers className="h-3 w-3" /> : <Brain className="h-3 w-3" />}
+            {currentAgent.mode === 'all_skills' ? 'All Skills' : 'Selector'}
+          </Badge>
+          <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <Zap className="h-3 w-3" />
+            {currentAgent.harness.skills.length + currentAgent.harness.tools.length} tools
+          </span>
+          <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <Shield className="h-3 w-3" />
+            {currentAgent.harness.hooks.filter(h => h.enabled).length} hooks
+          </span>
+        </div>
+      )}
+
       {/* Chat Area */}
       <Card className="flex-1 flex flex-col overflow-hidden">
         <ScrollArea className="flex-1">
@@ -107,7 +128,7 @@ export default function Playground() {
               <EmptyState
                 icon={Bot}
                 title="开始对话"
-                description="选择一个智能体，输入问题开始对话测试"
+                description="选择一个 Agent，输入问题开始 Harness 执行验证"
                 className="py-20"
               />
             ) : (
@@ -126,13 +147,19 @@ export default function Playground() {
                   >
                     <p className="whitespace-pre-wrap">{msg.content}</p>
                     {msg.metadata && 'route_type' in msg.metadata && (
-                      <div className="mt-2 flex gap-1.5">
-                        <Badge variant="secondary" className="text-[10px]">
+                      <div className="mt-2 flex gap-1.5 flex-wrap">
+                        <Badge variant="secondary" className="text-[10px] border border-primary/20 bg-primary/5 text-primary">
                           {String(msg.metadata.route_type)}
                         </Badge>
                         {'confidence' in msg.metadata && (
                           <Badge variant="outline" className="text-[10px]">
                             {(Number(msg.metadata.confidence) * 100).toFixed(0)}%
+                          </Badge>
+                        )}
+                        {'hooks_triggered' in msg.metadata && (
+                          <Badge variant="secondary" className="text-[10px]">
+                            <Shield className="h-3 w-3 mr-1" />
+                            {String(msg.metadata.hooks_triggered)} hooks
                           </Badge>
                         )}
                       </div>
@@ -159,7 +186,7 @@ export default function Playground() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={selectedAgent ? '输入问题...' : '请先选择智能体'}
+              placeholder={selectedAgent ? '输入问题...' : '请先选择 Agent'}
               disabled={!selectedAgent || loading}
             />
             <Button

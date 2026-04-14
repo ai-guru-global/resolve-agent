@@ -21,3 +21,31 @@ export function usePlatformStatus() {
     queryFn: api.getPlatformStatus,
   });
 }
+
+export function useAgentOverviews() {
+  return useQuery({
+    queryKey: ['dashboard', 'agent-overviews'],
+    queryFn: api.getAgentOverviews,
+  });
+}
+
+export function useActivityEvents() {
+  return useQuery({
+    queryKey: ['dashboard', 'activity'],
+    queryFn: api.getActivityEvents,
+  });
+}
+
+export function useExecutionStats() {
+  return useQuery({
+    queryKey: ['dashboard', 'execution-stats'],
+    queryFn: api.getExecutionStats,
+  });
+}
+
+export function useAlerts() {
+  return useQuery({
+    queryKey: ['dashboard', 'alerts'],
+    queryFn: api.getAlerts,
+  });
+}

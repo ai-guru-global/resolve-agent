@@ -373,7 +373,6 @@ flowchart TB
 | Provider | Models | 模型 |
 |----------|--------|------|
 | **Qwen 通义千问** | qwen-turbo, qwen-plus, qwen-max | 阿里云 |
-| **Wenxin 文心一言** | ERNIE-4.0 | 百度云 |
 | **Zhipu 智谱清言** | GLM-4 | 智谱 AI |
 
 ### 📝 Ticket Summary Agent | 工单总结 Agent

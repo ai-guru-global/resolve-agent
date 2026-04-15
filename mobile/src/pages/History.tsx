@@ -112,7 +112,7 @@ export default function History() {
         <h1
           className="text-display"
           style={{
-            fontSize: 'clamp(1.25rem, 4vw, 1.5rem)',
+            fontSize: 'clamp(1.0625rem, 3.5vw, 1.25rem)',
             color: 'var(--color-text-primary)',
             fontFamily: 'var(--font-display)',
           }}
@@ -312,7 +312,7 @@ export default function History() {
         {filtered.length === 0 && (
           <div className="text-center py-12 animate-fade-up">
             <span
-              style={{ fontSize: '32px', display: 'block', marginBottom: '12px' }}
+              style={{ fontSize: '26px', display: 'block', marginBottom: '12px' }}
             >
               ◻
             </span>

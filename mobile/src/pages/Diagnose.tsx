@@ -131,7 +131,7 @@ export default function Diagnose() {
                 className="w-16 h-16 rounded-full flex items-center justify-center"
                 style={{ background: 'oklch(68% 0.15 75 / 0.15)', border: '1px solid oklch(68% 0.15 75 / 0.25)' }}
               >
-                <span style={{ fontSize: '28px', color: 'var(--color-accent)' }}>◉</span>
+                <span style={{ fontSize: '22px', color: 'var(--color-accent)' }}>◉</span>
               </div>
               <p className="text-label" style={{ color: 'var(--color-text-secondary)' }}>
                 点击拍摄错误页面
@@ -206,7 +206,7 @@ export default function Diagnose() {
                     className="w-full h-full flex items-center justify-center"
                     style={{ background: 'var(--color-surface-raised)' }}
                   >
-                    <span style={{ fontSize: '24px', opacity: 0.3 }}>◉</span>
+                    <span style={{ fontSize: '20px', opacity: 0.3 }}>◉</span>
                   </div>
                 </button>
               ))}
@@ -223,7 +223,7 @@ export default function Diagnose() {
               className="w-20 h-20 rounded-full flex items-center justify-center animate-pulse-glow"
               style={{ background: 'oklch(68% 0.15 75 / 0.15)' }}
             >
-              <span style={{ fontSize: '32px', color: 'var(--color-accent)' }}>◉</span>
+              <span style={{ fontSize: '26px', color: 'var(--color-accent)' }}>◉</span>
             </div>
           </div>
           <p className="text-label" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-display)' }}>
@@ -244,7 +244,7 @@ export default function Diagnose() {
                 className="w-12 h-12 rounded-2xl mx-auto mb-3 flex items-center justify-center animate-spin-slow"
                 style={{ background: 'oklch(68% 0.15 75 / 0.15)' }}
               >
-                <span style={{ fontSize: '22px', color: 'var(--color-accent)' }}>◈</span>
+                <span style={{ fontSize: '18px', color: 'var(--color-accent)' }}>◈</span>
               </div>
               <p className="text-label font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}>
                 正在分析
@@ -326,7 +326,7 @@ export default function Diagnose() {
               className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
               style={{ background: 'oklch(65% 0.18 145 / 0.2)' }}
             >
-              <span style={{ fontSize: '18px' }}>✓</span>
+              <span style={{ fontSize: '15px' }}>✓</span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-label font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}>
@@ -419,7 +419,7 @@ export default function Diagnose() {
                 style={{ background: 'var(--color-surface-raised)' }}
               >
                 <div className="flex items-center gap-2">
-                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '14px' }}>
+                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '12px' }}>
                     {s.action ? '◈' : '○'}
                   </span>
                   <span className="text-label" style={{ color: 'var(--color-text-primary)' }}>

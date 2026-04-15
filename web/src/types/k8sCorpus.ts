@@ -1,5 +1,20 @@
 export type K8sChainId = 'pod-not-ready' | 'kubeadm-init';
 
+/** Chain topology classification */
+export type K8sChainTopology = 'event-driven' | 'sequential-pipeline';
+
+/** Chain scenario type */
+export type K8sChainType = 'troubleshooting' | 'initialization';
+
+/** Call type distribution for a chain */
+export interface K8sCallTypeDistribution {
+  direct: number;
+  grpc: number;
+  http: number;
+  event: number;
+  watch: number;
+}
+
 export interface K8sFunctionSignature {
   name: string;
   signature: string;
@@ -41,6 +56,16 @@ export interface K8sAnalysisChain {
   totalFiles: number;
   totalFunctions: number;
   totalLinesOfCode: number;
+  /** Chain scenario type: troubleshooting or initialization */
+  chainType: K8sChainType;
+  /** Chain topology: event-driven graph or sequential pipeline */
+  topology: K8sChainTopology;
+  /** Distribution of call types across edges */
+  callTypeDistribution: K8sCallTypeDistribution;
+  /** Involved K8s components */
+  components: string[];
+  /** Short tags summarizing chain characteristics */
+  tags: string[];
 }
 
 export interface K8sCorpusMetadata {

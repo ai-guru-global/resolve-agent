@@ -14,17 +14,19 @@
 |------|------|----------|
 | [快速入门](./quickstart.md) | 5分钟内启动您的第一个智能Agent | 所有用户 |
 | [架构设计](./architecture.md) | 深入了解系统架构与设计理念 | 架构师、开发者 |
+| [数据库 Schema](./database-schema.md) | PostgreSQL 16 张表设计与迁移策略 | 开发者 |
 | [智能选择器](./intelligent-selector.md) | 自适应工作流路由引擎详解 | 开发者 |
-| [FTA工作流引擎](./fta-engine.md) | 高级静态分析引擎 | 开发者、运维 |
+| [选择器适配器](./selector-adapters.md) | Hook/Skill 适配器与 SelectorProtocol | 开发者 |
+| [FTA 工作流引擎](./fta-engine.md) | 故障树分析引擎 | 开发者、运维 |
+| [AgentScope 与 Higress 集成](./agentscope-higress-integration.md) | 网关集成架构与代码分析管道 | 架构师、开发者 |
 | [技能系统](./skill-system.md) | 构建和使用专家技能 | 开发者 |
-| [RAG管道](./rag-pipeline.md) | 检索增强生成系统 | 开发者 |
-| [CLI参考](./cli-reference.md) | 命令行工具完整指南 | 运维、开发者 |
+| [RAG 管道](./rag-pipeline.md) | 检索增强生成系统 | 开发者 |
+| [工单总结 Agent](./ticket-summary-agent.md) | 知识生产引擎设计哲学 | 架构师、开发者 |
+| [工单总结集成分析](./ticket-summary-agent-integration-analysis.md) | 集成可行性与实施计划 | 架构师、开发者 |
+| [CLI 参考](./cli-reference.md) | 命令行工具完整指南 | 运维、开发者 |
 | [配置参考](./configuration.md) | 配置选项详细说明 | 运维、开发者 |
 | [部署指南](./deployment.md) | 生产环境部署方案 | 运维 |
-| [API参考](./api-reference.md) | gRPC/REST API 完整文档 | 开发者 |
 | [最佳实践](./best-practices.md) | AIOps 使用建议与优化技巧 | 所有用户 |
-| [工单总结 Agent](../architecture/ticket-summary-agent.md) | 知识生产引擎设计哲学 | 架构师、开发者 |
-| [工单总结集成分析](../architecture/ticket-summary-agent-integration-analysis.md) | 集成可行性与实施计划 | 架构师、开发者 |
 
 ---
 

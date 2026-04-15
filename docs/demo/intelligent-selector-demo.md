@@ -2225,8 +2225,8 @@ ResolveAgent Intelligent Selector Demo
 
 ## 参考资料
 
-- [ResolveAgent 架构概述](../architecture/overview.md)
-- [FTA 引擎设计](../architecture/fta-engine.md)
-- [Intelligent Selector 机制](../architecture/intelligent-selector.md)
+- [ResolveAgent 架构概述](../zh/architecture.md)
+- [FTA 引擎设计](../zh/fta-engine.md)
+- [Intelligent Selector 机制](../zh/intelligent-selector.md)
 - [API Proto 定义](../../api/proto/resolveagent/v1/)
 - [用户快速入门指南](../user-guide/quickstart.md)

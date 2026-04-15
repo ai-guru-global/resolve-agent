@@ -48,7 +48,7 @@ function TabBar() {
               )}
               <span
                 className="text-base leading-none"
-                style={{ fontFamily: 'var(--font-display)', fontSize: '18px' }}
+                style={{ fontFamily: 'var(--font-display)', fontSize: '15px' }}
               >
                 {tab.icon}
               </span>
@@ -112,7 +112,7 @@ function PhoneFrame({ children }: { children: React.ReactNode }) {
 
         {/* Status bar */}
         <div style={{ position: 'absolute', top: '0px', left: '0px', right: '0px', height: '48px', display: 'flex', alignItems: 'flex-end', paddingLeft: '24px', paddingBottom: '8px', zIndex: 90, pointerEvents: 'none' }}>
-          <span style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif', fontSize: '15px', fontWeight: '600', color: '#fff', letterSpacing: '-0.01em' }}>{time}</span>
+          <span style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif', fontSize: '13px', fontWeight: '600', color: '#fff', letterSpacing: '-0.01em' }}>{time}</span>
         </div>
 
         {/* Dynamic Island */}

@@ -11,6 +11,7 @@ interface SourceFileNodeData {
   linesOfCode: number;
   importance: 'critical' | 'high' | 'medium';
   description: string;
+  chainType?: 'troubleshooting' | 'initialization';
 }
 
 const COMPONENT_STYLES: Record<string, { border: string; bg: string; badge: string }> = {
@@ -47,22 +48,36 @@ const IMPORTANCE_INDICATOR: Record<string, string> = {
   medium: 'bg-slate-400',
 };
 
+// Shape variation: troubleshooting chains use rounded corners, init chains use sharper
+const CHAIN_TYPE_SHAPE: Record<string, string> = {
+  troubleshooting: 'rounded-lg',
+  initialization: 'rounded-md',
+};
+
 const SourceFileNode: FC<NodeProps> = memo(({ data, selected }) => {
   const d = data as unknown as SourceFileNodeData;
   const styles = COMPONENT_STYLES[d.component] ?? COMPONENT_STYLES.api!;
   const indicatorColor = IMPORTANCE_INDICATOR[d.importance] ?? 'bg-slate-400';
+  const shapeClass = CHAIN_TYPE_SHAPE[d.chainType ?? 'troubleshooting'] ?? 'rounded-lg';
+  const isInit = d.chainType === 'initialization';
 
   return (
     <div
       className={cn(
-        'relative rounded-lg border-2 pl-5 pr-4 py-3 shadow-sm min-w-[210px] max-w-[260px] transition-shadow cursor-pointer',
+        'relative border-2 pl-5 pr-4 py-3 shadow-sm min-w-[210px] max-w-[260px] transition-shadow cursor-pointer',
+        shapeClass,
         styles.border,
         styles.bg,
         selected && 'ring-2 ring-primary shadow-md',
+        isInit && 'border-l-4',
       )}
     >
       {/* Importance indicator bar */}
-      <div className={cn('absolute left-0 top-2 bottom-2 w-1 rounded-full', indicatorColor)} />
+      <div className={cn(
+        'absolute left-0 top-2 bottom-2 rounded-full',
+        indicatorColor,
+        isInit ? 'w-1.5' : 'w-1',
+      )} />
 
       <Handle type="target" position={Position.Top} className="!bg-muted-foreground" />
 

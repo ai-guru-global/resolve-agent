@@ -1,6 +1,6 @@
 export default function Mobile() {
   return (
-    <div className="h-full flex items-center justify-center" style={{ background: '#1a1a1a' }}>
+    <div className="h-full flex items-center justify-center" style={{ background: '#ffffff' }}>
       <iframe
         src="http://localhost:4000"
         title="Mobile AI Ops"
@@ -10,6 +10,7 @@ export default function Mobile() {
           border: 'none',
           overflow: 'hidden',
           display: 'block',
+          borderRadius: '54px',
         }}
       />
     </div>

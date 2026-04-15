@@ -30,6 +30,7 @@ dependencies = [
 
 [project.scripts]
 resolveagent-docsync = "resolveagent.docsync.cli:main"
+kudig-rag-import = "resolveagent.corpus.kudig_rag_import:main"
 
 [project.optional-dependencies]
 rag = [

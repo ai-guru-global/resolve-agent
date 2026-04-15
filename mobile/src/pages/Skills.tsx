@@ -57,7 +57,7 @@ export default function Skills() {
         <h1
           className="text-display"
           style={{
-            fontSize: 'clamp(1.25rem, 4vw, 1.5rem)',
+            fontSize: 'clamp(1.0625rem, 3.5vw, 1.25rem)',
             color: 'var(--color-text-primary)',
             fontFamily: 'var(--font-display)',
           }}
@@ -71,7 +71,7 @@ export default function Skills() {
       <div className="relative animate-fade-up" style={{ animationDelay: '60ms' }}>
         <span
           className="absolute left-4 top-1/2 -translate-y-1/2"
-          style={{ color: 'var(--color-accent)', fontSize: '16px' }}
+          style={{ color: 'var(--color-accent)', fontSize: '13px' }}
         >
           ◎
         </span>
@@ -114,7 +114,7 @@ export default function Skills() {
                 transition: 'all var(--duration-fast) var(--ease-out-quart)',
               }}
             >
-              <span style={{ fontSize: '14px' }}>{tabIcons[tab.id]}</span>
+              <span style={{ fontSize: '12px' }}>{tabIcons[tab.id]}</span>
               <span>{tab.label}</span>
             </button>
           )
@@ -147,7 +147,7 @@ export default function Skills() {
                     <span
                       style={{
                         color: 'var(--color-accent)',
-                        fontSize: '16px',
+                        fontSize: '13px',
                         fontFamily: 'var(--font-display)',
                       }}
                     >

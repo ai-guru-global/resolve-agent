@@ -3,6 +3,13 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      fontSize: {
+        'micro': ['0.6875rem', { lineHeight: '1rem' }],        // ~9px at 13px root
+        'caption': ['0.75rem', { lineHeight: '1.0625rem' }],   // ~10px
+        'label': ['0.8125rem', { lineHeight: '1.1875rem' }],   // ~10.5px
+        'title': ['1rem', { lineHeight: '1.375rem' }],         // 13px
+        'display': ['1.1875rem', { lineHeight: '1.5rem' }],    // ~15.5px
+      },
       colors: {
         brand: {
           50: '#f0f9ff',

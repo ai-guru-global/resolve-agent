@@ -48,7 +48,7 @@ const navigationItems: {
   { name: '监控告警', href: '/monitoring', icon: Bell },
   { name: '记忆 & 数据库', href: '/database', icon: DatabaseZap },
   { name: '系统设置', href: '/settings', icon: Settings },
-  { name: '自助学习', href: 'https://github.com/ai-guru-global/ai-guru-database', icon: GraduationCap, external: true },
+  { name: '自助学习', href: 'https://github.com/ai-guru-global/ai-guru-database/tree/main', icon: GraduationCap, external: true },
 ];
 
 export default function MainLayout({ children }: { children: ReactNode }) {

@@ -1164,36 +1164,28 @@ pnpm install
 pnpm start
 ```
 
-### English Documentation
-
-| Document | Description |
-|----------|-------------|
-| [Architecture Overview](docs/architecture/overview.md) | System architecture and design |
-| [Intelligent Selector](docs/architecture/intelligent-selector.md) | Adaptive workflow routing engine |
-| [FTA Engine](docs/architecture/fta-engine.md) | Fault Tree Analysis engine |
-| [Ticket Summary Agent](docs/architecture/ticket-summary-agent.md) | Knowledge production engine for ticket summarization |
-| [Ticket Summary Agent Integration](docs/architecture/ticket-summary-agent-integration-analysis.md) | Integration feasibility and implementation plan |
-| [AgentScope-Higress Integration](docs/architecture/agentscope-higress-integration.md) | Deep integration architecture |
-| [Quick Start Guide](docs/user-guide/quickstart.md) | Get started in 5 minutes |
-
-### 中文文档
+### 文档导航
 
 完整的中文文档位于 [`docs/zh/`](docs/zh/) 目录：
 
 | 文档 | 说明 |
 |------|------|
-| [README.md](docs/zh/README.md) | 文档索引 |
+| [文档索引](docs/zh/README.md) | 文档目录与总览 |
 | [快速入门](docs/zh/quickstart.md) | 5分钟上手指南 |
 | [架构设计](docs/zh/architecture.md) | 系统架构详解 |
+| [数据库 Schema](docs/zh/database-schema.md) | PostgreSQL 16 张表设计与迁移策略 |
 | [智能选择器](docs/zh/intelligent-selector.md) | 自适应工作流路由引擎 |
-| [FTA 工作流引擎](docs/zh/fta-engine.md) | 高级静态分析引擎 |
+| [选择器适配器](docs/zh/selector-adapters.md) | Hook/Skill 适配器与 SelectorProtocol |
+| [FTA 工作流引擎](docs/zh/fta-engine.md) | 故障树分析引擎 |
+| [AgentScope-Higress 集成](docs/zh/agentscope-higress-integration.md) | 深度集成架构文档 |
 | [技能系统](docs/zh/skill-system.md) | 专家技能开发指南 |
 | [RAG 管道](docs/zh/rag-pipeline.md) | 检索增强生成系统 |
+| [工单总结 Agent](docs/zh/ticket-summary-agent.md) | 知识生产引擎设计哲学 |
+| [工单总结集成分析](docs/zh/ticket-summary-agent-integration-analysis.md) | 集成可行性与实施计划 |
 | [CLI 参考](docs/zh/cli-reference.md) | 命令行完整参考 |
 | [配置参考](docs/zh/configuration.md) | 配置选项详解 |
 | [部署指南](docs/zh/deployment.md) | 生产环境部署 |
 | [最佳实践](docs/zh/best-practices.md) | AIOps 使用建议与技巧 |
-| [AgentScope-Higress 集成](docs/zh/agentscope-higress-integration.md) | 深度集成架构文档 |
 
 ---
 
@@ -1238,9 +1230,8 @@ resolve-agent/
 ├── configs/                # Default configurations
 ├── skills/                 # Community skill registry
 ├── docs/                   # Documentation
-│   ├── architecture/       # Architecture docs
+│   ├── zh/                 # 中文架构与使用文档
 │   ├── user-guide/         # User guides
-│   └── zh/                 # Chinese documentation
 └── test/e2e/               # End-to-end tests
 ```
 

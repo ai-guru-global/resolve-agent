@@ -231,10 +231,10 @@ Now that you have ResolveAgent running, explore these features:
 
 ### Learn the Concepts
 
-- **[Architecture Overview](../architecture/overview.md)**: Understand how ResolveAgent works
-- **[Intelligent Selector](../architecture/intelligent-selector.md)**: Learn about the routing mechanism
-- **[FTA Engine](../architecture/fta-engine.md)**: Build diagnostic workflows
-- **[Ticket Summary Agent](../architecture/ticket-summary-agent.md)**: Knowledge production engine for ticket summarization
+- **[架构概览](../zh/architecture.md)**: 了解 ResolveAgent 的整体架构设计
+- **[智能选择器](../zh/intelligent-selector.md)**: 了解路由机制
+- **[FTA 引擎](../zh/fta-engine.md)**: 构建诊断工作流
+- **[工单总结 Agent](../zh/ticket-summary-agent.md)**: 知识生产引擎
 
 ### Hands-on Practice
 

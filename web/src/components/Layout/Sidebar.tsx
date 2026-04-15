@@ -68,7 +68,7 @@ const navGroups: NavGroup[] = [
     items: [
       { name: 'Skills 技能', href: '/skills', icon: Zap },
       { name: 'FTA 工作流', href: '/workflows', icon: GitBranch },
-      { name: '排查方案库', href: '/solutions', icon: BookOpen },
+      { name: '结构化标准方案', href: '/solutions', icon: BookOpen },
       { name: '代码分析语料', href: '/code-analysis', icon: Code2 },
       { name: 'RAG 知识库', href: '/rag/collections', icon: Database },
     ],
@@ -97,7 +97,7 @@ const navGroups: NavGroup[] = [
         href: '#external',
         icon: GraduationCap,
         external: true,
-        url: 'https://github.com/ai-guru-global/ai-guru-database',
+        url: 'https://github.com/ai-guru-global/ai-guru-database/tree/main',
       },
     ],
   },

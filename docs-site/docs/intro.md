@@ -20,7 +20,7 @@
 | **新用户** | [快速开始指南](/docs/user-guide/quickstart) |
 | **开发者** | [本地开发指南](/docs/dev-guide/local-dev) |
 | **运维工程师** | [部署手册](/docs/ops/deployment) |
-| **架构师** | [架构概览](/docs/architecture/overview) |
+| **架构师** | [架构概览](/docs/zh/architecture) |
 | **API 用户** | [API 参考](/docs/api/index) |
 
 ## 功能特性

@@ -61,7 +61,7 @@ export default function SolutionList() {
       const data = await api.listSolutions();
       setSolutions(data.solutions);
     } catch {
-      toast.error('加载排查方案列表失败');
+      toast.error('加载结构化标准方案列表失败');
     } finally {
       setLoading(false);
     }
@@ -105,11 +105,11 @@ export default function SolutionList() {
   if (!loading && solutions.length === 0 && !searchKeyword) {
     return (
       <div className="space-y-6">
-        <PageHeader title="排查方案库" description="结构化故障排查知识库" />
+        <PageHeader title="结构化标准方案" description="结构化标准方案知识库" />
         <EmptyState
           icon={BookOpen}
-          title="暂无排查方案"
-          description="创建第一个排查方案来构建运维知识库"
+          title="暂无结构化标准方案"
+          description="创建第一个结构化标准方案来构建运维知识库"
         />
       </div>
     );
@@ -118,8 +118,8 @@ export default function SolutionList() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="排查方案库"
-        description="结构化故障排查知识库 - 问题现象 / 关键信息 / 排查步骤 / 解决方案"
+        title="结构化标准方案"
+        description="结构化标准方案知识库 - 问题现象 / 关键信息 / 排查步骤 / 解决方案"
         actions={
           <Button size="sm" asChild>
             <Link to="/solutions/new">
@@ -239,7 +239,7 @@ export default function SolutionList() {
           <DialogHeader>
             <DialogTitle>确认删除</DialogTitle>
             <DialogDescription>
-              确定要删除排查方案 &quot;{deleteTarget?.title}&quot; 吗？此操作不可撤销。
+              确定要删除结构化标准方案 &quot;{deleteTarget?.title}&quot; 吗？此操作不可撤销。
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

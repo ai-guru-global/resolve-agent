@@ -62,7 +62,7 @@ export default function Home() {
           <h1
             className="text-display"
             style={{
-              fontSize: 'clamp(1.5rem, 5vw, 2rem)',
+              fontSize: 'clamp(1.125rem, 4vw, 1.375rem)',
               color: 'var(--color-text-primary)',
               fontFamily: 'var(--font-display)',
             }}
@@ -90,8 +90,8 @@ export default function Home() {
           animationDelay: '80ms',
         }}
       >
-        <span style={{ color: 'var(--color-accent)', fontSize: '18px' }}>◎</span>
-        <span style={{ color: 'var(--color-text-tertiary)', fontSize: '0.9375rem' }}>
+        <span style={{ color: 'var(--color-accent)', fontSize: '14px' }}>◎</span>
+        <span style={{ color: 'var(--color-text-tertiary)', fontSize: '0.8125rem' }}>
           拍摄错误页面或描述问题...
         </span>
       </button>
@@ -114,7 +114,7 @@ export default function Home() {
             <span
               style={{
                 color: action.accent,
-                fontSize: '22px',
+                fontSize: '18px',
                 fontFamily: 'var(--font-display)',
                 lineHeight: 1,
               }}
@@ -150,7 +150,7 @@ export default function Home() {
                 className="w-10 h-10 rounded-xl flex items-center justify-center"
                 style={{ background: 'var(--color-accent-glow)', border: '1px solid oklch(68% 0.15 75 / 0.25)' }}
               >
-                <span style={{ fontSize: '18px' }}>◈</span>
+                <span style={{ fontSize: '15px' }}>◈</span>
               </div>
               <div
                 className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px]"
@@ -216,7 +216,7 @@ export default function Home() {
               className="text-title mb-0.5"
               style={{
                 fontFamily: 'var(--font-display)',
-                fontSize: '1.375rem',
+                fontSize: '1.125rem',
                 color: 'var(--color-text-primary)',
               }}
             >
@@ -349,7 +349,7 @@ export default function Home() {
           className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
           style={{ background: 'oklch(68% 0.15 75 / 0.2)' }}
         >
-          <span style={{ fontSize: '16px', color: 'var(--color-accent)' }}>◆</span>
+          <span style={{ fontSize: '13px', color: 'var(--color-accent)' }}>◆</span>
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-label font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
@@ -359,7 +359,7 @@ export default function Home() {
             模型市场 · Skills 编排 · 本地推理
           </p>
         </div>
-        <span style={{ color: 'var(--color-accent)', fontSize: '14px' }}>→</span>
+        <span style={{ color: 'var(--color-accent)', fontSize: '12px' }}>→</span>
       </div>
     </div>
   )

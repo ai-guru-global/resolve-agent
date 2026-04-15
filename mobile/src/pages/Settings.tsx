@@ -48,7 +48,7 @@ export default function Settings() {
         <h1
           className="text-display"
           style={{
-            fontSize: 'clamp(1.25rem, 4vw, 1.5rem)',
+            fontSize: 'clamp(1.0625rem, 3.5vw, 1.25rem)',
             color: 'var(--color-text-primary)',
             fontFamily: 'var(--font-display)',
           }}
@@ -82,7 +82,7 @@ export default function Settings() {
         >
           <span
             style={{
-              fontSize: '18px',
+              fontSize: '15px',
               color: offlineMode ? 'var(--color-success)' : 'var(--color-text-tertiary)',
             }}
           >
@@ -212,7 +212,7 @@ export default function Settings() {
                     <span
                       style={{
                         color: 'var(--color-accent)',
-                        fontSize: '14px',
+                        fontSize: '12px',
                         fontFamily: 'var(--font-display)',
                       }}
                     >

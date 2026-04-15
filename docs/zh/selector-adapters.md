@@ -1,10 +1,10 @@
-# Selector Adapters
+# 选择器适配器
 
-The Selector Adapter system provides alternative routing implementations that conform to the same `SelectorProtocol` interface. This enables the Intelligent Selector to be deployed in different operational modes without changing downstream code.
+选择器适配器系统提供了符合统一 `SelectorProtocol` 接口的多种路由实现。这使得智能选择器可以在不同运行模式下部署，而无需更改下游代码。
 
-**Location**: `python/src/resolveagent/selector/`
+**代码位置**: `python/src/resolveagent/selector/`
 
-## Overview
+## 概述
 
 ```
                           SelectorProtocol
@@ -12,24 +12,26 @@ The Selector Adapter system provides alternative routing implementations that co
                ┌───────────────┼───────────────┐
                │               │               │
      IntelligentSelector  HookSelector    SkillSelector
-       (default)          Adapter          Adapter
+       (默认)            Adapter          Adapter
                │               │               │
                │         ┌─────┴─────┐         │
                │         │ pre-hooks │         │
                │         │     ↓     │         │
                └────────▶│ selector  │◀────────┘
-                         │     ↓     │     (calls run()
-                         │ post-hooks│      directly)
+                         │     ↓     │     (直接调用 run())
+                         │ post-hooks│
                          └───────────┘
 ```
 
-All three implementations satisfy `SelectorProtocol`, which requires:
+三种实现均满足 `SelectorProtocol`，要求实现：
 - `async def route(input_text, agent_id, context, enrich_context) -> RouteDecision`
 - `def get_strategy_info() -> dict[str, Any]`
 
+---
+
 ## SelectorProtocol
 
-Defined in `selector/protocol.py` as a `runtime_checkable` Protocol for structural subtyping:
+定义在 `selector/protocol.py` 中，作为 `runtime_checkable` 的 Protocol，支持结构子类型化：
 
 ```python
 from typing import Any, Protocol, runtime_checkable
@@ -48,18 +50,18 @@ class SelectorProtocol(Protocol):
     def get_strategy_info(self) -> dict[str, Any]: ...
 ```
 
-Usage for type checking:
+**类型检查用法**：
 
 ```python
 from resolveagent.selector.protocol import SelectorProtocol
 
 def configure_agent(selector: SelectorProtocol) -> None:
-    """Accepts any selector implementation."""
+    """接受任意选择器实现"""
     info = selector.get_strategy_info()
-    print(f"Using strategy: {info['strategy']}")
+    print(f"使用策略: {info['strategy']}")
 ```
 
-Runtime checks:
+**运行时检查**：
 
 ```python
 assert isinstance(IntelligentSelector(), SelectorProtocol)
@@ -67,96 +69,98 @@ assert isinstance(HookSelectorAdapter(), SelectorProtocol)
 assert isinstance(SkillSelectorAdapter(), SelectorProtocol)
 ```
 
+---
+
 ## HookSelectorAdapter
 
-**File**: `selector/hook_selector.py`
+**文件**: `selector/hook_selector.py`
 
-Wraps `IntelligentSelector` with the existing hooks infrastructure (`HookRunner`), enabling external code to intercept and modify routing decisions at well-defined extension points.
+通过现有的 Hooks 基础设施（`HookRunner`）包装 `IntelligentSelector`，允许外部代码在定义好的扩展点拦截和修改路由决策。
 
-### Architecture
+### 架构
 
 ```
-route() called
+route() 调用
     │
     ▼
 ┌─────────────────────────────┐
-│  _ensure_default_hooks()    │  (lazy, first-call only)
+│  _ensure_default_hooks()    │  (惰性加载，仅首次调用)
 └──────────────┬──────────────┘
                │
                ▼
 ┌─────────────────────────────┐
-│  PRE-HOOKS                  │
-│  trigger: "selector.route"  │
-│  type: "pre"                │
+│  前置 Hook (PRE-HOOKS)      │
+│  触发点: "selector.route"   │
+│  类型: "pre"                │
 │                             │
-│  • intent_analysis_handler  │  → Runs IntentAnalyzer, stores in modified_data
-│  • (custom pre-hooks)       │
+│  • intent_analysis_handler  │  → 运行 IntentAnalyzer，存储到 modified_data
+│  • (自定义 pre-hooks)       │
 │                             │
-│  Short-circuit check:       │
-│  If modified_data contains  │
-│  "route_decision" and       │
-│  skip_remaining is True     │
-│  → Skip core routing        │
+│  短路检查:                  │
+│  如果 modified_data 包含    │
+│  "route_decision" 且        │
+│  skip_remaining 为 True     │
+│  → 跳过核心路由             │
 └──────────────┬──────────────┘
                │
                ▼
 ┌─────────────────────────────┐
-│  CORE ROUTING               │
+│  核心路由                   │
 │  IntelligentSelector.route()│
-│  (skipped if short-circuit) │
+│  (短路时跳过)               │
 └──────────────┬──────────────┘
                │
                ▼
 ┌─────────────────────────────┐
-│  POST-HOOKS                 │
-│  trigger: "selector.route"  │
-│  type: "post"               │
+│  后置 Hook (POST-HOOKS)     │
+│  触发点: "selector.route"   │
+│  类型: "post"               │
 │                             │
-│  • decision_audit_handler   │  → Logs decision for observability
-│  • confidence_override      │  → Adjusts confidence from metadata
-│  • (custom post-hooks)      │
+│  • decision_audit_handler   │  → 记录决策日志用于可观测性
+│  • confidence_override      │  → 从元数据调整置信度
+│  • (自定义 post-hooks)      │
 │                             │
-│  Applies modified           │
-│  route_decision if present  │
+│  如果存在 modified          │
+│  route_decision 则应用      │
 └──────────────┬──────────────┘
                │
                ▼
           RouteDecision
 ```
 
-### Usage
+### 使用方式
 
 ```python
 from resolveagent.selector.hook_selector import HookSelectorAdapter
 
-# Default: creates InMemoryHookClient + installs default hooks
+# 默认：创建 InMemoryHookClient + 安装默认 hooks
 adapter = HookSelectorAdapter(strategy="hybrid")
-decision = await adapter.route("diagnose the error", agent_id="agent-1")
+decision = await adapter.route("诊断这个错误", agent_id="agent-1")
 
-# Custom hook client
+# 自定义 hook 客户端
 from resolveagent.hooks.memory_client import InMemoryHookClient
 client = InMemoryHookClient()
 adapter = HookSelectorAdapter(hook_client=client, strategy="rule")
 ```
 
-### Built-in Handlers
+### 内置处理器
 
-Three handlers are registered in `hooks/selector_handlers.py`:
+三个处理器注册在 `hooks/selector_handlers.py` 中：
 
-| Handler | Type | Description |
+| 处理器 | 类型 | 说明 |
 |---------|------|-------------|
-| `intent_analysis_handler` | Pre | Runs `IntentAnalyzer`, stores classification in `modified_data` |
-| `decision_audit_handler` | Post | Logs route type, target, confidence, and timestamp |
-| `confidence_override_handler` | Post | Adjusts confidence based on `metadata["confidence_overrides"]` map |
+| `intent_analysis_handler` | 前置 | 运行 `IntentAnalyzer`，将分类结果存入 `modified_data` |
+| `decision_audit_handler` | 后置 | 记录路由类型、目标、置信度和时间戳 |
+| `confidence_override_handler` | 后置 | 基于 `metadata["confidence_overrides"]` 映射调整置信度 |
 
-### Custom Hooks
+### 自定义 Hook
 
-Register custom handlers and create hook definitions:
+注册自定义处理器并创建 Hook 定义：
 
 ```python
 from resolveagent.hooks.models import HookContext, HookResult
 
-# 1. Define a handler
+# 1. 定义处理器
 async def rate_limit_handler(ctx: HookContext) -> HookResult:
     agent_id = ctx.target_id
     if is_rate_limited(agent_id):
@@ -167,47 +171,49 @@ async def rate_limit_handler(ctx: HookContext) -> HookResult:
                 "route_decision": {
                     "route_type": "direct",
                     "confidence": 1.0,
-                    "reasoning": "Rate limited",
+                    "reasoning": "已限流",
                 },
             },
         )
     return HookResult(success=True)
 
-# 2. Register the handler
+# 2. 注册处理器
 adapter._runner.register_handler("rate_limit", rate_limit_handler)
 
-# 3. Create a hook definition
+# 3. 创建 Hook 定义
 await adapter._client.create({
     "name": "rate-limiter",
     "hook_type": "pre",
     "trigger_point": "selector.route",
     "handler_type": "rate_limit",
-    "execution_order": -1,  # Run before other pre-hooks
+    "execution_order": -1,  # 在其他 pre-hooks 之前执行
     "enabled": True,
 })
 ```
 
-### Default Hook Auto-Installation
+### 默认 Hook 自动安装
 
-On the first `route()` call, if the hook store is empty, two default hooks are lazily created:
+首次 `route()` 调用时，如果 Hook 存储为空，会惰性创建两个默认 Hook：
 
-| Hook Name | Type | Handler | Purpose |
+| Hook 名称 | 类型 | 处理器 | 用途 |
 |-----------|------|---------|---------|
-| `intent-pre-analysis` | `pre` | `intent_analysis` | Pre-analyze intent before routing |
-| `decision-audit` | `post` | `decision_audit` | Log all routing decisions |
+| `intent-pre-analysis` | `pre` | `intent_analysis` | 路由前预分析意图 |
+| `decision-audit` | `post` | `decision_audit` | 记录所有路由决策 |
+
+---
 
 ## InMemoryHookClient
 
-**File**: `hooks/memory_client.py`
+**文件**: `hooks/memory_client.py`
 
-Drop-in replacement for the platform `HookClient` that stores hook definitions in a Python `dict` instead of querying the Go REST API. Designed for development, testing, and standalone deployments.
+平台 `HookClient` 的内存替代实现，将 Hook 定义存储在 Python `dict` 中而非查询 Go REST API。适用于开发、测试和独立部署场景。
 
 ```python
 from resolveagent.hooks.memory_client import InMemoryHookClient
 
 client = InMemoryHookClient()
 
-# CRUD operations (same interface as HookClient)
+# CRUD 操作（与 HookClient 接口一致）
 result = await client.create({"name": "my-hook", "hook_type": "pre", ...})
 hook = await client.get(result["id"])
 hooks = await client.list()
@@ -216,22 +222,24 @@ await client.delete(result["id"])
 executions = await client.list_executions(result["id"])
 ```
 
+---
+
 ## SkillSelectorAdapter
 
-**File**: `selector/skill_selector.py`
+**文件**: `selector/skill_selector.py`
 
-Wraps the routing logic as a skill invocation, treating the Intelligent Selector as a standard skill in the skills infrastructure.
+将路由逻辑包装为技能调用，把智能选择器视为技能基础设施中的标准技能。
 
-### Architecture
+### 架构
 
 ```
-route() called
+route() 调用
     │
     ▼
 ┌─────────────────────────┐
-│  _get_callable()        │  (lazy load on first call)
-│  imports selector_skill │
-│  :run directly          │
+│  _get_callable()        │  (首次调用时惰性加载)
+│  导入 selector_skill    │
+│  :run                   │
 └────────────┬────────────┘
              │
              ▼
@@ -249,23 +257,23 @@ route() called
 ┌─────────────────────────┐
 │  RouteDecision(**result)│
 │                         │
-│  On error:              │
+│  出错时:                │
 │  → direct, conf=0.3    │
 └─────────────────────────┘
 ```
 
-### Usage
+### 使用方式
 
 ```python
 from resolveagent.selector.skill_selector import SkillSelectorAdapter
 
 adapter = SkillSelectorAdapter()
-decision = await adapter.route("search the web", agent_id="agent-1")
+decision = await adapter.route("搜索网络信息", agent_id="agent-1")
 ```
 
-### Skill Entry Point
+### 技能入口点
 
-The skill function is at `resolveagent.skills.builtin.selector_skill:run`:
+技能函数位于 `resolveagent.skills.builtin.selector_skill:run`：
 
 ```python
 async def run(
@@ -280,52 +288,58 @@ async def run(
     return decision.model_dump()
 ```
 
-An independent skill manifest is located at `python/skills/intelligent-selector/manifest.yaml`.
+独立技能清单位于 `python/skills/intelligent-selector/manifest.yaml`。
 
-### Error Handling
+### 错误处理
 
-On any exception, the adapter returns a fallback decision:
+发生任何异常时，适配器返回兜底决策：
 
 ```python
 RouteDecision(
     route_type="direct",
     confidence=0.3,
-    reasoning=f"Skill selector fallback: {error}",
+    reasoning=f"技能选择器兜底: {error}",
 )
 ```
 
-## MegaAgent Integration
+---
 
-`MegaAgent` selects the adapter via the `selector_mode` parameter:
+## MegaAgent 集成
 
-| Mode | Adapter | Description |
+`MegaAgent` 通过 `selector_mode` 参数选择适配器：
+
+| 模式 | 适配器 | 说明 |
 |------|---------|-------------|
-| `"selector"` (default) | `IntelligentSelector` | Direct LLM-powered routing |
-| `"hooks"` | `HookSelectorAdapter` | Pre/post hooks around routing |
-| `"skills"` | `SkillSelectorAdapter` | Routes via skill invocation |
+| `"selector"` (默认) | `IntelligentSelector` | 直接 LLM 驱动的路由 |
+| `"hooks"` | `HookSelectorAdapter` | 带前/后置 Hook 的路由 |
+| `"skills"` | `SkillSelectorAdapter` | 通过技能调用进行路由 |
 
 ```python
 from resolveagent.agent.mega import MegaAgent
 
-# Each mode creates the corresponding adapter lazily
+# 每种模式惰性创建对应的适配器
 agent = MegaAgent(
     name="my-agent",
     selector_strategy="hybrid",
-    selector_mode="hooks",  # or "selector", "skills"
+    selector_mode="hooks",  # 或 "selector", "skills"
 )
 ```
 
-The selector instance is created once by `_get_selector()` and reused across all `reply()` calls.
+选择器实例由 `_get_selector()` 创建一次，并在所有 `reply()` 调用中复用。
 
-## Testing
+---
 
-| Test File | Tests |
+## 测试
+
+| 测试文件 | 测试内容 |
 |-----------|-------|
-| `test_hook_selector.py` | InMemoryHookClient CRUD (9 tests), HookSelectorAdapter routing/short-circuit/protocol (7 tests) |
-| `test_skill_selector.py` | SkillSelectorAdapter routing/loading/fallback/protocol (7 tests) |
-| `test_mega_selector_modes.py` | MegaAgent factory/reuse/strategy forwarding (12 tests) |
+| `test_hook_selector.py` | InMemoryHookClient CRUD (9 个测试)、HookSelectorAdapter 路由/短路/协议 (7 个测试) |
+| `test_skill_selector.py` | SkillSelectorAdapter 路由/加载/兜底/协议 (7 个测试) |
+| `test_mega_selector_modes.py` | MegaAgent 工厂/复用/策略转发 (12 个测试) |
 
-## See Also
+---
 
-- [Intelligent Selector](intelligent-selector.md) -- Core selector architecture and pipeline
-- [Architecture Overview](overview.md) -- System-level architecture
+## 相关文档
+
+- [智能选择器](./intelligent-selector.md) — 核心选择器架构和处理管道
+- [架构设计](./architecture.md) — 系统级架构概览

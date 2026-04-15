@@ -1,4 +1,4 @@
-import type { K8sAnalysisChain, K8sCorpusMetadata } from '@/types/k8sCorpus';
+import type { K8sAnalysisChain, K8sCorpusMetadata, K8sCallTypeDistribution } from '@/types/k8sCorpus';
 
 // ---------------------------------------------------------------------------
 // Chain 1: Pod NotReady
@@ -13,6 +13,11 @@ const podNotReadyChain: K8sAnalysisChain = {
   totalFiles: 8,
   totalFunctions: 14,
   totalLinesOfCode: 8420,
+  chainType: 'troubleshooting',
+  topology: 'event-driven',
+  callTypeDistribution: { direct: 4, grpc: 0, http: 1, event: 1, watch: 2 } satisfies K8sCallTypeDistribution,
+  components: ['kubelet', 'controller-manager', 'api-server'],
+  tags: ['故障排查', '事件驱动', '多分支并行', 'Probe → Status → Taint'],
   flowSteps: [
     '容器运行时状态变化 — 容器健康检查失败、退出或启动失败',
     'Kubelet 探针系统周期性执行 Readiness Probe，结果缓存到 readinessManager',
@@ -605,6 +610,11 @@ const kubeadmInitChain: K8sAnalysisChain = {
   totalFiles: 9,
   totalFunctions: 15,
   totalLinesOfCode: 6850,
+  chainType: 'initialization',
+  topology: 'sequential-pipeline',
+  callTypeDistribution: { direct: 8, grpc: 0, http: 1, event: 0, watch: 0 } satisfies K8sCallTypeDistribution,
+  components: ['kubeadm', 'api-server', 'controller-manager'],
+  tags: ['集群初始化', '顺序流水线', '阶段化执行', 'Phase Runner 模式'],
   flowSteps: [
     'kubeadm init 命令解析配置和参数，执行预检验证系统环境',
     '生成 CA、API Server、Controller Manager、Scheduler 等全套 PKI 证书',

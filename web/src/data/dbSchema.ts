@@ -725,6 +725,8 @@ const troubleshootingSolutions: TableDef = {
   ],
   mockData: [
     { id: 'sol-001', title: 'K8s Pod CrashLoopBackOff 排查方案', problem_symptoms: 'Pod 频繁重启', key_information: 'kubectl describe pod Events', troubleshooting_steps: '1. 检查 Events 2. 分析退出码', resolution_steps: '调整 memory limits', domain: 'kubernetes', component: 'pod', severity: 'high', tags: ['k8s', 'pod'], version: 1, status: 'active', created_at: '2026-03-15T10:00:00Z', updated_at: '2026-04-01T08:30:00Z' },
+    { id: 'sol-kudig-001', title: 'API Server 故障排查指南', problem_symptoms: 'API Server 无响应、请求超时或返回 5xx 错误', key_information: 'kube-apiserver pod logs, etcd 连接状态, --audit-log', troubleshooting_steps: '1. 检查 apiserver pod 状态 2. 验证 etcd 连接 3. 检查证书有效期', resolution_steps: '重启 apiserver / 修复 etcd 连接 / 续签证书', domain: 'kubernetes', component: 'api-server', severity: 'high', tags: ['k8s', 'api-server', 'control-plane'], version: 1, status: 'active', created_at: '2026-04-10T08:00:00Z', updated_at: '2026-04-10T08:00:00Z' },
+    { id: 'sol-kudig-003', title: 'Pod 生命周期故障排查指南', problem_symptoms: 'Pod 启动失败、CrashLoopBackOff、ImagePullBackOff 或异常退出', key_information: 'Pod Events, container logs, exit code, node 资源状态', troubleshooting_steps: '1. kubectl describe pod 2. 检查镜像拉取 3. 分析 exit code', resolution_steps: '修复配置/资源限制/镜像版本', domain: 'kubernetes', component: 'pod', severity: 'medium', tags: ['k8s', 'pod', 'lifecycle'], version: 1, status: 'active', created_at: '2026-04-10T08:00:00Z', updated_at: '2026-04-10T08:00:00Z' },
   ],
 };
 
@@ -794,7 +796,7 @@ export const tableGroups: TableGroup[] = [
     tables: [memoryShortTerm, memoryLongTerm],
   },
   {
-    label: '排查方案库',
+    label: '结构化标准方案',
     color: 'orange',
     tables: [troubleshootingSolutions, solutionExecutions],
   },

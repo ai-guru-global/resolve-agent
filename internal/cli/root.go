@@ -9,6 +9,7 @@ import (
 
 	agentcmd "github.com/ai-guru-global/resolve-agent/internal/cli/agent"
 	configcmd "github.com/ai-guru-global/resolve-agent/internal/cli/config"
+	corpuscmd "github.com/ai-guru-global/resolve-agent/internal/cli/corpus"
 	ragcmd "github.com/ai-guru-global/resolve-agent/internal/cli/rag"
 	skillcmd "github.com/ai-guru-global/resolve-agent/internal/cli/skill"
 	workflowcmd "github.com/ai-guru-global/resolve-agent/internal/cli/workflow"
@@ -45,6 +46,7 @@ func init() {
 	rootCmd.AddCommand(skillcmd.NewCmd())
 	rootCmd.AddCommand(workflowcmd.NewCmd())
 	rootCmd.AddCommand(ragcmd.NewCmd())
+	rootCmd.AddCommand(corpuscmd.NewCmd())
 	rootCmd.AddCommand(configcmd.NewCmd())
 	rootCmd.AddCommand(newVersionCmd())
 	rootCmd.AddCommand(newDashboardCmd())

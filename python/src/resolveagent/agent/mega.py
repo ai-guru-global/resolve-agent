@@ -3,12 +3,18 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from resolveagent.agent.base import BaseAgent
 from resolveagent.selector.selector import RouteDecision
 
+if TYPE_CHECKING:
+    from resolveagent.selector.protocol import SelectorProtocol
+
 logger = logging.getLogger(__name__)
+
+# Valid selector mode values.
+SelectorMode = Literal["selector", "hooks", "skills"]
 
 
 class MegaAgent(BaseAgent):
@@ -25,14 +31,47 @@ class MegaAgent(BaseAgent):
         model_id: str | None = None,
         system_prompt: str = "",
         selector_strategy: str = "hybrid",
+        selector_mode: SelectorMode = "selector",
         **kwargs: Any,
     ) -> None:
         super().__init__(name=name, model_id=model_id, system_prompt=system_prompt, **kwargs)
         self.selector_strategy = selector_strategy
+        self.selector_mode: SelectorMode = selector_mode
+        self._selector_instance: SelectorProtocol | None = None
         self._llm_provider = None
         self._rag_pipeline = None
         self._skill_executor = None
         self._fta_engine = None
+        self._static_analysis_engine = None
+        self._dynamic_analysis_engine = None
+
+    # ------------------------------------------------------------------
+    # Selector factory
+    # ------------------------------------------------------------------
+
+    def _get_selector(self) -> SelectorProtocol:
+        """Return a cached selector instance matching ``selector_mode``.
+
+        The selector is lazily created on first call and reused across
+        subsequent ``reply`` invocations.
+        """
+        if self._selector_instance is not None:
+            return self._selector_instance
+
+        if self.selector_mode == "hooks":
+            from resolveagent.selector.hook_selector import HookSelectorAdapter
+
+            self._selector_instance = HookSelectorAdapter(strategy=self.selector_strategy)
+        elif self.selector_mode == "skills":
+            from resolveagent.selector.skill_selector import SkillSelectorAdapter
+
+            self._selector_instance = SkillSelectorAdapter()
+        else:
+            from resolveagent.selector.selector import IntelligentSelector
+
+            self._selector_instance = IntelligentSelector(strategy=self.selector_strategy)
+
+        return self._selector_instance
 
     async def reply(self, message: dict[str, Any]) -> dict[str, Any]:
         """Process a message through the Intelligent Selector and route accordingly.
@@ -43,9 +82,7 @@ class MegaAgent(BaseAgent):
         Returns:
             Response from the selected subsystem.
         """
-        from resolveagent.selector.selector import IntelligentSelector
-
-        selector = IntelligentSelector(strategy=self.selector_strategy)
+        selector = self._get_selector()
         decision = await selector.route(
             input_text=message.get("content", ""),
             agent_id=self.name,
@@ -415,9 +452,28 @@ class MegaAgent(BaseAgent):
         content: str,
         decision: RouteDecision,
     ) -> dict[str, Any]:
-        """Execute code analysis using LLM and optional static analysis tools."""
-        # Use LLM to analyze code with structured prompts
+        """Execute code analysis with sub-type dispatch.
 
+        Supports three sub-types based on ``decision.parameters``:
+        - ``static``: AST-based call graph + error parsing + solution generation
+        - ``traffic``: Dynamic traffic capture analysis + graph building
+        - ``llm`` (default): LLM-only code review (legacy behaviour)
+        """
+        sub_type = decision.parameters.get("sub_type", "llm")
+
+        if sub_type == "static":
+            return await self._execute_static_analysis(content, decision)
+        elif sub_type == "traffic":
+            return await self._execute_traffic_analysis(content, decision)
+        else:
+            return await self._execute_llm_code_analysis(content, decision)
+
+    async def _execute_llm_code_analysis(
+        self,
+        content: str,
+        decision: RouteDecision,
+    ) -> dict[str, Any]:
+        """LLM-only code analysis (legacy behaviour)."""
         from resolveagent.llm.higress_provider import create_llm_provider
         from resolveagent.llm.provider import ChatMessage
 
@@ -452,6 +508,132 @@ class MegaAgent(BaseAgent):
                 "route_target": decision.route_target,
                 "confidence": decision.confidence,
                 "analyzer": "llm-based",
+            },
+        }
+
+    async def _execute_static_analysis(
+        self,
+        content: str,
+        decision: RouteDecision,
+    ) -> dict[str, Any]:
+        """Execute AST-based static analysis engine."""
+        from resolveagent.code_analysis.engine import StaticAnalysisEngine
+
+        if self._static_analysis_engine is None:
+            self._static_analysis_engine = StaticAnalysisEngine(
+                llm_provider=self._llm_provider,
+                rag_pipeline=self._rag_pipeline,
+                model=self.model_id,
+            )
+
+        repo_path = decision.parameters.get("repo_path", "")
+        language = decision.parameters.get("language")
+        entry_points = decision.parameters.get("entry_points")
+        error_logs = decision.parameters.get("error_logs", content)
+
+        if not repo_path:
+            return {
+                "role": "assistant",
+                "content": "静态分析需要指定 repo_path 参数",
+                "metadata": {
+                    "route_type": decision.route_type,
+                    "error": "missing_repo_path",
+                },
+            }
+
+        result = await self._static_analysis_engine.analyze_single(
+            repo_path=repo_path,
+            language=language,
+            entry_points=entry_points,
+            error_logs=error_logs,
+        )
+
+        parts = ["## 静态分析结果\n"]
+        parts.append(f"- 调用图节点: {result.stats.get('call_graph_nodes', 0)}")
+        parts.append(f"- 调用图边: {result.stats.get('call_graph_edges', 0)}")
+        parts.append(f"- 发现错误: {result.stats.get('errors_found', 0)}")
+        parts.append(f"- 生成解决方案: {result.stats.get('solutions_generated', 0)}")
+
+        if result.solutions:
+            parts.append("\n### 解决方案")
+            for sol in result.solutions[:5]:
+                parts.append(f"\n**{sol.title}** ({sol.severity})")
+                parts.append(sol.summary[:200])
+
+        return {
+            "role": "assistant",
+            "content": "\n".join(parts),
+            "metadata": {
+                "route_type": decision.route_type,
+                "route_target": decision.route_target,
+                "confidence": decision.confidence,
+                "analyzer": "static-analysis",
+                "stats": result.stats,
+            },
+        }
+
+    async def _execute_traffic_analysis(
+        self,
+        content: str,
+        decision: RouteDecision,
+    ) -> dict[str, Any]:
+        """Execute dynamic traffic analysis engine."""
+        from resolveagent.traffic.engine import DynamicAnalysisEngine
+
+        if self._dynamic_analysis_engine is None:
+            self._dynamic_analysis_engine = DynamicAnalysisEngine(
+                llm_provider=self._llm_provider,
+                rag_pipeline=self._rag_pipeline,
+                model=self.model_id,
+            )
+
+        sources = decision.parameters.get("sources", [])
+        name = decision.parameters.get("name", "")
+        target_service = decision.parameters.get("target_service", "")
+
+        if not sources:
+            return {
+                "role": "assistant",
+                "content": "流量分析需要指定 sources 参数（OTel/Proxy/eBPF 数据）",
+                "metadata": {
+                    "route_type": decision.route_type,
+                    "error": "missing_sources",
+                },
+            }
+
+        result = await self._dynamic_analysis_engine.analyze_single(
+            sources=sources,
+            name=name,
+            target_service=target_service,
+        )
+
+        report = result.get("report", {})
+        stats = result.get("stats", {})
+
+        parts = ["## 流量分析结果\n"]
+        parts.append(f"- 服务数: {stats.get('unique_services', 0)}")
+        parts.append(f"- 调用链路: {stats.get('unique_edges', 0)}")
+        parts.append(f"- 总请求数: {stats.get('total_requests', 0)}")
+        parts.append(f"- 错误率: {stats.get('error_rate', 0):.2%}")
+
+        if report.get("summary"):
+            parts.append(f"\n### 分析摘要\n{report['summary'][:500]}")
+
+        if report.get("suggestions"):
+            parts.append("\n### 优化建议")
+            for s in report["suggestions"][:5]:
+                parts.append(f"- **{s.get('title', '')}**: {s.get('description', '')}")
+
+        return {
+            "role": "assistant",
+            "content": "\n".join(parts),
+            "metadata": {
+                "route_type": decision.route_type,
+                "route_target": decision.route_target,
+                "confidence": decision.confidence,
+                "analyzer": "traffic-analysis",
+                "stats": stats,
+                "graph": result.get("graph"),
             },
         }
 

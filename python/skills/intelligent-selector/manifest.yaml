@@ -1,0 +1,54 @@
+name: intelligent-selector
+version: "1.0.0"
+description: "Routes requests through the Intelligent Selector pipeline"
+author: "resolveagent"
+entry_point: "resolveagent.skills.builtin.selector_skill:run"
+inputs:
+  - name: input_text
+    type: string
+    required: true
+    description: "User input to route"
+  - name: agent_id
+    type: string
+    required: false
+    description: "Agent processing this request"
+  - name: context
+    type: object
+    required: false
+    description: "Additional routing context"
+  - name: strategy
+    type: string
+    required: false
+    default: "hybrid"
+    description: "Routing strategy (hybrid, rule, llm)"
+  - name: enrich_context
+    type: boolean
+    required: false
+    default: true
+    description: "Whether to enrich context before routing"
+outputs:
+  - name: route_type
+    type: string
+    required: true
+    description: "Selected route type"
+  - name: route_target
+    type: string
+    required: true
+    description: "Specific target within the route"
+  - name: confidence
+    type: number
+    required: true
+    description: "Decision confidence score"
+  - name: reasoning
+    type: string
+    required: false
+    description: "Explanation of the routing decision"
+  - name: parameters
+    type: object
+    required: false
+    description: "Additional routing parameters"
+permissions:
+  network_access: true
+  file_system_read: false
+  file_system_write: false
+  timeout_seconds: 30

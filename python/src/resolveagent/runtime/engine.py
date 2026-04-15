@@ -22,6 +22,9 @@ class ExecutionEngine:
     invokes the Intelligent Selector, and routes to the appropriate
     subsystem (FTA, Skills, or RAG).
 
+    Supports lifecycle hooks (pre/post) and persistent memory via
+    store clients when configured.
+
     Example:
         ```python
         engine = ExecutionEngine()
@@ -33,12 +36,19 @@ class ExecutionEngine:
         ```
     """
 
-    def __init__(self, registry_client: Any | None = None) -> None:
+    def __init__(
+        self,
+        registry_client: Any | None = None,
+        memory_client: Any | None = None,
+        hook_runner: Any | None = None,
+    ) -> None:
         self._agent_pool: dict[str, MegaAgent] = {}
         self._selector = IntelligentSelector(strategy="hybrid", registry_client=registry_client)
         self._conversations: dict[str, list[dict]] = {}
         self._execution_count = 0
         self._registry_client = registry_client
+        self._memory_client = memory_client
+        self._hook_runner = hook_runner
 
     async def execute(
         self,
@@ -104,6 +114,19 @@ class ExecutionEngine:
         }
 
         try:
+            # Run pre-execution hooks
+            if self._hook_runner:
+                from resolveagent.hooks.models import HookContext
+                pre_ctx = HookContext(
+                    trigger_point="agent.execute",
+                    hook_type="pre",
+                    target_id=agent_id,
+                    execution_id=execution_id,
+                    input_data={"message": input_text, "context": context or {}},
+                )
+                await self._hook_runner.run(pre_ctx)
+                input_text = pre_ctx.input_data.get("message", input_text)
+
             # Load or create agent
             agent = await self._load_agent(agent_id)
 
@@ -155,6 +178,18 @@ class ExecutionEngine:
 
             # Add assistant response to conversation history
             # (Note: actual content is handled by the caller)
+
+            # Run post-execution hooks
+            if self._hook_runner:
+                from resolveagent.hooks.models import HookContext
+                post_ctx = HookContext(
+                    trigger_point="agent.execute",
+                    hook_type="post",
+                    target_id=agent_id,
+                    execution_id=execution_id,
+                    input_data={"message": input_text},
+                )
+                await self._hook_runner.run(post_ctx)
 
             duration = time.time() - start_time
             self._execution_count += 1
@@ -538,7 +573,7 @@ class ExecutionEngine:
             # Load workflow from registry (placeholder - use registry_client in production)
             # For now, create a simple workflow execution
             from resolveagent.fta.workflow import Workflow, WorkflowNode
-            
+
             workflow = Workflow(
                 id=workflow_id,
                 name=f"Workflow-{workflow_id}",
@@ -568,7 +603,7 @@ class ExecutionEngine:
 
             # Execute workflow steps
             current_data = input_data
-            
+
             for i, node in enumerate(workflow.nodes):
                 yield {
                     "type": "event",
@@ -594,7 +629,7 @@ class ExecutionEngine:
                         # Filter only content chunks for workflow output
                         if chunk.get("type") in ("content", "content_chunk"):
                             yield chunk
-                
+
                 elif node.type == "skill":
                     from resolveagent.skills.executor import SkillExecutor
                     executor = SkillExecutor()
@@ -619,7 +654,7 @@ class ExecutionEngine:
                 }
 
             duration = time.time() - start_time
-            
+
             yield {
                 "type": "event",
                 "event": {
@@ -676,4 +711,6 @@ class ExecutionEngine:
             "execution_count": self._execution_count,
             "active_agents": len(self._agent_pool),
             "active_conversations": len(self._conversations),
+            "memory_client_connected": self._memory_client is not None,
+            "hook_runner_enabled": self._hook_runner is not None,
         }

@@ -211,12 +211,12 @@ type Usage struct {
 
 // ExecuteResponse is the response from executing an agent.
 type ExecuteResponse struct {
-	AgentID   string   `json:"agent_id"`
-	Response  string   `json:"response"`
-	Message   string   `json:"message"`
-	Content   string   `json:"content"`
-	Duration  float64  `json:"duration"`
-	Usage     *Usage   `json:"usage,omitempty"`
+	AgentID  string  `json:"agent_id"`
+	Response string  `json:"response"`
+	Message  string  `json:"message"`
+	Content  string  `json:"content"`
+	Duration float64 `json:"duration"`
+	Usage    *Usage  `json:"usage,omitempty"`
 }
 
 // ExecuteAgent executes an agent.
@@ -236,9 +236,9 @@ func (c *Client) ExecuteAgent(ctx context.Context, id string, req *ExecuteReques
 
 // ExecutionLog represents a single log entry.
 type ExecutionLog struct {
-	Timestamp time.Time `json:"timestamp"`
-	Level     string    `json:"level"`
-	Message   string    `json:"message"`
+	Timestamp time.Time              `json:"timestamp"`
+	Level     string                 `json:"level"`
+	Message   string                 `json:"message"`
 	Fields    map[string]interface{} `json:"fields,omitempty"`
 }
 
@@ -351,10 +351,10 @@ type TestSkillRequest struct {
 
 // TestSkillResponse is the response from testing a skill.
 type TestSkillResponse struct {
-	SkillID string                 `json:"skill_id"`
-	Output  map[string]interface{} `json:"output"`
-	Error   string                 `json:"error,omitempty"`
-	Duration float64               `json:"duration"`
+	SkillID  string                 `json:"skill_id"`
+	Output   map[string]interface{} `json:"output"`
+	Error    string                 `json:"error,omitempty"`
+	Duration float64                `json:"duration"`
 }
 
 // TestSkill tests a skill with input.
@@ -449,8 +449,8 @@ type ValidateWorkflowRequest struct {
 
 // ValidateWorkflowResponse is the response from validating a workflow.
 type ValidateWorkflowResponse struct {
-	Valid   bool     `json:"valid"`
-	Errors  []string `json:"errors,omitempty"`
+	Valid    bool     `json:"valid"`
+	Errors   []string `json:"errors,omitempty"`
 	Warnings []string `json:"warnings,omitempty"`
 }
 
@@ -503,17 +503,17 @@ func (c *Client) ExecuteWorkflow(ctx context.Context, id string, req *ExecuteWor
 
 // Collection represents a RAG collection.
 type Collection struct {
-	ID              string            `json:"id"`
-	Name            string            `json:"name"`
-	Description     string            `json:"description"`
-	EmbeddingModel  string            `json:"embedding_model"`
-	ChunkStrategy   string            `json:"chunk_strategy"`
-	DocumentCount   int               `json:"document_count"`
-	VectorCount     int               `json:"vector_count"`
-	Status          string            `json:"status"`
-	Labels          map[string]string `json:"labels"`
-	CreatedAt       time.Time         `json:"created_at"`
-	UpdatedAt       time.Time         `json:"updated_at"`
+	ID             string            `json:"id"`
+	Name           string            `json:"name"`
+	Description    string            `json:"description"`
+	EmbeddingModel string            `json:"embedding_model"`
+	ChunkStrategy  string            `json:"chunk_strategy"`
+	DocumentCount  int               `json:"document_count"`
+	VectorCount    int               `json:"vector_count"`
+	Status         string            `json:"status"`
+	Labels         map[string]string `json:"labels"`
+	CreatedAt      time.Time         `json:"created_at"`
+	UpdatedAt      time.Time         `json:"updated_at"`
 }
 
 // ListCollectionsResponse is the response for listing collections.
@@ -642,4 +642,19 @@ func (c *Client) QueryCollection(ctx context.Context, req *QueryRequest) (*Query
 	}
 
 	return &resp, nil
+}
+
+// CorpusImportRequest is the request to import an external corpus.
+type CorpusImportRequest struct {
+	Source          string   `json:"source"`
+	ImportTypes     []string `json:"import_types,omitempty"`
+	RAGCollectionID string   `json:"rag_collection_id,omitempty"`
+	Profile         string   `json:"profile,omitempty"`
+	ForceClone      bool     `json:"force_clone,omitempty"`
+	DryRun          bool     `json:"dry_run,omitempty"`
+}
+
+// ImportCorpus starts a corpus import via the REST API.
+func (c *Client) ImportCorpus(ctx context.Context, req *CorpusImportRequest) ([]byte, error) {
+	return c.Post(ctx, "/corpus/import", req)
 }

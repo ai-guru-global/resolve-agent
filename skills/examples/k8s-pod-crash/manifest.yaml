@@ -1,0 +1,113 @@
+name: k8s-pod-crash
+version: "1.0.0"
+description: "K8s Pod CrashLoopBackOff 场景排查技能 - 自动诊断 Pod 崩溃原因并生成结构化排查方案"
+author: "ResolveNet"
+entry_point: "skill:run"
+skill_type: scenario
+
+inputs:
+  - name: namespace
+    type: string
+    description: "Kubernetes 命名空间"
+    required: true
+    default: "default"
+  - name: pod_name
+    type: string
+    description: "异常 Pod 名称（支持前缀匹配）"
+    required: true
+  - name: cluster_id
+    type: string
+    description: "ACK 集群 ID"
+    required: false
+
+outputs:
+  - name: structured_solution
+    type: object
+    description: "四要素结构化排查方案（问题现象 / 关键信息 / 排查步骤 / 解决方案）"
+
+permissions:
+  network_access: true
+  file_system_read: false
+  file_system_write: false
+  timeout_seconds: 120
+
+scenario:
+  domain: kubernetes
+  tags:
+    - k8s
+    - pod
+    - crashloop
+    - oom
+    - container
+  severity_levels:
+    - critical
+    - high
+    - medium
+    - low
+  troubleshooting_flow:
+    - id: collect-pod-events
+      name: 收集 Pod Events
+      description: "获取 Pod 的 Events 信息，分析最近的调度和容器事件"
+      step_type: collect
+      command: "kubectl describe pod {pod_name} -n {namespace} | grep -A 20 'Events:'"
+      timeout_seconds: 15
+      order: 0
+
+    - id: collect-container-status
+      name: 收集容器状态
+      description: "获取容器的 Last State 和退出码"
+      step_type: collect
+      command: "kubectl get pod {pod_name} -n {namespace} -o jsonpath='{.status.containerStatuses[*]}'"
+      timeout_seconds: 15
+      order: 1
+
+    - id: diagnose-exit-code
+      name: 诊断退出码
+      description: "根据容器退出码判断失败原因：137=OOMKilled, 1=应用错误, 126=权限, 127=命令未找到"
+      step_type: diagnose
+      expected_output: "exit_code_classification"
+      order: 2
+
+    - id: collect-resource-usage
+      name: 收集资源使用情况
+      description: "检查节点和 Pod 的 CPU/Memory 使用率"
+      step_type: collect
+      command: "kubectl top pod {pod_name} -n {namespace} --containers"
+      timeout_seconds: 15
+      order: 3
+
+    - id: collect-logs
+      name: 收集容器日志
+      description: "获取前一个崩溃容器的日志"
+      step_type: collect
+      command: "kubectl logs {pod_name} -n {namespace} --previous --tail=50"
+      timeout_seconds: 15
+      order: 4
+
+    - id: diagnose-oom
+      name: 诊断 OOM 问题
+      description: "判断是否为 OOM 导致的崩溃"
+      step_type: diagnose
+      condition: "exit_code == 137"
+      expected_output: "oom_analysis"
+      order: 5
+
+    - id: verify-resource-limits
+      name: 验证资源限额
+      description: "检查 Pod 的 resources.requests 和 resources.limits 配置"
+      step_type: verify
+      command: "kubectl get pod {pod_name} -n {namespace} -o jsonpath='{.spec.containers[*].resources}'"
+      expected_output: "resource_config"
+      order: 6
+
+    - id: action-recommend
+      name: 生成解决建议
+      description: "综合所有诊断信息生成具体的解决方案"
+      step_type: action
+      order: 7
+
+  output_template:
+    include_symptoms: true
+    include_evidence: true
+    include_steps: true
+    include_resolution: true

@@ -11,6 +11,21 @@ type Config struct {
 	Runtime   RuntimeConfig   `mapstructure:"runtime"`
 	Gateway   GatewayConfig   `mapstructure:"gateway"`
 	Telemetry TelemetryConfig `mapstructure:"telemetry"`
+	Store     StoreConfig     `mapstructure:"store"`
+}
+
+// StoreConfig controls registry backend selection.
+type StoreConfig struct {
+	Backend    string            `mapstructure:"backend"`    // "memory" (default) or "postgres"
+	Registries map[string]string `mapstructure:"registries"` // per-registry override
+	Memory     MemoryStoreConfig `mapstructure:"memory"`
+}
+
+// MemoryStoreConfig holds memory store specific settings.
+type MemoryStoreConfig struct {
+	ShortTermMaxEntries   int    `mapstructure:"short_term_max_entries"`
+	LongTermPruneInterval string `mapstructure:"long_term_prune_interval"`
+	LongTermDefaultTTL    string `mapstructure:"long_term_default_ttl"`
 }
 
 // ServerConfig holds HTTP/gRPC server settings.

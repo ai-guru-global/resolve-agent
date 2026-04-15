@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, Bot } from 'lucide-react';
+import { Zap, Bot, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/PageHeader';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -9,6 +9,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useSkills } from '@/hooks/useSkills';
 
+type SkillFilter = 'all' | 'general' | 'scenario';
+
 const skillIcons: Record<string, string> = {
   'ticket-handler': '🎫',
   'consulting-qa': '💬',
@@ -16,6 +18,27 @@ const skillIcons: Record<string, string> = {
   'metric-alerter': '📈',
   'change-reviewer': '🔍',
   'hello-world': '👋',
+  'k8s-pod-crash': '🔥',
+  'rds-replication-lag': '🗄️',
+  // Kudig topic-skills (scenario-type)
+  'SKILL-NODE-001': '🖥️',
+  'SKILL-POD-001': '💥',
+  'SKILL-POD-002': '⏳',
+  'SKILL-NET-001': '🌐',
+  'SKILL-NET-002': '🔗',
+  'SKILL-SEC-001': '🔐',
+  'SKILL-STORE-001': '💾',
+  'SKILL-WORK-001': '🚀',
+  'SKILL-SEC-002': '👮',
+  'SKILL-IMAGE-001': '📦',
+  'SKILL-CP-001': '⚙️',
+  'SKILL-SCALE-001': '📈',
+  'SKILL-NET-003': '🚪',
+  'SKILL-CONFIG-001': '📋',
+  'SKILL-MONITOR-001': '📉',
+  'SKILL-LOG-001': '📝',
+  'SKILL-PERF-001': '⚡',
+  'SKILL-SEC-003': '🛡️',
 };
 
 const skillDisplayNames: Record<string, string> = {
@@ -25,6 +48,27 @@ const skillDisplayNames: Record<string, string> = {
   'metric-alerter': '指标告警',
   'change-reviewer': '变更审核',
   'hello-world': '测试技能',
+  'k8s-pod-crash': 'K8s Pod 崩溃排查',
+  'rds-replication-lag': 'RDS 复制延迟诊断',
+  // Kudig topic-skills (scenario-type)
+  'SKILL-NODE-001': '节点 NotReady 诊断与修复',
+  'SKILL-POD-001': 'Pod CrashLoopBackOff & OOMKilled 诊断',
+  'SKILL-POD-002': 'Pod Pending 诊断与修复',
+  'SKILL-NET-001': 'DNS 解析失败诊断',
+  'SKILL-NET-002': 'Service 连通性故障诊断',
+  'SKILL-SEC-001': '证书过期诊断与修复',
+  'SKILL-STORE-001': 'PVC 存储故障诊断',
+  'SKILL-WORK-001': 'Deployment Rollout 失败诊断',
+  'SKILL-SEC-002': 'RBAC/Quota 故障诊断',
+  'SKILL-IMAGE-001': '镜像拉取失败诊断',
+  'SKILL-CP-001': '控制平面故障诊断',
+  'SKILL-SCALE-001': '自动扩缩容故障诊断',
+  'SKILL-NET-003': 'Ingress/Gateway 故障诊断',
+  'SKILL-CONFIG-001': 'ConfigMap/Secret 故障诊断',
+  'SKILL-MONITOR-001': '监控告警故障诊断',
+  'SKILL-LOG-001': '日志采集故障诊断',
+  'SKILL-PERF-001': '性能瓶颈诊断',
+  'SKILL-SEC-003': '安全事件响应',
 };
 
 // Mock: which agents reference each skill
@@ -35,20 +79,78 @@ const skillAgentRefs: Record<string, string[]> = {
   'metric-alerter': ['mega-agent', 'monitor-agent'],
   'change-reviewer': ['mega-agent', 'code-reviewer'],
   'hello-world': ['test-agent'],
+  'k8s-pod-crash': ['mega-agent', 'fta-diagnoser'],
+  'rds-replication-lag': ['mega-agent', 'fta-diagnoser'],
+  // Kudig topic-skills (imported from corpus)
+  'SKILL-NODE-001': ['mega-agent', 'fta-diagnoser'],
+  'SKILL-POD-001': ['mega-agent', 'fta-diagnoser'],
+  'SKILL-POD-002': ['mega-agent', 'fta-diagnoser'],
+  'SKILL-NET-001': ['mega-agent', 'fta-diagnoser'],
+  'SKILL-NET-002': ['mega-agent', 'fta-diagnoser'],
+  'SKILL-SEC-001': ['mega-agent', 'fta-diagnoser'],
+  'SKILL-STORE-001': ['mega-agent', 'fta-diagnoser'],
+  'SKILL-WORK-001': ['mega-agent', 'fta-diagnoser'],
+  'SKILL-SEC-002': ['mega-agent', 'fta-diagnoser'],
+  'SKILL-IMAGE-001': ['mega-agent', 'fta-diagnoser'],
+  'SKILL-CP-001': ['mega-agent', 'fta-diagnoser'],
+  'SKILL-SCALE-001': ['mega-agent', 'fta-diagnoser'],
+  'SKILL-NET-003': ['mega-agent', 'fta-diagnoser'],
+  'SKILL-CONFIG-001': ['mega-agent', 'fta-diagnoser'],
+  'SKILL-MONITOR-001': ['mega-agent', 'fta-diagnoser'],
+  'SKILL-LOG-001': ['mega-agent', 'fta-diagnoser'],
+  'SKILL-PERF-001': ['mega-agent', 'fta-diagnoser'],
+  'SKILL-SEC-003': ['mega-agent', 'fta-diagnoser'],
 };
+
+const filterTabs: { key: SkillFilter; label: string }[] = [
+  { key: 'all', label: '全部' },
+  { key: 'general', label: '通用技能' },
+  { key: 'scenario', label: '场景技能' },
+];
 
 export default function SkillList() {
   const { data, isLoading } = useSkills();
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
+  const [filter, setFilter] = useState<SkillFilter>('all');
 
   const skills = data?.skills ?? [];
+  const filteredSkills = filter === 'all'
+    ? skills
+    : skills.filter((s) => (s.skill_type ?? 'general') === filter);
+
+  const generalCount = skills.filter((s) => (s.skill_type ?? 'general') === 'general').length;
+  const scenarioCount = skills.filter((s) => s.skill_type === 'scenario').length;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Skills 技能"
-        description={isLoading ? '加载中...' : `Harness Tools/Skills 层 · 已安装 ${skills.length} 个技能`}
+        description={isLoading ? '加载中...' : `Harness Tools/Skills 层 · 已安装 ${skills.length} 个技能 (${generalCount} 通用 / ${scenarioCount} 场景)`}
       />
+
+      {/* Filter tabs */}
+      {!isLoading && skills.length > 0 && (
+        <div className="flex items-center gap-1">
+          <Filter className="h-3.5 w-3.5 text-muted-foreground mr-1" />
+          {filterTabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => { setFilter(tab.key); setSelectedSkill(null); }}
+              className={cn(
+                'px-3 py-1 rounded-full text-xs font-medium transition-colors',
+                filter === tab.key
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted/30 text-muted-foreground hover:bg-muted/50',
+              )}
+            >
+              {tab.label}
+              {tab.key === 'all' && ` (${skills.length})`}
+              {tab.key === 'general' && ` (${generalCount})`}
+              {tab.key === 'scenario' && ` (${scenarioCount})`}
+            </button>
+          ))}
+        </div>
+      )}
 
       {isLoading ? (
         <div className="space-y-2">
@@ -71,8 +173,9 @@ export default function SkillList() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Skill list — left */}
           <div className="lg:col-span-2 space-y-1.5">
-            {skills.map((skill) => {
+            {filteredSkills.map((skill) => {
               const refs = skillAgentRefs[skill.name] ?? [];
+              const isScenario = skill.skill_type === 'scenario';
               return (
                 <button
                   key={skill.name}
@@ -87,12 +190,25 @@ export default function SkillList() {
                   <div className="flex items-center gap-3">
                     <span className="text-xl shrink-0">{skillIcons[skill.name] ?? '⚡'}</span>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
+                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                         <span className="text-sm font-display font-bold">{skillDisplayNames[skill.name] ?? skill.name}</span>
                         <Badge variant="secondary" className="font-mono text-[10px]">v{skill.version}</Badge>
+                        {isScenario ? (
+                          <Badge className="text-[10px] bg-orange-500/15 text-orange-400 border-orange-500/20 hover:bg-orange-500/25">场景</Badge>
+                        ) : (
+                          <Badge className="text-[10px] bg-blue-500/15 text-blue-400 border-blue-500/20 hover:bg-blue-500/25">通用</Badge>
+                        )}
                         <StatusBadge variant="healthy" label="就绪" />
                       </div>
                       <p className="text-xs text-muted-foreground truncate">{skill.description}</p>
+                      {isScenario && skill.domain && (
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                          <Badge variant="outline" className="text-[10px] font-mono">{skill.domain}</Badge>
+                          {skill.tags?.slice(0, 3).map((tag) => (
+                            <span key={tag} className="text-[10px] text-muted-foreground/60">#{tag}</span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="hidden sm:flex items-center gap-1 text-[11px] text-muted-foreground shrink-0">
                       <Bot className="h-3 w-3" />
@@ -110,18 +226,38 @@ export default function SkillList() {
               const skill = skills.find((s) => s.name === selectedSkill);
               const refs = skillAgentRefs[selectedSkill] ?? [];
               if (!skill) return null;
+              const isScenario = skill.skill_type === 'scenario';
               return (
                 <Card className="sticky top-4">
                   <CardContent className="p-5 space-y-4">
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">{skillIcons[skill.name] ?? '⚡'}</span>
                       <div>
-                        <p className="text-sm font-display font-bold">{skillDisplayNames[skill.name] ?? skill.name}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-display font-bold">{skillDisplayNames[skill.name] ?? skill.name}</p>
+                          {isScenario ? (
+                            <Badge className="text-[9px] bg-orange-500/15 text-orange-400 border-orange-500/20">场景</Badge>
+                          ) : (
+                            <Badge className="text-[9px] bg-blue-500/15 text-blue-400 border-blue-500/20">通用</Badge>
+                          )}
+                        </div>
                         <p className="text-[10px] text-muted-foreground font-mono">{skill.name}</p>
                       </div>
                     </div>
 
                     <p className="text-xs text-muted-foreground leading-relaxed">{skill.description}</p>
+
+                    {isScenario && skill.domain && (
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5 font-semibold">场景信息</p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <Badge variant="outline" className="text-[10px] font-mono">{skill.domain}</Badge>
+                          {skill.tags?.map((tag) => (
+                            <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-muted/30 text-muted-foreground">#{tag}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     <div>
                       <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-semibold">引用此技能的 Agent</p>

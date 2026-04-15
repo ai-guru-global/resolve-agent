@@ -8,7 +8,9 @@ import time
 from typing import Any
 
 from resolveagent.skills.loader import LoadedSkill
+from resolveagent.skills.manifest import SkillType
 from resolveagent.skills.sandbox import SandboxConfig, SandboxExecutor, SandboxResult
+from resolveagent.skills.solution import StructuredSolution
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +91,10 @@ class SkillExecutor:
             )
 
         try:
+            # Route scenario skills to the TroubleshootingEngine
+            if skill.manifest.skill_type == SkillType.SCENARIO:
+                return await self._execute_scenario(skill, inputs)
+
             # Determine if we should use sandbox
             should_use_sandbox = use_sandbox if use_sandbox is not None else self.use_sandbox
 
@@ -237,6 +243,35 @@ class SkillExecutor:
 
         return errors
 
+    async def _execute_scenario(
+        self,
+        skill: LoadedSkill,
+        inputs: dict[str, Any],
+    ) -> SkillResult:
+        """Execute a scenario skill through the TroubleshootingEngine.
+
+        Args:
+            skill: The loaded scenario skill.
+            inputs: Input parameters.
+
+        Returns:
+            SkillResult wrapping a StructuredSolution.
+        """
+        from resolveagent.skills.troubleshoot import TroubleshootingEngine
+
+        start = time.monotonic()
+        engine = TroubleshootingEngine(skill_executor=self)
+        solution = await engine.execute(skill.manifest, inputs)
+        duration_ms = int((time.monotonic() - start) * 1000)
+
+        return SkillResult(
+            outputs={"structured_solution": solution.to_dict()},
+            success=True,
+            logs=solution.to_markdown(),
+            duration_ms=duration_ms,
+            solution=solution,
+        )
+
     async def _execute_direct(
         self,
         skill: LoadedSkill,
@@ -371,6 +406,7 @@ class SkillResult:
         error: str | None = None,
         logs: str = "",
         duration_ms: int = 0,
+        solution: StructuredSolution | None = None,
     ) -> None:
         """Initialize skill result.
 
@@ -380,12 +416,14 @@ class SkillResult:
             error: Error message if execution failed.
             logs: Execution logs/output.
             duration_ms: Execution duration in milliseconds.
+            solution: Structured solution (only for scenario skills).
         """
         self.outputs = outputs
         self.success = success
         self.error = error
         self.logs = logs
         self.duration_ms = duration_ms
+        self.solution = solution
 
     def to_dict(self) -> dict[str, Any]:
         """Convert result to dictionary.
@@ -393,12 +431,15 @@ class SkillResult:
         Returns:
             Dictionary representation.
         """
-        return {
+        result_dict: dict[str, Any] = {
             "outputs": self.outputs,
             "success": self.success,
             "error": self.error,
             "duration_ms": self.duration_ms,
         }
+        if self.solution is not None:
+            result_dict["structured_solution"] = self.solution.to_dict()
+        return result_dict
 
     def __repr__(self) -> str:
         return f"SkillResult(success={self.success}, duration={self.duration_ms}ms)"

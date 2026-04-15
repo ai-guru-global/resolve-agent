@@ -15,3 +15,20 @@ selector:
 telemetry:
   enabled: false
   service_name: "resolveagent-runtime"
+
+# Store client configuration (connects to Go platform REST API)
+store:
+  platform_url: "http://localhost:8080"
+  timeout_seconds: 30
+  retry_count: 3
+  retry_delay_ms: 500
+
+# Memory configuration for agent runtime
+memory:
+  short_term:
+    max_messages_per_conversation: 200
+    default_fetch_limit: 50
+  long_term:
+    enabled: true
+    default_importance: 0.5
+    prune_interval_hours: 24

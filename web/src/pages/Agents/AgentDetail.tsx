@@ -1,5 +1,5 @@
-import { useParams } from 'react-router-dom';
-import { Layers, Brain, Zap, Shield, MemoryStick, Box, FileText, Target, Cpu, GitBranch } from 'lucide-react';
+import { useParams, Link } from 'react-router-dom';
+import { Layers, Brain, Zap, Shield, MemoryStick, Box, FileText, Target, Cpu, GitBranch, Pencil, Copy, Stethoscope, Rocket, GitCompareArrows, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/PageHeader';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { useAgent, useAgentExecutions, useAgentRuntimeStatus } from '@/hooks/useAgents';
 import type { AgentExecution, StatusVariant, SelectorStrategy } from '@/types';
 import { agentStatusToVariant } from '@/types';
@@ -99,7 +100,7 @@ export default function AgentDetail() {
           agentLoading ? (
             <Skeleton className="h-6 w-16" />
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {agent?.mode && (
                 <Badge variant="secondary" className="text-[10px] gap-1 border border-primary/20 bg-primary/5 text-primary">
                   {agent.mode === 'all_skills' ? <Layers className="h-3 w-3" /> : <Brain className="h-3 w-3" />}
@@ -107,6 +108,22 @@ export default function AgentDetail() {
                 </Badge>
               )}
               <StatusBadge variant={statusVariant} label={statusLabels[agent?.status ?? ''] ?? agent?.status ?? '未知'} />
+              <Separator orientation="vertical" className="h-5 mx-1" />
+              <Button variant="outline" size="sm" asChild>
+                <Link to={`/agents/${id}/edit`}><Pencil className="mr-1.5 h-3 w-3" />编辑</Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to={`/agents/new?from=${id}`}><Copy className="mr-1.5 h-3 w-3" />克隆</Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to={`/agents/${id}/diagnostics`}><Stethoscope className="mr-1.5 h-3 w-3" />诊断</Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to={`/agents/${id}/deployment`}><Rocket className="mr-1.5 h-3 w-3" />部署</Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to={`/agents/compare?a=${id}`}><GitCompareArrows className="mr-1.5 h-3 w-3" />对比</Link>
+              </Button>
             </div>
           )
         }
@@ -118,6 +135,16 @@ export default function AgentDetail() {
           <TabsTrigger value="harness">Harness</TabsTrigger>
           <TabsTrigger value="status">运行状态</TabsTrigger>
           <TabsTrigger value="history">执行记录</TabsTrigger>
+          <TabsTrigger value="memory" className="gap-1" asChild>
+            <Link to={`/agents/${id}/memory`}>
+              <MemoryStick className="h-3 w-3" />记忆
+            </Link>
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="gap-1" asChild>
+            <Link to={`/agents/${id}/analytics`}>
+              <BarChart3 className="h-3 w-3" />分析
+            </Link>
+          </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}

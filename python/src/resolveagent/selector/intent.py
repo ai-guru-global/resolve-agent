@@ -7,14 +7,14 @@ strategies: keyword matching, pattern recognition, and LLM-based analysis.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
-from enum import Enum
+from dataclasses import dataclass
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel
 
 
-class IntentType(str, Enum):
+class IntentType(StrEnum):
     """Supported intent types for routing decisions."""
 
     WORKFLOW = "workflow"  # Complex multi-step processes, FTA, decision trees
@@ -124,6 +124,9 @@ class IntentAnalyzer:
                 r"\b(static analysis|code review|security scan|lint)\b",
                 r"\b(ast|syntax tree|parse tree|call graph)\b",
                 r"\b(dependency|import|module)\s+(analysis|check|graph)\b",
+                r"\b(traffic|packet|capture)\s+(analysis|graph|trace)\b",
+                r"\b(service\s+dependency|call\s+chain|entry\s*point)\b",
+                r"\b(ebpf|otel|opentelemetry|tracing)\s+(analysis|data)\b",
                 r"```[a-z]*\n[\s\S]*```",  # Code blocks
                 r"\b(def|class|function|method|import|from)\b.*:\s*$",  # Code syntax
             ],
@@ -132,20 +135,46 @@ class IntentAnalyzer:
                 "refactor", "optimize", "lint", "static analysis",
                 "ast", "syntax", "parse", "security", "dependency",
                 "function", "class", "method", "module",
+                "call graph", "call chain", "entry point",
+                "traffic", "packet", "capture", "tracing",
+                "service dependency", "latency", "error rate",
             ],
             weight=1.1,
         ),
     ]
 
-    def __init__(self, enable_semantic: bool = True) -> None:
+    def __init__(self, enable_semantic: bool = True, split_threshold: float = 0.15) -> None:
         """Initialize the intent analyzer.
 
         Args:
             enable_semantic: Enable semantic analysis for ambiguous cases.
+            split_threshold: When the gap between top-2 normalised scores is
+                below this value the input is classified as MULTI intent.
         """
         self.enable_semantic = enable_semantic
+        self.split_threshold = split_threshold
         self._compiled_patterns: dict[IntentType, list[re.Pattern[str]]] = {}
         self._compile_patterns()
+        # Pre-compile the code-detection patterns once.
+        self._code_block_re = re.compile(r"```[\s\S]*```")
+        self._inline_code_re = re.compile(r"`[^`]+`")
+        self._code_syntax_patterns = [
+            re.compile(p)
+            for p in [
+                r"\bdef\s+\w+\s*\(",
+                r"\bclass\s+\w+",
+                r"\bfunction\s+\w+\s*\(",
+                r"\bimport\s+[\w.]+",
+                r"\bfrom\s+[\w.]+\s+import",
+                r"\bconst\s+\w+\s*=",
+                r"\blet\s+\w+\s*=",
+                r"\bvar\s+\w+\s*=",
+            ]
+        ]
+        self._question_starters = frozenset([
+            "what", "how", "why", "when", "where", "who", "which",
+            "is", "are", "can", "could", "would", "should", "does", "do",
+        ])
 
     def _compile_patterns(self) -> None:
         """Pre-compile regex patterns for efficiency."""
@@ -155,19 +184,12 @@ class IntentAnalyzer:
             ]
 
     async def classify(self, input_text: str) -> IntentClassification:
-        """Classify the intent of the user input with high precision.
+        """Classify the intent of the user input.
 
-        Uses a multi-stage classification approach:
-        1. Quick keyword check for obvious intents
-        2. Pattern matching for structured requests
-        3. Score aggregation and normalization
-        4. Confidence threshold check
-
-        Args:
-            input_text: User input to classify.
-
-        Returns:
-            IntentClassification with type, confidence, and metadata.
+        Uses a consolidated single-pass approach for efficiency:
+        1. Keyword + pattern scoring in one traversal per intent pattern
+        2. Code-block and question detection (pre-compiled regexes)
+        3. Score normalisation, multi-intent detection, target suggestion
         """
         if not input_text or not input_text.strip():
             return IntentClassification(
@@ -179,33 +201,44 @@ class IntentAnalyzer:
         text_lower = input_text.lower()
         scores: dict[IntentType, float] = {}
         entities: list[str] = []
+        matched_patterns: list[str] = []
         metadata: dict[str, Any] = {"input_length": len(input_text)}
 
-        # Stage 1: Keyword matching (fast path)
-        keyword_scores = self._score_keywords(text_lower)
-        for intent_type, score in keyword_scores.items():
-            scores[intent_type] = scores.get(intent_type, 0) + score
+        # --- Single pass: keywords + regex patterns simultaneously ---
+        for pattern_def in self.INTENT_PATTERNS:
+            intent = pattern_def.intent_type
+            # Keyword hits
+            kw_hits = sum(1 for kw in pattern_def.keywords if kw in text_lower)
+            if kw_hits:
+                scores[intent] = scores.get(intent, 0) + kw_hits * 0.15 * pattern_def.weight
+            # Pattern hits
+            for pat in self._compiled_patterns.get(intent, []):
+                if pat.search(text_lower):
+                    scores[intent] = scores.get(intent, 0) + 0.3 * pattern_def.weight
+                    matched_patterns.append(pat.pattern)
 
-        # Stage 2: Pattern matching
-        pattern_scores, matched_patterns = self._score_patterns(text_lower)
-        for intent_type, score in pattern_scores.items():
-            scores[intent_type] = scores.get(intent_type, 0) + score
         metadata["matched_patterns"] = matched_patterns
 
-        # Stage 3: Special detection for code blocks
-        if self._contains_code(input_text):
-            scores[IntentType.CODE_ANALYSIS] = (
-                scores.get(IntentType.CODE_ANALYSIS, 0) + 0.5
-            )
+        # --- Code detection (pre-compiled) ---
+        contains_code = bool(
+            self._code_block_re.search(input_text)
+            or self._inline_code_re.search(input_text)
+            or any(p.search(input_text) for p in self._code_syntax_patterns)
+        )
+        if contains_code:
+            scores[IntentType.CODE_ANALYSIS] = scores.get(IntentType.CODE_ANALYSIS, 0) + 0.5
             metadata["contains_code"] = True
             entities.append("code_block")
 
-        # Stage 4: Question detection for RAG
-        if self._is_question(text_lower):
+        # --- Question detection ---
+        text_stripped = text_lower.strip()
+        first_word = text_stripped.split()[0] if text_stripped else ""
+        is_question = first_word in self._question_starters or text_stripped.endswith("?")
+        if is_question:
             scores[IntentType.RAG] = scores.get(IntentType.RAG, 0) + 0.3
             metadata["is_question"] = True
 
-        # Determine winner and confidence
+        # --- Scoring & winner selection ---
         if not scores:
             return IntentClassification(
                 intent_type=IntentType.DIRECT.value,
@@ -214,23 +247,29 @@ class IntentAnalyzer:
                 metadata=metadata,
             )
 
-        # Normalize scores and find best match
         total_score = sum(scores.values())
-        normalized_scores = {
+        normalized: dict[IntentType, float] = {
             k: v / total_score if total_score > 0 else 0
             for k, v in scores.items()
         }
 
-        best_intent = max(scores.keys(), key=lambda k: scores[k])
-        confidence = min(normalized_scores[best_intent] * 1.5, 1.0)  # Scale up
+        sorted_intents = sorted(normalized.items(), key=lambda kv: kv[1], reverse=True)
+        best_intent = sorted_intents[0][0]
+        best_norm = sorted_intents[0][1]
 
-        # Check for multi-intent scenario
+        # Multi-intent: if gap to second-best < split_threshold
+        if len(sorted_intents) >= 2:
+            second_norm = sorted_intents[1][1]
+            if best_norm - second_norm < self.split_threshold and second_norm > 0.2:
+                best_intent = IntentType.MULTI
+
+        confidence = min(best_norm * 1.5, 1.0)
+
         sub_intents = [
-            k.value for k, v in normalized_scores.items()
+            k.value for k, v in normalized.items()
             if v > 0.2 and k != best_intent
         ]
 
-        # Get suggested target if available
         suggested_target = self._get_suggested_target(best_intent, text_lower)
 
         return IntentClassification(
@@ -241,6 +280,8 @@ class IntentAnalyzer:
             sub_intents=sub_intents,
             suggested_target=suggested_target,
         )
+
+    # -- Legacy helpers kept for backward compat but no longer called by classify --
 
     def _score_keywords(self, text: str) -> dict[IntentType, float]:
         """Score based on keyword presence."""
@@ -277,37 +318,17 @@ class IntentAnalyzer:
 
     def _contains_code(self, text: str) -> bool:
         """Check if input contains code blocks or code-like content."""
-        # Markdown code blocks
-        if re.search(r"```[\s\S]*```", text):
-            return True
-        # Inline code
-        if re.search(r"`[^`]+`", text):
-            return True
-        # Common code patterns
-        code_patterns = [
-            r"\bdef\s+\w+\s*\(",  # Python function
-            r"\bclass\s+\w+",  # Class definition
-            r"\bfunction\s+\w+\s*\(",  # JavaScript function
-            r"\bimport\s+[\w.]+",  # Import statements
-            r"\bfrom\s+[\w.]+\s+import",  # Python from import
-            r"\bconst\s+\w+\s*=",  # JavaScript const
-            r"\blet\s+\w+\s*=",  # JavaScript let
-            r"\bvar\s+\w+\s*=",  # Variable declaration
-        ]
-        for pattern in code_patterns:
-            if re.search(pattern, text):
-                return True
-        return False
+        return bool(
+            self._code_block_re.search(text)
+            or self._inline_code_re.search(text)
+            or any(p.search(text) for p in self._code_syntax_patterns)
+        )
 
     def _is_question(self, text: str) -> bool:
         """Check if input is a question."""
-        question_starters = [
-            "what", "how", "why", "when", "where", "who", "which",
-            "is", "are", "can", "could", "would", "should", "does", "do",
-        ]
         text = text.strip()
         first_word = text.split()[0] if text else ""
-        return first_word in question_starters or text.endswith("?")
+        return first_word in self._question_starters or text.endswith("?")
 
     def _get_suggested_target(
         self, intent_type: IntentType, text: str
@@ -317,8 +338,9 @@ class IntentAnalyzer:
             # Suggest specific skill based on keywords
             if "search" in text and "web" in text:
                 return "web-search"
-            if "execute" in text or "run" in text:
-                if "code" in text or "script" in text:
+            if ("execute" in text or "run" in text) and (
+                "code" in text or "script" in text
+            ):
                     return "code-exec"
             if "file" in text:
                 return "file-ops"
@@ -329,6 +351,10 @@ class IntentAnalyzer:
                 return "linter"
             if "refactor" in text:
                 return "refactor"
+            if "traffic" in text or "packet" in text or "capture" in text:
+                return "traffic-analysis"
+            if "call graph" in text or "call chain" in text or "entry point" in text:
+                return "static-analysis"
             return "static-analysis"
 
         return ""

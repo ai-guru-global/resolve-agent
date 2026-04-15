@@ -29,20 +29,20 @@ runtime:
 gateway:
   # Enable Higress gateway integration
   enabled: false
-  
+
   # Higress admin API URL
   admin_url: "http://localhost:8888"
-  
+
   # Route synchronization interval (Go Registry -> Higress)
   sync_interval: "30s"
-  
+
   # LLM Model Routing Configuration
   # All LLM calls from Python runtime go through Higress
   model_routing:
     enabled: true
     default_model: "qwen-plus"
     base_path: "/llm"
-  
+
   # Gateway Authentication
   # Higress handles external auth, platform validates forwarded headers
   auth:
@@ -52,7 +52,7 @@ gateway:
     api_key_names:
       - "X-API-Key"
       - "Authorization"
-  
+
   # Load Balancer Configuration
   # Higress handles external LB, this configures internal behavior
   load_balancer:
@@ -67,3 +67,23 @@ telemetry:
   otlp_endpoint: "localhost:4317"
   service_name: "resolveagent-platform"
   metrics_enabled: true
+
+# Store Configuration
+# Controls which backend each registry uses for persistence.
+store:
+  # Default backend for all registries: "memory" or "postgres"
+  backend: "memory"
+
+  # Per-registry backend override (optional, falls back to 'backend')
+  registries:
+    hooks: "memory"
+    rag_documents: "memory"
+    fta_documents: "memory"
+    code_analysis: "memory"
+    memory: "memory"
+
+  # Memory store specific settings
+  memory:
+    short_term_max_entries: 200
+    long_term_prune_interval: "1h"
+    long_term_default_ttl: "720h"

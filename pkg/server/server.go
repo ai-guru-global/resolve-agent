@@ -19,27 +19,45 @@ import (
 
 // Server is the main platform services server.
 type Server struct {
-	cfg              *config.Config
-	logger           *slog.Logger
-	httpServer       *http.Server
-	grpcServer       *grpc.Server
-	agentRegistry    registry.AgentRegistry
-	skillRegistry    registry.SkillRegistry
-	workflowRegistry registry.WorkflowRegistry
-	ragRegistry      registry.RAGRegistry
-	runtimeClient    *RuntimeClient
+	cfg                    *config.Config
+	logger                 *slog.Logger
+	httpServer             *http.Server
+	grpcServer             *grpc.Server
+	agentRegistry          registry.AgentRegistry
+	skillRegistry          registry.SkillRegistry
+	workflowRegistry       registry.WorkflowRegistry
+	ragRegistry            registry.RAGRegistry
+	hookRegistry           registry.HookRegistry
+	ragDocumentRegistry    registry.RAGDocumentRegistry
+	ftaDocumentRegistry    registry.FTADocumentRegistry
+	codeAnalysisRegistry   registry.CodeAnalysisRegistry
+	memoryRegistry         registry.MemoryRegistry
+	solutionRegistry       registry.TroubleshootingSolutionRegistry
+	callGraphRegistry      registry.CallGraphRegistry
+	trafficCaptureRegistry registry.TrafficCaptureRegistry
+	trafficGraphRegistry   registry.TrafficGraphRegistry
+	runtimeClient          *RuntimeClient
 }
 
 // New creates a new Server instance.
 func New(cfg *config.Config, logger *slog.Logger) (*Server, error) {
 	s := &Server{
-		cfg:              cfg,
-		logger:           logger,
-		agentRegistry:    registry.NewInMemoryAgentRegistry(),
-		skillRegistry:    registry.NewInMemorySkillRegistry(),
-		workflowRegistry: registry.NewInMemoryWorkflowRegistry(),
-		ragRegistry:      registry.NewInMemoryRAGRegistry(),
-		runtimeClient:    NewRuntimeClient(cfg),
+		cfg:                    cfg,
+		logger:                 logger,
+		agentRegistry:          registry.NewInMemoryAgentRegistry(),
+		skillRegistry:          registry.NewInMemorySkillRegistry(),
+		workflowRegistry:       registry.NewInMemoryWorkflowRegistry(),
+		ragRegistry:            registry.NewInMemoryRAGRegistry(),
+		hookRegistry:           registry.NewInMemoryHookRegistry(),
+		ragDocumentRegistry:    registry.NewInMemoryRAGDocumentRegistry(),
+		ftaDocumentRegistry:    registry.NewInMemoryFTADocumentRegistry(),
+		codeAnalysisRegistry:   registry.NewInMemoryCodeAnalysisRegistry(),
+		memoryRegistry:         registry.NewInMemoryMemoryRegistry(),
+		solutionRegistry:       registry.NewInMemoryTroubleshootingSolutionRegistry(),
+		callGraphRegistry:      registry.NewInMemoryCallGraphRegistry(),
+		trafficCaptureRegistry: registry.NewInMemoryTrafficCaptureRegistry(),
+		trafficGraphRegistry:   registry.NewInMemoryTrafficGraphRegistry(),
+		runtimeClient:          NewRuntimeClient(cfg),
 	}
 
 	// Initialize gRPC server

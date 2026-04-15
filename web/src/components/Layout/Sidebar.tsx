@@ -6,11 +6,24 @@ import {
   Bot,
   Zap,
   Database,
+  DatabaseZap,
   GitBranch,
   MessageSquare,
   Settings,
   ChevronsLeft,
   ChevronsRight,
+  Activity,
+  BarChart3,
+  Bell,
+  BookOpen,
+  Code2,
+  FileBox,
+  Users,
+  Layers,
+  Play,
+  Smartphone,
+  GraduationCap,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/stores/app';
@@ -22,6 +35,8 @@ interface NavItem {
   name: string;
   href: string;
   icon: typeof LayoutDashboard;
+  external?: boolean;
+  url?: string;
 }
 
 interface NavGroup {
@@ -31,41 +46,70 @@ interface NavGroup {
 
 const navGroups: NavGroup[] = [
   {
-    label: 'Harness 概览',
+    label: '平台概览',
     items: [
       { name: '首页', href: '/', icon: Home },
-      { name: 'Harness 概览', href: '/dashboard', icon: LayoutDashboard },
+      { name: '全局看板', href: '/dashboard', icon: LayoutDashboard },
+      { name: '架构说明', href: '/architecture', icon: Layers },
+      { name: 'Mobile App', href: '/mobile', icon: Smartphone },
+      { name: 'Demo 演示', href: '/demo', icon: Play },
     ],
   },
   {
     label: 'Agent 管理',
     items: [
       { name: 'Agent 管理', href: '/agents', icon: Bot },
+      { name: 'Agent 模板', href: '/agents/templates', icon: FileBox },
+      { name: '多 Agent 协作', href: '/agents/collaboration', icon: Users },
     ],
   },
   {
     label: 'Harness 组件',
     items: [
       { name: 'Skills 技能', href: '/skills', icon: Zap },
-      { name: 'Knowledge 知识库', href: '/rag/collections', icon: Database },
+      { name: 'FTA 工作流', href: '/workflows', icon: GitBranch },
+      { name: '排查方案库', href: '/solutions', icon: BookOpen },
+      { name: '代码分析语料', href: '/code-analysis', icon: Code2 },
+      { name: 'RAG 知识库', href: '/rag/collections', icon: Database },
     ],
   },
   {
     label: '分析 & 测试',
     items: [
-      { name: '故障分析', href: '/workflows', icon: GitBranch },
       { name: 'Playground', href: '/playground', icon: MessageSquare },
+      { name: '追踪分析', href: '/traces', icon: Activity },
+      { name: '评估基准', href: '/evaluation', icon: BarChart3 },
+      { name: '监控告警', href: '/monitoring', icon: Bell },
     ],
   },
   {
     label: '系统',
-    items: [{ name: '系统设置', href: '/settings', icon: Settings }],
+    items: [
+      { name: '记忆 & 数据库', href: '/database', icon: DatabaseZap },
+      { name: '系统设置', href: '/settings', icon: Settings },
+    ],
+  },
+  {
+    label: '学习 & 资源',
+    items: [
+      {
+        name: '自助学习',
+        href: '#external',
+        icon: GraduationCap,
+        external: true,
+        url: 'https://github.com/ai-guru-global/ai-guru-database',
+      },
+    ],
   },
 ];
 
 function isActive(pathname: string, href: string): boolean {
   if (href === '/') return pathname === '/';
-  return pathname.startsWith(href);
+  // Exact match (handles /agents and /agents/ equally)
+  if (pathname === href) return true;
+  // Prefix match only when pathname goes deeper — pathname must start with href
+  // AND the next char must be '/' (not a longer path segment matching by coincidence)
+  return pathname.startsWith(href) && pathname[href.length] === '/';
 }
 
 export default function Sidebar() {
@@ -123,17 +167,34 @@ export default function Sidebar() {
               {!sidebarExpanded && group !== navGroups[0] && <Separator className="my-2" />}
               <div className="space-y-0.5">
                 {group.items.map((item) => {
-                  const active = isActive(location.pathname, item.href);
-                  const linkContent = (
+                  const active = !item.external && isActive(location.pathname, item.href);
+                  const linkClasses = cn(
+                    'flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors',
+                    active
+                      ? 'bg-accent text-accent-foreground font-medium'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                    !sidebarExpanded && 'justify-center px-0 py-2',
+                  );
+
+                  const linkContent = item.external ? (
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={linkClasses}
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {sidebarExpanded && (
+                        <>
+                          <span>{item.name}</span>
+                          <ExternalLink className="ml-auto h-3 w-3 text-muted-foreground/50" />
+                        </>
+                      )}
+                    </a>
+                  ) : (
                     <Link
                       to={item.href}
-                      className={cn(
-                        'flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors',
-                        active
-                          ? 'bg-accent text-accent-foreground font-medium'
-                          : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                        !sidebarExpanded && 'justify-center px-0 py-2',
-                      )}
+                      className={linkClasses}
                     >
                       <item.icon className={cn('h-4 w-4 shrink-0', active && 'text-accent-foreground')} />
                       {sidebarExpanded && <span>{item.name}</span>}
@@ -144,7 +205,9 @@ export default function Sidebar() {
                     return (
                       <Tooltip key={item.href}>
                         <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-                        <TooltipContent side="right">{item.name}</TooltipContent>
+                        <TooltipContent side="right">
+                          {item.name}{item.external && ' ↗'}
+                        </TooltipContent>
                       </Tooltip>
                     );
                   }

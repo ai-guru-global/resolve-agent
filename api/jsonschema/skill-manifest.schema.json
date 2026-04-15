@@ -43,6 +43,15 @@
     },
     "permissions": {
       "$ref": "#/$defs/permissions"
+    },
+    "skill_type": {
+      "type": "string",
+      "enum": ["general", "scenario"],
+      "default": "general",
+      "description": "Skill classification: general (utility) or scenario (troubleshooting)"
+    },
+    "scenario": {
+      "$ref": "#/$defs/scenario_config"
     }
   },
   "$defs": {
@@ -54,7 +63,8 @@
         "type": { "type": "string", "enum": ["string", "number", "boolean", "object", "array"] },
         "description": { "type": "string" },
         "required": { "type": "boolean", "default": false },
-        "default": {}
+        "default": {},
+        "enum": { "type": "array", "items": { "type": "string" } }
       }
     },
     "permissions": {
@@ -67,6 +77,50 @@
         "max_memory_mb": { "type": "integer", "default": 256 },
         "max_cpu_seconds": { "type": "integer", "default": 30 },
         "timeout_seconds": { "type": "integer", "default": 60 }
+      }
+    },
+    "troubleshooting_step": {
+      "type": "object",
+      "required": ["id", "name", "step_type"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "step_type": { "type": "string", "enum": ["collect", "diagnose", "verify", "action"] },
+        "command": { "type": "string" },
+        "skill_ref": { "type": "string" },
+        "expected_output": { "type": "string" },
+        "condition": { "type": "string" },
+        "timeout_seconds": { "type": "integer", "default": 30 },
+        "order": { "type": "integer", "default": 0 }
+      }
+    },
+    "solution_output_template": {
+      "type": "object",
+      "properties": {
+        "include_symptoms": { "type": "boolean", "default": true },
+        "include_evidence": { "type": "boolean", "default": true },
+        "include_steps": { "type": "boolean", "default": true },
+        "include_resolution": { "type": "boolean", "default": true },
+        "custom_sections": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "scenario_config": {
+      "type": "object",
+      "required": ["domain"],
+      "properties": {
+        "domain": { "type": "string", "description": "Problem domain (e.g., kubernetes, database, network)" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "troubleshooting_flow": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/troubleshooting_step" }
+        },
+        "output_template": { "$ref": "#/$defs/solution_output_template" },
+        "severity_levels": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["critical", "high", "medium", "low"]
+        }
       }
     }
   }

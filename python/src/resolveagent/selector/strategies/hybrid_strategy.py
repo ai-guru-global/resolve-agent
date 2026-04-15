@@ -8,7 +8,7 @@ and performance.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from resolveagent.selector.selector import RouteDecision
@@ -34,6 +34,8 @@ class HybridConfig:
     llm_weight: float = 0.4
     # Boost for code_analysis when code blocks are detected
     code_boost: float = 0.1
+    # Per-route-type extra confidence boosts (e.g. {"workflow": 0.05})
+    per_route_boosts: dict[str, float] = field(default_factory=dict)
 
 
 class HybridStrategy:
@@ -204,12 +206,26 @@ class HybridStrategy:
                     decision.confidence + self.config.code_boost, 1.0
                 )
                 decision.parameters["code_boost_applied"] = True
+            # Extra boost for high-complexity code
+            if code_context and code_context.get("complexity_hint") == "high":
+                decision.confidence = min(decision.confidence + 0.05, 1.0)
 
         # Boost workflow for diagnostic keywords
         if decision.route_type == "workflow":
             text_lower = input_text.lower()
             if any(kw in text_lower for kw in ["diagnose", "root cause", "troubleshoot"]):
                 decision.confidence = min(decision.confidence + 0.05, 1.0)
+
+        # Boost RAG when conversation history is available
+        if decision.route_type == "rag":
+            history = context.get("conversation_history", [])
+            if len(history) > 3:
+                decision.confidence = min(decision.confidence + 0.03, 1.0)
+
+        # Apply per-route-type configurable boosts
+        extra = self.config.per_route_boosts.get(decision.route_type, 0.0)
+        if extra:
+            decision.confidence = min(decision.confidence + extra, 1.0)
 
         return decision
 
@@ -222,4 +238,5 @@ class HybridStrategy:
             "rule_weight": self.config.rule_weight,
             "llm_weight": self.config.llm_weight,
             "code_boost": self.config.code_boost,
+            "per_route_boosts": self.config.per_route_boosts,
         }

@@ -12,6 +12,9 @@ type SkillDefinition struct {
 	Version     string            `json:"version"`
 	Description string            `json:"description"`
 	Author      string            `json:"author"`
+	SkillType   string            `json:"skill_type"`
+	Domain      string            `json:"domain,omitempty"`
+	Tags        []string          `json:"tags,omitempty"`
 	Manifest    map[string]any    `json:"manifest"`
 	SourceType  string            `json:"source_type"`
 	SourceURI   string            `json:"source_uri"`
@@ -25,6 +28,7 @@ type SkillRegistry interface {
 	Get(ctx context.Context, name string) (*SkillDefinition, error)
 	List(ctx context.Context, opts ListOptions) ([]*SkillDefinition, int, error)
 	Unregister(ctx context.Context, name string) error
+	ListByType(ctx context.Context, skillType string, opts ListOptions) ([]*SkillDefinition, int, error)
 }
 
 // InMemorySkillRegistry is an in-memory implementation for development.
@@ -76,4 +80,17 @@ func (r *InMemorySkillRegistry) Unregister(_ context.Context, name string) error
 
 	delete(r.skills, name)
 	return nil
+}
+
+func (r *InMemorySkillRegistry) ListByType(_ context.Context, skillType string, _ ListOptions) ([]*SkillDefinition, int, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	skills := make([]*SkillDefinition, 0)
+	for _, s := range r.skills {
+		if s.SkillType == skillType {
+			skills = append(skills, s)
+		}
+	}
+	return skills, len(skills), nil
 }

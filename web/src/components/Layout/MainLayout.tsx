@@ -7,8 +7,14 @@ import {
   Zap,
   GitBranch,
   Database,
+  DatabaseZap,
   MessageSquare,
   Settings,
+  Activity,
+  BarChart3,
+  Bell,
+  GraduationCap,
+  ExternalLink,
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -23,16 +29,26 @@ import {
   CommandList,
 } from '@/components/ui/command';
 
-const navigationItems = [
+const navigationItems: {
+  name: string;
+  href: string;
+  icon: typeof Home;
+  external?: boolean;
+}[] = [
   { name: '首页', href: '/', icon: Home },
   { name: 'Harness 概览', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Agent 管理', href: '/agents', icon: Bot },
   { name: 'Skills 技能', href: '/skills', icon: Zap },
-  { name: '故障分析', href: '/workflows', icon: GitBranch },
-  { name: 'Knowledge 知识库', href: '/rag/collections', icon: Database },
+  { name: 'FTA 工作流', href: '/workflows', icon: GitBranch },
+  { name: 'RAG 知识库', href: '/rag/collections', icon: Database },
   { name: '知识文档', href: '/rag/documents', icon: Database },
   { name: 'Playground', href: '/playground', icon: MessageSquare },
+  { name: '追踪分析', href: '/traces', icon: Activity },
+  { name: '评估基准', href: '/evaluation', icon: BarChart3 },
+  { name: '监控告警', href: '/monitoring', icon: Bell },
+  { name: '记忆 & 数据库', href: '/database', icon: DatabaseZap },
   { name: '系统设置', href: '/settings', icon: Settings },
+  { name: '自助学习', href: 'https://github.com/ai-guru-global/ai-guru-database', icon: GraduationCap, external: true },
 ];
 
 export default function MainLayout({ children }: { children: ReactNode }) {
@@ -69,12 +85,17 @@ export default function MainLayout({ children }: { children: ReactNode }) {
               <CommandItem
                 key={item.href}
                 onSelect={() => {
-                  navigate(item.href);
+                  if (item.external) {
+                    window.open(item.href, '_blank', 'noopener,noreferrer');
+                  } else {
+                    navigate(item.href);
+                  }
                   setCommandPaletteOpen(false);
                 }}
               >
                 <item.icon className="mr-2 h-4 w-4" />
                 <span>{item.name}</span>
+                {item.external && <ExternalLink className="ml-auto h-3 w-3 text-muted-foreground/50" />}
               </CommandItem>
             ))}
           </CommandGroup>

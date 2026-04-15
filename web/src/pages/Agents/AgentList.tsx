@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Bot, Plus, MoreHorizontal, Trash2, Eye, Loader2, Zap, Shield, MemoryStick, Layers, Brain } from 'lucide-react';
+import { Bot, Plus, MoreHorizontal, Trash2, Eye, Loader2, Zap, Shield, MemoryStick, Layers, Brain, Pencil, Copy, GitCompareArrows } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/PageHeader';
@@ -191,6 +191,24 @@ export default function AgentList() {
                         <Link to={`/agents/${agent.id}`}>
                           <Eye className="mr-2 h-4 w-4" />
                           查看详情
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to={`/agents/${agent.id}/edit`}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          编辑
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to={`/agents/new?from=${agent.id}`}>
+                          <Copy className="mr-2 h-4 w-4" />
+                          克隆
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to={`/agents/compare?a=${agent.id}`}>
+                          <GitCompareArrows className="mr-2 h-4 w-4" />
+                          对比
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />

@@ -289,12 +289,18 @@ export interface SkillDetailInfo {
   author: string;
   icon: string;
   entry_point: string;
+  skill_type: SkillType;
+  scenario_config?: ScenarioConfig;
   inputs: SkillParameter[];
   outputs: SkillParameter[];
   permissions: SkillPermissions;
   install_date: string;
   last_executed: string;
   execution_count: number;
+  level?: number;
+  experience_points?: number;
+  next_level_experience?: number;
+  related_agent_count?: number;
 }
 
 // Extended Workflow types
@@ -393,4 +399,394 @@ export interface SystemSettings {
     build_date: string;
   };
   models: ModelConfig[];
+}
+
+// Troubleshooting Solution types
+export type SolutionStatus = 'active' | 'archived' | 'draft';
+export type SolutionSeverity = 'critical' | 'high' | 'medium' | 'low';
+
+export interface TroubleshootingSolution {
+  id: string;
+  title: string;
+  problem_symptoms: string;
+  key_information: string;
+  troubleshooting_steps: string;
+  resolution_steps: string;
+  domain: string;
+  component: string;
+  severity: SolutionSeverity;
+  tags: string[];
+  search_keywords: string;
+  version: number;
+  status: SolutionStatus;
+  source_uri: string;
+  rag_collection_id: string;
+  rag_document_id: string;
+  related_skill_names: string[];
+  related_workflow_ids: string[];
+  metadata: Record<string, unknown>;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SolutionExecution {
+  id: string;
+  solution_id: string;
+  executor: string;
+  trigger_context: Record<string, unknown>;
+  status: string;
+  outcome_notes: string;
+  effectiveness_score: number;
+  duration_ms: number;
+  started_at: string;
+  completed_at: string;
+  created_at: string;
+}
+
+export interface SolutionSearchOptions {
+  domain?: string;
+  component?: string;
+  severity?: string;
+  tags?: string[];
+  keyword?: string;
+  status?: string;
+  limit?: number;
+  offset?: number;
+}
+
+// ─── Agent Update types ───
+export interface UpdateAgentRequest {
+  name?: string;
+  type?: string;
+  model?: string;
+  status?: string;
+  mode?: AgentMode;
+  system_prompt?: string;
+  harness?: Partial<HarnessConfig>;
+  config?: Record<string, unknown>;
+}
+
+// ─── Memory types ───
+export interface Conversation {
+  id: string;
+  agent_id: string;
+  user_id: string;
+  message_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConversationMessage {
+  id: string;
+  conversation_id: string;
+  role: 'system' | 'user' | 'assistant' | 'tool';
+  content: string;
+  token_count: number;
+  sequence: number;
+  created_at: string;
+}
+
+export interface LongTermMemory {
+  id: string;
+  agent_id: string;
+  user_id: string;
+  memory_type: 'summary' | 'preference' | 'pattern' | 'fact' | 'skill_learned';
+  content: string;
+  importance: number;
+  access_count: number;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  expires_at: string | null;
+}
+
+// ─── Agent Execution Detail types ───
+export interface AgentExecutionDetail extends AgentExecution {
+  input_full: string;
+  output_full: string;
+  pipeline_trace: SelectorPipelineTrace | null;
+  hook_logs: HookExecutionLog[];
+  memory_context: ConversationMessage[];
+  error_detail: string | null;
+  timing_breakdown: TimingBreakdown;
+}
+
+export interface HookExecutionLog {
+  hook_name: string;
+  hook_type: HookType;
+  status: 'success' | 'failed' | 'skipped';
+  duration_ms: number;
+  input_preview: string;
+  output_preview: string;
+  timestamp: string;
+}
+
+export interface TimingBreakdown {
+  selector_ms: number;
+  pre_hook_ms: number;
+  llm_inference_ms: number;
+  post_hook_ms: number;
+  total_ms: number;
+}
+
+// ─── Agent Analytics types ───
+export interface AgentAnalytics {
+  agent_id: string;
+  time_range: string;
+  kpis: {
+    success_rate: number;
+    success_rate_trend: TrendInfo;
+    avg_latency_ms: number;
+    avg_latency_trend: TrendInfo;
+    total_executions: number;
+    execution_trend: TrendInfo;
+    error_rate: number;
+    error_rate_trend: TrendInfo;
+  };
+  execution_timeline: HourlyExecution[];
+  latency_percentiles: {
+    p50: number;
+    p75: number;
+    p90: number;
+    p95: number;
+    p99: number;
+  };
+  route_distribution: RouteDistribution[];
+  confidence_histogram: { bucket: string; count: number }[];
+  top_errors: { error_type: string; count: number; last_seen: string }[];
+}
+
+// ─── Agent Template types ───
+export interface AgentTemplate {
+  id: string;
+  name: string;
+  description: string;
+  type: AgentType;
+  category: 'ops' | 'knowledge' | 'analysis' | 'custom';
+  icon: string;
+  model: string;
+  system_prompt: string;
+  tools: string[];
+  skills: string[];
+  mode: AgentMode;
+}
+
+// ─── Health Diagnostics types ───
+export type DiagnosticCheckStatus = 'pass' | 'warning' | 'fail';
+
+export interface DiagnosticCheck {
+  name: string;
+  category: 'runtime' | 'config' | 'connectivity' | 'performance' | 'dependency';
+  status: DiagnosticCheckStatus;
+  message: string;
+  detail: string | null;
+}
+
+export interface AgentDiagnosticsResult {
+  agent_id: string;
+  health_score: number;
+  overall_status: 'healthy' | 'degraded' | 'failed';
+  checks: DiagnosticCheck[];
+  recent_errors: AgentExecution[];
+  checked_at: string;
+}
+
+// ─── Deployment types ───
+export type DeploymentState = 'deployed' | 'undeployed' | 'deploying' | 'scaling' | 'error';
+
+export interface DeploymentInfo {
+  agent_id: string;
+  state: DeploymentState;
+  replicas: number;
+  desired_replicas: number;
+  cpu_limit: string;
+  memory_limit: string;
+  auto_scale: boolean;
+  uptime_seconds: number;
+}
+
+export interface DeploymentVersion {
+  version: string;
+  deployed_at: string;
+  deployer: string;
+  status: 'success' | 'failed' | 'rollback';
+  config_changes: string;
+}
+
+export interface DeploymentLog {
+  timestamp: string;
+  level: 'debug' | 'info' | 'warn' | 'error';
+  message: string;
+}
+
+// ─── Multi-Agent Collaboration types ───
+export interface CollaborationSession {
+  id: string;
+  name: string;
+  pattern: 'sequential' | 'fan_out_fan_in' | 'supervisor_worker' | 'debate';
+  agents: string[];
+  status: 'running' | 'completed' | 'failed';
+  started_at: string;
+  completed_at: string | null;
+  duration_ms: number;
+}
+
+// ─── Access Control types ───
+export type AccessRole = 'viewer' | 'operator' | 'developer' | 'admin';
+
+export interface AccessRule {
+  id: string;
+  agent_id: string;
+  user_or_role: string;
+  role: AccessRole;
+  permissions: {
+    view: boolean;
+    execute: boolean;
+    edit: boolean;
+    admin: boolean;
+  };
+  created_at: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  agent_id: string;
+  user: string;
+  action: string;
+  detail: string;
+  timestamp: string;
+}
+
+// Skill type classification
+export type SkillType = 'general' | 'scenario';
+
+export interface ScenarioConfig {
+  domain: string;
+  tags: string[];
+  troubleshooting_flow: TroubleshootingStep[];
+  output_template: SolutionOutputTemplate | null;
+  severity_levels: string[];
+}
+
+export interface TroubleshootingStep {
+  id: string;
+  name: string;
+  description: string;
+  step_type: 'collect' | 'diagnose' | 'verify' | 'action';
+  command: string | null;
+  skill_ref: string | null;
+  expected_output: string | null;
+  condition: string | null;
+  timeout_seconds: number;
+  order: number;
+}
+
+export interface SolutionOutputTemplate {
+  include_symptoms: boolean;
+  include_evidence: boolean;
+  include_steps: boolean;
+  include_resolution: boolean;
+  custom_sections: string[];
+}
+
+// ─── Code Analysis types ───
+export type AnalysisStatus = 'pending' | 'running' | 'completed' | 'error' | 'analyzed';
+
+export interface CallGraphInfo {
+  id: string;
+  analysis_id: string;
+  repository_url: string;
+  branch: string;
+  language: string;
+  entry_point: string;
+  node_count: number;
+  edge_count: number;
+  max_depth: number;
+  status: AnalysisStatus;
+  created_at?: string;
+}
+
+export interface TrafficCaptureInfo {
+  id: string;
+  name: string;
+  source_type: string;
+  target_service: string;
+  status: AnalysisStatus;
+  config: Record<string, unknown>;
+  summary: Record<string, unknown>;
+  labels: Record<string, string>;
+  created_at?: string;
+}
+
+export interface TrafficGraphInfo {
+  id: string;
+  capture_id: string;
+  name: string;
+  status: AnalysisStatus;
+  graph_data: Record<string, unknown>;
+  nodes: TrafficGraphNode[];
+  edges: TrafficGraphEdge[];
+  analysis_report: string;
+  suggestions: TrafficSuggestion[];
+  created_at?: string;
+}
+
+export interface TrafficGraphNode {
+  id: string;
+  label: string;
+  request_count: number;
+  error_count: number;
+  avg_latency_ms: number;
+  protocols: string[];
+}
+
+export interface TrafficGraphEdge {
+  id: string;
+  source: string;
+  target: string;
+  request_count: number;
+  error_count: number;
+  avg_latency_ms: number;
+  protocols: string[];
+  methods: string[];
+}
+
+export interface TrafficSuggestion {
+  title: string;
+  description: string;
+  priority: 'high' | 'medium' | 'low';
+}
+
+export interface XYFlowGraphData {
+  nodes: XYFlowNode[];
+  edges: XYFlowEdge[];
+}
+
+export interface XYFlowNode {
+  id: string;
+  type: string;
+  position: { x: number; y: number };
+  data: {
+    label: string;
+    requestCount: number;
+    errorCount: number;
+    avgLatencyMs: number;
+    protocols: string[];
+  };
+}
+
+export interface XYFlowEdge {
+  id: string;
+  source: string;
+  target: string;
+  type: string;
+  animated: boolean;
+  data: {
+    requestCount: number;
+    errorCount: number;
+    avgLatencyMs: number;
+    protocols: string[];
+    methods: string[];
+  };
 }

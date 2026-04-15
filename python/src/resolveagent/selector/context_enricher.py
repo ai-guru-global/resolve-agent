@@ -6,7 +6,9 @@ including conversation history, available resources, and code analysis context.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
+import logging
 import re
 from dataclasses import dataclass, field
 from typing import Any
@@ -173,7 +175,7 @@ class ContextEnricher:
 
     def __init__(self, registry_client: Any | None = None) -> None:
         """Initialize the context enricher.
-        
+
         Args:
             registry_client: Optional registry client for querying resources.
         """
@@ -181,6 +183,7 @@ class ContextEnricher:
         self._compiled_issue_patterns: list[tuple[re.Pattern[str], str]] = []
         self._compile_patterns()
         self._registry_client = registry_client
+        self._logger = logging.getLogger(__name__)
 
     def _compile_patterns(self) -> None:
         """Pre-compile patterns for efficiency."""
@@ -221,10 +224,16 @@ class ContextEnricher:
             },
         )
 
-        # Enrich with available resources
-        enriched.available_skills = await self._get_available_skills(agent_id)
-        enriched.active_workflows = await self._get_active_workflows(agent_id)
-        enriched.rag_collections = await self._get_rag_collections(agent_id)
+        # Enrich with available resources (parallel I/O)
+        skills, workflows, collections = await asyncio.gather(
+            self._get_available_skills(agent_id),
+            self._get_active_workflows(agent_id),
+            self._get_rag_collections(agent_id),
+        )
+        # Sort skills by relevance to the input, keep top 10.
+        enriched.available_skills = self._rank_skills(input_text, skills)
+        enriched.active_workflows = workflows
+        enriched.rag_collections = collections
 
         # Enrich with conversation history
         enriched.conversation_history = await self._get_conversation_history(
@@ -268,7 +277,7 @@ class ContextEnricher:
             except Exception as e:
                 logger = logging.getLogger(__name__)
                 logger.warning(f"Failed to query skill registry: {e}")
-        
+
         # Fallback to default skills
         return [
             {
@@ -321,7 +330,7 @@ class ContextEnricher:
             except Exception as e:
                 logger = logging.getLogger(__name__)
                 logger.warning(f"Failed to query workflow registry: {e}")
-        
+
         # Fallback to default workflows
         return [
             {
@@ -369,7 +378,7 @@ class ContextEnricher:
             except Exception as e:
                 logger = logging.getLogger(__name__)
                 logger.warning(f"Failed to query RAG registry: {e}")
-        
+
         # Fallback to default collections
         return [
             {
@@ -480,6 +489,37 @@ class ContextEnricher:
             return "medium"
         else:
             return "high"
+
+    def _rank_skills(
+        self, input_text: str, skills: list[dict[str, Any]], top_n: int = 10
+    ) -> list[dict[str, Any]]:
+        """Rank skills by relevance to *input_text* and return top-N."""
+        text_lower = input_text.lower()
+        scored: list[tuple[float, dict[str, Any]]] = []
+        for skill in skills:
+            score = self._score_skill_relevance(text_lower, skill)
+            scored.append((score, skill))
+        scored.sort(key=lambda t: t[0], reverse=True)
+        return [s for _, s in scored[:top_n]]
+
+    @staticmethod
+    def _score_skill_relevance(text_lower: str, skill_info: dict[str, Any]) -> float:
+        """Compute a 0-1 relevance score for a skill against input text."""
+        caps: list[str] = skill_info.get("capabilities", [])
+        if not caps:
+            return 0.0
+        hits: float = sum(1 for c in caps if c in text_lower)
+        # Also check skill name / description fragments.
+        name = skill_info.get("name", "").lower()
+        if name and name.replace("-", " ") in text_lower:
+            hits += 1
+        desc = skill_info.get("description", "").lower()
+        desc_words = [w for w in desc.split() if len(w) > 3]
+        for word in desc_words:
+            if word in text_lower:
+                hits += 0.5
+        max_possible = len(caps) + 1 + len(desc_words) * 0.5
+        return min(hits / max_possible, 1.0) if max_possible > 0 else 0.0
 
     def _calculate_confidence(self, context: EnrichedContext) -> float:
         """Calculate confidence in the enrichment quality."""

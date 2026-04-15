@@ -60,7 +60,7 @@ export default function WorkflowList() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="故障分析工作流"
+        title="FTA 工作流"
         description={isLoading ? undefined : `共 ${workflows.length} 个工作流`}
         actions={
           <Button asChild>

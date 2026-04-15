@@ -1,13 +1,17 @@
+import { useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { Activity } from 'lucide-react';
+import { Activity, GitBranch } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EmptyState } from '@/components/EmptyState';
 import { MetricCard } from '@/components/MetricCard';
 import { DataTable, type DataTableColumn } from '@/components/DataTable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useWorkflowExecutions } from '@/hooks/useWorkflows';
-import type { WorkflowExecutionRecord, StatusVariant } from '@/types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
+import FTATreeEditor from '@/components/TreeEditor/FTATreeEditor';
+import { useWorkflowExecutions, useWorkflowFaultTree, useSaveFaultTree } from '@/hooks/useWorkflows';
+import type { WorkflowExecutionRecord, StatusVariant, FaultTree } from '@/types';
 import { ClipboardList, CheckCircle2, Clock } from 'lucide-react';
 
 const executionStatusMap: Record<string, { label: string; variant: StatusVariant }> = {
@@ -65,8 +69,10 @@ const columns: DataTableColumn<WorkflowExecutionRecord>[] = [
 
 export default function WorkflowExecution() {
   const { id } = useParams();
-  const { data, isLoading } = useWorkflowExecutions(id);
+  const workflowId = id ?? 'wf-001';
 
+  // Execution data
+  const { data, isLoading } = useWorkflowExecutions(workflowId);
   const executions = data?.executions ?? [];
   const completedCount = executions.filter((e) => e.status === 'completed').length;
   const successRate = executions.length > 0 ? ((completedCount / executions.length) * 100).toFixed(0) : '0';
@@ -74,44 +80,90 @@ export default function WorkflowExecution() {
     ? (executions.reduce((sum, e) => sum + e.duration_ms, 0) / executions.length / 1000).toFixed(1)
     : '0';
 
+  // FTA tree data
+  const { data: faultTree, isLoading: treeLoading } = useWorkflowFaultTree(workflowId);
+  const saveMutation = useSaveFaultTree(workflowId);
+
+  const handleSave = useCallback(
+    (tree: FaultTree) => {
+      saveMutation.mutate(tree);
+    },
+    [saveMutation],
+  );
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title="执行监控"
+        title="工作流详情"
         breadcrumbs={[
           { label: '故障分析工作流', href: '/workflows' },
-          { label: id ? `工作流 ${id}` : '全部执行' },
+          { label: workflowId },
         ]}
       />
 
-      {/* Summary Cards */}
-      {!isLoading && executions.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <MetricCard icon={ClipboardList} value={String(executions.length)} label="总执行次数" accentColor="border-l-primary" />
-          <MetricCard icon={CheckCircle2} value={`${successRate}%`} label="成功率" accentColor="border-l-status-healthy" />
-          <MetricCard icon={Clock} value={`${avgDuration}s`} label="平均耗时" accentColor="border-l-status-degraded" />
-        </div>
-      )}
+      <Tabs defaultValue="editor" className="w-full">
+        <TabsList>
+          <TabsTrigger value="editor" className="gap-1.5">
+            <GitBranch className="h-3.5 w-3.5" />
+            FTA 树编辑器
+          </TabsTrigger>
+          <TabsTrigger value="executions" className="gap-1.5">
+            <Activity className="h-3.5 w-3.5" />
+            执行记录
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Execution Table */}
-      {!isLoading && executions.length === 0 ? (
-        <Card>
-          <EmptyState
-            icon={Activity}
-            title="暂无执行记录"
-            description="工作流执行状态和节点评估结果将在此实时展示"
-          />
-        </Card>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>执行记录</CardTitle>
-          </CardHeader>
-          <CardContent className="px-0">
-            <DataTable columns={columns} data={executions} loading={isLoading} emptyMessage="暂无执行记录" />
-          </CardContent>
-        </Card>
-      )}
+        {/* ── FTA Tree Editor Tab ── */}
+        <TabsContent value="editor" className="mt-4">
+          {treeLoading ? (
+            <Card>
+              <CardContent className="flex items-center justify-center" style={{ height: '600px' }}>
+                <Skeleton className="h-8 w-32" />
+              </CardContent>
+            </Card>
+          ) : (
+            <div style={{ height: 'calc(100vh - 260px)', minHeight: '500px' }}>
+              <FTATreeEditor
+                faultTree={faultTree ?? null}
+                onSave={handleSave}
+                saving={saveMutation.isPending}
+              />
+            </div>
+          )}
+        </TabsContent>
+
+        {/* ── Execution Records Tab ── */}
+        <TabsContent value="executions" className="mt-4 space-y-4">
+          {/* Summary Cards */}
+          {!isLoading && executions.length > 0 && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <MetricCard icon={ClipboardList} value={String(executions.length)} label="总执行次数" accentColor="border-l-primary" />
+              <MetricCard icon={CheckCircle2} value={`${successRate}%`} label="成功率" accentColor="border-l-status-healthy" />
+              <MetricCard icon={Clock} value={`${avgDuration}s`} label="平均耗时" accentColor="border-l-status-degraded" />
+            </div>
+          )}
+
+          {/* Execution Table */}
+          {!isLoading && executions.length === 0 ? (
+            <Card>
+              <EmptyState
+                icon={Activity}
+                title="暂无执行记录"
+                description="工作流执行状态和节点评估结果将在此实时展示"
+              />
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>执行记录</CardTitle>
+              </CardHeader>
+              <CardContent className="px-0">
+                <DataTable columns={columns} data={executions} loading={isLoading} emptyMessage="暂无执行记录" />
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

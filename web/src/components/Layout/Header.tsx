@@ -15,6 +15,7 @@ const routeMap: Record<string, { label: string; parent?: { label: string; href: 
   '/rag/collections': { label: 'Knowledge 知识库' },
   '/rag/documents': { label: '知识文档' },
   '/playground': { label: 'Playground' },
+  '/database': { label: '数据库概览' },
   '/settings': { label: '系统设置' },
 };
 

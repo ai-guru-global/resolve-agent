@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/PageHeader';
@@ -13,11 +13,47 @@ import { api } from '@/api/client';
 
 export default function AgentCreate() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fromId = searchParams.get('from');
+  const fromTemplate = searchParams.get('from_template');
+
   const [loading, setLoading] = useState(false);
+  const [prefilling, setPrefilling] = useState(false);
   const [name, setName] = useState('');
   const [type, setType] = useState('mega');
   const [model, setModel] = useState('qwen-turbo');
   const [prompt, setPrompt] = useState('');
+
+  // Pre-fill from cloned agent
+  useEffect(() => {
+    if (!fromId) return;
+    setPrefilling(true);
+    api.getAgent(fromId).then((agent) => {
+      setName(`${agent.name} (副本)`);
+      setType(agent.type);
+      setModel(String(agent.config.model ?? 'qwen-turbo'));
+      setPrompt(agent.harness.system_prompt ?? '');
+    }).catch(() => {
+      toast.error('加载源 Agent 信息失败');
+    }).finally(() => setPrefilling(false));
+  }, [fromId]);
+
+  // Pre-fill from template
+  useEffect(() => {
+    if (!fromTemplate) return;
+    setPrefilling(true);
+    api.listAgentTemplates().then((data) => {
+      const tpl = data.templates.find((t) => t.id === fromTemplate);
+      if (tpl) {
+        setName(tpl.name);
+        setType(tpl.type);
+        setModel(tpl.model);
+        setPrompt(tpl.system_prompt);
+      }
+    }).catch(() => {
+      toast.error('加载模板信息失败');
+    }).finally(() => setPrefilling(false));
+  }, [fromTemplate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,10 +72,10 @@ export default function AgentCreate() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="创建运维智能体"
+        title={fromId ? '克隆运维智能体' : fromTemplate ? '从模板创建' : '创建运维智能体'}
         breadcrumbs={[
           { label: '智能体管理', href: '/agents' },
-          { label: '创建智能体' },
+          { label: fromId ? '克隆智能体' : '创建智能体' },
         ]}
       />
 
@@ -98,9 +134,9 @@ export default function AgentCreate() {
             </div>
 
             <div className="flex gap-3 pt-2">
-              <Button type="submit" disabled={loading || !name}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                创建智能体
+              <Button type="submit" disabled={loading || prefilling || !name}>
+                {(loading || prefilling) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {fromId ? '克隆创建' : '创建智能体'}
               </Button>
               <Button type="button" variant="outline" onClick={() => navigate('/agents')}>
                 取消

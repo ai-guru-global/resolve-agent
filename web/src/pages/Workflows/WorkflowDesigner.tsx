@@ -76,6 +76,7 @@ function buildFlowData(tree: FaultTree): { nodes: Node[]; edges: Edge[] } {
         label: event.name,
         type: event.type === 'top' ? 'top' : event.type === 'basic' || event.type === 'undeveloped' ? 'basic' : 'intermediate',
         status: 'completed',
+        editable: false,
       },
     });
   }
@@ -101,6 +102,7 @@ function buildFlowData(tree: FaultTree): { nodes: Node[]; edges: Edge[] } {
         label: gate.name,
         gateType: gate.type === 'AND' || gate.type === 'OR' || gate.type === 'VOTING' ? gate.type : 'OR',
         kValue: gate.k_value,
+        editable: false,
       },
     });
 

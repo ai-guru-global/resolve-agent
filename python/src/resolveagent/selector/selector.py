@@ -12,6 +12,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from resolveagent.selector.cache import RouteDecisionCache, get_global_cache
+
 logger = logging.getLogger(__name__)
 
 
@@ -110,12 +112,23 @@ class IntelligentSelector:
 
     VALID_STRATEGIES = ("llm", "rule", "hybrid")
 
-    def __init__(self, strategy: str = "hybrid", registry_client: Any | None = None) -> None:
+    def __init__(
+        self,
+        strategy: str = "hybrid",
+        registry_client: Any | None = None,
+        cache_scope: str = "instance",
+        cache_max_size: int = 1000,
+        cache_ttl_seconds: float = 300.0,
+    ) -> None:
         """Initialize the Intelligent Selector.
 
         Args:
             strategy: Routing strategy - 'llm', 'rule', or 'hybrid'.
             registry_client: Optional registry client for querying resources.
+            cache_scope: ``"instance"`` for per-selector cache,
+                ``"global"`` for a shared module-level cache.
+            cache_max_size: Maximum entries in the route decision cache.
+            cache_ttl_seconds: Time-to-live for cached decisions.
         """
         if strategy not in self.VALID_STRATEGIES:
             logger.warning(
@@ -130,8 +143,21 @@ class IntelligentSelector:
             "hybrid": self._route_hybrid,
         }
         self._intent_analyzer = None
-        self._context_enricher: ContextEnricher | None = None
+        self._context_enricher: Any | None = None
         self._registry_client = registry_client
+
+        # Strategy instance cache -- avoids re-compiling regexes per call.
+        self._strategy_instances: dict[str, Any] = {}
+
+        # Route decision cache.
+        if cache_scope == "global":
+            self._cache: RouteDecisionCache = get_global_cache(
+                max_size=cache_max_size, ttl_seconds=cache_ttl_seconds
+            )
+        else:
+            self._cache = RouteDecisionCache(
+                max_size=cache_max_size, ttl_seconds=cache_ttl_seconds
+            )
 
     async def route(
         self,
@@ -139,32 +165,28 @@ class IntelligentSelector:
         agent_id: str = "",
         context: dict[str, Any] | None = None,
         enrich_context: bool = True,
+        bypass_cache: bool = False,
     ) -> RouteDecision:
         """Route a request to the appropriate subsystem.
-
-        This is the main entry point for routing decisions. It orchestrates
-        the full pipeline: intent analysis, context enrichment, and routing.
 
         Args:
             input_text: The user input to route.
             agent_id: The agent processing this request.
             context: Additional context for routing.
             enrich_context: Whether to enrich context before routing.
+            bypass_cache: Skip cache lookup and always compute a fresh decision.
 
         Returns:
             A RouteDecision indicating where and how to route the request.
-
-        Example:
-            ```python
-            selector = IntelligentSelector(strategy="hybrid")
-            decision = await selector.route(
-                "Analyze this code for security issues",
-                agent_id="agent-001",
-            )
-            print(f"Route to: {decision.route_type}/{decision.route_target}")
-            print(f"Confidence: {decision.confidence:.2f}")
-            ```
         """
+        # Check cache first (unless bypassed).
+        cache_key = RouteDecisionCache.make_key(input_text, agent_id, self.strategy)
+        if not bypass_cache:
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                logger.debug("Cache hit for route decision", extra={"agent_id": agent_id})
+                return cached
+
         ctx = context or {}
 
         # Optional: Enrich context with full pipeline
@@ -174,6 +196,9 @@ class IntelligentSelector:
         # Make routing decision
         route_fn = self._strategies.get(self.strategy, self._route_hybrid)
         decision = await route_fn(input_text, agent_id, ctx)
+
+        # Store in cache.
+        self._cache.put(cache_key, decision)
 
         # Log decision
         logger.info(
@@ -234,31 +259,39 @@ class IntelligentSelector:
 
         return enriched.to_dict()
 
+    def _get_strategy(self, name: str) -> Any:
+        """Return a cached strategy instance, creating it on first access."""
+        if name not in self._strategy_instances:
+            if name == "llm":
+                from resolveagent.selector.strategies.llm_strategy import LLMStrategy
+                self._strategy_instances[name] = LLMStrategy()
+            elif name == "rule":
+                from resolveagent.selector.strategies.rule_strategy import RuleStrategy
+                self._strategy_instances[name] = RuleStrategy()
+            elif name == "hybrid":
+                from resolveagent.selector.strategies.hybrid_strategy import HybridStrategy
+                self._strategy_instances[name] = HybridStrategy()
+        return self._strategy_instances[name]
+
     async def _route_llm(
         self, input_text: str, agent_id: str, context: dict[str, Any]
     ) -> RouteDecision:
         """Use an LLM to classify and route the request."""
-        from resolveagent.selector.strategies.llm_strategy import LLMStrategy
-
-        strategy = LLMStrategy()
+        strategy = self._get_strategy("llm")
         return await strategy.decide(input_text, agent_id, context)
 
     async def _route_rule(
         self, input_text: str, agent_id: str, context: dict[str, Any]
     ) -> RouteDecision:
         """Use rule-based pattern matching to route the request."""
-        from resolveagent.selector.strategies.rule_strategy import RuleStrategy
-
-        strategy = RuleStrategy()
+        strategy = self._get_strategy("rule")
         return await strategy.decide(input_text, agent_id, context)
 
     async def _route_hybrid(
         self, input_text: str, agent_id: str, context: dict[str, Any]
     ) -> RouteDecision:
         """Try rules first, fall back to LLM for ambiguous cases."""
-        from resolveagent.selector.strategies.hybrid_strategy import HybridStrategy
-
-        strategy = HybridStrategy()
+        strategy = self._get_strategy("hybrid")
         return await strategy.decide(input_text, agent_id, context)
 
     def get_strategy_info(self) -> dict[str, Any]:

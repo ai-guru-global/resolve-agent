@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
+import uuid
 from typing import Any
 
 from resolveagent.rag.ingest.chunker import TextChunker
@@ -20,12 +22,16 @@ class RAGPipeline:
     - Document ingestion (parse, chunk, embed, index)
     - Semantic retrieval (embed query, search, rerank)
     - Augmented generation (inject context into LLM prompt)
+
+    When a rag_document_client is provided, document metadata and
+    ingestion history are persisted to the Go platform store.
     """
 
     def __init__(
         self,
         embedding_model: str = "bge-large-zh",
         vector_backend: str = "milvus",
+        rag_document_client: Any | None = None,
     ) -> None:
         self.embedding_model = embedding_model
         self.vector_backend = vector_backend
@@ -33,11 +39,13 @@ class RAGPipeline:
         self._embedder = Embedder(model=embedding_model)
         self._retriever = Retriever(vector_backend=vector_backend)
         self._reranker = Reranker()
+        self._rag_doc_client = rag_document_client
 
     async def ingest(
         self,
         collection_id: str,
         documents: list[dict[str, Any]],
+        chunker: Any | None = None,
     ) -> dict[str, Any]:
         """Ingest documents into a collection.
 
@@ -46,6 +54,8 @@ class RAGPipeline:
         Args:
             collection_id: Target collection ID.
             documents: List of document dicts with 'content' and 'metadata'.
+            chunker: Optional TextChunker override. When provided, uses this
+                     instead of the pipeline's default chunker.
 
         Returns:
             Ingestion result with counts.
@@ -66,8 +76,31 @@ class RAGPipeline:
                 if not content:
                     continue
 
+                # Register document metadata in platform store
+                doc_id = doc.get("id", str(uuid.uuid4()))
+                content_hash = hashlib.sha256(content.encode()).hexdigest()
+
+                if self._rag_doc_client:
+                    try:
+                        await self._rag_doc_client.create_document(
+                            collection_id,
+                            {
+                                "id": doc_id,
+                                "title": metadata.get("title", f"doc-{doc_id[:8]}"),
+                                "source_uri": metadata.get("source_uri", ""),
+                                "content_hash": content_hash,
+                                "content_type": metadata.get("content_type", "text/plain"),
+                                "size_bytes": len(content.encode()),
+                                "metadata": metadata,
+                                "status": "processing",
+                            },
+                        )
+                    except Exception as e:
+                        logger.warning("Failed to register document metadata", extra={"error": str(e)})
+
                 # Step 1: Chunk the document
-                chunks = self._chunker.chunk(content)
+                active_chunker = chunker if chunker is not None else self._chunker
+                chunks = active_chunker.chunk(content)
                 total_chunks += len(chunks)
 
                 # Step 2: Generate embeddings for chunks
@@ -75,6 +108,16 @@ class RAGPipeline:
 
                 # Step 3: Index chunks in vector store
                 await self._index_chunks(collection_id, chunks, embeddings, metadata)
+
+                # Update document status to indexed
+                if self._rag_doc_client:
+                    try:
+                        await self._rag_doc_client.update_document(
+                            doc_id,
+                            {"chunk_count": len(chunks), "status": "indexed"},
+                        )
+                    except Exception as e:
+                        logger.warning("Failed to update document status", extra={"error": str(e)})
 
             except Exception as e:
                 error_msg = f"Failed to ingest document: {e}"

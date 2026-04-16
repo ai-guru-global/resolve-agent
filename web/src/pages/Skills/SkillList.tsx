@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, Bot, Filter } from 'lucide-react';
+import { Zap, Bot, Filter, Shield, Puzzle, Cpu, Cloud, Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/PageHeader';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -127,6 +127,60 @@ export default function SkillList() {
         title="Skills 技能"
         description={isLoading ? '加载中...' : `Harness Tools/Skills 层 · 已安装 ${skills.length} 个技能 (${generalCount} 通用 / ${scenarioCount} 场景)`}
       />
+
+      {/* Skill system introduction */}
+      <div className="rounded-xl border border-border/40 bg-gradient-to-br from-card/60 via-card/30 to-transparent p-5">
+        <div className="flex items-start gap-3 mb-4">
+          <div className="shrink-0 w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Puzzle className="h-4.5 w-4.5 text-primary" />
+          </div>
+          <div>
+            <h3 className="text-sm font-display font-bold mb-1">什么是技能（Skill）？</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              技能是 ResolveAgent 的<strong className="text-foreground/80">可复用功能模块</strong>，为 AI Agent 提供插件化的能力扩展。
+              每个技能封装了特定的运维能力 —— 从日志分析、指标告警到自动化修复，Agent 通过组合不同技能来处理复杂的运维场景。
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="flex items-start gap-2 rounded-lg bg-muted/15 p-3">
+            <Cpu className="h-3.5 w-3.5 text-blue-400 mt-0.5 shrink-0" />
+            <div>
+              <span className="text-[11px] font-semibold text-foreground/80">诊断类</span>
+              <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">日志分析、指标异常检测、根因定位</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2 rounded-lg bg-muted/15 p-3">
+            <Wrench className="h-3.5 w-3.5 text-purple-400 mt-0.5 shrink-0" />
+            <div>
+              <span className="text-[11px] font-semibold text-foreground/80">操作类</span>
+              <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">自动修复、配置变更、服务重启</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2 rounded-lg bg-muted/15 p-3">
+            <Cloud className="h-3.5 w-3.5 text-cyan-400 mt-0.5 shrink-0" />
+            <div>
+              <span className="text-[11px] font-semibold text-foreground/80">云服务类</span>
+              <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">K8s 编排、RDS 运维、云资源管理</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2 rounded-lg bg-muted/15 p-3">
+            <Shield className="h-3.5 w-3.5 text-green-400 mt-0.5 shrink-0" />
+            <div>
+              <span className="text-[11px] font-semibold text-foreground/80">安全机制</span>
+              <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">权限控制、沙箱执行、资源限制</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-border/20">
+          <Bot className="h-3 w-3 text-muted-foreground/60" />
+          <p className="text-[10px] text-muted-foreground/60">
+            技能与 Agent 的关系：Agent 是决策中枢，技能是执行单元。Agent 根据上下文智能选择并编排技能，完成端到端的运维自动化。
+          </p>
+        </div>
+      </div>
 
       {/* Filter tabs */}
       {!isLoading && skills.length > 0 && (

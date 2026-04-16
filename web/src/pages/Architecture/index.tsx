@@ -11,6 +11,10 @@ import {
   Cpu,
   ChevronRight,
   FileText,
+  Shield,
+  Sparkles,
+  Route,
+  Lightbulb,
 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -71,38 +75,45 @@ const subDocs: DocSection[] = [
   },
 ];
 
-const capabilities = [
+const innovations = [
   {
-    title: 'Advanced Static Analysis',
-    description: 'Intelligent fault detection and root cause analysis using FTA',
+    title: '智能选择器',
+    description: 'LLM 驱动的元路由引擎，三阶段流程（意图分析→上下文增强→路由决策），支持规则/LLM/混合三种策略，自适应工作流调度',
+    icon: Route,
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-500/10 border-amber-500/20',
+  },
+  {
+    title: 'FTA 故障树分析',
+    description: '复杂多步骤故障诊断，支持 AND/OR/NOT/VOTING/INHIBIT/PRIORITY_AND 六种门类型，最小割集计算与蒙特卡罗仿真',
     icon: GitBranch,
     color: 'text-purple-400',
     bgColor: 'bg-purple-500/10 border-purple-500/20',
   },
   {
-    title: 'RAG',
-    description: 'Semantic knowledge retrieval from operations documentation',
+    title: 'RAG 知识检索增强',
+    description: '6 格式解析 + 5 种分块策略，BGE 向量嵌入，三级重排序回退（cross-encoder → LLM → Jaccard+MMR）',
     icon: BookOpen,
     color: 'text-emerald-400',
     bgColor: 'bg-emerald-500/10 border-emerald-500/20',
   },
   {
-    title: 'Adaptive Workflows',
-    description: 'Dynamic, context-aware routing and orchestration',
-    icon: Zap,
-    color: 'text-amber-400',
-    bgColor: 'bg-amber-500/10 border-amber-500/20',
-  },
-  {
-    title: 'Expert Skills',
-    description: 'Pluggable domain expertise for AIOps scenarios',
+    title: '专家技能系统',
+    description: '原子化功能单元，沙箱执行（10s CPU / 512MB RAM），内置 WebSearch、CodeExecution、FileOps',
     icon: Cpu,
     color: 'text-blue-400',
     bgColor: 'bg-blue-500/10 border-blue-500/20',
   },
   {
-    title: 'Ticket Summary',
-    description: 'Knowledge production engine for organizational capability increments',
+    title: '代码分析引擎',
+    description: '静态分析（AST 调用图 + 错误解析 + 方案生成）与动态分析（混合流量采集 + 服务依赖图），RAG 双写沉淀',
+    icon: Zap,
+    color: 'text-orange-400',
+    bgColor: 'bg-orange-500/10 border-orange-500/20',
+  },
+  {
+    title: '工单摘要智能体',
+    description: '知识生产引擎，将工单处理经验转化为组织能力增量，持续沉淀运维知识',
     icon: MessageSquare,
     color: 'text-cyan-400',
     bgColor: 'bg-cyan-500/10 border-cyan-500/20',
@@ -446,6 +457,58 @@ function CoordDiagram() {
   );
 }
 
+function HarnessDiagram() {
+  const W = 680;
+  const H = 260;
+
+  return (
+    <div className="overflow-x-auto">
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: W, margin: '0 auto', display: 'block' }} xmlns="http://www.w3.org/2000/svg">
+        <style>{`text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }`}</style>
+        <SvgDefs />
+        <rect width={W} height={H} fill={COLORS.bg} />
+
+        {/* Title */}
+        <text x={W / 2} y={28} textAnchor="middle" fill={COLORS.text} fontSize="15" fontWeight="700">Agent = Model + Harness</text>
+
+        {/* Agent outer box */}
+        <rect x={60} y={50} width={560} height={190} rx="16" fill="rgba(165,180,252,0.08)" stroke={COLORS.stroke} strokeWidth="2" strokeDasharray="6,3" />
+        <text x={80} y={72} fill={COLORS.text} fontSize="13" fontWeight="700">Agent</text>
+
+        {/* Model box (left) */}
+        <rect x={90} y={90} width={180} height={130} rx="14" fill={COLORS.beige} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={180} y={118} textAnchor="middle" fill={COLORS.text} fontSize="13" fontWeight="700">Model (LLM)</text>
+        <text x={180} y={142} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">通义千问 · 文心一言</text>
+        <text x={180} y={158} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">智谱清言 · OpenAI</text>
+        <text x={180} y={180} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">推理 · 生成 · 理解</text>
+        <text x={180} y={206} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9" fontStyle="italic">核心智能引擎</text>
+
+        {/* Plus sign */}
+        <text x={300} y={162} textAnchor="middle" fill={COLORS.text} fontSize="24" fontWeight="700">+</text>
+
+        {/* Harness box (right) */}
+        <rect x={340} y={90} width={260} height={130} rx="14" fill={COLORS.purple} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={470} y={118} textAnchor="middle" fill={COLORS.text} fontSize="13" fontWeight="700">Harness (非模型逻辑)</text>
+
+        {/* Harness sub-items */}
+        <rect x={355} y={130} width={110} height={28} rx="6" fill="rgba(255,255,255,0.6)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={410} y={148} textAnchor="middle" fill={COLORS.text} fontSize="10">状态管理</text>
+
+        <rect x={475} y={130} width={110} height={28} rx="6" fill="rgba(255,255,255,0.6)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={530} y={148} textAnchor="middle" fill={COLORS.text} fontSize="10">工具执行</text>
+
+        <rect x={355} y={166} width={110} height={28} rx="6" fill="rgba(255,255,255,0.6)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={410} y={184} textAnchor="middle" fill={COLORS.text} fontSize="10">沙箱环境</text>
+
+        <rect x={475} y={166} width={110} height={28} rx="6" fill="rgba(255,255,255,0.6)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={530} y={184} textAnchor="middle" fill={COLORS.text} fontSize="10">Hooks 生命周期</text>
+
+        <text x={470} y={210} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9" fontStyle="italic">上下文策略 · 路由调度 · 安全沙箱 · 可观测性</text>
+      </svg>
+    </div>
+  );
+}
+
 export default function ArchitecturePage() {
   return (
     <div className="space-y-6 animate-slide-up">
@@ -454,30 +517,55 @@ export default function ArchitecturePage() {
         description="ResolveAgent 核心架构文档 — 面向问题解决的综合智能体平台"
       />
 
-      {/* Architecture Diagram */}
+      {/* ═══════════════ 第一层：什么是 Agent Harness ═══════════════ */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Layers className="h-4 w-4 text-primary" />
-            系统架构
+            <Lightbulb className="h-4 w-4 text-primary" />
+            Agent Harness 理念
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <ArchitectureDiagram />
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            ResolveAgent 采用 <span className="font-semibold text-foreground">Agent = Model + Harness</span> 架构范式。
+            Model 是大语言模型本身的推理能力，而 <span className="font-semibold text-foreground">Harness</span> 涵盖所有非模型逻辑 ——
+            状态管理、工具执行、沙箱环境、生命周期 Hooks、上下文策略、路由调度和可观测性。
+            这种分离使得同一 Harness 可以驱动不同 LLM 后端，也使系统具备更强的可测试性和可组合性。
+          </p>
+          <HarnessDiagram />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-md bg-amber-500/5 border border-amber-500/20 p-3">
+              <p className="text-xs font-medium text-amber-600 dark:text-amber-400 mb-1">模型无关</p>
+              <p className="text-xs text-muted-foreground">Harness 与 LLM 解耦，支持通义千问、文心一言、智谱清言、OpenAI 等多种后端自由切换</p>
+            </div>
+            <div className="rounded-md bg-purple-500/5 border border-purple-500/20 p-3">
+              <p className="text-xs font-medium text-purple-600 dark:text-purple-400 mb-1">可组合能力</p>
+              <p className="text-xs text-muted-foreground">FTA 工作流、专家技能、RAG 管道、代码分析引擎作为 Harness 组件，按需编排组合</p>
+            </div>
+            <div className="rounded-md bg-emerald-500/5 border border-emerald-500/20 p-3">
+              <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mb-1">全生命周期治理</p>
+              <p className="text-xs text-muted-foreground">Hooks 机制在 Agent 执行的各阶段（pre/post）插入自定义逻辑，实现精细化控制</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Core Capabilities */}
+      {/* ═══════════════ 第二层：ResolveAgent 的问题解决创新 ═══════════════ */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Bot className="h-4 w-4 text-primary" />
-            核心能力
+            <Sparkles className="h-4 w-4 text-primary" />
+            ResolveAgent 问题解决创新
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            传统 AI Agent 系统采用固定处理流程，而 ResolveAgent 通过<span className="font-semibold text-foreground">智能选择器</span>实现动态路由，
+            根据用户意图自动选择最优执行路径，并协调四大执行子系统（FTA、Skills、RAG、Code Analysis）协同工作。
+            以下是 ResolveAgent 为提升问题解决能力所做的六大核心创新：
+          </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {capabilities.map((cap) => (
+            {innovations.map((cap) => (
               <div key={cap.title} className={cn('rounded-lg border p-4', cap.bgColor)}>
                 <div className="flex items-center gap-2 mb-2">
                   <cap.icon className={cn('h-4 w-4', cap.color)} />
@@ -490,43 +578,17 @@ export default function ArchitecturePage() {
         </CardContent>
       </Card>
 
-      {/* Go-Python Bridge */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Globe className="h-4 w-4 text-primary" />
-            Go-Python 通信桥接
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Go 平台与 Python Runtime 通过 HTTP + SSE 流式通信，实现跨语言协同：
-          </p>
-          <GoPythonBridgeDiagram />
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="rounded-md bg-muted/30 p-3">
-              <p className="font-medium mb-1">SSE 流式传输</p>
-              <p className="text-muted-foreground">长运行操作（Agent 执行、语料导入）通过 Server-Sent Events 实时推送进度</p>
-            </div>
-            <div className="rounded-md bg-muted/30 p-3">
-              <p className="font-medium mb-1">RegistryClient</p>
-              <p className="text-muted-foreground">Python 侧 HTTP 客户端，查询 Go Registry 获取 Skills、Workflows、RAG 集合</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* FTA / Skills / RAG Coordination */}
+      {/* ═══════════════ 第三层：如何实现这些创新 ═══════════════ */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <GitBranch className="h-4 w-4 text-primary" />
-            FTA / Skills / RAG 协同调度
+            创新技术实现：FTA / Skills / RAG 协同调度
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            三大执行子系统通过智能选择器（Intelligent Selector）协调工作：
+            MegaAgent 编排器通过智能选择器（Intelligent Selector）将用户请求分发到最合适的执行子系统：
           </p>
           <CoordDiagram />
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -546,6 +608,24 @@ export default function ArchitecturePage() {
         </CardContent>
       </Card>
 
+      {/* ═══════════════ 第四层：系统设计详解 ═══════════════ */}
+
+      {/* System Architecture Overview */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Layers className="h-4 w-4 text-primary" />
+            系统架构总览
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            五层架构：客户端 → API 网关（Higress）→ 平台服务（Go）→ Agent 运行时（Python）→ 数据层
+          </p>
+          <ArchitectureDiagram />
+        </CardContent>
+      </Card>
+
       {/* Registry System */}
       <Card>
         <CardHeader className="pb-3">
@@ -556,7 +636,7 @@ export default function ArchitecturePage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Go 平台维护 9 个内存注册表，提供一致的 CRUD 接口，支持分页、过滤、排序：
+            Go 注册表系统作为唯一数据源（Single Source of Truth），通过 Higress 网关同步路由配置，确保系统拓扑一致性：
           </p>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
@@ -595,7 +675,7 @@ export default function ArchitecturePage() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Cpu className="h-4 w-4 text-primary" />
+            <Shield className="h-4 w-4 text-primary" />
             核心设计原则
           </CardTitle>
         </CardHeader>
@@ -607,6 +687,120 @@ export default function ArchitecturePage() {
                 <p className="text-xs text-muted-foreground">{p.desc}</p>
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Go-Python Bridge (moved to bottom as system implementation detail) */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Globe className="h-4 w-4 text-primary" />
+            Go-Python 通信桥接
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Why: 多语言架构的必要性 */}
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              ResolveAgent 采用 <span className="font-semibold text-foreground">Go + Python 多语言架构</span>，
+              这一设计源于核心技术决策（<span className="text-xs font-mono text-primary">ADR-001</span>）：单一语言难以同时满足高性能平台服务和灵活 AI 运行时的需求。
+              Go 平台与 Python Runtime 通过 HTTP + SSE 流式通信实现跨语言协同，让每个层级都使用最适合的技术栈。
+            </p>
+          </div>
+
+          {/* What: 各语言的技术优势 */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="rounded-md bg-emerald-500/10 p-1.5">
+                  <Cpu className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">Go — 平台服务层</span>
+              </div>
+              <ul className="space-y-1.5 text-xs text-muted-foreground">
+                <li className="flex items-start gap-1.5">
+                  <span className="text-emerald-500 mt-0.5">•</span>
+                  <span><span className="font-medium text-foreground">高并发低延迟</span> — goroutine 原生并发，轻松处理万级连接</span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <span className="text-emerald-500 mt-0.5">•</span>
+                  <span><span className="font-medium text-foreground">云原生生态</span> — 与 Kubernetes、etcd、Higress 天然协作</span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <span className="text-emerald-500 mt-0.5">•</span>
+                  <span><span className="font-medium text-foreground">静态编译</span> — 单二进制部署，启动快、资源占用低</span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <span className="text-emerald-500 mt-0.5">•</span>
+                  <span><span className="font-medium text-foreground">类型安全</span> — 泛型注册表 + gRPC 强类型接口，长期可维护</span>
+                </li>
+              </ul>
+            </div>
+            <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="rounded-md bg-purple-500/10 p-1.5">
+                  <Bot className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <span className="text-sm font-semibold text-purple-700 dark:text-purple-300">Python — Agent 运行时层</span>
+              </div>
+              <ul className="space-y-1.5 text-xs text-muted-foreground">
+                <li className="flex items-start gap-1.5">
+                  <span className="text-purple-500 mt-0.5">•</span>
+                  <span><span className="font-medium text-foreground">AI/ML 生态</span> — PyTorch、Transformers、BGE 嵌入等开箱即用</span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <span className="text-purple-500 mt-0.5">•</span>
+                  <span><span className="font-medium text-foreground">AgentScope 框架</span> — 成熟的 Agent 编排引擎，原生 Python 实现</span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <span className="text-purple-500 mt-0.5">•</span>
+                  <span><span className="font-medium text-foreground">快速迭代</span> — AI 能力原型开发效率高，Skill 编写门槛低</span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <span className="text-purple-500 mt-0.5">•</span>
+                  <span><span className="font-medium text-foreground">数据科学</span> — NumPy、Pandas 等支撑 FTA 概率分析与向量计算</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* How: 通信架构图 */}
+          <GoPythonBridgeDiagram />
+
+          {/* 通信机制详解 */}
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="rounded-md bg-muted/30 p-3">
+              <p className="font-medium mb-1">SSE 流式传输</p>
+              <p className="text-muted-foreground">长运行操作（Agent 执行、语料导入）通过 Server-Sent Events 实时推送进度</p>
+            </div>
+            <div className="rounded-md bg-muted/30 p-3">
+              <p className="font-medium mb-1">RegistryClient</p>
+              <p className="text-muted-foreground">Python 侧 HTTP 客户端，查询 Go Registry 获取 Skills、Workflows、RAG 集合</p>
+            </div>
+          </div>
+
+          {/* Benefit: 架构收益 */}
+          <div className="rounded-lg border border-border/50 bg-muted/10 p-4">
+            <p className="text-xs font-semibold text-foreground mb-3">架构收益</p>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs text-muted-foreground">
+              <div className="flex items-start gap-2">
+                <Zap className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
+                <span><span className="font-medium text-foreground">性能最优化</span> — Go 承担高频 API / 注册表读写，Python 专注计算密集型 AI 推理，各取所长</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <Layers className="h-3.5 w-3.5 text-blue-500 mt-0.5 shrink-0" />
+                <span><span className="font-medium text-foreground">独立扩缩容</span> — 平台层和运行时层可独立水平扩展，按需分配资源</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <Sparkles className="h-3.5 w-3.5 text-purple-500 mt-0.5 shrink-0" />
+                <span><span className="font-medium text-foreground">AI 能力充分释放</span> — Python 生态的 LLM/RAG/FTA 能力无需跨语言妥协</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <Shield className="h-3.5 w-3.5 text-emerald-500 mt-0.5 shrink-0" />
+                <span><span className="font-medium text-foreground">故障隔离</span> — 运行时崩溃不影响平台服务；gRPC + SSE 提供清晰的边界契约</span>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

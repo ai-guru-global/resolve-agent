@@ -33,6 +33,11 @@ import Settings from './pages/Settings';
 import DatabaseOverview from './pages/Database';
 import ArchitecturePage from './pages/Architecture';
 import DatabaseSchemaPage from './pages/DatabaseSchema';
+import SelectorPage from './pages/Selector';
+import SelectorAdaptersPage from './pages/SelectorAdapters';
+import FTAEnginePage from './pages/FTAEngine';
+import AgentScopeHigressPage from './pages/AgentScopeHigress';
+import TicketSummaryPage from './pages/TicketSummary';
 import Demo from './pages/Demo';
 import Mobile from './pages/Mobile';
 
@@ -72,6 +77,11 @@ export default function App() {
         <Route path="/database" element={<DatabaseOverview />} />
         <Route path="/architecture" element={<ArchitecturePage />} />
         <Route path="/architecture/database-schema" element={<DatabaseSchemaPage />} />
+        <Route path="/architecture/selector" element={<SelectorPage />} />
+        <Route path="/architecture/selector-adapters" element={<SelectorAdaptersPage />} />
+        <Route path="/architecture/fta-engine" element={<FTAEnginePage />} />
+        <Route path="/architecture/agentscope-higress" element={<AgentScopeHigressPage />} />
+        <Route path="/architecture/ticket-summary" element={<TicketSummaryPage />} />
         <Route path="/mobile" element={<Mobile />} />
         <Route path="/architecture/:doc" element={<ArchitecturePage />} />
         <Route path="/settings" element={<Settings />} />

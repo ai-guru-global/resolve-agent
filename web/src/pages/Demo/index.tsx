@@ -18,6 +18,11 @@ import {
   Activity,
   Layers,
   Network,
+  ArrowRight,
+  Search,
+  Code2,
+  MessageSquare,
+  Trophy,
 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +31,17 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+
+interface SelectorCandidate {
+  route_type: string;
+  route_target: string;
+  label: string;
+  icon: typeof Bot;
+  confidence: number;
+  matched_keywords: string[];
+  reasoning: string;
+  selected?: boolean;
+}
 
 interface DemoScenario {
   id: string;
@@ -36,6 +52,7 @@ interface DemoScenario {
   input: string;
   steps: DemoStep[];
   response: DemoResponse;
+  selectorCandidates?: SelectorCandidate[];
 }
 
 interface DemoStep {
@@ -70,18 +87,77 @@ const demoScenarios: DemoScenario[] = [
   {
     id: 'mega',
     title: '智能问题诊断',
-    description: 'Multi-Agent 协作，综合调用 Skills、RAG、FTA 进行复杂问题分析',
+    description: 'Selector 在 Skill / RAG / FTA / Direct 间智能路由，展示多语料类型选择判断逻辑',
     icon: Sparkles,
     color: 'text-purple-500',
     input: '集群节点 cn-hangzhou.10.0.3.47 内存使用率 91%，部分 Pod 出现重启',
     steps: [
-      { label: '意图理解', description: '解析问题，提取关键实体', icon: Brain, duration: 120 },
-      { label: '路由选择', description: '综合评估选择 Multi-Agent 模式', icon: Zap, duration: 80 },
-      { label: '并行执行', description: 'K8s 诊断 Skill 与 etcd 检查', icon: Play, duration: 850 },
-      { label: '结果汇总', description: '聚合返回，生成综合报告', icon: Bot, duration: 180 },
+      { label: '意图分析', description: '解析输入，提取实体：节点、内存、Pod 重启', icon: Brain, duration: 120 },
+      { label: '上下文增强', description: '加载可用 Skills / RAG Collections / Workflows 元数据', icon: Search, duration: 100 },
+      { label: '候选评估', description: 'Selector 对 6 种语料类型逐一匹配关键词并计算置信度', icon: BarChart3, duration: 200 },
+      { label: '路由裁决', description: '置信度排序 → FTA 0.90 胜出，同时调度 Skill 辅助', icon: Trophy, duration: 80 },
+      { label: '多路执行', description: 'FTA 故障树诊断 + metrics-checker 指标采集并行', icon: Play, duration: 850 },
+      { label: '结果融合', description: '聚合多路结果，生成综合诊断报告', icon: Bot, duration: 180 },
+    ],
+    selectorCandidates: [
+      {
+        route_type: 'fta',
+        route_target: 'incident-diagnosis',
+        label: 'FTA 故障树',
+        icon: GitBranch,
+        confidence: 0.90,
+        matched_keywords: ['内存', '重启', 'Pod'],
+        reasoning: '包含"重启""内存"等故障诊断关键词，需要多维度根因分析',
+        selected: true,
+      },
+      {
+        route_type: 'skill',
+        route_target: 'metrics-checker',
+        label: 'Skill 指标检查',
+        icon: Zap,
+        confidence: 0.86,
+        matched_keywords: ['内存', '使用率', '91%'],
+        reasoning: '涉及"内存使用率"指标数据，匹配 metrics-checker 技能',
+      },
+      {
+        route_type: 'skill',
+        route_target: 'log-analyzer',
+        label: 'Skill 日志分析',
+        icon: FileText,
+        confidence: 0.52,
+        matched_keywords: ['Pod'],
+        reasoning: '"Pod 重启"可能需要日志分析，但输入未显式提及日志',
+      },
+      {
+        route_type: 'rag',
+        route_target: 'support-knowledge-base',
+        label: 'RAG 知识检索',
+        icon: BookOpen,
+        confidence: 0.41,
+        matched_keywords: [],
+        reasoning: '无"怎么""如何""文档"等知识查询关键词，置信度低',
+      },
+      {
+        route_type: 'code_analysis',
+        route_target: 'static-analyzer',
+        label: '代码分析',
+        icon: Code2,
+        confidence: 0.12,
+        matched_keywords: [],
+        reasoning: '无代码相关关键词，不匹配',
+      },
+      {
+        route_type: 'direct',
+        route_target: '',
+        label: '直接对话',
+        icon: MessageSquare,
+        confidence: 0.08,
+        matched_keywords: [],
+        reasoning: '存在明确的技术意图，非闲聊类',
+      },
     ],
     response: {
-      content: `## 诊断结果\n\n- 集群节点数：12/12 Ready\n- etcd 集群健康：3/3 members\n- 异常节点：\`cn-hangzhou.10.0.3.47\` 内存 91.3%，OOM 风险\n- 3 Pod 处于 CrashLoopBackOff\n\n**建议**：kubectl drain 后扩容节点池`,
+      content: `## Selector 路由决策\n\n**输入解析**：检测到节点级故障 + 资源指标异常 + Pod 级联影响\n\n**路由裁决**：\n- FTA 故障树 → 0.90（主路由，负责根因定位）\n- metrics-checker → 0.86（辅助路由，采集指标数据）\n- log-analyzer → 0.52（未达阈值，跳过）\n- RAG / Code / Direct → < 0.50（排除）\n\n## 诊断结果\n\n- 集群节点数：12/12 Ready\n- etcd 集群健康：3/3 members\n- 异常节点：\`cn-hangzhou.10.0.3.47\` 内存 91.3%，OOM 风险\n- 3 Pod 处于 CrashLoopBackOff\n\n**建议**：kubectl drain 后扩容节点池`,
       route_type: 'multi',
       confidence: 0.91,
       metadata: { latency_ms: 1230, model: 'qwen-max' },
@@ -367,6 +443,128 @@ function StepIndicator({ step, index, total, active, completed }: {
   );
 }
 
+/** Selector 候选路由对比面板 */
+function SelectorDecisionPanel({
+  candidates,
+  revealCount,
+  showWinner,
+}: {
+  candidates: SelectorCandidate[];
+  revealCount: number;
+  showWinner: boolean;
+}) {
+  const sorted = [...candidates].sort((a, b) => b.confidence - a.confidence);
+  const maxConf = sorted[0]?.confidence ?? 1;
+
+  return (
+    <div className="rounded-lg border bg-card overflow-hidden">
+      {/* header */}
+      <div className="px-3 py-2 border-b bg-muted/40 flex items-center gap-2">
+        <Brain className="h-3.5 w-3.5 text-primary" />
+        <span className="text-xs font-medium">Selector 语料类型评估</span>
+        <span className="text-[10px] text-muted-foreground ml-auto">
+          {revealCount}/{sorted.length} 已评估
+        </span>
+      </div>
+
+      <div className="divide-y">
+        {sorted.map((c, i) => {
+          const revealed = i < revealCount;
+          const isWinner = showWinner && c.selected;
+          const CIcon = c.icon;
+          const barPct = (c.confidence / maxConf) * 100;
+          const confColor =
+            c.confidence >= 0.8 ? 'bg-green-500' : c.confidence >= 0.6 ? 'bg-yellow-500' : 'bg-muted-foreground/30';
+
+          return (
+            <div
+              key={c.route_type + c.route_target}
+              className={cn(
+                'px-3 py-2 transition-all duration-500',
+                !revealed && 'opacity-30',
+                isWinner && 'bg-green-500/5 ring-1 ring-inset ring-green-500/30',
+              )}
+            >
+              {/* 第一行：类型 + 置信度 */}
+              <div className="flex items-center gap-2">
+                <CIcon className={cn('h-3.5 w-3.5 shrink-0', isWinner ? 'text-green-500' : 'text-muted-foreground')} />
+                <span className={cn('text-xs font-medium flex-1', isWinner && 'text-green-600 dark:text-green-400')}>
+                  {c.label}
+                  {c.route_target && (
+                    <span className="text-muted-foreground font-normal ml-1">→ {c.route_target}</span>
+                  )}
+                </span>
+                {isWinner && (
+                  <Badge variant="default" className="text-[9px] px-1.5 py-0 h-4 bg-green-500 hover:bg-green-500">
+                    ✓ 选中
+                  </Badge>
+                )}
+                <span
+                  className={cn(
+                    'text-xs font-mono tabular-nums',
+                    c.confidence >= 0.8
+                      ? 'text-green-600 dark:text-green-400 font-semibold'
+                      : c.confidence >= 0.6
+                        ? 'text-yellow-600 dark:text-yellow-400'
+                        : 'text-muted-foreground',
+                  )}
+                >
+                  {revealed ? `${(c.confidence * 100).toFixed(0)}%` : '—'}
+                </span>
+              </div>
+
+              {/* 置信度条 */}
+              {revealed && (
+                <div className="mt-1.5 flex items-center gap-2">
+                  <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={cn('h-full rounded-full transition-all duration-700', confColor)}
+                      style={{ width: `${barPct}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* 匹配关键词 + 推理 */}
+              {revealed && (
+                <div className="mt-1 flex flex-wrap items-center gap-1">
+                  {c.matched_keywords.length > 0 ? (
+                    c.matched_keywords.map((kw) => (
+                      <span
+                        key={kw}
+                        className="inline-flex text-[10px] px-1.5 py-0 rounded bg-primary/10 text-primary"
+                      >
+                        {kw}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground italic">无关键词命中</span>
+                  )}
+                  <span className="text-[10px] text-muted-foreground ml-auto max-w-[60%] truncate" title={c.reasoning}>
+                    {c.reasoning}
+                  </span>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* footer - 决策结论 */}
+      {showWinner && (
+        <div className="px-3 py-2 border-t bg-green-500/5">
+          <div className="flex items-center gap-1.5 text-[11px]">
+            <ArrowRight className="h-3 w-3 text-green-500" />
+            <span className="text-green-600 dark:text-green-400 font-medium">
+              裁决：FTA 故障树（主路由）+ metrics-checker（辅助路由）→ Multi-Agent 协作
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Demo() {
   const [running, setRunning] = useState(false);
   const [activeScenario, setActiveScenario] = useState<DemoScenario | null>(null);
@@ -376,6 +574,10 @@ export default function Demo() {
   const [progress, setProgress] = useState(0);
   const responseRef = useRef<HTMLDivElement>(null);
 
+  // Selector 候选揭示计数 & 裁决标记
+  const [selectorReveal, setSelectorReveal] = useState(0);
+  const [selectorWinner, setSelectorWinner] = useState(false);
+
   const runDemo = async (scenario: DemoScenario) => {
     setRunning(true);
     setActiveScenario(scenario);
@@ -383,14 +585,33 @@ export default function Demo() {
     setCompletedSteps([]);
     setShowResponse(false);
     setProgress(0);
+    setSelectorReveal(0);
+    setSelectorWinner(false);
 
     const totalDuration = scenario.steps.reduce((acc, s) => acc + (s.duration || 0), 0);
     let elapsed = 0;
+    const candidateCount = scenario.selectorCandidates?.length ?? 0;
 
     for (let i = 0; i < scenario.steps.length; i++) {
       setCurrentStep(i);
-      const step = scenario.steps[i];
-      const stepDuration = step?.duration ?? 0;
+      const step = scenario.steps[i]!;
+      const stepDuration = step.duration ?? 0;
+
+      // 在 "候选评估" 步骤期间逐个揭示候选者
+      const isCandidateStep = candidateCount > 0 && step.label === '候选评估';
+      const revealInterval = isCandidateStep ? stepDuration / (candidateCount + 1) : 0;
+      let revealTimer: ReturnType<typeof setInterval> | null = null;
+      let revealed = 0;
+
+      if (isCandidateStep) {
+        revealTimer = setInterval(() => {
+          revealed++;
+          setSelectorReveal(revealed);
+          if (revealed >= candidateCount && revealTimer) {
+            clearInterval(revealTimer);
+          }
+        }, revealInterval);
+      }
 
       await new Promise((resolve) => {
         const interval = setInterval(() => {
@@ -402,6 +623,14 @@ export default function Demo() {
           }
         }, 50);
       });
+
+      if (revealTimer) clearInterval(revealTimer);
+      if (isCandidateStep) setSelectorReveal(candidateCount);
+
+      // 在 "路由裁决" 步骤完成时标记胜者
+      if (candidateCount > 0 && step!.label === '路由裁决') {
+        setSelectorWinner(true);
+      }
 
       setCompletedSteps((prev) => [...prev, i]);
       elapsed = 0;
@@ -541,18 +770,31 @@ export default function Demo() {
                 <CardTitle className="text-sm">执行流程</CardTitle>
               </CardHeader>
               <CardContent className="flex-1">
-                <div className="space-y-0">
-                  {activeScenario.steps.map((step, index) => (
-                    <StepIndicator
-                      key={index}
-                      step={step}
-                      index={index}
-                      total={activeScenario.steps.length}
-                      active={currentStep === index && running}
-                      completed={completedSteps.includes(index)}
-                    />
-                  ))}
-                </div>
+                <ScrollArea className="h-full">
+                  <div className="space-y-0">
+                    {activeScenario.steps.map((step, index) => (
+                      <StepIndicator
+                        key={index}
+                        step={step}
+                        index={index}
+                        total={activeScenario.steps.length}
+                        active={currentStep === index && running}
+                        completed={completedSteps.includes(index)}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Selector 决策面板 — 仅当场景包含候选数据时渲染 */}
+                  {activeScenario.selectorCandidates && (selectorReveal > 0 || selectorWinner) && (
+                    <div className="mt-4">
+                      <SelectorDecisionPanel
+                        candidates={activeScenario.selectorCandidates}
+                        revealCount={selectorReveal}
+                        showWinner={selectorWinner}
+                      />
+                    </div>
+                  )}
+                </ScrollArea>
               </CardContent>
             </Card>
 

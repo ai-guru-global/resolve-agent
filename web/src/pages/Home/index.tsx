@@ -28,6 +28,8 @@ import {
   EyeOff,
   Library,
   Braces,
+  Route,
+  Scan,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -217,12 +219,20 @@ function SectionHeader({ badge, title, subtitle }: { badge: string; title: strin
 
 /* ═══════════════════ HERO SECTION ═══════════════════ */
 
+const CORE_INNOVATIONS = [
+  { label: '智能选择器', desc: 'LLM 驱动元路由', icon: Route, color: 'hsl(40 92% 52%)' },
+  { label: 'FTA 引擎', desc: '故障树分析诊断', icon: GitBranch, color: 'hsl(280 60% 55%)' },
+  { label: '技能系统', desc: '沙箱化原子执行', icon: Zap, color: 'hsl(142 71% 45%)' },
+  { label: 'RAG 管道', desc: '检索增强生成', icon: Database, color: 'hsl(200 70% 50%)' },
+  { label: '代码分析', desc: '静态+动态引擎', icon: Scan, color: 'hsl(25 80% 55%)' },
+];
+
 function HeroSection({ onScrollDown: _onScrollDown }: { onScrollDown: () => void }) {
   const navigate = useNavigate();
 
   return (
-    <section className="relative min-h-[420px] flex items-center">
-      <div className="relative max-w-4xl mx-auto px-4 py-20">
+    <section className="relative min-h-[520px] flex items-center">
+      <div className="relative max-w-5xl mx-auto px-4 py-20">
         {/* Status pill */}
         <div className="inline-flex items-center gap-2.5 rounded-full border border-border bg-card px-4 py-1.5 mb-10 animate-slide-up">
           <span className="relative flex h-1.5 w-1.5">
@@ -237,15 +247,30 @@ function HeroSection({ onScrollDown: _onScrollDown }: { onScrollDown: () => void
           Resolve Agent
         </h1>
 
-        <p className="animate-slide-up text-lg text-muted-foreground mb-2 max-w-md" style={{ animationDelay: '0.2s' }}>
-          面向问题解决的综合智能体
-        </p>
-        <p className="animate-slide-up text-[11px] text-muted-foreground/60 max-w-md mb-10 tracking-wider uppercase" style={{ animationDelay: '0.25s' }}>
-          Agent Harness Engineering · AIOps · Intelligent Routing
+        <p className="animate-slide-up text-lg text-muted-foreground mb-3 max-w-lg" style={{ animationDelay: '0.2s' }}>
+          面向问题解决的综合智能体 — 通过智能路由协调五大核心引擎，实现自适应故障诊断与知识检索
         </p>
 
+        {/* Core Innovations Pills */}
+        <div className="animate-slide-up flex flex-wrap items-center gap-2 mb-10" style={{ animationDelay: '0.28s' }}>
+          {CORE_INNOVATIONS.map((item) => (
+            <span
+              key={item.label}
+              className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200 hover:scale-[1.03]"
+              style={{
+                borderColor: `color-mix(in srgb, ${item.color} 25%, transparent)`,
+                backgroundColor: `color-mix(in srgb, ${item.color} 6%, transparent)`,
+              }}
+            >
+              <item.icon className="h-3 w-3" style={{ color: item.color }} />
+              <span className="font-semibold" style={{ color: item.color }}>{item.label}</span>
+              <span className="text-muted-foreground/60 hidden sm:inline">· {item.desc}</span>
+            </span>
+          ))}
+        </div>
+
         {/* CTA Buttons */}
-        <div className="animate-slide-up flex flex-col sm:flex-row items-start gap-3" style={{ animationDelay: '0.35s' }}>
+        <div className="animate-slide-up flex flex-col sm:flex-row items-start gap-3" style={{ animationDelay: '0.38s' }}>
           <button
             onClick={() => navigate('/agents')}
             className="group inline-flex items-center gap-2.5 rounded-lg bg-foreground text-background px-6 py-2.5 text-sm font-semibold transition-all duration-200 hover:opacity-90 active:scale-[0.98]"
@@ -264,6 +289,298 @@ function HeroSection({ onScrollDown: _onScrollDown }: { onScrollDown: () => void
         </div>
       </div>
     </section>
+  );
+}
+
+/* ═══════════════ ARCHITECTURE COMPARISON ═══════════════ */
+
+const ARCH_COLORS = {
+  bg: 'hsl(var(--background))',
+  card: 'hsl(var(--card))',
+  border: 'hsl(var(--border))',
+  text: 'hsl(var(--foreground))',
+  muted: 'hsl(var(--muted-foreground))',
+  amber: 'hsl(40 92% 52%)',
+  green: 'hsl(142 71% 45%)',
+  purple: 'hsl(280 60% 55%)',
+  blue: 'hsl(200 70% 50%)',
+  orange: 'hsl(25 80% 55%)',
+  red: 'hsl(0 72% 51%)',
+};
+
+function ArchitectureComparison() {
+  return (
+    <section className="max-w-6xl mx-auto px-4 py-16">
+      <SectionHeader
+        badge="Architecture Evolution"
+        title="架构演进对比"
+        subtitle="从传统 Agent 到 ResolveAgent — 理解智能体平台的三代架构范式差异"
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* ── 传统 Agent 架构 ── */}
+        <div className="rounded-xl border border-border/50 bg-card/30 p-5 transition-all hover:border-border">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+              <Bot className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div>
+              <h3 className="text-sm font-display font-bold">传统 Agent</h3>
+              <p className="text-[10px] text-muted-foreground">固定流水线</p>
+            </div>
+          </div>
+          <div className="space-y-2 mb-4">
+            {[
+              { label: '用户输入', sub: 'User Query' },
+              { label: '固定 Prompt', sub: 'Static Template' },
+              { label: 'LLM 调用', sub: 'Single Model' },
+              { label: '固定输出', sub: 'Response' },
+            ].map((step, i) => (
+              <div key={step.label}>
+                <div className="flex items-center gap-2 rounded-md border border-border/40 bg-background/50 px-3 py-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded text-[10px] font-bold text-muted-foreground bg-muted">
+                    {i + 1}
+                  </span>
+                  <div className="flex-1">
+                    <p className="text-[11px] font-medium">{step.label}</p>
+                    <p className="text-[9px] text-muted-foreground">{step.sub}</p>
+                  </div>
+                </div>
+                {i < 3 && <div className="flex justify-center"><ArrowDown className="h-3 w-3 text-muted-foreground/20 my-0.5" /></div>}
+              </div>
+            ))}
+          </div>
+          <div className="rounded-md bg-muted/30 border border-border/30 p-2.5">
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              <span className="font-semibold text-foreground/70">局限</span> — 单一处理路径，无法根据意图动态调度，缺少工具执行和知识检索能力
+            </p>
+          </div>
+        </div>
+
+        {/* ── Agent Harness 架构 ── */}
+        <div className="rounded-xl border border-primary/20 bg-card/50 p-5 transition-all hover:border-primary/30">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: `color-mix(in srgb, ${ARCH_COLORS.amber} 12%, transparent)` }}>
+              <Shield className="h-4 w-4" style={{ color: ARCH_COLORS.amber }} />
+            </div>
+            <div>
+              <h3 className="text-sm font-display font-bold">Agent Harness</h3>
+              <p className="text-[10px] text-muted-foreground">Model + 非模型逻辑</p>
+            </div>
+          </div>
+          <div className="space-y-2 mb-4">
+            <div className="flex items-center gap-2 rounded-md border border-border/40 bg-background/50 px-3 py-2">
+              <Bot className="h-3.5 w-3.5 text-muted-foreground" />
+              <div className="flex-1">
+                <p className="text-[11px] font-medium">用户输入</p>
+              </div>
+            </div>
+            <div className="flex justify-center"><ArrowDown className="h-3 w-3 text-muted-foreground/20 my-0.5" /></div>
+            <div className="rounded-lg border-2 border-dashed border-primary/15 bg-primary/[0.02] p-2.5 space-y-1.5">
+              <p className="text-[9px] text-primary/60 font-semibold uppercase tracking-wider">Harness Layer</p>
+              {[
+                { label: 'Hooks / 中间件', icon: Shield },
+                { label: 'Orchestration', icon: Workflow },
+                { label: 'Tool 执行', icon: Zap },
+                { label: 'Memory / 上下文', icon: MemoryStick },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-2 rounded border border-border/30 bg-background/40 px-2.5 py-1.5">
+                  <item.icon className="h-3 w-3 text-primary/50" />
+                  <span className="text-[10px] font-medium">{item.label}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-center"><ArrowDown className="h-3 w-3 text-muted-foreground/20 my-0.5" /></div>
+            <div className="flex items-center gap-2 rounded-md border border-border/40 bg-background/50 px-3 py-2">
+              <Brain className="h-3.5 w-3.5 text-muted-foreground" />
+              <div className="flex-1">
+                <p className="text-[11px] font-medium">LLM 推理</p>
+                <p className="text-[9px] text-muted-foreground">多模型可切换</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-md bg-primary/[0.03] border border-primary/15 p-2.5">
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              <span className="font-semibold text-foreground/70">进步</span> — 将模型与非模型逻辑分离，支持生命周期管理，但缺少专用子系统协调能力
+            </p>
+          </div>
+        </div>
+
+        {/* ── ResolveAgent 综合架构 ── */}
+        <div className="rounded-xl border-2 border-primary/25 bg-card/60 p-5 transition-all hover:border-primary/35 relative overflow-hidden">
+          {/* Highlight badge */}
+          <div className="absolute top-3 right-3">
+            <span className="text-[9px] font-semibold bg-primary text-primary-foreground px-2 py-0.5 rounded-full">ResolveAgent</span>
+          </div>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground">
+              <span className="text-[10px] font-display font-extrabold text-background">R</span>
+            </div>
+            <div>
+              <h3 className="text-sm font-display font-bold">ResolveAgent</h3>
+              <p className="text-[10px] text-muted-foreground">Harness + 智能路由 + 五大引擎</p>
+            </div>
+          </div>
+          <div className="space-y-2 mb-4">
+            <div className="flex items-center gap-2 rounded-md border border-border/40 bg-background/50 px-3 py-2">
+              <Bot className="h-3.5 w-3.5 text-muted-foreground" />
+              <p className="text-[11px] font-medium flex-1">用户输入</p>
+            </div>
+            <div className="flex justify-center"><ArrowDown className="h-3 w-3 text-primary/30 my-0.5" /></div>
+
+            {/* Intelligent Selector */}
+            <div className="rounded-lg border border-primary/20 p-2.5" style={{ backgroundColor: `color-mix(in srgb, ${ARCH_COLORS.amber} 5%, transparent)` }}>
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Route className="h-3 w-3" style={{ color: ARCH_COLORS.amber }} />
+                <span className="text-[10px] font-bold" style={{ color: ARCH_COLORS.amber }}>智能选择器</span>
+                <span className="text-[8px] text-muted-foreground ml-auto">Intent → Context → Route</span>
+              </div>
+              <div className="flex gap-1">
+                {['规则', 'LLM', '混合'].map((s) => (
+                  <span key={s} className="text-[8px] rounded bg-background/60 border border-border/30 px-1.5 py-0.5 text-muted-foreground">{s}</span>
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-center"><ArrowDown className="h-3 w-3 text-primary/30 my-0.5" /></div>
+
+            {/* Five Engines */}
+            <div className="grid grid-cols-2 gap-1.5">
+              {[
+                { label: 'FTA 引擎', icon: GitBranch, color: ARCH_COLORS.purple },
+                { label: '技能系统', icon: Zap, color: ARCH_COLORS.green },
+                { label: 'RAG 管道', icon: Database, color: ARCH_COLORS.blue },
+                { label: '代码分析', icon: Scan, color: ARCH_COLORS.orange },
+              ].map((eng) => (
+                <div
+                  key={eng.label}
+                  className="flex items-center gap-1.5 rounded border px-2 py-1.5"
+                  style={{
+                    borderColor: `color-mix(in srgb, ${eng.color} 20%, transparent)`,
+                    backgroundColor: `color-mix(in srgb, ${eng.color} 4%, transparent)`,
+                  }}
+                >
+                  <eng.icon className="h-3 w-3" style={{ color: eng.color }} />
+                  <span className="text-[10px] font-semibold" style={{ color: eng.color }}>{eng.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-md bg-primary/[0.04] border border-primary/15 p-2.5">
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              <span className="font-semibold text-foreground/70">创新</span> — 智能选择器动态路由 + 五大引擎协同执行，自适应工作流调度，上下文增强决策
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Architecture Flow SVG */}
+      <div className="mt-8 rounded-xl border border-border/50 bg-card/30 p-6 overflow-x-auto">
+        <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-muted-foreground mb-5">ResolveAgent 完整数据流</p>
+        <ArchFlowDiagram />
+      </div>
+    </section>
+  );
+}
+
+function ArchFlowDiagram() {
+  const W = 860;
+  const H = 340;
+  const C = {
+    bg: '#f8f6f3', stroke: '#4a4a4a', text: '#1a1a1a', muted: '#6a6a6a', arrow: '#5a5a5a',
+    amber: '#e4a83c', green: '#48b07a', purple: '#9466cc', blue: '#3a9fd6', orange: '#d97a3e',
+    blueBg: '#e8f0f8', greenBg: '#e4f5ec', purpleBg: '#f0e8f8', orangeBg: '#fdf0e4', amberBg: '#fdf4e0',
+    grayBg: '#eeedeb',
+  };
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: W, margin: '0 auto', display: 'block' }} xmlns="http://www.w3.org/2000/svg">
+      <style>{`text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }`}</style>
+      <defs>
+        <marker id="af-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+          <polygon points="0 0, 8 4, 0 8" fill={C.arrow} />
+        </marker>
+        <filter id="af-shadow" x="-5%" y="-5%" width="110%" height="115%">
+          <feDropShadow dx="0" dy="1" stdDeviation="3" floodColor="#00000008" />
+        </filter>
+      </defs>
+      <rect width={W} height={H} fill={C.bg} rx="8" />
+
+      {/* Row 1: User Request */}
+      <rect x={350} y={16} width={160} height={36} rx={10} fill={C.blueBg} stroke={C.stroke} strokeWidth={1.5} />
+      <text x={430} y={38} textAnchor="middle" fill={C.text} fontSize={11} fontWeight={600}>User Request</text>
+
+      {/* Arrow to Selector */}
+      <line x1={430} y1={52} x2={430} y2={76} stroke={C.arrow} strokeWidth={1.5} markerEnd="url(#af-arrow)" />
+
+      {/* Row 2: Intelligent Selector */}
+      <rect x={240} y={80} width={380} height={52} rx={12} fill={C.amberBg} stroke={C.amber} strokeWidth={2} filter="url(#af-shadow)" />
+      <text x={310} y={100} fill={C.amber} fontSize={11} fontWeight={700}>Intelligent Selector</text>
+      <text x={310} y={118} fill={C.muted} fontSize={9}>Intent Analysis → Context Enrichment → Route Decision</text>
+      {/* Strategy badges */}
+      <rect x={530} y={91} width={38} height={16} rx={4} fill="rgba(228,168,60,0.15)" />
+      <text x={549} y={103} textAnchor="middle" fill={C.amber} fontSize={8} fontWeight={600}>Rule</text>
+      <rect x={572} y={91} width={38} height={16} rx={4} fill="rgba(228,168,60,0.15)" />
+      <text x={591} y={103} textAnchor="middle" fill={C.amber} fontSize={8} fontWeight={600}>LLM</text>
+
+      {/* Arrows to 5 engines */}
+      <line x1={210} y1={132} x2={120} y2={162} stroke={C.arrow} strokeWidth={1.5} markerEnd="url(#af-arrow)" />
+      <line x1={330} y1={132} x2={280} y2={162} stroke={C.arrow} strokeWidth={1.5} markerEnd="url(#af-arrow)" />
+      <line x1={430} y1={132} x2={430} y2={162} stroke={C.arrow} strokeWidth={1.5} markerEnd="url(#af-arrow)" />
+      <line x1={530} y1={132} x2={580} y2={162} stroke={C.arrow} strokeWidth={1.5} markerEnd="url(#af-arrow)" />
+      <line x1={650} y1={132} x2={730} y2={162} stroke={C.arrow} strokeWidth={1.5} markerEnd="url(#af-arrow)" />
+
+      {/* Row 3: Five Engines */}
+      {/* FTA Engine */}
+      <rect x={40} y={166} width={150} height={56} rx={10} fill={C.purpleBg} stroke={C.purple} strokeWidth={1.5} filter="url(#af-shadow)" />
+      <text x={115} y={188} textAnchor="middle" fill={C.purple} fontSize={11} fontWeight={700}>FTA 引擎</text>
+      <text x={115} y={204} textAnchor="middle" fill={C.muted} fontSize={8}>故障树 · 最小割集 · MC仿真</text>
+
+      {/* Skills System */}
+      <rect x={205} y={166} width={150} height={56} rx={10} fill={C.greenBg} stroke={C.green} strokeWidth={1.5} filter="url(#af-shadow)" />
+      <text x={280} y={188} textAnchor="middle" fill={C.green} fontSize={11} fontWeight={700}>技能系统</text>
+      <text x={280} y={204} textAnchor="middle" fill={C.muted} fontSize={8}>沙箱执行 · 原子化能力单元</text>
+
+      {/* RAG Pipeline */}
+      <rect x={370} y={166} width={150} height={56} rx={10} fill={C.blueBg} stroke={C.blue} strokeWidth={1.5} filter="url(#af-shadow)" />
+      <text x={445} y={188} textAnchor="middle" fill={C.blue} fontSize={11} fontWeight={700}>RAG 管道</text>
+      <text x={445} y={204} textAnchor="middle" fill={C.muted} fontSize={8}>BGE嵌入 · 三级重排 · 向量检索</text>
+
+      {/* Code Analysis */}
+      <rect x={535} y={166} width={150} height={56} rx={10} fill={C.orangeBg} stroke={C.orange} strokeWidth={1.5} filter="url(#af-shadow)" />
+      <text x={610} y={188} textAnchor="middle" fill={C.orange} fontSize={11} fontWeight={700}>代码分析</text>
+      <text x={610} y={204} textAnchor="middle" fill={C.muted} fontSize={8}>AST调用图 · 动态依赖分析</text>
+
+      {/* Ticket Summary */}
+      <rect x={700} y={166} width={150} height={56} rx={10} fill={C.grayBg} stroke={C.stroke} strokeWidth={1.5} filter="url(#af-shadow)" />
+      <text x={775} y={188} textAnchor="middle" fill={C.text} fontSize={11} fontWeight={700}>工单摘要</text>
+      <text x={775} y={204} textAnchor="middle" fill={C.muted} fontSize={8}>知识生产 · 经验沉淀</text>
+
+      {/* Arrows to data layer */}
+      <line x1={115} y1={222} x2={115} y2={248} stroke={C.arrow} strokeWidth={1} strokeDasharray="4,3" markerEnd="url(#af-arrow)" />
+      <line x1={280} y1={222} x2={280} y2={248} stroke={C.arrow} strokeWidth={1} strokeDasharray="4,3" markerEnd="url(#af-arrow)" />
+      <line x1={445} y1={222} x2={445} y2={248} stroke={C.arrow} strokeWidth={1} strokeDasharray="4,3" markerEnd="url(#af-arrow)" />
+      <line x1={610} y1={222} x2={610} y2={248} stroke={C.arrow} strokeWidth={1} strokeDasharray="4,3" markerEnd="url(#af-arrow)" />
+      <line x1={775} y1={222} x2={775} y2={248} stroke={C.arrow} strokeWidth={1} strokeDasharray="4,3" markerEnd="url(#af-arrow)" />
+
+      {/* Row 4: Shared Infrastructure */}
+      <rect x={40} y={252} width={810} height={40} rx={10} fill={C.grayBg} stroke={C.stroke} strokeWidth={1.5} />
+      <text x={W / 2} y={268} textAnchor="middle" fill={C.text} fontSize={11} fontWeight={600}>Shared Data Layer</text>
+      <text x={W / 2} y={282} textAnchor="middle" fill={C.muted} fontSize={9}>PostgreSQL · Redis · NATS · Milvus / Qdrant · Go Registry (Single Source of Truth)</text>
+
+      {/* Layer labels */}
+      <text x={20} y={38} fill={C.muted} fontSize={9} fontWeight={600}>Input</text>
+      <text x={20} y={108} fill={C.muted} fontSize={9} fontWeight={600}>Router</text>
+      <text x={20} y={196} fill={C.muted} fontSize={9} fontWeight={600}>Engines</text>
+      <text x={20} y={274} fill={C.muted} fontSize={9} fontWeight={600}>Data</text>
+
+      {/* Legend */}
+      <g transform="translate(680, 298)">
+        <text x={0} y={12} fill={C.muted} fontSize={8}>动态路由</text>
+        <line x1={42} y1={9} x2={62} y2={9} stroke={C.arrow} strokeWidth={1.5} markerEnd="url(#af-arrow)" />
+        <text x={80} y={12} fill={C.muted} fontSize={8}>数据流</text>
+        <line x1={112} y1={9} x2={132} y2={9} stroke={C.arrow} strokeWidth={1} strokeDasharray="4,3" markerEnd="url(#af-arrow)" />
+      </g>
+    </svg>
   );
 }
 
@@ -893,15 +1210,13 @@ export default function Home() {
   return (
     <div className="min-h-full -m-6 overflow-y-auto">
       <HeroSection onScrollDown={handleScrollDown} />
-      <HarnessArchitecture />
+      <ArchitectureComparison />
 
       <div ref={modesRef} className="scroll-mt-4">
         <ModesComparison />
       </div>
 
       <InteractiveDemo />
-      <CapabilitiesSection />
-      <StatsBar />
 
       {/* Footer */}
       <footer className="max-w-4xl mx-auto px-4 pt-4 pb-10">

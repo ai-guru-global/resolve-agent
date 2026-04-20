@@ -95,7 +95,7 @@ class SkillCorpusImporter:
             except Exception as e:
                 logger.warning(
                     "Failed to register skill",
-                    extra={"name": adapted.name, "error": str(e)},
+                    extra={"skill_name": adapted.name, "error": str(e)},
                 )
 
         # 2. Import runbook body into RAG for semantic search

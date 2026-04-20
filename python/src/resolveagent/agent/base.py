@@ -30,7 +30,7 @@ class BaseAgent:
         self._config = kwargs
         self._memory: list[dict[str, Any]] = []
 
-        logger.info("Agent initialized", extra={"name": name, "model": model_id})
+        logger.info("Agent initialized", extra={"agent_name": name, "model": model_id})
 
     async def reply(self, message: dict[str, Any]) -> dict[str, Any]:
         """Process a message and generate a reply.

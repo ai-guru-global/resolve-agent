@@ -30,6 +30,10 @@ import {
   Braces,
   Route,
   Scan,
+  Blocks,
+  TrendingUp,
+  Users,
+  Gauge,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -625,14 +629,14 @@ function HarnessArchitecture() {
 /* ═══════════════ TWO MODES — HARNESS EXECUTION ═══════════════ */
 
 function ModesComparison() {
-  const [activeMode, setActiveMode] = useState<'all' | 'selector'>('all');
+  const [activeMode, setActiveMode] = useState<'all' | 'agentscope' | 'selector'>('all');
 
   return (
     <section className="max-w-5xl mx-auto px-4 py-16">
       <SectionHeader
         badge="Harness Execution Modes"
-        title="两种 Harness 执行模式"
-        subtitle="Harness 编排逻辑决定 Agent 如何调度 Tools/Skills"
+        title="Resolve Agent 的三种执行模式"
+        subtitle="Harness 编排逻辑决定 Agent 如何调度 Tools/Skills — 从全量触发到智能路由到自主推理"
       />
 
       {/* Mode toggle */}
@@ -649,6 +653,16 @@ function ModesComparison() {
             全 Skills 模式
           </button>
           <button
+            onClick={() => setActiveMode('agentscope')}
+            className={cn(
+              'rounded-md px-5 py-2 text-sm font-medium transition-all duration-200',
+              activeMode === 'agentscope' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <Blocks className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
+            AgentScope 插件模式
+          </button>
+          <button
             onClick={() => setActiveMode('selector')}
             className={cn(
               'rounded-md px-5 py-2 text-sm font-medium transition-all duration-200',
@@ -661,13 +675,14 @@ function ModesComparison() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      {/* ── Three Mode Cards ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* All Skills Mode */}
         <div className={cn(
           'rounded-xl border p-6 transition-all duration-300',
           activeMode === 'all' ? 'border-foreground/20 bg-card' : 'border-border bg-card/50 opacity-50',
         )}>
-          <div className="flex items-center gap-3 mb-5">
+          <div className="flex items-center gap-3 mb-4">
             <Layers className="h-5 w-5" />
             <div>
               <h3 className="text-base font-display font-bold">全 Skills 模式</h3>
@@ -675,7 +690,14 @@ function ModesComparison() {
             </div>
           </div>
 
-          <div className="space-y-1 mb-5">
+          {/* Scenario badge */}
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            <span className="text-[9px] font-semibold rounded-full border border-border bg-muted px-2 py-0.5 text-muted-foreground">简单并行</span>
+            <span className="text-[9px] font-semibold rounded-full border border-border bg-muted px-2 py-0.5 text-muted-foreground">全量扫描</span>
+            <span className="text-[9px] font-semibold rounded-full border border-border bg-muted px-2 py-0.5 text-muted-foreground">通用架构</span>
+          </div>
+
+          <div className="space-y-1 mb-4">
             {SKILLS.map((skill) => (
               <div key={skill.id} className="flex items-center gap-3 rounded-md border border-border bg-background px-3 py-2">
                 <skill.icon className="h-3.5 w-3.5 text-muted-foreground" />
@@ -686,21 +708,97 @@ function ModesComparison() {
           </div>
 
           <p className="text-[11px] text-muted-foreground leading-relaxed border-t border-border pt-4">
-            全面覆盖所有分析维度 · 并行执行效率最大化 · 综合结果聚合输出
+            全面覆盖所有分析维度 · 并行执行效率最大化 · 兼容通用 Agent 架构
+          </p>
+        </div>
+
+        {/* AgentScope Plugin Mode */}
+        <div className={cn(
+          'rounded-xl border p-6 transition-all duration-300',
+          activeMode === 'agentscope' ? 'border-foreground/20 bg-card' : 'border-border bg-card/50 opacity-50',
+        )}>
+          <div className="flex items-center gap-3 mb-4">
+            <Blocks className="h-5 w-5" />
+            <div>
+              <h3 className="text-base font-display font-bold">AgentScope 插件模式</h3>
+              <p className="text-xs text-muted-foreground">ReActAgent 自主推理 + 工具调用循环</p>
+            </div>
+          </div>
+
+          {/* Scenario badge */}
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            <span className="text-[9px] font-semibold rounded-full border border-border bg-muted px-2 py-0.5 text-muted-foreground">企业级部署</span>
+            <span className="text-[9px] font-semibold rounded-full border border-border bg-muted px-2 py-0.5 text-muted-foreground">多 Agent 协同</span>
+            <span className="text-[9px] font-semibold rounded-full border border-border bg-muted px-2 py-0.5 text-muted-foreground">大规模并发</span>
+          </div>
+
+          {/* ReAct Loop pipeline */}
+          <div className="border border-border rounded-lg bg-background p-3 mb-4">
+            <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-2 font-semibold">ReAct 推理循环</p>
+            <div className="flex items-center gap-1.5">
+              {[
+                { label: 'Thought', icon: Brain },
+                { label: 'Action', icon: Zap },
+                { label: 'Observation', icon: Eye },
+              ].map((step, i) => (
+                <div key={step.label} className="flex items-center gap-1.5 flex-1">
+                  <div className="flex-1 rounded-md border border-border bg-muted p-2 text-center">
+                    <step.icon className="h-3.5 w-3.5 mx-auto mb-0.5 text-foreground" />
+                    <p className="text-[10px] font-medium">{step.label}</p>
+                  </div>
+                  {i < 2 && <ChevronRight className="h-3 w-3 text-muted-foreground/30 shrink-0" />}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Bridge & Tool targets */}
+          <div className="space-y-1.5 mb-4">
+            <p className="text-[10px] text-muted-foreground/50 uppercase tracking-wider font-semibold px-1">Bridge 适配 & 工具集</p>
+            {[
+              { label: 'HigressChatModel', desc: 'LLM 网关路由', icon: Route },
+              { label: 'Selector 元工具', desc: '三阶段智能路由', icon: Target },
+              { label: 'FTA / RAG / Skill', desc: '子系统封装为 Tool', icon: Zap },
+              { label: 'MCP / A2A 协议', desc: '外部工具 & Agent 互操作', icon: Blocks },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center gap-2.5 rounded-md border border-border bg-background px-3 py-2">
+                <item.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="flex-1 min-w-0">
+                  <span className="text-[10px] font-medium">{item.label}</span>
+                  <span className="text-[9px] text-muted-foreground/50 ml-1.5">{item.desc}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-[11px] text-muted-foreground leading-relaxed border-t border-border pt-4">
+            自主推理循环 · 多 Agent 协作 (MsgHub) · MCP/A2A 协议扩展 · 社区生态复用
           </p>
         </div>
 
         {/* Selector Mode */}
         <div className={cn(
-          'rounded-xl border p-6 transition-all duration-300',
-          activeMode === 'selector' ? 'border-foreground/20 bg-card' : 'border-border bg-card/50 opacity-50',
+          'rounded-xl border p-6 transition-all duration-300 relative overflow-hidden',
+          activeMode === 'selector' ? 'border-primary/30 bg-card' : 'border-border bg-card/50 opacity-50',
         )}>
-          <div className="flex items-center gap-3 mb-5">
+          {/* Recommended badge */}
+          <div className="absolute top-3 right-3">
+            <span className="text-[9px] font-semibold bg-primary text-primary-foreground px-2 py-0.5 rounded-full">推荐</span>
+          </div>
+
+          <div className="flex items-center gap-3 mb-4">
             <Brain className="h-5 w-5" />
             <div>
               <h3 className="text-base font-display font-bold">选择器模式</h3>
-              <p className="text-xs text-muted-foreground">Harness 的 Orchestration Logic 分析意图后精准路由</p>
+              <p className="text-xs text-muted-foreground">自研精简架构，意图分析后精准路由</p>
             </div>
+          </div>
+
+          {/* Scenario badge */}
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            <span className="text-[9px] font-semibold rounded-full border border-primary/20 bg-primary/5 px-2 py-0.5 text-primary">最优路由</span>
+            <span className="text-[9px] font-semibold rounded-full border border-primary/20 bg-primary/5 px-2 py-0.5 text-primary">极致性能</span>
+            <span className="text-[9px] font-semibold rounded-full border border-primary/20 bg-primary/5 px-2 py-0.5 text-primary">最高智能化</span>
           </div>
 
           {/* Decision pipeline */}
@@ -724,7 +822,7 @@ function ModesComparison() {
           </div>
 
           {/* Route targets */}
-          <div className="grid grid-cols-2 gap-1.5 mb-5">
+          <div className="grid grid-cols-2 gap-1.5 mb-4">
             {ROUTE_TYPES.map((rt) => (
               <div key={rt.type} className="flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5">
                 <rt.icon className="h-3.5 w-3.5 text-muted-foreground" />
@@ -735,6 +833,110 @@ function ModesComparison() {
 
           <p className="text-[11px] text-muted-foreground leading-relaxed border-t border-border pt-4">
             精准路由降低资源消耗 · 置信度评分透明可审计 · 规则 + LLM 混合策略
+          </p>
+        </div>
+      </div>
+
+      {/* ── Comparison Table ── */}
+      <div className="mt-8 rounded-xl border border-border/50 bg-card/30 overflow-hidden">
+        <div className="px-5 py-3 border-b border-border/30 bg-background/40">
+          <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-muted-foreground">性能与特性对比</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-[11px]">
+            <thead>
+              <tr className="border-b border-border/30">
+                <th className="text-left font-semibold text-muted-foreground px-5 py-3 w-[28%]">对比维度</th>
+                <th className="text-center font-semibold text-muted-foreground px-3 py-3 w-[24%]">
+                  <Layers className="h-3 w-3 inline-block mr-1 -mt-0.5" />
+                  全 Skills
+                </th>
+                <th className="text-center font-semibold text-muted-foreground px-3 py-3 w-[24%]">
+                  <Blocks className="h-3 w-3 inline-block mr-1 -mt-0.5" />
+                  AgentScope
+                </th>
+                <th className="text-center font-semibold px-3 py-3 w-[24%]">
+                  <Brain className="h-3 w-3 inline-block mr-1 -mt-0.5" />
+                  选择器
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                {
+                  label: '路由智能化',
+                  icon: Route,
+                  all: { text: '40%', note: '无路由' },
+                  agentscope: { text: '75%', note: 'LLM 推理' },
+                  selector: { text: '100%', note: '混合策略', best: true },
+                },
+                {
+                  label: '决策延迟',
+                  icon: Gauge,
+                  all: { text: '~0ms', note: '无决策' },
+                  agentscope: { text: '~200ms', note: 'LLM 调用' },
+                  selector: { text: '3-45ms', note: '规则快路径', best: true },
+                },
+                {
+                  label: '并发能力',
+                  icon: Users,
+                  all: { text: '中', note: '单进程' },
+                  agentscope: { text: '高', note: 'MsgHub', best: true },
+                  selector: { text: '高', note: 'LRU 缓存' },
+                },
+                {
+                  label: '架构复杂度',
+                  icon: Layers,
+                  all: { text: '低', note: '直接并行' },
+                  agentscope: { text: '高', note: '7 适配器' },
+                  selector: { text: '中', note: '自研精简', best: true },
+                },
+                {
+                  label: '多 Agent 协作',
+                  icon: Blocks,
+                  all: { text: '—', note: '不支持' },
+                  agentscope: { text: '原生', note: 'MsgHub + A2A', best: true },
+                  selector: { text: '有限', note: 'Multi 路由' },
+                },
+                {
+                  label: '生态扩展',
+                  icon: TrendingUp,
+                  all: { text: '自研', note: '封闭' },
+                  agentscope: { text: '开放', note: 'MCP + 社区', best: true },
+                  selector: { text: '自研', note: '插件化' },
+                },
+              ].map((row) => (
+                <tr key={row.label} className="border-b border-border/15 last:border-0 hover:bg-muted/20 transition-colors">
+                  <td className="px-5 py-2.5 font-medium text-foreground">
+                    <div className="flex items-center gap-2">
+                      <row.icon className="h-3 w-3 text-muted-foreground/50" />
+                      {row.label}
+                    </div>
+                  </td>
+                  <td className="px-3 py-2.5 text-center">
+                    <span className="font-mono font-bold text-muted-foreground">{row.all.text}</span>
+                    <span className="block text-[9px] text-muted-foreground/50 mt-0.5">{row.all.note}</span>
+                  </td>
+                  <td className="px-3 py-2.5 text-center">
+                    <span className={cn('font-mono font-bold', row.agentscope.best ? 'text-primary' : 'text-muted-foreground')}>{row.agentscope.text}</span>
+                    <span className="block text-[9px] text-muted-foreground/50 mt-0.5">{row.agentscope.note}</span>
+                  </td>
+                  <td className="px-3 py-2.5 text-center">
+                    <span className={cn('font-mono font-bold', row.selector.best ? 'text-primary' : 'text-muted-foreground')}>{row.selector.text}</span>
+                    <span className="block text-[9px] text-muted-foreground/50 mt-0.5">{row.selector.note}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Recommendation footer */}
+        <div className="px-5 py-3 border-t border-border/30 bg-primary/[0.02]">
+          <p className="text-[10px] text-muted-foreground leading-relaxed">
+            <span className="font-semibold text-primary">推荐</span> — 生产环境首选<strong>选择器模式</strong>（路由精准 + 性能最优）；
+            需要多 Agent 协作或 MCP 生态接入时选择 <strong>AgentScope 插件模式</strong>；
+            简单全量扫描场景使用<strong>全 Skills 模式</strong>
           </p>
         </div>
       </div>

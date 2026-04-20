@@ -100,11 +100,11 @@ func (s *Server) registerHTTPRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/corpus/import", s.handleCorpusImport)
 
 	// Memory endpoints
-	mux.HandleFunc("GET /api/v1/memory/{agent_id}/conversations", s.handleListConversations)
+	mux.HandleFunc("GET /api/v1/memory/agents/{agent_id}/conversations", s.handleListConversations)
 	mux.HandleFunc("GET /api/v1/memory/conversations/{id}", s.handleGetConversation)
 	mux.HandleFunc("POST /api/v1/memory/conversations/{id}/messages", s.handleAddMessage)
 	mux.HandleFunc("DELETE /api/v1/memory/conversations/{id}", s.handleDeleteConversation)
-	mux.HandleFunc("GET /api/v1/memory/{agent_id}/long-term", s.handleSearchLongTermMemory)
+	mux.HandleFunc("GET /api/v1/memory/agents/{agent_id}/long-term", s.handleSearchLongTermMemory)
 	mux.HandleFunc("POST /api/v1/memory/long-term", s.handleStoreLongTermMemory)
 	mux.HandleFunc("GET /api/v1/memory/long-term/{id}", s.handleGetLongTermMemory)
 	mux.HandleFunc("PUT /api/v1/memory/long-term/{id}", s.handleUpdateLongTermMemory)
@@ -290,6 +290,9 @@ func (s *Server) handleExecuteAgent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Determine if client wants SSE streaming
+	wantStream := req.Stream || r.Header.Get("Accept") == "text/event-stream"
+
 	// Forward to Python runtime via HTTP
 	executeReq := &ExecuteAgentRequest{
 		Input:          req.Message,
@@ -300,19 +303,52 @@ func (s *Server) handleExecuteAgent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	resultCh, errCh := s.runtimeClient.ExecuteAgent(ctx, id, executeReq)
 
-	// Check for immediate errors
-	select {
-	case err := <-errCh:
-		if err != nil {
-			s.logger.Error("Agent execution failed", "error", err, "agent_id", id)
-			writeError(w, http.StatusInternalServerError, "execution failed: "+err.Error())
-			return
+	// Non-streaming mode: collect all chunks and return JSON
+	if !wantStream {
+		var fullContent strings.Builder
+		var lastMetadata map[string]interface{}
+
+		for {
+			select {
+			case resp, ok := <-resultCh:
+				if !ok {
+					resultCh = nil
+				} else {
+					switch resp.Type {
+					case "content", "content_chunk":
+						fullContent.WriteString(resp.Content)
+						if resp.Metadata != nil {
+							lastMetadata = resp.Metadata
+						}
+					case "error":
+						if resp.Error != nil {
+							writeError(w, http.StatusInternalServerError, resp.Error.Message)
+							return
+						}
+					}
+				}
+			case err := <-errCh:
+				if err != nil {
+					s.logger.Error("Agent execution failed", "error", err, "agent_id", id)
+					writeError(w, http.StatusInternalServerError, "execution failed: "+err.Error())
+					return
+				}
+				errCh = nil
+			case <-ctx.Done():
+				writeError(w, http.StatusRequestTimeout, "request timeout")
+				return
+			}
+			if resultCh == nil && errCh == nil {
+				break
+			}
 		}
-	case <-ctx.Done():
-		writeError(w, http.StatusRequestTimeout, "request timeout")
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"agent_id": id,
+			"content":  fullContent.String(),
+			"metadata": lastMetadata,
+		})
 		return
-	default:
-		// Continue to streaming
 	}
 
 	// Stream response

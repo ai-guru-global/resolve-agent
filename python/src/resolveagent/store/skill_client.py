@@ -53,7 +53,7 @@ class SkillStoreClient(BaseStoreClient):
                 # Skill already exists — update via PUT or just log
                 logger.info(
                     "Skill already registered",
-                    extra={"name": skill_data.get("name")},
+                    extra={"skill_name": skill_data.get("name")}
                 )
                 return skill_data
             response.raise_for_status()
@@ -61,7 +61,7 @@ class SkillStoreClient(BaseStoreClient):
         except Exception as e:
             logger.error(
                 "Failed to register skill",
-                extra={"name": skill_data.get("name"), "error": str(e)},
+                extra={"skill_name": skill_data.get("name"), "error": str(e)}
             )
             return None
 
@@ -91,7 +91,7 @@ class SkillStoreClient(BaseStoreClient):
             response.raise_for_status()
             return response.json()
         except Exception as e:
-            logger.error("Failed to get skill", extra={"name": name, "error": str(e)})
+            logger.error("Failed to get skill", extra={"skill_name": name, "error": str(e)})
             return None
 
     async def unregister_skill(self, name: str) -> bool:
@@ -106,6 +106,6 @@ class SkillStoreClient(BaseStoreClient):
         except Exception as e:
             logger.error(
                 "Failed to unregister skill",
-                extra={"name": name, "error": str(e)},
+                extra={"skill_name": name, "error": str(e)},
             )
             return False

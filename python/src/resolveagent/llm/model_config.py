@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from pydantic import BaseModel
@@ -60,6 +61,13 @@ class ModelRegistry:
         elif config.provider == "zhipu":
             from resolveagent.llm.zhipu import ZhipuProvider
             return ZhipuProvider(api_key=config.api_key)
+        elif config.provider == "kimi":
+            from resolveagent.llm.openai_compat import OpenAICompatProvider
+            return OpenAICompatProvider(
+                api_key=config.api_key or os.getenv("KIMI_API_KEY", ""),
+                base_url=config.base_url or "https://api.moonshot.cn/v1",
+                default_model=config.model_name,
+            )
         else:
             from resolveagent.llm.openai_compat import OpenAICompatProvider
             return OpenAICompatProvider(

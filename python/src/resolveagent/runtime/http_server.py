@@ -48,20 +48,24 @@ class RuntimeHTTPServer:
     def _create_app(self) -> FastAPI:
         """Create FastAPI application with routes."""
 
+        server_self = self
+
         @asynccontextmanager
         async def lifespan(app: FastAPI):
             """Lifespan context manager."""
             logger.info("Runtime HTTP server starting up...")
-            await self.lifecycle.initialize()
-            # Initialize skill store client for corpus import
-            self._skill_client = SkillStoreClient(address=self.platform_address)
-            await self._skill_client.connect()
-            logger.info("Skill store client connected", extra={"address": self.platform_address})
+            try:
+                await server_self.lifecycle.initialize()
+                server_self._skill_client = SkillStoreClient(address=server_self.platform_address)
+                await server_self._skill_client.connect()
+                logger.info("Skill store client connected", extra={"address": server_self.platform_address})
+            except Exception as e:
+                logger.warning(f"Lifespan startup warning (non-fatal): {e}")
             yield
             logger.info("Runtime HTTP server shutting down...")
-            if self._skill_client:
-                await self._skill_client.close()
-            await self.lifecycle.shutdown()
+            if server_self._skill_client:
+                await server_self._skill_client.close()
+            await server_self.lifecycle.shutdown()
 
         app = FastAPI(
             title="ResolveAgent Runtime API",
@@ -612,3 +616,9 @@ def get_runtime_server(host: str = "0.0.0.0", port: int = 9091) -> RuntimeHTTPSe
     if _runtime_server is None:
         _runtime_server = RuntimeHTTPServer(host, port)
     return _runtime_server
+
+
+def create_app() -> FastAPI:
+    """Factory function that returns a FastAPI app for uvicorn."""
+    server = get_runtime_server()
+    return server.app

@@ -28,3 +28,24 @@ models:
     provider: zhipu
     model_name: glm-4
     max_tokens: 8192
+
+  - id: moonshot-v1-8k
+    provider: kimi
+    model_name: moonshot-v1-8k
+    base_url: https://api.moonshot.cn/v1
+    max_tokens: 8192
+    default_temperature: 0.7
+
+  - id: moonshot-v1-32k
+    provider: kimi
+    model_name: moonshot-v1-32k
+    base_url: https://api.moonshot.cn/v1
+    max_tokens: 32768
+    default_temperature: 0.7
+
+  - id: moonshot-v1-128k
+    provider: kimi
+    model_name: moonshot-v1-128k
+    base_url: https://api.moonshot.cn/v1
+    max_tokens: 131072
+    default_temperature: 0.7

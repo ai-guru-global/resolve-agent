@@ -49,3 +49,39 @@ class AgentPool:
     def size(self) -> int:
         """Current pool size."""
         return len(self._pool)
+
+
+class AgentLifecycleManager:
+    """Manages agent lifecycle: creation, warm-up, health checks, and teardown."""
+
+    def __init__(self, pool_max_size: int = 100) -> None:
+        self.pool = AgentPool(max_size=pool_max_size)
+
+    async def initialize(self) -> None:
+        """Initialize the lifecycle manager."""
+        logger.info("AgentLifecycleManager initialized")
+
+    async def shutdown(self) -> None:
+        """Shutdown the lifecycle manager and cleanup all agents."""
+        logger.info("AgentLifecycleManager shutting down")
+
+    async def get_or_create_agent(self, agent_id: str, agent_config: dict[str, Any] | None = None) -> Any:
+        """Get an existing agent or create a new one."""
+        agent = self.pool.get(agent_id)
+        if agent is not None:
+            return agent
+        # TODO: Create agent from config via AgentScope
+        logger.info("Creating new agent", extra={"agent_id": agent_id})
+        agent = {"id": agent_id, "config": agent_config or {}}
+        self.pool.put(agent_id, agent)
+        return agent
+
+    async def remove_agent(self, agent_id: str) -> None:
+        """Remove and cleanup an agent."""
+        self.pool.remove(agent_id)
+        logger.info("Removed agent", extra={"agent_id": agent_id})
+
+    @property
+    def active_count(self) -> int:
+        """Number of active agents."""
+        return self.pool.size

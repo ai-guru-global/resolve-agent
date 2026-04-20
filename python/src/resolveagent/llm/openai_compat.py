@@ -53,6 +53,12 @@ class OpenAICompatProvider(LLMProvider):
         if not self.api_key and "localhost" not in self.base_url:
             logger.warning("OpenAI API key not configured")
 
+    # Models that require fixed temperature based on thinking mode
+    # kimi-k2.5: thinking enabled → temperature=1.0, thinking disabled → temperature=0.6
+    FIXED_TEMPERATURE_MODELS = ("kimi-k2.5", "kimi-k2", "kimi-k2-thinking")
+    # Temperature when thinking is disabled for K2.5 models
+    THINKING_DISABLED_TEMPERATURE = 0.6
+
     async def chat(
         self,
         messages: list[ChatMessage],
@@ -63,6 +69,11 @@ class OpenAICompatProvider(LLMProvider):
     ) -> ChatResponse:
         """Generate completion via OpenAI-compatible API."""
         model = model or self.default_model
+        # K2.5 models require specific temperature values based on thinking mode
+        thinking_cfg = kwargs.get("thinking")
+        thinking_disabled = isinstance(thinking_cfg, dict) and thinking_cfg.get("type") == "disabled"
+        if any(model.startswith(m) for m in self.FIXED_TEMPERATURE_MODELS):
+            temperature = self.THINKING_DISABLED_TEMPERATURE if thinking_disabled else 1.0
         logger.debug("OpenAI chat", extra={"model": model, "messages": len(messages)})
 
         headers = {
@@ -105,7 +116,7 @@ class OpenAICompatProvider(LLMProvider):
 
                 choice = data.get("choices", [{}])[0]
                 message = choice.get("message", {})
-                content = message.get("content", "")
+                content = message.get("content", "") or ""
                 finish_reason = choice.get("finish_reason", "stop")
 
                 usage = data.get("usage", {})
@@ -146,6 +157,11 @@ class OpenAICompatProvider(LLMProvider):
     ) -> AsyncIterator[str]:
         """Stream completion via OpenAI-compatible API."""
         model = model or self.default_model
+        # K2.5 models require specific temperature values based on thinking mode
+        thinking_cfg = kwargs.get("thinking")
+        thinking_disabled = isinstance(thinking_cfg, dict) and thinking_cfg.get("type") == "disabled"
+        if any(model.startswith(m) for m in self.FIXED_TEMPERATURE_MODELS):
+            temperature = self.THINKING_DISABLED_TEMPERATURE if thinking_disabled else 1.0
         logger.debug("OpenAI streaming chat", extra={"model": model})
 
         headers = {
@@ -194,7 +210,7 @@ class OpenAICompatProvider(LLMProvider):
                                 data = json.loads(data_str)
                                 choice = data.get("choices", [{}])[0]
                                 delta = choice.get("delta", {})
-                                content = delta.get("content", "")
+                                content = delta.get("content", "") or ""
 
                                 if content:
                                     yield content

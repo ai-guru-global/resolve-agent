@@ -147,7 +147,7 @@ class ExecutionEngine:
             decision = await self._selector.route(
                 input_text=input_text,
                 agent_id=agent_id,
-                conversation_history=self._conversations[conversation_id][-10:],  # Last 10 messages
+                context={"conversation_history": self._conversations[conversation_id][-10:]},
             )
 
             yield {
@@ -165,19 +165,30 @@ class ExecutionEngine:
             }
 
             # Execute based on routing decision
+            full_response_content = []
             if stream:
                 async for chunk in self._execute_streaming(agent, input_text, decision, ctx):
+                    # Collect content for conversation history
+                    if chunk.get("type") in ("content", "content_chunk") and chunk.get("content"):
+                        full_response_content.append(chunk["content"])
                     yield chunk
             else:
                 result = await self._execute_sync(agent, input_text, decision, ctx)
+                content = result.get("content", "")
+                if content:
+                    full_response_content.append(content)
                 yield {
                     "type": "content",
-                    "content": result.get("content", ""),
+                    "content": content,
                     "metadata": result.get("metadata", {}),
                 }
 
-            # Add assistant response to conversation history
-            # (Note: actual content is handled by the caller)
+            # Save assistant response to conversation history
+            if full_response_content:
+                assistant_content = "".join(full_response_content)
+                self._conversations[conversation_id].append(
+                    {"role": "assistant", "content": assistant_content}
+                )
 
             # Run post-execution hooks
             if self._hook_runner:
@@ -323,7 +334,7 @@ class ExecutionEngine:
         # Route to appropriate subsystem
         if decision.route_type == "direct":
             # Direct LLM call with streaming
-            async for chunk in self._stream_direct_llm(agent, input_text, decision):
+            async for chunk in self._stream_direct_llm(agent, input_text, decision, ctx.conversation_id):
                 yield chunk
 
         elif decision.route_type == "rag":
@@ -367,6 +378,7 @@ class ExecutionEngine:
         agent: MegaAgent,
         input_text: str,
         decision: RouteDecision,
+        conversation_id: str | None = None,
     ) -> AsyncIterator[dict[str, Any]]:
         """Stream direct LLM response.
 
@@ -374,6 +386,7 @@ class ExecutionEngine:
             agent: The agent.
             input_text: User input.
             decision: Routing decision.
+            conversation_id: Conversation ID for multi-turn history.
 
         Yields:
             Content chunks.
@@ -382,25 +395,37 @@ class ExecutionEngine:
         from resolveagent.llm.provider import ChatMessage
 
         llm = create_llm_provider(model=agent.model_id or "qwen-plus")
+        # Use provider's default_model (from env LLM_DEFAULT_MODEL) to avoid sending unsupported model names
+        effective_model = llm.default_model
 
-        messages = [
-            ChatMessage(role="system", content=agent.system_prompt),
-            ChatMessage(role="user", content=input_text),
-        ]
+        # Build messages with conversation history for multi-turn support
+        messages = [ChatMessage(role="system", content=agent.system_prompt)]
+        if conversation_id and conversation_id in self._conversations:
+            # Include conversation history (up to last 20 messages)
+            history = self._conversations[conversation_id][-20:]
+            for msg in history:
+                messages.append(ChatMessage(role=msg["role"], content=msg["content"]))
+        else:
+            messages.append(ChatMessage(role="user", content=input_text))
 
         try:
             # Try streaming
             content_parts = []
-            async for chunk in llm.chat_stream(messages=messages, model=agent.model_id):
-                delta = chunk.delta
+            async for chunk in llm.chat_stream(messages=messages, model=effective_model):
+                # chat_stream yields str chunks directly
+                delta = chunk if isinstance(chunk, str) else getattr(chunk, 'delta', str(chunk))
                 content_parts.append(delta)
+
+                finished = False
+                if hasattr(chunk, 'finish_reason'):
+                    finished = chunk.finish_reason is not None
 
                 yield {
                     "type": "content_chunk",
                     "content": delta,
                     "metadata": {
                         "route_type": decision.route_type,
-                        "finished": chunk.finish_reason is not None,
+                        "finished": finished,
                     },
                 }
 
@@ -408,7 +433,7 @@ class ExecutionEngine:
             logger.warning("Streaming failed, falling back to sync", extra={"error": str(e)})
 
             # Fallback to non-streaming
-            response = await llm.chat(messages=messages, model=agent.model_id)
+            response = await llm.chat(messages=messages, model=effective_model)
 
             yield {
                 "type": "content",
@@ -477,6 +502,7 @@ class ExecutionEngine:
         from resolveagent.llm.provider import ChatMessage
 
         llm = create_llm_provider(model=agent.model_id or "qwen-plus")
+        effective_model = llm.default_model
 
         prompt = f"""基于以下检索到的信息回答问题：
 
@@ -490,7 +516,7 @@ class ExecutionEngine:
                 ChatMessage(role="system", content=agent.system_prompt),
                 ChatMessage(role="user", content=prompt),
             ],
-            model=agent.model_id,
+            model=effective_model,
         )
 
         yield {

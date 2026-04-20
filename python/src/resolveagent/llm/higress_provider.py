@@ -98,12 +98,12 @@ class HigressLLMProvider(LLMProvider):
         self._default_model = default_model
         self._api_key = api_key or os.getenv("RESOLVEAGENT_API_KEY", "")
         self._timeout = timeout
-        
+
         self._client = httpx.AsyncClient(
             timeout=httpx.Timeout(timeout),
             headers=self._build_headers(),
         )
-        
+
         logger.info(
             "HigressLLMProvider initialized",
             extra={"gateway": self._gateway_url, "default_model": default_model},
@@ -141,7 +141,7 @@ class HigressLLMProvider(LLMProvider):
                 "Failed to get model route from registry, using default",
                 extra={"model": model, "error": str(e)},
             )
-        
+
         # Fallback to default path structure
         return f"{self._gateway_url}/llm/models/{model}/chat/completions"
 
@@ -167,7 +167,7 @@ class HigressLLMProvider(LLMProvider):
         """
         model = model or self._default_model
         endpoint = await self._get_model_endpoint(model)
-        
+
         payload = {
             "model": model,
             "messages": [{"role": m.role, "content": m.content} for m in messages],
@@ -176,24 +176,24 @@ class HigressLLMProvider(LLMProvider):
             "stream": False,
             **kwargs,
         }
-        
+
         logger.debug(
             "Sending chat request to Higress",
             extra={"endpoint": endpoint, "model": model, "messages": len(messages)},
         )
-        
+
         try:
             response = await self._client.post(endpoint, json=payload)
             response.raise_for_status()
             data = response.json()
-            
+
             # Parse OpenAI-compatible response
             content = ""
             if "choices" in data and data["choices"]:
                 content = data["choices"][0].get("message", {}).get("content", "")
-            
+
             usage = data.get("usage", {})
-            
+
             return ChatResponse(
                 content=content,
                 model=data.get("model", model),
@@ -204,7 +204,7 @@ class HigressLLMProvider(LLMProvider):
                 },
                 finish_reason=data.get("choices", [{}])[0].get("finish_reason", "stop"),
             )
-            
+
         except httpx.HTTPStatusError as e:
             logger.error(
                 "LLM request failed",
@@ -237,7 +237,7 @@ class HigressLLMProvider(LLMProvider):
         """
         model = model or self._default_model
         endpoint = await self._get_model_endpoint(model)
-        
+
         payload = {
             "model": model,
             "messages": [{"role": m.role, "content": m.content} for m in messages],
@@ -246,37 +246,37 @@ class HigressLLMProvider(LLMProvider):
             "stream": True,
             **kwargs,
         }
-        
+
         logger.debug(
             "Starting streaming chat request to Higress",
             extra={"endpoint": endpoint, "model": model},
         )
-        
+
         try:
             async with self._client.stream("POST", endpoint, json=payload) as response:
                 response.raise_for_status()
-                
+
                 async for line in response.aiter_lines():
                     if not line or not line.startswith("data: "):
                         continue
-                    
+
                     data_str = line[6:]  # Remove "data: " prefix
                     if data_str == "[DONE]":
                         break
-                    
+
                     try:
                         import json
                         data = json.loads(data_str)
-                        
+
                         if "choices" in data and data["choices"]:
                             delta = data["choices"][0].get("delta", {})
                             content = delta.get("content", "")
                             if content:
                                 yield content
-                                
+
                     except json.JSONDecodeError:
                         continue
-                        
+
         except httpx.HTTPStatusError as e:
             logger.error(
                 "Streaming LLM request failed",
@@ -318,7 +318,7 @@ class HigressEmbeddingProvider:
         self._default_model = default_model
         self._api_key = api_key or os.getenv("RESOLVEAGENT_API_KEY", "")
         self._timeout = timeout
-        
+
         self._client = httpx.AsyncClient(
             timeout=httpx.Timeout(timeout),
             headers=self._build_headers(),
@@ -349,29 +349,29 @@ class HigressEmbeddingProvider:
         """
         model = model or self._default_model
         endpoint = f"{self._gateway_url}/llm/embeddings/{model}"
-        
+
         payload = {
             "model": model,
             "input": texts,
         }
-        
+
         logger.debug(
             "Generating embeddings through Higress",
             extra={"model": model, "count": len(texts)},
         )
-        
+
         try:
             response = await self._client.post(endpoint, json=payload)
             response.raise_for_status()
             data = response.json()
-            
+
             # Parse OpenAI-compatible embedding response
             embeddings = []
             for item in data.get("data", []):
                 embeddings.append(item.get("embedding", []))
-            
+
             return embeddings
-            
+
         except Exception as e:
             logger.error("Embedding request failed", extra={"error": str(e)})
             raise
@@ -399,16 +399,41 @@ class HigressEmbeddingProvider:
 def create_llm_provider(
     gateway_url: str | None = None,
     model: str = "qwen-plus",
-) -> HigressLLMProvider:
-    """Create a Higress LLM provider.
+) -> LLMProvider:
+    """Create an LLM provider.
+
+    If RESOLVEAGENT_LLM_DIRECT=true or no gateway is configured,
+    creates a direct OpenAI-compatible provider (e.g., for Kimi/Moonshot).
+    Otherwise, routes through Higress gateway.
 
     Args:
         gateway_url: Optional gateway URL override.
         model: Default model.
 
     Returns:
-        HigressLLMProvider instance.
+        LLMProvider instance.
     """
+    direct_mode = os.getenv("RESOLVEAGENT_LLM_DIRECT", "false").lower() in ("true", "1", "yes")
+    gateway_enabled = os.getenv("RESOLVEAGENT_GATEWAY_ENABLED", "false").lower() in ("true", "1", "yes")
+
+    if direct_mode or not gateway_enabled:
+        # Direct mode: use OpenAI-compatible provider
+        from resolveagent.llm.openai_compat import OpenAICompatProvider
+
+        api_key = os.getenv("KIMI_API_KEY", "") or os.getenv("RESOLVEAGENT_API_KEY", "")
+        base_url = os.getenv("LLM_BASE_URL", "https://api.moonshot.cn/v1")
+        default_model = os.getenv("LLM_DEFAULT_MODEL", model)
+
+        logger.info(
+            "Creating direct LLM provider (no gateway)",
+            extra={"base_url": base_url, "model": default_model},
+        )
+        return OpenAICompatProvider(
+            api_key=api_key,
+            base_url=base_url,
+            default_model=default_model,
+        )
+
     return HigressLLMProvider(gateway_url=gateway_url, default_model=model)
 
 

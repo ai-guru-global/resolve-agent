@@ -217,12 +217,13 @@ Respond ONLY with the JSON object, no additional text.'''
             # Create LLM provider (uses default model from config)
             llm = create_llm_provider(model=self.model_id)
 
-            # Call LLM
+            # Call LLM with thinking disabled for clean JSON routing output
             response = await llm.chat(
                 messages=[ChatMessage(role="user", content=prompt)],
                 model=self.model_id,
                 temperature=0.3,  # Lower temperature for more deterministic routing
                 max_tokens=500,
+                thinking={"type": "disabled"},  # Disable reasoning for routing decisions
             )
 
             logger.debug("LLM routing response received", extra={"model": response.model})

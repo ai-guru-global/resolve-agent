@@ -43,7 +43,7 @@ class SkillLoader:
 
         logger.info(
             "Loading skill",
-            extra={"name": manifest.name, "path": path},
+            extra={"skill_name": manifest.name, "path": path},
         )
 
         loaded = LoadedSkill(

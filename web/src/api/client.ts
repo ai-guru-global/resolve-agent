@@ -144,10 +144,10 @@ const realApi = {
     request<PlatformStatus>('/platform/status'),
   getSettings: () =>
     request<SystemSettings>('/settings'),
-  executeAgent: (id: string, message: string) =>
-    request<{ agent_id: string; response?: string; content?: string; metadata?: Record<string, unknown> }>(
+  executeAgent: (id: string, message: string, conversationId?: string) =>
+    request<{ agent_id: string; response?: string; content?: string; conversation_id?: string; metadata?: Record<string, unknown> }>(
       `/agents/${id}/execute`,
-      { method: 'POST', body: JSON.stringify({ message }) },
+      { method: 'POST', body: JSON.stringify({ message, ...(conversationId ? { conversation_id: conversationId } : {}) }) },
     ),
   systemInfo: () =>
     request<{ version: string; commit: string; build_date: string }>('/system/info'),

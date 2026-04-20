@@ -72,15 +72,15 @@ telemetry:
 # Controls which backend each registry uses for persistence.
 store:
   # Default backend for all registries: "memory" or "postgres"
-  backend: "memory"
+  backend: "postgres"
 
   # Per-registry backend override (optional, falls back to 'backend')
   registries:
-    hooks: "memory"
-    rag_documents: "memory"
-    fta_documents: "memory"
-    code_analysis: "memory"
-    memory: "memory"
+    hooks: "postgres"
+    rag_documents: "postgres"
+    fta_documents: "postgres"
+    code_analysis: "postgres"
+    memory: "postgres"
 
   # Memory store specific settings
   memory:

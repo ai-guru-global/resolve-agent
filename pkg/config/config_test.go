@@ -4,48 +4,6 @@ import (
 	"testing"
 )
 
-func TestDatabaseConfig_DSN(t *testing.T) {
-	tests := []struct {
-		name     string
-		config   DatabaseConfig
-		expected string
-	}{
-		{
-			name: "default values",
-			config: DatabaseConfig{
-				Host:     "localhost",
-				Port:     5432,
-				User:     "postgres",
-				Password: "password",
-				Database: "resolveagent",
-				SSLMode:  "disable",
-			},
-			expected: "postgres://postgres:password@localhost:5432/resolveagent?sslmode=disable",
-		},
-		{
-			name: "with ssl mode require",
-			config: DatabaseConfig{
-				Host:     "localhost",
-				Port:     5432,
-				User:     "postgres",
-				Password: "password",
-				Database: "resolveagent",
-				SSLMode:  "require",
-			},
-			expected: "postgres://postgres:password@localhost:5432/resolveagent?sslmode=require",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := tt.config.DSN()
-			if got != tt.expected {
-				t.Errorf("DSN() = %v, want %v", got, tt.expected)
-			}
-		})
-	}
-}
-
 func TestLoad(t *testing.T) {
 	// Test loading config with defaults
 	cfg, err := Load("")

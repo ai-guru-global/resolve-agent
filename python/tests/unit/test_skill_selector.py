@@ -47,9 +47,7 @@ class TestSkillSelectorAdapter:
     @pytest.mark.asyncio
     async def test_code_analysis_routing(self, adapter):
         """Test code analysis routing through skill adapter."""
-        decision = await adapter.route(
-            '```python\ndef unsafe(): exec(input())```\nfind security issues'
-        )
+        decision = await adapter.route("```python\ndef unsafe(): exec(input())```\nfind security issues")
         assert decision.route_type == "code_analysis"
 
     @pytest.mark.asyncio

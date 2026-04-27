@@ -7,9 +7,9 @@ computing minimal cut sets in fault trees.
 from __future__ import annotations
 
 import logging
-from copy import deepcopy
+from typing import Any
 
-from resolveagent.fta.tree import FaultTree, GateType, EventType
+from resolveagent.fta.tree import EventType, FaultTree, GateType
 
 logger = logging.getLogger(__name__)
 
@@ -67,9 +67,9 @@ def compute_minimal_cut_sets(tree: FaultTree) -> list[set[str]]:
 
 def _expand_cut_sets(
     cut_sets: list[set[str]],
-    gates_by_output: dict[str, any],
-    gates_by_id: dict[str, any],
-    events_by_id: dict[str, any],
+    gates_by_output: dict[str, Any],
+    gates_by_id: dict[str, Any],
+    events_by_id: dict[str, Any],
 ) -> list[set[str]]:
     """Expand cut sets by replacing intermediate events with their gates.
 
@@ -96,11 +96,9 @@ def _expand_cut_sets(
             expandable_event = None
             for event_id in cut_set:
                 event = events_by_id.get(event_id)
-                if event and event.event_type != EventType.BASIC:
-                    # Check if this event is output of a gate
-                    if event_id in gates_by_output:
-                        expandable_event = event_id
-                        break
+                if event and event.event_type != EventType.BASIC and event_id in gates_by_output:
+                    expandable_event = event_id
+                    break
 
             if expandable_event is None:
                 # All events are basic, keep this cut set
@@ -109,9 +107,7 @@ def _expand_cut_sets(
 
             # Expand this event using its gate
             gate = gates_by_output[expandable_event]
-            expanded = _expand_event_in_cut_set(
-                cut_set, expandable_event, gate, events_by_id
-            )
+            expanded = _expand_event_in_cut_set(cut_set, expandable_event, gate, events_by_id)
             new_cut_sets.extend(expanded)
             changed = True
 
@@ -129,8 +125,8 @@ def _expand_cut_sets(
 def _expand_event_in_cut_set(
     cut_set: set[str],
     event_id: str,
-    gate: any,
-    events_by_id: dict[str, any],
+    gate: Any,
+    events_by_id: dict[str, Any],
 ) -> list[set[str]]:
     """Expand a single event in a cut set using its gate.
 
@@ -165,7 +161,8 @@ def _expand_event_in_cut_set(
         # VOTING gate: k-out-of-n
         # For minimal cut sets, we need combinations of k inputs
         from itertools import combinations
-        k = getattr(gate, 'k_value', 1)
+
+        k = getattr(gate, "k_value", 1)
         new_cut_sets = []
         for combo in combinations(gate.input_ids, k):
             new_cut_set = base_cut_set | set(combo)
@@ -205,7 +202,7 @@ def _remove_absorbed_cut_sets(cut_sets: list[set[str]]) -> list[set[str]]:
     # Sort by size (smallest first) for efficient absorption check
     sorted_cut_sets = sorted(cut_sets, key=lambda x: (len(x), sorted(x)))
 
-    minimal = []
+    minimal: list[set[str]] = []
     for cut_set in sorted_cut_sets:
         # Check if this cut set is absorbed by any already-minimal set
         is_absorbed = False
@@ -246,10 +243,7 @@ def explain_cut_sets(cut_sets: list[set[str]], tree: FaultTree) -> list[str]:
             else:
                 event_names.append(event_id)
 
-        if len(event_names) == 1:
-            explanation = f"Cut Set {i}: {event_names[0]}"
-        else:
-            explanation = f"Cut Set {i}: {' AND '.join(event_names)}"
+        explanation = f"Cut Set {i}: {event_names[0]}" if len(event_names) == 1 else f"Cut Set {i}: {' AND '.join(event_names)}"
 
         explanations.append(explanation)
 
@@ -286,7 +280,7 @@ def compute_cut_set_probability(
         event = events_by_id.get(event_id)
         if event:
             # Use provided probability or default to 0.5
-            prob = event_probs.get(event_id, getattr(event, 'probability', 0.5))
+            prob = event_probs.get(event_id, getattr(event, "probability", 0.5))
             probability *= prob
 
     return probability

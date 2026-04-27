@@ -51,17 +51,14 @@ class SkillStoreClient(BaseStoreClient):
             response = await self._client.post("/api/v1/skills", json=skill_data)
             if response.status_code == 409:
                 # Skill already exists — update via PUT or just log
-                logger.info(
-                    "Skill already registered",
-                    extra={"skill_name": skill_data.get("name")}
-                )
+                logger.info("Skill already registered", extra={"skill_name": skill_data.get("name")})
                 return skill_data
             response.raise_for_status()
             return response.json()
         except Exception as e:
             logger.error(
                 "Failed to register skill",
-                extra={"skill_name": skill_data.get("name"), "error": str(e)}
+                extra={"skill_name": skill_data.get("name"), "error": str(e)},
             )
             return None
 

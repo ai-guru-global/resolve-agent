@@ -154,7 +154,7 @@ class ContextEnricher:
         ],
         "json": [
             r'^\s*\{\s*"\w+"\s*:',
-            r'^\s*\[\s*\{',
+            r"^\s*\[\s*\{",
         ],
     }
 
@@ -188,15 +188,10 @@ class ContextEnricher:
     def _compile_patterns(self) -> None:
         """Pre-compile patterns for efficiency."""
         for lang, patterns in self.LANGUAGE_PATTERNS.items():
-            self._compiled_lang_patterns[lang] = [
-                re.compile(p, re.IGNORECASE | re.MULTILINE)
-                for p in patterns
-            ]
+            self._compiled_lang_patterns[lang] = [re.compile(p, re.IGNORECASE | re.MULTILINE) for p in patterns]
 
         for pattern, issue in self.ISSUE_PATTERNS.items():
-            self._compiled_issue_patterns.append(
-                (re.compile(pattern, re.IGNORECASE), issue)
-            )
+            self._compiled_issue_patterns.append((re.compile(pattern, re.IGNORECASE), issue))
 
     async def enrich(
         self,
@@ -236,9 +231,7 @@ class ContextEnricher:
         enriched.rag_collections = collections
 
         # Enrich with conversation history
-        enriched.conversation_history = await self._get_conversation_history(
-            agent_id, context.get("conversation_id")
-        )
+        enriched.conversation_history = await self._get_conversation_history(agent_id, context.get("conversation_id"))
 
         # Analyze code context if present
         code_context = self._analyze_code_context(input_text)
@@ -246,9 +239,7 @@ class ContextEnricher:
             enriched.code_context = code_context
 
         # Infer user preferences from history
-        enriched.user_preferences = await self._infer_user_preferences(
-            agent_id, enriched.conversation_history
-        )
+        enriched.user_preferences = await self._infer_user_preferences(agent_id, enriched.conversation_history)
 
         # Calculate enrichment confidence
         enriched.enrichment_confidence = self._calculate_confidence(enriched)
@@ -353,9 +344,7 @@ class ContextEnricher:
             },
         ]
 
-    async def _get_rag_collections(
-        self, agent_id: str
-    ) -> list[dict[str, Any]]:
+    async def _get_rag_collections(self, agent_id: str) -> list[dict[str, Any]]:
         """Get available RAG collections for the agent.
 
         Queries the RAG registry via registry_client if available,
@@ -407,9 +396,7 @@ class ContextEnricher:
             },
         ]
 
-    async def _get_conversation_history(
-        self, agent_id: str, conversation_id: str | None
-    ) -> list[dict[str, Any]]:
+    async def _get_conversation_history(self, agent_id: str, conversation_id: str | None) -> list[dict[str, Any]]:
         """Get conversation history for context continuity.
 
         In production, this would query the memory manager.
@@ -417,9 +404,7 @@ class ContextEnricher:
         # TODO: Query actual memory manager
         return []
 
-    async def _infer_user_preferences(
-        self, agent_id: str, history: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    async def _infer_user_preferences(self, agent_id: str, history: list[dict[str, Any]]) -> dict[str, Any]:
         """Infer user preferences from conversation history."""
         # TODO: Implement preference inference
         return {
@@ -490,9 +475,7 @@ class ContextEnricher:
         else:
             return "high"
 
-    def _rank_skills(
-        self, input_text: str, skills: list[dict[str, Any]], top_n: int = 10
-    ) -> list[dict[str, Any]]:
+    def _rank_skills(self, input_text: str, skills: list[dict[str, Any]], top_n: int = 10) -> list[dict[str, Any]]:
         """Rank skills by relevance to *input_text* and return top-N."""
         text_lower = input_text.lower()
         scored: list[tuple[float, dict[str, Any]]] = []

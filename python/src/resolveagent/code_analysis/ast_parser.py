@@ -74,11 +74,24 @@ class ParsedModule:
 
 
 # Python entry-point decorator patterns
-_PYTHON_ENTRY_DECORATORS = frozenset([
-    "app.route", "app.get", "app.post", "app.put", "app.delete", "app.patch",
-    "router.get", "router.post", "router.put", "router.delete",
-    "api_view", "action", "task", "celery.task",
-])
+_PYTHON_ENTRY_DECORATORS = frozenset(
+    [
+        "app.route",
+        "app.get",
+        "app.post",
+        "app.put",
+        "app.delete",
+        "app.patch",
+        "router.get",
+        "router.post",
+        "router.put",
+        "router.delete",
+        "api_view",
+        "action",
+        "task",
+        "celery.task",
+    ]
+)
 
 
 class _PythonCallVisitor(ast.NodeVisitor):
@@ -122,12 +135,14 @@ class _PythonCallVisitor(ast.NodeVisitor):
                 callee = self._get_call_name(child)
                 if callee:
                     call_names.append(callee)
-                    self.calls.append(CallSite(
-                        callee=callee,
-                        file_path=self.file_path,
-                        line=child.lineno,
-                        caller=qualified,
-                    ))
+                    self.calls.append(
+                        CallSite(
+                            callee=callee,
+                            file_path=self.file_path,
+                            line=child.lineno,
+                            caller=qualified,
+                        )
+                    )
 
         func.calls = call_names
         self.functions.append(func)
@@ -151,10 +166,7 @@ class _PythonCallVisitor(ast.NodeVisitor):
         self._current_class = old_class
 
         # Collect methods that were added during class visit
-        cls.methods = [
-            f for f in self.functions
-            if f.name.startswith(f"{node.name}.")
-        ]
+        cls.methods = [f for f in self.functions if f.name.startswith(f"{node.name}.")]
         self.classes.append(cls)
 
     def visit_Import(self, node: ast.Import) -> None:  # noqa: N802
@@ -234,9 +246,7 @@ class ASTParser:
         source = path.read_text(encoding="utf-8", errors="replace")
         return self.parse_source(source, lang, file_path=file_path)
 
-    def parse_source(
-        self, source: str, language: str, file_path: str = "<string>"
-    ) -> ParsedModule:
+    def parse_source(self, source: str, language: str, file_path: str = "<string>") -> ParsedModule:
         """Parse source code text and return a structured module representation."""
         if language == "python":
             return self._parse_python(source, file_path)
@@ -281,8 +291,14 @@ class ASTParser:
         # Language-specific function patterns
         func_patterns = {
             "go": re.compile(r"^func\s+(?:\(.*?\)\s+)?(\w+)\s*\("),
-            "javascript": re.compile(r"(?:function\s+(\w+)|(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s+)?(?:function|\())", re.MULTILINE),
-            "typescript": re.compile(r"(?:function\s+(\w+)|(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s+)?(?:function|\())", re.MULTILINE),
+            "javascript": re.compile(
+                r"(?:function\s+(\w+)|(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s+)?(?:function|\())",
+                re.MULTILINE,
+            ),
+            "typescript": re.compile(
+                r"(?:function\s+(\w+)|(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s+)?(?:function|\())",
+                re.MULTILINE,
+            ),
             "java": re.compile(r"(?:public|private|protected)?\s*(?:static\s+)?(?:\w+\s+)+(\w+)\s*\("),
         }
 
@@ -304,17 +320,18 @@ class ASTParser:
                 if m:
                     name = m.group(1) or (m.group(2) if m.lastindex and m.lastindex >= 2 else "")
                     if name:
-                        functions.append(FunctionDef(
-                            name=name,
-                            file_path=file_path,
-                            line_start=i,
-                            line_end=i,
-                        ))
+                        functions.append(
+                            FunctionDef(
+                                name=name,
+                                file_path=file_path,
+                                line_start=i,
+                                line_end=i,
+                            )
+                        )
 
             # Detect entry points
-            if entry_re and entry_re.search(line):
-                if functions:
-                    functions[-1].is_entry_point = True
+            if entry_re and entry_re.search(line) and functions:
+                functions[-1].is_entry_point = True
 
         # Simple import detection
         import_patterns = {

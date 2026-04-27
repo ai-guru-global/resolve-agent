@@ -9,8 +9,8 @@ from typing import Any
 
 from resolveagent.rag.ingest.chunker import TextChunker
 from resolveagent.rag.ingest.embedder import Embedder
-from resolveagent.rag.retrieve.retriever import Retriever
 from resolveagent.rag.retrieve.reranker import Reranker
+from resolveagent.rag.retrieve.retriever import Retriever
 
 logger = logging.getLogger(__name__)
 
@@ -168,10 +168,7 @@ class RAGPipeline:
             )
 
             # Prepare metadata for each chunk
-            chunk_metadata = [
-                {**metadata, "chunk_index": i, "total_chunks": len(chunks)}
-                for i in range(len(chunks))
-            ]
+            chunk_metadata = [{**metadata, "chunk_index": i, "total_chunks": len(chunks)} for i in range(len(chunks))]
 
             # Insert chunks into vector store
             await store.insert(

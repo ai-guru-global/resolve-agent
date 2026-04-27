@@ -1418,6 +1418,10 @@ export default function Home() {
         <ModesComparison />
       </div>
 
+      <HarnessArchitecture />
+      <CapabilitiesSection />
+      <StatsBar />
+
       <InteractiveDemo />
 
       {/* Footer */}

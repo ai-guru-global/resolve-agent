@@ -85,9 +85,7 @@ class KudigRAGClient:
 
     # -- Ingest operations ---------------------------------------------------
 
-    def ingest_documents(
-        self, collection_id: str, documents: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    def ingest_documents(self, collection_id: str, documents: list[dict[str, Any]]) -> dict[str, Any]:
         body = {"documents": documents}
         resp = self._request("POST", f"/rag/collections/{collection_id}/ingest", json=body)
         return resp.json()
@@ -172,9 +170,7 @@ class MarkdownProcessor:
     def content_hash(content: str) -> str:
         return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
-    def prepare_documents(
-        self, file_path: Path, repo_root: Path, domain: str
-    ) -> tuple[list[dict[str, Any]], str]:
+    def prepare_documents(self, file_path: Path, repo_root: Path, domain: str) -> tuple[list[dict[str, Any]], str]:
         """Parse a Markdown file and return (document dicts, content_hash)."""
         content = file_path.read_text(encoding="utf-8", errors="ignore")
         if not content.strip():
@@ -239,11 +235,13 @@ class ImportState:
         }
 
     def record_error(self, relative_path: str, error: str) -> None:
-        self.errors.append({
-            "file": relative_path,
-            "error": error,
-            "at": datetime.now(UTC).isoformat(),
-        })
+        self.errors.append(
+            {
+                "file": relative_path,
+                "error": error,
+                "at": datetime.now(UTC).isoformat(),
+            }
+        )
 
     def save(self) -> None:
         path = Path(self._path).expanduser()
@@ -338,9 +336,7 @@ class KudigImporter:
         try:
             # 1. Acquire repository
             self._log("Acquiring repository...")
-            repo_path = CorpusAcquisition().acquire(
-                source=self.source, force=self.force_clone
-            )
+            repo_path = CorpusAcquisition().acquire(source=self.source, force=self.force_clone)
             self._log(f"Repository at {repo_path}")
 
             # 2. Scan domain-* directories
@@ -414,9 +410,7 @@ class KudigImporter:
                     state.record_success(rel_path, c_hash, total_chunks)
                     state.save()
 
-                    self._log(
-                        f"  [{i + 1}/{len(files)}] {rel_path} -> {total_chunks} chunks"
-                    )
+                    self._log(f"  [{i + 1}/{len(files)}] {rel_path} -> {total_chunks} chunks")
                 except Exception as exc:
                     self._log(f"  [{i + 1}/{len(files)}] {rel_path} -> INGEST ERROR: {exc}")
                     state.record_error(rel_path, str(exc))
@@ -441,9 +435,7 @@ class KudigImporter:
     def _scan_domain_files(repo_path: str) -> list[Path]:
         root = Path(repo_path)
         files: list[Path] = []
-        domain_dirs = sorted(
-            d for d in root.iterdir() if d.is_dir() and _DOMAIN_PATTERN.match(d.name)
-        )
+        domain_dirs = sorted(d for d in root.iterdir() if d.is_dir() and _DOMAIN_PATTERN.match(d.name))
         for domain_dir in domain_dirs:
             for md_file in sorted(domain_dir.rglob("*.md")):
                 files.append(md_file)
@@ -531,7 +523,8 @@ def main(argv: list[str] | None = None) -> None:
         help="Scan and report without importing",
     )
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
         help="Enable DEBUG logging",
     )

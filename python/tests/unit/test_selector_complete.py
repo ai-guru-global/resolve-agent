@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from resolveagent.selector.selector import IntelligentSelector, RouteDecision
 from resolveagent.selector.strategies.rule_strategy import RuleStrategy

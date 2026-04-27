@@ -94,10 +94,7 @@ class MemoryManager:
         self._conversation_id = conversation_id
         try:
             messages = await self._memory_client.get_conversation(conversation_id, limit)
-            self._entries = [
-                MemoryEntry(role=m.role, content=m.content, metadata=m.metadata)
-                for m in messages
-            ]
+            self._entries = [MemoryEntry(role=m.role, content=m.content, metadata=m.metadata) for m in messages]
             self._sequence_num = max((m.sequence_num for m in messages), default=0)
             logger.debug(
                 "Loaded conversation",

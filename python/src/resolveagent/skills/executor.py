@@ -5,12 +5,14 @@ from __future__ import annotations
 import json
 import logging
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from resolveagent.skills.loader import LoadedSkill
 from resolveagent.skills.manifest import SkillType
 from resolveagent.skills.sandbox import SandboxConfig, SandboxExecutor, SandboxResult
-from resolveagent.skills.solution import StructuredSolution
+
+if TYPE_CHECKING:
+    from resolveagent.skills.loader import LoadedSkill
+    from resolveagent.skills.solution import StructuredSolution
 
 logger = logging.getLogger(__name__)
 
@@ -186,9 +188,7 @@ class SkillExecutor:
 
                 # Enum validation
                 if param.enum and value not in param.enum:
-                    errors.append(
-                        f"Parameter {param.name} must be one of: {', '.join(map(str, param.enum))}"
-                    )
+                    errors.append(f"Parameter {param.name} must be one of: {', '.join(map(str, param.enum))}")
 
         # Check for unknown parameters
         known_params = {p.name for p in manifest.parameters}
@@ -294,6 +294,7 @@ class SkillExecutor:
 
             # Handle coroutine results
             import asyncio
+
             if asyncio.iscoroutine(result):
                 result = await result
 
@@ -313,7 +314,7 @@ class SkillExecutor:
                 duration_ms=duration_ms,
             )
 
-        except Exception as e:
+        except Exception:
             duration_ms = int((time.monotonic() - start) * 1000)
             raise
 

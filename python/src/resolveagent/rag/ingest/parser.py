@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
@@ -52,7 +53,7 @@ class DocumentParser:
             mime_type = self._detect_mime_type(content)
             ext = ""
 
-        logger.debug(f"Parsing document", extra={"mime_type": mime_type, "path": file_path})
+        logger.debug("Parsing document", extra={"mime_type": mime_type, "path": file_path})
 
         # Parse based on mime type
         if mime_type == "text/markdown" or ext in (".md", ".markdown"):
@@ -112,10 +113,7 @@ class DocumentParser:
 
     def _parse_text(self, content: str | bytes, file_path: str | None = None) -> dict[str, Any]:
         """Parse plain text."""
-        if isinstance(content, bytes):
-            text = content.decode("utf-8", errors="ignore")
-        else:
-            text = content
+        text = content.decode("utf-8", errors="ignore") if isinstance(content, bytes) else content
 
         return {
             "text": text,
@@ -127,10 +125,7 @@ class DocumentParser:
 
     def _parse_markdown(self, content: str | bytes, file_path: str | None = None) -> dict[str, Any]:
         """Parse Markdown document."""
-        if isinstance(content, bytes):
-            text = content.decode("utf-8", errors="ignore")
-        else:
-            text = content
+        text = content.decode("utf-8", errors="ignore") if isinstance(content, bytes) else content
 
         # Remove frontmatter (YAML between --- markers)
         text = re.sub(r"^---\s*\n.*?\n---\s*\n", "", text, flags=re.DOTALL)
@@ -159,10 +154,7 @@ class DocumentParser:
         except ImportError:
             logger.warning("beautifulsoup4 not installed, using basic HTML parsing")
             # Fallback: use regex to remove tags
-            if isinstance(content, bytes):
-                text = content.decode("utf-8", errors="ignore")
-            else:
-                text = content
+            text = content.decode("utf-8", errors="ignore") if isinstance(content, bytes) else content
             text = re.sub(r"<[^>]+>", " ", text)
             text = re.sub(r"\s+", " ", text).strip()
             return {
@@ -173,10 +165,7 @@ class DocumentParser:
                 },
             }
 
-        if isinstance(content, bytes):
-            soup = BeautifulSoup(content, "html.parser", from_encoding="utf-8")
-        else:
-            soup = BeautifulSoup(content, "html.parser")
+        soup = BeautifulSoup(content, "html.parser", from_encoding="utf-8") if isinstance(content, bytes) else BeautifulSoup(content, "html.parser")
 
         # Remove script and style elements
         for script in soup(["script", "style", "nav", "footer"]):
@@ -247,7 +236,7 @@ class DocumentParser:
             }
 
         except Exception as e:
-            logger.error(f"Failed to parse PDF", extra={"error": str(e)})
+            logger.error("Failed to parse PDF", extra={"error": str(e)})
             return {
                 "text": "",
                 "metadata": {
@@ -309,7 +298,7 @@ class DocumentParser:
             }
 
         except Exception as e:
-            logger.error(f"Failed to parse DOCX", extra={"error": str(e)})
+            logger.error("Failed to parse DOCX", extra={"error": str(e)})
             return {
                 "text": "",
                 "metadata": {
@@ -321,10 +310,7 @@ class DocumentParser:
 
     def _parse_json(self, content: str | bytes, file_path: str | None = None) -> dict[str, Any]:
         """Parse JSON document."""
-        if isinstance(content, bytes):
-            text = content.decode("utf-8", errors="ignore")
-        else:
-            text = content
+        text = content.decode("utf-8", errors="ignore") if isinstance(content, bytes) else content
 
         try:
             data = json.loads(text)
@@ -339,7 +325,7 @@ class DocumentParser:
                 },
             }
         except json.JSONDecodeError as e:
-            logger.warning(f"Invalid JSON", extra={"error": str(e)})
+            logger.warning("Invalid JSON", extra={"error": str(e)})
             return {
                 "text": text,
                 "metadata": {
@@ -365,10 +351,7 @@ def parse_file(file_path: str | Path) -> dict[str, Any]:
         raise FileNotFoundError(f"File not found: {file_path}")
 
     # Read file
-    if file_path.suffix.lower() in (".pdf", ".docx"):
-        mode = "rb"
-    else:
-        mode = "r"
+    mode = "rb" if file_path.suffix.lower() in (".pdf", ".docx") else "r"
 
     with open(file_path, mode, encoding="utf-8" if mode == "r" else None) as f:
         content = f.read()
@@ -408,7 +391,3 @@ def parse_directory(
                 logger.error(f"Failed to parse {file_path}", extra={"error": str(e)})
 
     return results
-
-
-# Import BytesIO for PDF parsing
-from io import BytesIO

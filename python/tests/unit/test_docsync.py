@@ -59,6 +59,12 @@ def test_bidirectional_sync_and_conflict_detection(tmp_path: Path) -> None:
                     {"source_lang": "en", "target_lang": "zh", "source": en_v1, "target": zh_v1},
                     {"source_lang": "zh", "target_lang": "en", "source": zh_v2, "target": en_v2},
                     {"source_lang": "en", "target_lang": "zh", "source": en_v2, "target": zh_v2},
+                    {"source_lang": "zh", "target_lang": "en", "source": "标题", "target": "Title"},
+                    {"source_lang": "en", "target_lang": "zh", "source": "Title", "target": "标题"},
+                    {"source_lang": "zh", "target_lang": "en", "source": "单一真相源", "target": "Single Source of Truth"},
+                    {"source_lang": "en", "target_lang": "zh", "source": "Single Source of Truth", "target": "单一真相源"},
+                    {"source_lang": "zh", "target_lang": "en", "source": "控制平面一致性", "target": "Control-plane consistency"},
+                    {"source_lang": "en", "target_lang": "zh", "source": "Control-plane consistency", "target": "控制平面一致性"},
                 ]
             },
             allow_unicode=True,
@@ -157,14 +163,8 @@ def test_bootstrap_existing_bilingual_pair(tmp_path: Path) -> None:
     assert zh_path.read_text(encoding="utf-8") == zh_text
     assert en_path.read_text(encoding="utf-8") == en_text
     memory = yaml.safe_load((tmp_path / "translation-memory.yaml").read_text(encoding="utf-8"))
-    assert any(
-        entry["source"] == "单一真相源" and entry["target"] == "Single Source of Truth"
-        for entry in memory["entries"]
-    )
-    assert any(
-        entry["source"] == "control-plane consistency" and entry["target"] == "控制平面一致性"
-        for entry in memory["entries"]
-    )
+    assert any(entry["source"] == "单一真相源" and entry["target"] == "Single Source of Truth" for entry in memory["entries"])
+    assert any(entry["source"] == "control-plane consistency" and entry["target"] == "控制平面一致性" for entry in memory["entries"])
 
 
 def test_proofread_accepts_glossary_aliases(tmp_path: Path) -> None:
@@ -253,7 +253,12 @@ def test_cli_resolves_config_from_workspace_root(tmp_path: Path) -> None:
             {
                 "entries": [
                     {"source_lang": "zh", "target_lang": "en", "source": "标题", "target": "Title"},
-                    {"source_lang": "zh", "target_lang": "en", "source": "# 标题\n", "target": "# Title\n"},
+                    {
+                        "source_lang": "zh",
+                        "target_lang": "en",
+                        "source": "# 标题\n",
+                        "target": "# Title\n",
+                    },
                 ]
             },
             allow_unicode=True,

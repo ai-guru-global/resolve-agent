@@ -10,11 +10,10 @@ import json
 import logging
 from typing import TYPE_CHECKING, Any
 
-from resolveagent.fta.tree import FTAEvent
-
 if TYPE_CHECKING:
-    from resolveagent.skills.executor import SkillExecutor
+    from resolveagent.fta.tree import FTAEvent
     from resolveagent.llm.base import LLMProvider
+    from resolveagent.skills.executor import SkillExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -110,9 +109,7 @@ class NodeEvaluator:
             # Fail-safe: return False (event did not occur)
             return False
 
-    async def _evaluate_skill(
-        self, skill_name: str, params: dict[str, Any], context: dict[str, Any]
-    ) -> bool:
+    async def _evaluate_skill(self, skill_name: str, params: dict[str, Any], context: dict[str, Any]) -> bool:
         """Evaluate by invoking a skill.
 
         Args:
@@ -169,9 +166,7 @@ class NodeEvaluator:
             )
             return False
 
-    async def _evaluate_rag(
-        self, collection_id: str, params: dict[str, Any], context: dict[str, Any]
-    ) -> bool:
+    async def _evaluate_rag(self, collection_id: str, params: dict[str, Any], context: dict[str, Any]) -> bool:
         """Evaluate by querying RAG.
 
         Args:
@@ -242,9 +237,7 @@ class NodeEvaluator:
             )
             return False
 
-    async def _evaluate_llm(
-        self, model_hint: str, params: dict[str, Any], context: dict[str, Any]
-    ) -> bool:
+    async def _evaluate_llm(self, model_hint: str, params: dict[str, Any], context: dict[str, Any]) -> bool:
         """Evaluate by calling an LLM.
 
         Args:
@@ -287,7 +280,10 @@ Respond with only "true" or "false"."""
             # Call LLM
             response = await self.llm_provider.chat(
                 messages=[
-                    {"role": "system", "content": "You are a classifier. Respond with only 'true' or 'false'."},
+                    {
+                        "role": "system",
+                        "content": "You are a classifier. Respond with only 'true' or 'false'.",
+                    },
                     {"role": "user", "content": prompt},
                 ],
                 temperature=0.0,  # Low temperature for consistent results

@@ -4,11 +4,9 @@ import pytest
 
 from resolveagent.hooks.memory_client import InMemoryHookClient
 from resolveagent.hooks.models import HookContext, HookResult
-from resolveagent.hooks.runner import HookRunner
 from resolveagent.selector.hook_selector import HookSelectorAdapter
 from resolveagent.selector.protocol import SelectorProtocol
 from resolveagent.selector.selector import RouteDecision
-
 
 # ==================== InMemoryHookClient Tests ====================
 
@@ -23,13 +21,15 @@ class TestInMemoryHookClient:
     @pytest.mark.asyncio
     async def test_create_and_get(self, client):
         """Test creating and retrieving a hook."""
-        result = await client.create({
-            "name": "test-hook",
-            "hook_type": "pre",
-            "trigger_point": "agent.execute",
-            "handler_type": "intent_analysis",
-            "enabled": True,
-        })
+        result = await client.create(
+            {
+                "name": "test-hook",
+                "hook_type": "pre",
+                "trigger_point": "agent.execute",
+                "handler_type": "intent_analysis",
+                "enabled": True,
+            }
+        )
         assert result is not None
         hook_id = result["id"]
 
@@ -150,14 +150,16 @@ class TestHookSelectorAdapter:
         client = InMemoryHookClient()
 
         # Create a pre-hook that short-circuits
-        await client.create({
-            "name": "force-direct",
-            "hook_type": "pre",
-            "trigger_point": "selector.route",
-            "handler_type": "force_direct",
-            "execution_order": 0,
-            "enabled": True,
-        })
+        await client.create(
+            {
+                "name": "force-direct",
+                "hook_type": "pre",
+                "trigger_point": "selector.route",
+                "handler_type": "force_direct",
+                "execution_order": 0,
+                "enabled": True,
+            }
+        )
 
         adapter = HookSelectorAdapter(hook_client=client, strategy="hybrid")
         adapter._default_hooks_installed = True  # Skip default hook installation
@@ -194,7 +196,5 @@ class TestHookSelectorAdapter:
     @pytest.mark.asyncio
     async def test_code_analysis_through_hooks(self, adapter):
         """Test code analysis routing through hook pipeline."""
-        decision = await adapter.route(
-            '```python\ndef vulnerable(): exec(input())```\nreview this code'
-        )
+        decision = await adapter.route("```python\ndef vulnerable(): exec(input())```\nreview this code")
         assert decision.route_type == "code_analysis"

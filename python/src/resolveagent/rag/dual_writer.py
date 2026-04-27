@@ -118,9 +118,7 @@ class DualWriteRAGPipeline:
             top_k=top_k,
         )
 
-    async def ingest_solutions(
-        self, solutions: list[Any]
-    ) -> dict[str, Any]:
+    async def ingest_solutions(self, solutions: list[Any]) -> dict[str, Any]:
         """Ingest solution documents from the static analysis engine.
 
         Converts ``SolutionDocument`` instances into RAG documents.
@@ -129,33 +127,35 @@ class DualWriteRAGPipeline:
         for sol in solutions:
             content = sol.to_markdown() if hasattr(sol, "to_markdown") else str(sol)
             meta = sol.to_dict() if hasattr(sol, "to_dict") else {}
-            documents.append({
-                "content": content,
-                "metadata": {
-                    **meta,
-                    "source": "code_analysis",
-                    "type": "solution_document",
-                },
-            })
+            documents.append(
+                {
+                    "content": content,
+                    "metadata": {
+                        **meta,
+                        "source": "code_analysis",
+                        "type": "solution_document",
+                    },
+                }
+            )
 
         return await self.ingest(documents, tags=["solution", "code-analysis"])
 
-    async def ingest_report(
-        self, report: Any
-    ) -> dict[str, Any]:
+    async def ingest_report(self, report: Any) -> dict[str, Any]:
         """Ingest a traffic analysis report into RAG.
 
         Converts an ``AnalysisReport`` into a RAG document.
         """
         content = report.to_markdown() if hasattr(report, "to_markdown") else str(report)
         meta = report.to_dict() if hasattr(report, "to_dict") else {}
-        documents = [{
-            "content": content,
-            "metadata": {
-                **meta,
-                "source": "traffic_analysis",
-                "type": "analysis_report",
-            },
-        }]
+        documents = [
+            {
+                "content": content,
+                "metadata": {
+                    **meta,
+                    "source": "traffic_analysis",
+                    "type": "analysis_report",
+                },
+            }
+        ]
 
         return await self.ingest(documents, tags=["traffic", "analysis-report"])

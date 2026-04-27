@@ -62,9 +62,7 @@ class TrafficGraphClient(BaseStoreClient):
             for g in data.get("graphs", [])
         ]
 
-    async def update(
-        self, graph_id: str, data: dict[str, Any]
-    ) -> dict[str, Any] | None:
+    async def update(self, graph_id: str, data: dict[str, Any]) -> dict[str, Any] | None:
         return await self._put(f"/api/v1/traffic/graphs/{graph_id}", data)
 
     async def delete(self, graph_id: str) -> dict[str, Any] | None:
@@ -72,6 +70,4 @@ class TrafficGraphClient(BaseStoreClient):
 
     async def analyze(self, graph_id: str) -> dict[str, Any] | None:
         """Trigger LLM analysis on a traffic graph."""
-        return await self._post(
-            f"/api/v1/traffic/graphs/{graph_id}/analyze", {}
-        )
+        return await self._post(f"/api/v1/traffic/graphs/{graph_id}/analyze", {})

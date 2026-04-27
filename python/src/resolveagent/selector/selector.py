@@ -60,16 +60,20 @@ class RouteDecision(BaseModel):
         default="",
         description="Explanation of the routing decision",
     )
-    chain: list["RouteDecision"] = Field(
+    chain: list[RouteDecision] = Field(
         default_factory=list,
         description="Ordered sub-decisions for multi-route scenarios",
     )
 
     def is_code_related(self) -> bool:
         """Check if this decision is for code-related processing."""
-        return self.route_type in ("code_analysis", "skill") and (
-            self.route_target in ("static-analysis", "code-exec", "security-scan", "linter")
-            or "code" in self.route_target.lower()
+        if self.route_type == "code_analysis":
+            return True
+        if self.route_type != "skill":
+            return False
+        code_targets = {"static-analysis", "code-exec", "security-scan", "linter"}
+        return self.route_target in code_targets or any(
+            t in self.route_target.lower() for t in ("code", "lint", "security", "analysis")
         )
 
     def is_high_confidence(self, threshold: float = 0.7) -> bool:
@@ -131,9 +135,7 @@ class IntelligentSelector:
             cache_ttl_seconds: Time-to-live for cached decisions.
         """
         if strategy not in self.VALID_STRATEGIES:
-            logger.warning(
-                f"Unknown strategy '{strategy}', using 'hybrid'"
-            )
+            logger.warning(f"Unknown strategy '{strategy}', using 'hybrid'")
             strategy = "hybrid"
 
         self.strategy = strategy
@@ -151,13 +153,9 @@ class IntelligentSelector:
 
         # Route decision cache.
         if cache_scope == "global":
-            self._cache: RouteDecisionCache = get_global_cache(
-                max_size=cache_max_size, ttl_seconds=cache_ttl_seconds
-            )
+            self._cache: RouteDecisionCache = get_global_cache(max_size=cache_max_size, ttl_seconds=cache_ttl_seconds)
         else:
-            self._cache = RouteDecisionCache(
-                max_size=cache_max_size, ttl_seconds=cache_ttl_seconds
-            )
+            self._cache = RouteDecisionCache(max_size=cache_max_size, ttl_seconds=cache_ttl_seconds)
 
     async def route(
         self,
@@ -214,9 +212,7 @@ class IntelligentSelector:
 
         return decision
 
-    async def analyze_intent(
-        self, input_text: str
-    ) -> dict[str, Any]:
+    async def analyze_intent(self, input_text: str) -> dict[str, Any]:
         """Analyze the intent of user input without full routing.
 
         Useful for understanding what the user wants without making
@@ -230,6 +226,7 @@ class IntelligentSelector:
         """
         if self._intent_analyzer is None:
             from resolveagent.selector.intent import IntentAnalyzer
+
             self._intent_analyzer = IntentAnalyzer()
 
         classification = await self._intent_analyzer.classify(input_text)
@@ -251,11 +248,10 @@ class IntelligentSelector:
         """Enrich context with additional information."""
         if self._context_enricher is None:
             from resolveagent.selector.context_enricher import ContextEnricher
+
             self._context_enricher = ContextEnricher(registry_client=self._registry_client)
 
-        enriched = await self._context_enricher.enrich(
-            input_text, agent_id, context
-        )
+        enriched = await self._context_enricher.enrich(input_text, agent_id, context)
 
         return enriched.to_dict()
 
@@ -264,32 +260,29 @@ class IntelligentSelector:
         if name not in self._strategy_instances:
             if name == "llm":
                 from resolveagent.selector.strategies.llm_strategy import LLMStrategy
+
                 self._strategy_instances[name] = LLMStrategy()
             elif name == "rule":
                 from resolveagent.selector.strategies.rule_strategy import RuleStrategy
+
                 self._strategy_instances[name] = RuleStrategy()
             elif name == "hybrid":
                 from resolveagent.selector.strategies.hybrid_strategy import HybridStrategy
+
                 self._strategy_instances[name] = HybridStrategy()
         return self._strategy_instances[name]
 
-    async def _route_llm(
-        self, input_text: str, agent_id: str, context: dict[str, Any]
-    ) -> RouteDecision:
+    async def _route_llm(self, input_text: str, agent_id: str, context: dict[str, Any]) -> RouteDecision:
         """Use an LLM to classify and route the request."""
         strategy = self._get_strategy("llm")
         return await strategy.decide(input_text, agent_id, context)
 
-    async def _route_rule(
-        self, input_text: str, agent_id: str, context: dict[str, Any]
-    ) -> RouteDecision:
+    async def _route_rule(self, input_text: str, agent_id: str, context: dict[str, Any]) -> RouteDecision:
         """Use rule-based pattern matching to route the request."""
         strategy = self._get_strategy("rule")
         return await strategy.decide(input_text, agent_id, context)
 
-    async def _route_hybrid(
-        self, input_text: str, agent_id: str, context: dict[str, Any]
-    ) -> RouteDecision:
+    async def _route_hybrid(self, input_text: str, agent_id: str, context: dict[str, Any]) -> RouteDecision:
         """Try rules first, fall back to LLM for ambiguous cases."""
         strategy = self._get_strategy("hybrid")
         return await strategy.decide(input_text, agent_id, context)

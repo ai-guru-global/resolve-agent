@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import time
 import uuid
-from typing import Any, AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 from resolveagent.agent.mega import MegaAgent
 from resolveagent.runtime.context import ExecutionContext
 from resolveagent.selector.selector import IntelligentSelector, RouteDecision
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +119,7 @@ class ExecutionEngine:
             # Run pre-execution hooks
             if self._hook_runner:
                 from resolveagent.hooks.models import HookContext
+
                 pre_ctx = HookContext(
                     trigger_point="agent.execute",
                     hook_type="pre",
@@ -186,13 +189,12 @@ class ExecutionEngine:
             # Save assistant response to conversation history
             if full_response_content:
                 assistant_content = "".join(full_response_content)
-                self._conversations[conversation_id].append(
-                    {"role": "assistant", "content": assistant_content}
-                )
+                self._conversations[conversation_id].append({"role": "assistant", "content": assistant_content})
 
             # Run post-execution hooks
             if self._hook_runner:
                 from resolveagent.hooks.models import HookContext
+
                 post_ctx = HookContext(
                     trigger_point="agent.execute",
                     hook_type="post",
@@ -307,7 +309,10 @@ class ExecutionEngine:
             )
 
         self._agent_pool[agent_id] = agent
-        logger.info("Created new agent", extra={"agent_id": agent_id, "from_registry": agent_config is not None})
+        logger.info(
+            "Created new agent",
+            extra={"agent_id": agent_id, "from_registry": agent_config is not None},
+        )
 
         return agent
 
@@ -413,11 +418,11 @@ class ExecutionEngine:
             content_parts = []
             async for chunk in llm.chat_stream(messages=messages, model=effective_model):
                 # chat_stream yields str chunks directly
-                delta = chunk if isinstance(chunk, str) else getattr(chunk, 'delta', str(chunk))
+                delta = chunk if isinstance(chunk, str) else getattr(chunk, "delta", str(chunk))
                 content_parts.append(delta)
 
                 finished = False
-                if hasattr(chunk, 'finish_reason'):
+                if hasattr(chunk, "finish_reason"):
                     finished = chunk.finish_reason is not None
 
                 yield {
@@ -658,6 +663,7 @@ class ExecutionEngine:
 
                 elif node.type == "skill":
                     from resolveagent.skills.executor import SkillExecutor
+
                     executor = SkillExecutor()
                     result = await executor.execute(
                         skill_name=node.config.get("skill_name", ""),

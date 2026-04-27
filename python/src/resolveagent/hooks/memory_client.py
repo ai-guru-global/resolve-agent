@@ -7,7 +7,7 @@ definitions in memory instead of querying the Go platform.
 from __future__ import annotations
 
 import uuid
-from typing import Any
+from typing import Any, List
 
 from resolveagent.store.hook_client import HookExecutionInfo, HookInfo
 
@@ -42,7 +42,7 @@ class InMemoryHookClient:
     async def get(self, hook_id: str) -> HookInfo | None:
         return self._hooks.get(hook_id)
 
-    async def list(self) -> list[HookInfo]:
+    async def list(self) -> List[HookInfo]:
         return list(self._hooks.values())
 
     async def update(self, hook_id: str, hook: dict[str, Any]) -> dict[str, Any] | None:
@@ -50,8 +50,15 @@ class InMemoryHookClient:
         if existing is None:
             return None
         for attr in (
-            "name", "hook_type", "trigger_point", "target_id",
-            "execution_order", "handler_type", "config", "enabled", "labels",
+            "name",
+            "hook_type",
+            "trigger_point",
+            "target_id",
+            "execution_order",
+            "handler_type",
+            "config",
+            "enabled",
+            "labels",
         ):
             if attr in hook:
                 setattr(existing, attr, hook[attr])
@@ -63,5 +70,5 @@ class InMemoryHookClient:
             return {"id": hook_id}
         return None
 
-    async def list_executions(self, hook_id: str) -> list[HookExecutionInfo]:
+    async def list_executions(self, hook_id: str) -> List[HookExecutionInfo]:
         return self._executions.get(hook_id, [])

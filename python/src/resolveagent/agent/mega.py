@@ -6,10 +6,10 @@ import logging
 from typing import TYPE_CHECKING, Any, Literal
 
 from resolveagent.agent.base import BaseAgent
-from resolveagent.selector.selector import RouteDecision
 
 if TYPE_CHECKING:
     from resolveagent.selector.protocol import SelectorProtocol
+    from resolveagent.selector.selector import RouteDecision
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +137,6 @@ class MegaAgent(BaseAgent):
             Execution result.
         """
         route_type = decision.route_type
-        route_target = decision.route_target
         content = message.get("content", "")
 
         if route_type == "direct":
@@ -331,7 +330,6 @@ class MegaAgent(BaseAgent):
     ) -> dict[str, Any]:
         """Execute an FTA workflow."""
         from resolveagent.fta.engine import FTAEngine
-        from resolveagent.fta.tree import FaultTree
 
         if self._fta_engine is None:
             self._fta_engine = FTAEngine()
@@ -351,6 +349,7 @@ class MegaAgent(BaseAgent):
         workflow_def = None
         try:
             from resolveagent.runtime.registry_client import get_registry_client
+
             registry = get_registry_client()
             workflow_info = await registry.get_workflow(workflow_name)
             if workflow_info:
@@ -427,6 +426,7 @@ class MegaAgent(BaseAgent):
                 skill_name = node.get("config", {}).get("skill_name")
                 if skill_name:
                     from resolveagent.skills.executor import SkillExecutor
+
                     executor = SkillExecutor()
                     skill_result = await executor.execute(
                         skill_name=skill_name,
@@ -650,10 +650,7 @@ class MegaAgent(BaseAgent):
             results.append(sub_result)
 
         # Combine results
-        combined_content = "\n\n".join([
-            f"[{i+1}] {r['metadata']['route_type']}: {r['content'][:200]}..."
-            for i, r in enumerate(results)
-        ])
+        combined_content = "\n\n".join([f"[{i + 1}] {r['metadata']['route_type']}: {r['content'][:200]}..." for i, r in enumerate(results)])
 
         return {
             "role": "assistant",

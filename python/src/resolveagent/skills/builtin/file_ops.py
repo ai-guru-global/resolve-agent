@@ -129,7 +129,7 @@ def _read_file(path: str) -> dict[str, Any]:
                 "message": f"File too large ({size} bytes, max {MAX_FILE_SIZE})",
             }
 
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             content = f.read()
 
         return {
@@ -282,12 +282,20 @@ def _delete_path(path: str) -> dict[str, Any]:
             }
         elif os.path.isdir(path):
             import shutil
+
             shutil.rmtree(path)
             return {
                 "operation": "delete",
                 "path": path,
                 "success": True,
                 "message": "Directory deleted successfully",
+            }
+        else:
+            return {
+                "operation": "delete",
+                "path": path,
+                "success": False,
+                "message": "Path is neither a file nor a directory",
             }
 
     except Exception as e:

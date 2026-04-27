@@ -5,11 +5,14 @@ from __future__ import annotations
 import json
 import logging
 import os
-from typing import Any, AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 import httpx
 
 from resolveagent.llm.provider import ChatMessage, ChatResponse, LLMProvider
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -126,22 +129,22 @@ class QwenProvider(LLMProvider):
                 "Qwen API HTTP error",
                 extra={"status": e.response.status_code, "response": e.response.text},
             )
-            raise RuntimeError(f"Qwen API error: {e.response.status_code} - {e.response.text}")
-        except httpx.TimeoutException as e:
+            raise RuntimeError(f"Qwen API error: {e.response.status_code} - {e.response.text}") from e
+        except httpx.TimeoutException:
             logger.error("Qwen API timeout")
-            raise RuntimeError("Qwen API request timed out")
+            raise RuntimeError("Qwen API request timed out") from None
         except Exception as e:
             logger.error("Qwen API error", extra={"error": str(e)})
-            raise RuntimeError(f"Qwen API call failed: {e}")
+            raise RuntimeError(f"Qwen API call failed: {e}") from e
 
-    async def chat_stream(
+    async def chat_stream(  # type: ignore[override]
         self,
         messages: list[ChatMessage],
         model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
         **kwargs: Any,
-    ) -> AsyncIterator[str]:
+    ) -> AsyncGenerator[str]:
         """Stream completion via Qwen API.
 
         Args:
@@ -178,48 +181,50 @@ class QwenProvider(LLMProvider):
         payload.update(kwargs)
 
         try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                async with client.stream(
+            async with (
+                httpx.AsyncClient(timeout=60.0) as client,
+                client.stream(
                     "POST",
                     f"{self.base_url}/chat/completions",
                     headers=headers,
                     json=payload,
-                ) as response:
-                    response.raise_for_status()
+                ) as response,
+            ):
+                response.raise_for_status()
 
-                    async for line in response.aiter_lines():
-                        line = line.strip()
-                        if not line or line.startswith(":"):
+                async for line in response.aiter_lines():
+                    line = line.strip()
+                    if not line or line.startswith(":"):
+                        continue
+
+                    if line.startswith("data: "):
+                        data_str = line[6:]
+
+                        if data_str == "[DONE]":
+                            break
+
+                        try:
+                            data = json.loads(data_str)
+                            choice = data.get("choices", [{}])[0]
+                            delta = choice.get("delta", {})
+                            content = delta.get("content", "")
+
+                            if content:
+                                yield content
+
+                        except json.JSONDecodeError:
+                            logger.warning(f"Failed to parse SSE data: {data_str}")
                             continue
-
-                        if line.startswith("data: "):
-                            data_str = line[6:]
-
-                            if data_str == "[DONE]":
-                                break
-
-                            try:
-                                data = json.loads(data_str)
-                                choice = data.get("choices", [{}])[0]
-                                delta = choice.get("delta", {})
-                                content = delta.get("content", "")
-
-                                if content:
-                                    yield content
-
-                            except json.JSONDecodeError:
-                                logger.warning(f"Failed to parse SSE data: {data_str}")
-                                continue
 
         except httpx.HTTPStatusError as e:
             logger.error(
                 "Qwen streaming API HTTP error",
                 extra={"status": e.response.status_code},
             )
-            raise RuntimeError(f"Qwen streaming API error: {e.response.status_code}")
+            raise RuntimeError(f"Qwen streaming API error: {e.response.status_code}") from e
         except Exception as e:
             logger.error("Qwen streaming API error", extra={"error": str(e)})
-            raise RuntimeError(f"Qwen streaming API call failed: {e}")
+            raise RuntimeError(f"Qwen streaming API call failed: {e}") from e
 
 
 class QwenProviderError(Exception):

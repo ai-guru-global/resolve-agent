@@ -121,11 +121,9 @@ export default function SolutionList() {
         title="结构化标准方案"
         description="结构化标准方案知识库 - 问题现象 / 关键信息 / 排查步骤 / 解决方案"
         actions={
-          <Button size="sm" asChild>
-            <Link to="/solutions/new">
-              <Plus className="mr-1.5 h-3.5 w-3.5" />
-              新建方案
-            </Link>
+          <Button size="sm" onClick={() => toast.info('即将推出：方案创建功能')}>
+            <Plus className="mr-1.5 h-3.5 w-3.5" />
+            新建方案
           </Button>
         }
       />

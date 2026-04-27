@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, List
 
 from resolveagent.store.base_client import BaseStoreClient
 
@@ -24,15 +24,15 @@ class SolutionInfo:
     domain: str = ""
     component: str = ""
     severity: str = "medium"
-    tags: list[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=lambda: [])
     search_keywords: str = ""
     version: int = 1
     status: str = "active"
     source_uri: str = ""
     rag_collection_id: str = ""
     rag_document_id: str = ""
-    related_skill_names: list[str] = field(default_factory=list)
-    related_workflow_ids: list[str] = field(default_factory=list)
+    related_skill_names: list[str] = field(default_factory=lambda: [])
+    related_workflow_ids: list[str] = field(default_factory=lambda: [])
     metadata: dict[str, Any] = field(default_factory=dict)
     created_by: str = ""
 
@@ -97,7 +97,7 @@ class SolutionClient(BaseStoreClient):
         status: str = "",
         limit: int = 100,
         offset: int = 0,
-    ) -> list[SolutionInfo]:
+    ) -> List[SolutionInfo]:
         """List solutions with optional filters."""
         params: dict[str, Any] = {"limit": limit, "offset": offset}
         if domain:
@@ -112,9 +112,7 @@ class SolutionClient(BaseStoreClient):
             return []
         return [_parse_solution(s) for s in data.get("solutions", [])]
 
-    async def update(
-        self, solution_id: str, solution: dict[str, Any]
-    ) -> dict[str, Any] | None:
+    async def update(self, solution_id: str, solution: dict[str, Any]) -> dict[str, Any] | None:
         """Update a solution."""
         return await self._put(f"/api/v1/solutions/{solution_id}", solution)
 
@@ -128,11 +126,11 @@ class SolutionClient(BaseStoreClient):
         domain: str = "",
         component: str = "",
         severity: str = "",
-        tags: list[str] | None = None,
+        tags: List[str] | None = None,
         status: str = "",
         limit: int = 20,
         offset: int = 0,
-    ) -> list[SolutionInfo]:
+    ) -> List[SolutionInfo]:
         """Search solutions with domain-specific filters."""
         payload: dict[str, Any] = {"limit": limit, "offset": offset}
         if keyword:
@@ -153,26 +151,18 @@ class SolutionClient(BaseStoreClient):
             return []
         return [_parse_solution(s) for s in data.get("solutions", [])]
 
-    async def bulk_create(
-        self, solutions: list[dict[str, Any]]
-    ) -> int:
+    async def bulk_create(self, solutions: List[dict[str, Any]]) -> int:
         """Bulk create solutions. Returns count of created items."""
         data = await self._post("/api/v1/solutions/bulk", {"solutions": solutions})
         if not data:
             return 0
         return data.get("created", 0)
 
-    async def record_execution(
-        self, solution_id: str, execution: dict[str, Any]
-    ) -> dict[str, Any] | None:
+    async def record_execution(self, solution_id: str, execution: dict[str, Any]) -> dict[str, Any] | None:
         """Record a solution execution."""
-        return await self._post(
-            f"/api/v1/solutions/{solution_id}/executions", execution
-        )
+        return await self._post(f"/api/v1/solutions/{solution_id}/executions", execution)
 
-    async def list_executions(
-        self, solution_id: str
-    ) -> list[SolutionExecutionInfo]:
+    async def list_executions(self, solution_id: str) -> List[SolutionExecutionInfo]:
         """List executions for a solution."""
         data = await self._get(f"/api/v1/solutions/{solution_id}/executions")
         if not data:

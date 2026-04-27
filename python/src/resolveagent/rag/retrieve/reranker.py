@@ -7,7 +7,6 @@ to improve the relevance of retrieved chunks.
 from __future__ import annotations
 
 import logging
-import os
 from typing import TYPE_CHECKING, Any
 
 logger = logging.getLogger(__name__)
@@ -16,6 +15,7 @@ logger = logging.getLogger(__name__)
 # This is optional - if not available, will fall back to simple scoring
 try:
     from sentence_transformers import CrossEncoder
+
     SENTENCE_TRANSFORMERS_AVAILABLE = True
 except ImportError:
     SENTENCE_TRANSFORMERS_AVAILABLE = False
@@ -159,7 +159,7 @@ class Reranker:
 
             # Attach scores to chunks
             reranked = []
-            for chunk, score in zip(chunks, scores):
+            for chunk, score in zip(chunks, scores, strict=False):
                 new_chunk = chunk.copy()
                 new_chunk["rerank_score"] = float(score)
                 # Combine original score with rerank score if available
@@ -221,7 +221,10 @@ Respond with only a number from 0 to 10."""
             try:
                 response = await self.llm_provider.chat(
                     messages=[
-                        {"role": "system", "content": "You are a relevance scorer. Respond with only a number 0-10."},
+                        {
+                            "role": "system",
+                            "content": "You are a relevance scorer. Respond with only a number 0-10.",
+                        },
                         {"role": "user", "content": prompt},
                     ],
                     temperature=0.0,
@@ -236,11 +239,9 @@ Respond with only a number from 0 to 10."""
                 except ValueError:
                     # Try to extract number from response
                     import re
+
                     numbers = re.findall(r"\d+", content_response)
-                    if numbers:
-                        score = float(numbers[0]) / 10.0
-                    else:
-                        score = 0.5
+                    score = float(numbers[0]) / 10.0 if numbers else 0.5
 
                 new_chunk = chunk.copy()
                 new_chunk["rerank_score"] = score
@@ -374,7 +375,7 @@ Respond with only a number from 0 to 10."""
         reranked = await self.rerank(query, chunks, len(chunks))
 
         # Apply MMR (Maximal Marginal Relevance) selection
-        selected = []
+        selected: list[dict[str, Any]] = []
         remaining = reranked.copy()
 
         while len(selected) < top_k and remaining:

@@ -39,7 +39,7 @@ func newCreateCmd() *cobra.Command {
 					Type:        agentType,
 					Description: "",
 					Config: map[string]interface{}{
-						"model":       model,
+						"model":         model,
 						"system_prompt": prompt,
 					},
 					Status: "active",

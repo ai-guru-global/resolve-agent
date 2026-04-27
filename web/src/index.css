@@ -41,6 +41,9 @@
     --status-failed: 0 72% 51%;
     --status-progressing: 220 14% 10%;
     --status-unknown: 220 5% 58%;
+    --status-mock-bg: 50 90% 95%;
+    --status-mock-text: 38 92% 35%;
+    --status-mock-border: 38 60% 70%;
   }
 
   /* ─── Dark Theme (Deep Black) ─── */
@@ -79,6 +82,9 @@
     --status-failed: 0 62% 58%;
     --status-progressing: 0 0% 98%;
     --status-unknown: 220 5% 46%;
+    --status-mock-bg: 30 30% 18%;
+    --status-mock-text: 40 85% 65%;
+    --status-mock-border: 30 20% 30%;
   }
 
   * {

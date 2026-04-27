@@ -6,16 +6,18 @@ import json
 import logging
 import os
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
-from resolveagent.corpus.importer import CorpusImporter
 from resolveagent.runtime.engine import ExecutionEngine
 from resolveagent.runtime.lifecycle import AgentLifecycleManager
 from resolveagent.store.skill_client import SkillStoreClient
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 logger = logging.getLogger(__name__)
 
@@ -115,7 +117,7 @@ class RuntimeHTTPServer:
 
             except Exception as e:
                 logger.error(f"Failed to execute agent: {e}")
-                raise HTTPException(status_code=500, detail=str(e))
+                raise HTTPException(status_code=500, detail=str(e)) from e
 
         # Workflow execution
         @app.post("/v1/workflows/{workflow_id}/execute")
@@ -151,7 +153,7 @@ class RuntimeHTTPServer:
 
             except Exception as e:
                 logger.error(f"Failed to execute workflow: {e}")
-                raise HTTPException(status_code=500, detail=str(e))
+                raise HTTPException(status_code=500, detail=str(e)) from e
 
         # RAG query
         @app.post("/v1/rag/query")
@@ -175,15 +177,17 @@ class RuntimeHTTPServer:
                     filters=filters,
                 )
 
-                return JSONResponse({
-                    "results": results,
-                    "query": query,
-                    "collection_id": collection_id,
-                })
+                return JSONResponse(
+                    {
+                        "results": results,
+                        "query": query,
+                        "collection_id": collection_id,
+                    }
+                )
 
             except Exception as e:
                 logger.error(f"RAG query error: {e}")
-                raise HTTPException(status_code=500, detail=str(e))
+                raise HTTPException(status_code=500, detail=str(e)) from e
 
         # RAG ingest
         @app.post("/v1/rag/ingest")
@@ -197,20 +201,22 @@ class RuntimeHTTPServer:
                 from resolveagent.rag.pipeline import RAGPipeline
 
                 pipeline = RAGPipeline()
-                result = await pipeline.ingest(
+                await pipeline.ingest(
                     collection_id=collection_id,
                     documents=documents,
                 )
 
-                return JSONResponse({
-                    "success": True,
-                    "ingested_count": len(documents),
-                    "collection_id": collection_id,
-                })
+                return JSONResponse(
+                    {
+                        "success": True,
+                        "ingested_count": len(documents),
+                        "collection_id": collection_id,
+                    }
+                )
 
             except Exception as e:
                 logger.error(f"RAG ingest error: {e}")
-                raise HTTPException(status_code=500, detail=str(e))
+                raise HTTPException(status_code=500, detail=str(e)) from e
 
         # Skill execution
         @app.post("/v1/skills/{skill_name}/execute")
@@ -230,15 +236,17 @@ class RuntimeHTTPServer:
                     context=context,
                 )
 
-                return JSONResponse({
-                    "success": result.success,
-                    "output": result.output,
-                    "error": result.error,
-                })
+                return JSONResponse(
+                    {
+                        "success": result.success,
+                        "output": result.output,
+                        "error": result.error,
+                    }
+                )
 
             except Exception as e:
                 logger.error(f"Skill execution error: {e}")
-                raise HTTPException(status_code=500, detail=str(e))
+                raise HTTPException(status_code=500, detail=str(e)) from e
 
         # Corpus import
         @app.post("/v1/corpus/import")
@@ -283,7 +291,7 @@ class RuntimeHTTPServer:
 
             except Exception as e:
                 logger.error(f"Failed to start corpus import: {e}")
-                raise HTTPException(status_code=500, detail=str(e))
+                raise HTTPException(status_code=500, detail=str(e)) from e
 
         # Solution RAG sync
         @app.post("/v1/solutions/sync-rag")
@@ -322,29 +330,33 @@ class RuntimeHTTPServer:
 
                 pipeline = RAGPipeline()
                 collection_id = "solutions"
-                documents = [{
-                    "content": content,
-                    "metadata": {
-                        "solution_id": solution_id,
-                        "domain": domain,
-                        "tags": tags,
-                        "type": "troubleshooting_solution",
-                    },
-                }]
+                documents = [
+                    {
+                        "content": content,
+                        "metadata": {
+                            "solution_id": solution_id,
+                            "domain": domain,
+                            "tags": tags,
+                            "type": "troubleshooting_solution",
+                        },
+                    }
+                ]
                 await pipeline.ingest(
                     collection_id=collection_id,
                     documents=documents,
                 )
 
-                return JSONResponse({
-                    "success": True,
-                    "rag_collection_id": collection_id,
-                    "rag_document_id": solution_id,
-                })
+                return JSONResponse(
+                    {
+                        "success": True,
+                        "rag_collection_id": collection_id,
+                        "rag_document_id": solution_id,
+                    }
+                )
 
             except Exception as e:
                 logger.error(f"Solution RAG sync error: {e}")
-                raise HTTPException(status_code=500, detail=str(e))
+                raise HTTPException(status_code=500, detail=str(e)) from e
 
         # Solution semantic search
         @app.post("/v1/solutions/semantic-search")
@@ -355,12 +367,10 @@ class RuntimeHTTPServer:
                 query = body.get("query", "")
                 top_k = body.get("top_k", 10)
                 domain = body.get("domain", "")
-                tags = body.get("tags", [])
+                body.get("tags", [])
 
                 if not query:
-                    raise HTTPException(
-                        status_code=400, detail="query is required"
-                    )
+                    raise HTTPException(status_code=400, detail="query is required")
 
                 from resolveagent.rag.pipeline import RAGPipeline
 
@@ -381,25 +391,27 @@ class RuntimeHTTPServer:
                 # Transform RAG results to solution search format
                 search_results = []
                 for r in results:
-                    search_results.append({
-                        "solution_id": r.get("metadata", {}).get(
-                            "solution_id", ""
-                        ),
-                        "title": r.get("metadata", {}).get("title", ""),
-                        "score": r.get("score", 0.0),
-                        "snippet": r.get("content", "")[:200],
-                    })
+                    search_results.append(
+                        {
+                            "solution_id": r.get("metadata", {}).get("solution_id", ""),
+                            "title": r.get("metadata", {}).get("title", ""),
+                            "score": r.get("score", 0.0),
+                            "snippet": r.get("content", "")[:200],
+                        }
+                    )
 
-                return JSONResponse({
-                    "results": search_results,
-                    "total": len(search_results),
-                })
+                return JSONResponse(
+                    {
+                        "results": search_results,
+                        "total": len(search_results),
+                    }
+                )
 
             except HTTPException:
                 raise
             except Exception as e:
                 logger.error(f"Solution semantic search error: {e}")
-                raise HTTPException(status_code=500, detail=str(e))
+                raise HTTPException(status_code=500, detail=str(e)) from e
 
         # ---------------------------------------------------------------
         # Code Analysis endpoints
@@ -440,7 +452,7 @@ class RuntimeHTTPServer:
 
             except Exception as e:
                 logger.error(f"Failed to start static analysis: {e}")
-                raise HTTPException(status_code=500, detail=str(e))
+                raise HTTPException(status_code=500, detail=str(e)) from e
 
         @app.post("/v1/code-analysis/traffic")
         async def traffic_analysis(request: Request) -> StreamingResponse:
@@ -473,7 +485,7 @@ class RuntimeHTTPServer:
 
             except Exception as e:
                 logger.error(f"Failed to start traffic analysis: {e}")
-                raise HTTPException(status_code=500, detail=str(e))
+                raise HTTPException(status_code=500, detail=str(e)) from e
 
         @app.post("/v1/code-analysis/errors/parse")
         async def parse_errors(request: Request) -> JSONResponse:
@@ -488,32 +500,34 @@ class RuntimeHTTPServer:
                 parser = ErrorParser()
                 errors = parser.parse(text, language)
 
-                return JSONResponse({
-                    "errors": [
-                        {
-                            "error_type": e.error_type,
-                            "message": e.message,
-                            "language": e.language,
-                            "severity": e.severity,
-                            "file_path": e.file_path,
-                            "line_number": e.line_number,
-                            "stack_trace": [
-                                {
-                                    "file_path": f.file_path,
-                                    "line_number": f.line_number,
-                                    "function_name": f.function_name,
-                                }
-                                for f in e.stack_trace
-                            ],
-                        }
-                        for e in errors
-                    ],
-                    "count": len(errors),
-                })
+                return JSONResponse(
+                    {
+                        "errors": [
+                            {
+                                "error_type": e.error_type,
+                                "message": e.message,
+                                "language": e.language,
+                                "severity": e.severity,
+                                "file_path": e.file_path,
+                                "line_number": e.line_number,
+                                "stack_trace": [
+                                    {
+                                        "file_path": f.file_path,
+                                        "line_number": f.line_number,
+                                        "function_name": f.function_name,
+                                    }
+                                    for f in e.stack_trace
+                                ],
+                            }
+                            for e in errors
+                        ],
+                        "count": len(errors),
+                    }
+                )
 
             except Exception as e:
                 logger.error(f"Error parsing failed: {e}")
-                raise HTTPException(status_code=500, detail=str(e))
+                raise HTTPException(status_code=500, detail=str(e)) from e
 
         @app.post("/v1/code-analysis/traffic/graphs/{graph_id}/analyze")
         async def analyze_traffic_graph(graph_id: str, request: Request) -> StreamingResponse:
@@ -522,7 +536,11 @@ class RuntimeHTTPServer:
                 body = await request.json()
 
                 from resolveagent.store.traffic_graph_client import TrafficGraphClient
-                from resolveagent.traffic.graph_builder import TrafficGraphData, ServiceNode, ServiceEdge
+                from resolveagent.traffic.graph_builder import (
+                    ServiceEdge,
+                    ServiceNode,
+                    TrafficGraphData,
+                )
                 from resolveagent.traffic.report_generator import ReportGenerator
 
                 graph_client = TrafficGraphClient(base_url=body.get("platform_url", "http://localhost:8080"))
@@ -565,29 +583,33 @@ class RuntimeHTTPServer:
                 report = await generator.generate(graph_data)
 
                 # Update the stored graph with the report
-                await graph_client.update(graph_id, {
-                    "analysis_report": report.to_markdown(),
-                    "suggestions": report.suggestions,
-                    "status": "analyzed",
-                })
+                await graph_client.update(
+                    graph_id,
+                    {
+                        "analysis_report": report.to_markdown(),
+                        "suggestions": report.suggestions,
+                        "status": "analyzed",
+                    },
+                )
 
-                return JSONResponse({
-                    "graph_id": graph_id,
-                    "report": report.to_dict(),
-                    "report_markdown": report.to_markdown(),
-                })
+                return JSONResponse(
+                    {
+                        "graph_id": graph_id,
+                        "report": report.to_dict(),
+                        "report_markdown": report.to_markdown(),
+                    }
+                )
 
             except HTTPException:
                 raise
             except Exception as e:
                 logger.error(f"Traffic graph analysis failed: {e}")
-                raise HTTPException(status_code=500, detail=str(e))
+                raise HTTPException(status_code=500, detail=str(e)) from e
 
         return app
 
     async def start(self) -> None:
         """Start the HTTP server."""
-        import asyncio
 
         config = uvicorn.Config(
             self.app,

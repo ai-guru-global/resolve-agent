@@ -8,11 +8,14 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import Any, AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 from resolveagent.traffic.collector import TrafficCollector
-from resolveagent.traffic.graph_builder import TrafficGraphBuilder, TrafficGraphData
-from resolveagent.traffic.report_generator import AnalysisReport, ReportGenerator
+from resolveagent.traffic.graph_builder import TrafficGraphBuilder
+from resolveagent.traffic.report_generator import ReportGenerator
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 logger = logging.getLogger(__name__)
 
@@ -102,23 +105,28 @@ class DynamicAnalysisEngine:
         if self._capture_client is not None:
             try:
                 source_types = list({s.get("type", "") for s in sources})
-                await self._capture_client.create({
-                    "name": session_name,
-                    "source_type": ",".join(source_types),
-                    "target_service": target_service,
-                    "status": "collecting",
-                    "config": {"sources": [s.get("type") for s in sources]},
-                })
+                await self._capture_client.create(
+                    {
+                        "name": session_name,
+                        "source_type": ",".join(source_types),
+                        "target_service": target_service,
+                        "status": "collecting",
+                        "config": {"sources": [s.get("type") for s in sources]},
+                    }
+                )
 
                 # Persist records
                 record_dicts = TrafficCollector.records_to_dicts(records)
                 if record_dicts:
                     await self._capture_client.add_records(capture_id, record_dicts)
 
-                await self._capture_client.update(capture_id, {
-                    "status": "completed",
-                    "summary": {"record_count": len(records)},
-                })
+                await self._capture_client.update(
+                    capture_id,
+                    {
+                        "status": "completed",
+                        "summary": {"record_count": len(records)},
+                    },
+                )
             except Exception:
                 logger.warning("Failed to persist capture session", exc_info=True)
 
@@ -166,13 +174,15 @@ class DynamicAnalysisEngine:
         if self._graph_client is not None:
             try:
                 store_data = TrafficGraphBuilder.to_store_format(graph)
-                store_data.update({
-                    "capture_id": capture_id,
-                    "name": f"graph-{session_name}",
-                    "analysis_report": report.to_markdown(),
-                    "suggestions": report.suggestions,
-                    "status": "completed",
-                })
+                store_data.update(
+                    {
+                        "capture_id": capture_id,
+                        "name": f"graph-{session_name}",
+                        "analysis_report": report.to_markdown(),
+                        "suggestions": report.suggestions,
+                        "status": "completed",
+                    }
+                )
                 await self._graph_client.create(store_data)
             except Exception:
                 logger.warning("Failed to persist traffic graph", exc_info=True)

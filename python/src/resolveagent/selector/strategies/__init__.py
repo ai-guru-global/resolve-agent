@@ -25,7 +25,7 @@ from resolveagent.selector.strategies.hybrid_strategy import (
     HybridStrategy,
 )
 from resolveagent.selector.strategies.llm_strategy import LLMStrategy
-from resolveagent.selector.strategies.rule_strategy import RuleStrategy, RoutingRule
+from resolveagent.selector.strategies.rule_strategy import RoutingRule, RuleStrategy
 
 __all__ = [
     "HybridConfig",

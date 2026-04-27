@@ -9,9 +9,10 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from resolveagent.traffic.collector import RawRecord
+if TYPE_CHECKING:
+    from resolveagent.traffic.collector import RawRecord
 
 logger = logging.getLogger(__name__)
 
@@ -158,7 +159,8 @@ class TrafficGraphBuilder:
 
         logger.info(
             "Built traffic graph: %d nodes, %d edges",
-            len(nodes), len(edges),
+            len(nodes),
+            len(edges),
         )
         return graph
 
@@ -181,34 +183,38 @@ class TrafficGraphBuilder:
         for i, node in enumerate(graph.nodes):
             row = i // cols
             col = i % cols
-            xy_nodes.append({
-                "id": node.id,
-                "type": "serviceNode",
-                "position": {"x": col * spacing_x, "y": row * spacing_y},
-                "data": {
-                    "label": node.label,
-                    "requestCount": node.request_count,
-                    "errorCount": node.error_count,
-                    "avgLatencyMs": round(node.avg_latency_ms, 1),
-                    "protocols": node.protocols,
-                },
-            })
+            xy_nodes.append(
+                {
+                    "id": node.id,
+                    "type": "serviceNode",
+                    "position": {"x": col * spacing_x, "y": row * spacing_y},
+                    "data": {
+                        "label": node.label,
+                        "requestCount": node.request_count,
+                        "errorCount": node.error_count,
+                        "avgLatencyMs": round(node.avg_latency_ms, 1),
+                        "protocols": node.protocols,
+                    },
+                }
+            )
 
         for edge in graph.edges:
-            xy_edges.append({
-                "id": edge.id,
-                "source": edge.source,
-                "target": edge.target,
-                "type": "trafficEdge",
-                "animated": edge.error_count > 0,
-                "data": {
-                    "requestCount": edge.request_count,
-                    "errorCount": edge.error_count,
-                    "avgLatencyMs": round(edge.avg_latency_ms, 1),
-                    "protocols": edge.protocols,
-                    "methods": edge.methods,
-                },
-            })
+            xy_edges.append(
+                {
+                    "id": edge.id,
+                    "source": edge.source,
+                    "target": edge.target,
+                    "type": "trafficEdge",
+                    "animated": edge.error_count > 0,
+                    "data": {
+                        "requestCount": edge.request_count,
+                        "errorCount": edge.error_count,
+                        "avgLatencyMs": round(edge.avg_latency_ms, 1),
+                        "protocols": edge.protocols,
+                        "methods": edge.methods,
+                    },
+                }
+            )
 
         return {"nodes": xy_nodes, "edges": xy_edges}
 

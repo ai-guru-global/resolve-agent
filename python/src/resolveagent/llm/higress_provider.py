@@ -8,12 +8,15 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 import httpx
 
 from resolveagent.llm.provider import ChatMessage, ChatResponse, LLMProvider
 from resolveagent.runtime.registry_client import get_registry_client
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -215,14 +218,14 @@ class HigressLLMProvider(LLMProvider):
             logger.error("LLM request error", extra={"error": str(e)})
             raise
 
-    async def chat_stream(
+    async def chat_stream(  # type: ignore[override]
         self,
         messages: list[ChatMessage],
         model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
         **kwargs: Any,
-    ) -> AsyncIterator[str]:
+    ) -> AsyncGenerator[str]:
         """Generate a streaming chat completion through Higress gateway.
 
         Args:
@@ -266,6 +269,7 @@ class HigressLLMProvider(LLMProvider):
 
                     try:
                         import json
+
                         data = json.loads(data_str)
 
                         if "choices" in data and data["choices"]:
@@ -396,6 +400,7 @@ class HigressEmbeddingProvider:
 
 # Convenience functions for creating providers
 
+
 def create_llm_provider(
     gateway_url: str | None = None,
     model: str = "qwen-plus",
@@ -414,7 +419,11 @@ def create_llm_provider(
         LLMProvider instance.
     """
     direct_mode = os.getenv("RESOLVEAGENT_LLM_DIRECT", "false").lower() in ("true", "1", "yes")
-    gateway_enabled = os.getenv("RESOLVEAGENT_GATEWAY_ENABLED", "false").lower() in ("true", "1", "yes")
+    gateway_enabled = os.getenv("RESOLVEAGENT_GATEWAY_ENABLED", "false").lower() in (
+        "true",
+        "1",
+        "yes",
+    )
 
     if direct_mode or not gateway_enabled:
         # Direct mode: use OpenAI-compatible provider

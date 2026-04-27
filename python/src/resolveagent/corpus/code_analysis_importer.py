@@ -133,9 +133,7 @@ class CodeAnalysisCorpusImporter:
         # Ingest solutions into RAG via dual-write
         if analysis.solutions:
             try:
-                ingest_result = await self._dual_writer.ingest_solutions(
-                    analysis.solutions
-                )
+                ingest_result = await self._dual_writer.ingest_solutions(analysis.solutions)
                 primary = ingest_result.get("primary", {})
                 result["rag_documents_ingested"] = primary.get("documents_processed", 0)
                 result["rag_chunks_created"] = primary.get("chunks_created", 0)
@@ -150,18 +148,14 @@ class CodeAnalysisCorpusImporter:
             except Exception as e:
                 logger.warning("RAG ingestion failed for solutions", exc_info=True)
                 if progress:
-                    await progress.file_error(
-                        "code_analysis", f"{repo_path}/solutions", str(e)
-                    )
+                    await progress.file_error("code_analysis", f"{repo_path}/solutions", str(e))
 
         # Ingest call graph summary as a RAG document
         if analysis.call_graph and analysis.call_graph.nodes:
             try:
                 cg = analysis.call_graph
                 cg_doc = self._call_graph_to_document(cg, repo_path)
-                await self._dual_writer.ingest(
-                    [cg_doc], tags=["call-graph", "code-analysis"]
-                )
+                await self._dual_writer.ingest([cg_doc], tags=["call-graph", "code-analysis"])
             except Exception:
                 logger.warning("RAG ingestion failed for call graph", exc_info=True)
 
@@ -248,9 +242,7 @@ class CodeAnalysisCorpusImporter:
                 logger.warning("RAG ingestion failed for call chain corpus", exc_info=True)
                 result["error"] = str(e)
                 if progress:
-                    await progress.file_error(
-                        "code_analysis", "call-chain-corpus", str(e)
-                    )
+                    await progress.file_error("code_analysis", "call-chain-corpus", str(e))
 
         return result
 
@@ -274,28 +266,32 @@ class CodeAnalysisCorpusImporter:
                 )
                 for fn in sf_data.get("keyFunctions", sf_data.get("key_functions", []))
             ]
-            source_files.append(ChainSourceFile(
-                id=sf_data.get("id", ""),
-                file_path=sf_data.get("filePath", sf_data.get("file_path", "")),
-                file_name=sf_data.get("fileName", sf_data.get("file_name", "")),
-                package=sf_data.get("package", ""),
-                component=sf_data.get("component", ""),
-                description=sf_data.get("description", ""),
-                key_functions=key_fns,
-                lines_of_code=sf_data.get("linesOfCode", sf_data.get("lines_of_code", 0)),
-                importance=sf_data.get("importance", "medium"),
-            ))
+            source_files.append(
+                ChainSourceFile(
+                    id=sf_data.get("id", ""),
+                    file_path=sf_data.get("filePath", sf_data.get("file_path", "")),
+                    file_name=sf_data.get("fileName", sf_data.get("file_name", "")),
+                    package=sf_data.get("package", ""),
+                    component=sf_data.get("component", ""),
+                    description=sf_data.get("description", ""),
+                    key_functions=key_fns,
+                    lines_of_code=sf_data.get("linesOfCode", sf_data.get("lines_of_code", 0)),
+                    importance=sf_data.get("importance", "medium"),
+                )
+            )
 
         edges: list[ChainEdge] = []
         for e_data in data.get("edges", []):
-            edges.append(ChainEdge(
-                id=e_data.get("id", ""),
-                source_file_id=e_data.get("sourceFileId", e_data.get("source_file_id", "")),
-                target_file_id=e_data.get("targetFileId", e_data.get("target_file_id", "")),
-                label=e_data.get("label", ""),
-                call_type=e_data.get("callType", e_data.get("call_type", "direct")),
-                functions=e_data.get("functions", []),
-            ))
+            edges.append(
+                ChainEdge(
+                    id=e_data.get("id", ""),
+                    source_file_id=e_data.get("sourceFileId", e_data.get("source_file_id", "")),
+                    target_file_id=e_data.get("targetFileId", e_data.get("target_file_id", "")),
+                    label=e_data.get("label", ""),
+                    call_type=e_data.get("callType", e_data.get("call_type", "direct")),
+                    functions=e_data.get("functions", []),
+                )
+            )
 
         return CallChainData(
             chain_id=data.get("id", data.get("chain_id", "")),
@@ -324,10 +320,7 @@ class CodeAnalysisCorpusImporter:
     def _call_graph_to_document(cg: Any, repo_path: str) -> dict[str, Any]:
         """Convert a call graph result to a RAG document."""
         entry_list = "\n".join(f"- {ep}" for ep in cg.entry_points[:20])
-        node_summary = "\n".join(
-            f"- {n.function_name} ({n.file_path}:{n.line_start})"
-            for n in cg.nodes[:50]
-        )
+        node_summary = "\n".join(f"- {n.function_name} ({n.file_path}:{n.line_start})" for n in cg.nodes[:50])
 
         content = (
             f"# Call Graph Analysis: {repo_path}\n\n"
@@ -361,18 +354,13 @@ class CodeAnalysisCorpusImporter:
             "java": ["*.java"],
         }
 
-        if language:
-            patterns = ext_map.get(language, [f"*.{language}"])
-        else:
-            patterns = [p for group in ext_map.values() for p in group]
+        patterns = ext_map.get(language, [f"*.{language}"]) if language else [p for group in ext_map.values() for p in group]
 
         count = 0
         for pat in patterns:
             count += sum(
-                1 for _ in root.rglob(pat)
-                if not any(
-                    p.startswith(".") or p in ("node_modules", "vendor", "__pycache__", "venv")
-                    for p in _.relative_to(root).parts
-                )
+                1
+                for _ in root.rglob(pat)
+                if not any(p.startswith(".") or p in ("node_modules", "vendor", "__pycache__", "venv") for p in _.relative_to(root).parts)
             )
         return count

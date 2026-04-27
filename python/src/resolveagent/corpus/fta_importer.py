@@ -5,13 +5,14 @@ from __future__ import annotations
 import logging
 import re
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from resolveagent.corpus.config import CorpusConfig
 from resolveagent.corpus.fta_parser import FTAMarkdownParser
-from resolveagent.corpus.progress import ProgressTracker
-from resolveagent.corpus.rag_importer import RAGCorpusImporter
-from resolveagent.fta.serializer import dump_tree_to_yaml
+
+if TYPE_CHECKING:
+    from resolveagent.corpus.config import CorpusConfig
+    from resolveagent.corpus.progress import ProgressTracker
+    from resolveagent.corpus.rag_importer import RAGCorpusImporter
 
 logger = logging.getLogger(__name__)
 
@@ -60,18 +61,14 @@ class FTACorpusImporter:
                 continue
 
             try:
-                trees_created += await self._import_single(
-                    md_file, rag_collection_id, root
-                )
+                trees_created += await self._import_single(md_file, rag_collection_id, root)
                 await progress.file_processed(
                     "fta",
                     str(md_file.relative_to(root)),
                     extra={"trees": trees_created},
                 )
             except Exception as e:
-                await progress.file_error(
-                    "fta", str(md_file.relative_to(root)), str(e)
-                )
+                await progress.file_error("fta", str(md_file.relative_to(root)), str(e))
 
         return {"trees": trees_created, "errors": progress.stats["fta"].errors}
 
@@ -124,8 +121,11 @@ class FTACorpusImporter:
                 "fta_id": f"kudig-fta-{file_id}",
             }
             await self._rag_importer.import_to_rag(
-                rag_collection_id, content, metadata,
-                strategy="by_h3", chunk_size=1500,
+                rag_collection_id,
+                content,
+                metadata,
+                strategy="by_h3",
+                chunk_size=1500,
             )
 
         return 1

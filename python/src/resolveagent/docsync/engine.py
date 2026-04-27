@@ -8,9 +8,8 @@ import shlex
 import subprocess
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional, Union
 
 import yaml
 
@@ -43,7 +42,7 @@ class SyncOutcome:
 
     pair_id: str
     status: str
-    direction: Optional[str] = None
+    direction: str | None = None
     details: str = ""
 
 
@@ -67,23 +66,15 @@ class TranslationMemory:
         with self.path.open("w", encoding="utf-8") as handle:
             yaml.safe_dump(payload, handle, allow_unicode=True, sort_keys=False)
 
-    def lookup(self, *, source_lang: str, target_lang: str, source: str) -> Optional[str]:
+    def lookup(self, *, source_lang: str, target_lang: str, source: str) -> str | None:
         for entry in self.data.entries:
-            if (
-                entry.source_lang == source_lang
-                and entry.target_lang == target_lang
-                and entry.source == source
-            ):
+            if entry.source_lang == source_lang and entry.target_lang == target_lang and entry.source == source:
                 return entry.target
         return None
 
     def remember(self, *, source_lang: str, target_lang: str, source: str, target: str) -> None:
         for index, entry in enumerate(self.data.entries):
-            if (
-                entry.source_lang == source_lang
-                and entry.target_lang == target_lang
-                and entry.source == source
-            ):
+            if entry.source_lang == source_lang and entry.target_lang == target_lang and entry.source == source:
                 self.data.entries[index] = TranslationMemoryEntry(
                     source_lang=source_lang,
                     target_lang=target_lang,
@@ -161,10 +152,7 @@ class TranslationPipeline:
                 target=translated,
             )
             return translated
-        msg = (
-            f"No translation available for pair `{pair_id}` segment. "
-            "Configure `defaults.translator.command` or pre-seed translation memory."
-        )
+        msg = f"No translation available for pair `{pair_id}` segment. Configure `defaults.translator.command` or pre-seed translation memory."
         raise MissingTranslationError(msg)
 
     def _run_command(
@@ -209,7 +197,7 @@ class TranslationPipeline:
 class SyncEngine:
     """Coordinates config loading, change detection, syncing, and review queues."""
 
-    def __init__(self, config_path: Path, workspace_root: Optional[Path] = None) -> None:
+    def __init__(self, config_path: Path, workspace_root: Path | None = None) -> None:
         self.config_path = config_path
         self.workspace_root = workspace_root or config_path.parent.parent.parent
         self.config = self._load_config()
@@ -225,13 +213,13 @@ class SyncEngine:
             memory=self.memory,
         )
 
-    def sync(self, pair_id: Optional[str] = None) -> list[SyncOutcome]:
+    def sync(self, pair_id: str | None = None) -> list[SyncOutcome]:
         outcomes: list[SyncOutcome] = []
         for pair in self._selected_pairs(pair_id):
             outcomes.append(self._sync_pair(pair))
         return outcomes
 
-    def proofread(self, pair_id: Optional[str] = None) -> list[ReviewItem]:
+    def proofread(self, pair_id: str | None = None) -> list[ReviewItem]:
         issues: list[ReviewItem] = []
         for pair in self._selected_pairs(pair_id):
             issues.extend(self._proofread_pair(pair))
@@ -239,7 +227,7 @@ class SyncEngine:
         self._save_review_queue()
         return issues
 
-    def watch(self, pair_id: Optional[str] = None, interval_seconds: Optional[float] = None) -> None:
+    def watch(self, pair_id: str | None = None, interval_seconds: float | None = None) -> None:
         interval = interval_seconds or self.config.defaults.poll_interval_seconds
         while True:
             self.sync(pair_id)
@@ -271,7 +259,7 @@ class SyncEngine:
     ) -> None:
         self.glossary.add_term(zh=zh, en=en, category=category, notes=notes)
 
-    def _selected_pairs(self, pair_id: Optional[str]) -> list[SyncPair]:
+    def _selected_pairs(self, pair_id: str | None) -> list[SyncPair]:
         if pair_id is None:
             return list(self.config.pairs)
         selected = [pair for pair in self.config.pairs if pair.id == pair_id]
@@ -365,7 +353,7 @@ class SyncEngine:
                 f"({len(source_segments)} vs {len(target_segments)})."
             )
             raise SyncError(msg)
-        for source_segment, target_segment in zip(source_segments, target_segments):
+        for source_segment, target_segment in zip(source_segments, target_segments, strict=False):
             if not source_segment.strip() or not target_segment.strip():
                 continue
             self.memory.remember(
@@ -403,7 +391,9 @@ class SyncEngine:
         target_segments = processor.segments(target_text)
         if not source_segments or len(source_segments) != len(target_segments):
             return False
-        return self._looks_like_expected_language(pair.source_lang, processor.extract_text(source_text)) and self._looks_like_expected_language(pair.target_lang, processor.extract_text(target_text))
+        return self._looks_like_expected_language(pair.source_lang, processor.extract_text(source_text)) and self._looks_like_expected_language(
+            pair.target_lang, processor.extract_text(target_text)
+        )
 
     def _looks_like_expected_language(self, lang: str, text: str) -> bool:
         if not text.strip():
@@ -420,16 +410,15 @@ class SyncEngine:
         source_text = self._read_text(self._resolve(pair.source))
         target_text = self._read_text(self._resolve(pair.target))
         items: list[ReviewItem] = []
-        if pair.proofread.structure:
-            if processor.structure_signature(source_text) != processor.structure_signature(target_text):
-                items.append(
-                    self._review_item(
-                        pair_id=pair.id,
-                        severity="error",
-                        issue="源文稿与目标文稿结构签名不一致，请人工复核章节、表格或代码块是否漂移",
-                        direction="proofread",
-                    )
+        if pair.proofread.structure and processor.structure_signature(source_text) != processor.structure_signature(target_text):
+            items.append(
+                self._review_item(
+                    pair_id=pair.id,
+                    severity="error",
+                    issue="源文稿与目标文稿结构签名不一致，请人工复核章节、表格或代码块是否漂移",
+                    direction="proofread",
                 )
+            )
         if pair.proofread.untranslated_source_chars:
             extracted = processor.extract_text(target_text)
             if pair.target_lang == "en" and contains_cjk(extracted):
@@ -459,13 +448,9 @@ class SyncEngine:
                 )
         return items
 
-    def _replace_proofread_items(self, items: list[ReviewItem], pair_id: Optional[str]) -> None:
+    def _replace_proofread_items(self, items: list[ReviewItem], pair_id: str | None) -> None:
         selected_ids = {pair.id for pair in self._selected_pairs(pair_id)}
-        retained = [
-            item
-            for item in self.review_queue.items
-            if item.direction != "proofread" or item.pair_id not in selected_ids or item.resolved
-        ]
+        retained = [item for item in self.review_queue.items if item.direction != "proofread" or item.pair_id not in selected_ids or item.resolved]
         retained.extend(items)
         self.review_queue = ReviewQueue(items=retained)
 
@@ -474,10 +459,10 @@ class SyncEngine:
         pair: SyncPair,
         source_hash: str,
         target_hash: str,
-        snapshot: Optional[SyncSnapshot],
+        snapshot: SyncSnapshot | None,
         source_text: str,
         target_text: str,
-    ) -> Optional[str]:
+    ) -> str | None:
         if snapshot is None:
             if not source_text.strip() and not target_text.strip():
                 return None
@@ -571,7 +556,7 @@ class SyncEngine:
         with self.review_path.open("w", encoding="utf-8") as handle:
             yaml.safe_dump(payload, handle, allow_unicode=True, sort_keys=False)
 
-    def _resolve(self, path_like: Union[str, Path]) -> Path:
+    def _resolve(self, path_like: str | Path) -> Path:
         path = Path(path_like)
         if path.is_absolute():
             return path
@@ -592,7 +577,7 @@ def _hash_text(text: str) -> str:
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _excerpt(text: str, limit: int = 120) -> str:

@@ -27,7 +27,6 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
-import sys
 import time
 from dataclasses import dataclass
 from typing import Any
@@ -326,7 +325,7 @@ async def vectorize_seeds(
         for doc in group_docs:
             try:
                 content = generate_content(doc)
-                document = {
+                document: dict[str, Any] = {
                     "id": doc.id,
                     "content": content,
                     "metadata": {
@@ -493,7 +492,8 @@ def main(argv: list[str] | None = None) -> None:
         help="Delay in seconds between document processing (default: 0.1)",
     )
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
         help="Enable DEBUG logging",
     )

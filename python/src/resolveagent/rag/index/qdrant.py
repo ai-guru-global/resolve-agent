@@ -210,6 +210,7 @@ class QdrantStore(VectorStore):
             # Generate IDs if not provided
             if ids is None:
                 import uuid
+
                 ids = [str(uuid.uuid4()) for _ in range(len(vectors))]
 
             if metadata is None:
@@ -225,7 +226,7 @@ class QdrantStore(VectorStore):
                         **meta,
                     },
                 )
-                for id_, vector, text, meta in zip(ids, vectors, texts, metadata)
+                for id_, vector, text, meta in zip(ids, vectors, texts, metadata, strict=False)
             ]
 
             # Insert in batches
@@ -272,7 +273,7 @@ class QdrantStore(VectorStore):
             raise RuntimeError("Not connected to Qdrant")
 
         try:
-            from qdrant_client.models import Filter, FieldCondition, MatchValue
+            from qdrant_client.models import FieldCondition, Filter, MatchValue
 
             # Build filter if provided
             query_filter = None
@@ -300,12 +301,14 @@ class QdrantStore(VectorStore):
             # Format results
             formatted_results = []
             for result in results:
-                formatted_results.append({
-                    "id": result.id,
-                    "text": result.payload.get("text", "") if result.payload else "",
-                    "metadata": {k: v for k, v in (result.payload or {}).items() if k != "text"},
-                    "score": result.score,
-                })
+                formatted_results.append(
+                    {
+                        "id": result.id,
+                        "text": result.payload.get("text", "") if result.payload else "",
+                        "metadata": {k: v for k, v in (result.payload or {}).items() if k != "text"},
+                        "score": result.score,
+                    }
+                )
 
             logger.debug(
                 f"Search completed in {collection_name}",
@@ -349,12 +352,9 @@ class QdrantStore(VectorStore):
                 return len(ids)
 
             elif filters:
-                from qdrant_client.models import Filter, FieldCondition, MatchValue
+                from qdrant_client.models import FieldCondition, Filter, MatchValue
 
-                conditions = [
-                    FieldCondition(key=k, match=MatchValue(value=v))
-                    for k, v in filters.items()
-                ]
+                conditions = [FieldCondition(key=k, match=MatchValue(value=v)) for k, v in filters.items()]
                 query_filter = Filter(must=conditions)
 
                 self._client.delete(

@@ -5,11 +5,14 @@ from __future__ import annotations
 import json
 import logging
 import os
-from typing import Any, AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 import httpx
 
 from resolveagent.llm.provider import ChatMessage, ChatResponse, LLMProvider
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -99,10 +102,12 @@ class WenxinProvider(LLMProvider):
         # Convert messages to Wenxin format
         wenxin_messages = []
         for msg in messages:
-            wenxin_messages.append({
-                "role": msg.role,
-                "content": msg.content,
-            })
+            wenxin_messages.append(
+                {
+                    "role": msg.role,
+                    "content": msg.content,
+                }
+            )
 
         payload = {
             "messages": wenxin_messages,
@@ -150,19 +155,19 @@ class WenxinProvider(LLMProvider):
                 "Wenxin API HTTP error",
                 extra={"status": e.response.status_code, "response": e.response.text},
             )
-            raise RuntimeError(f"Wenxin API error: {e.response.status_code}")
+            raise RuntimeError(f"Wenxin API error: {e.response.status_code}") from e
         except Exception as e:
             logger.error("Wenxin API error", extra={"error": str(e)})
-            raise RuntimeError(f"Wenxin API call failed: {e}")
+            raise RuntimeError(f"Wenxin API call failed: {e}") from e
 
-    async def chat_stream(
+    async def chat_stream(  # type: ignore[override]
         self,
         messages: list[ChatMessage],
         model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
         **kwargs: Any,
-    ) -> AsyncIterator[str]:
+    ) -> AsyncGenerator[str]:
         """Stream completion via Baidu Wenxin API."""
         model = model or self.DEFAULT_MODEL
         logger.debug("Wenxin streaming chat", extra={"model": model})
@@ -177,10 +182,7 @@ class WenxinProvider(LLMProvider):
             "Content-Type": "application/json",
         }
 
-        wenxin_messages = [
-            {"role": msg.role, "content": msg.content}
-            for msg in messages
-        ]
+        wenxin_messages = [{"role": msg.role, "content": msg.content} for msg in messages]
 
         payload = {
             "messages": wenxin_messages,
@@ -191,46 +193,48 @@ class WenxinProvider(LLMProvider):
         payload.update(kwargs)
 
         try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                async with client.stream(
+            async with (
+                httpx.AsyncClient(timeout=60.0) as client,
+                client.stream(
                     "POST",
                     f"{endpoint}?access_token={access_token}",
                     headers=headers,
                     json=payload,
-                ) as response:
-                    response.raise_for_status()
+                ) as response,
+            ):
+                response.raise_for_status()
 
-                    async for line in response.aiter_lines():
-                        line = line.strip()
-                        if not line:
+                async for line in response.aiter_lines():
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    if line.startswith("data: "):
+                        data_str = line[6:]
+
+                        try:
+                            data = json.loads(data_str)
+                            content = data.get("result", "")
+                            is_end = data.get("is_end", False)
+
+                            if content:
+                                yield content
+
+                            if is_end:
+                                break
+
+                        except json.JSONDecodeError:
                             continue
-
-                        if line.startswith("data: "):
-                            data_str = line[6:]
-
-                            try:
-                                data = json.loads(data_str)
-                                content = data.get("result", "")
-                                is_end = data.get("is_end", False)
-
-                                if content:
-                                    yield content
-
-                                if is_end:
-                                    break
-
-                            except json.JSONDecodeError:
-                                continue
 
         except httpx.HTTPStatusError as e:
             logger.error(
                 "Wenxin streaming API HTTP error",
                 extra={"status": e.response.status_code},
             )
-            raise RuntimeError(f"Wenxin streaming API error: {e.response.status_code}")
+            raise RuntimeError(f"Wenxin streaming API error: {e.response.status_code}") from e
         except Exception as e:
             logger.error("Wenxin streaming API error", extra={"error": str(e)})
-            raise RuntimeError(f"Wenxin streaming API call failed: {e}")
+            raise RuntimeError(f"Wenxin streaming API call failed: {e}") from e
 
 
 class WenxinProviderError(Exception):

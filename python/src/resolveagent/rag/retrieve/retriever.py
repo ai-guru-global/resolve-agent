@@ -109,7 +109,7 @@ class Retriever:
                 "Retrieval failed",
                 extra={"collection": collection, "error": str(e)},
             )
-            raise RuntimeError(f"Failed to retrieve from {collection}: {e}")
+            raise RuntimeError(f"Failed to retrieve from {collection}: {e}") from e
 
     async def retrieve_by_text(
         self,

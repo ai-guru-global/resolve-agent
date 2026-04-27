@@ -6,7 +6,6 @@ from resolveagent.corpus.skill_adapter import (
     parse_front_matter,
 )
 
-
 # ---------------------------------------------------------------------------
 # parse_front_matter
 # ---------------------------------------------------------------------------
@@ -70,6 +69,7 @@ def test_parse_front_matter_no_yaml():
 # KudigSkillAdapter.convert
 # ---------------------------------------------------------------------------
 
+
 def _make_adapted_skill() -> AdaptedSkill:
     fm, body = parse_front_matter(SKILL_DOC)
     adapter = KudigSkillAdapter()
@@ -128,12 +128,13 @@ def test_convert_manifest_runbook_sections():
 # to_registration_dict
 # ---------------------------------------------------------------------------
 
+
 def test_to_registration_dict_has_required_keys():
     skill = _make_adapted_skill()
     d = skill.to_registration_dict()
     assert d["name"] == "node-notready-recovery"
     assert d["status"] == "active"
-    assert d["source_type"] == "corpus"
+    assert d["source_type"] == "kudig"
     assert "manifest" in d
     assert "labels" in d
 
@@ -141,6 +142,7 @@ def test_to_registration_dict_has_required_keys():
 # ---------------------------------------------------------------------------
 # Edge cases
 # ---------------------------------------------------------------------------
+
 
 def test_convert_missing_skill_id_falls_back_to_name():
     fm = {"skill_name": "My Cool Skill", "version": "1.0.0"}

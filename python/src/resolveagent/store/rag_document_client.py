@@ -45,9 +45,7 @@ class RAGIngestionInfo:
 class RAGDocumentClient(BaseStoreClient):
     """Client for RAG document store operations."""
 
-    async def create_document(
-        self, collection_id: str, doc: dict[str, Any]
-    ) -> dict[str, Any] | None:
+    async def create_document(self, collection_id: str, doc: dict[str, Any]) -> dict[str, Any] | None:
         return await self._post(f"/api/v1/rag/collections/{collection_id}/documents", doc)
 
     async def get_document(self, doc_id: str) -> RAGDocumentInfo | None:
@@ -87,9 +85,7 @@ class RAGDocumentClient(BaseStoreClient):
             for d in data.get("documents", [])
         ]
 
-    async def update_document(
-        self, doc_id: str, doc: dict[str, Any]
-    ) -> dict[str, Any] | None:
+    async def update_document(self, doc_id: str, doc: dict[str, Any]) -> dict[str, Any] | None:
         return await self._put(f"/api/v1/rag/documents/{doc_id}", doc)
 
     async def delete_document(self, doc_id: str) -> dict[str, Any] | None:

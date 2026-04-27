@@ -102,14 +102,10 @@ _global_cache: RouteDecisionCache | None = None
 _global_cache_lock = threading.Lock()
 
 
-def get_global_cache(
-    max_size: int = 1000, ttl_seconds: float = 300.0
-) -> RouteDecisionCache:
+def get_global_cache(max_size: int = 1000, ttl_seconds: float = 300.0) -> RouteDecisionCache:
     """Return (and lazily create) the module-level singleton cache."""
     global _global_cache
     with _global_cache_lock:
         if _global_cache is None:
-            _global_cache = RouteDecisionCache(
-                max_size=max_size, ttl_seconds=ttl_seconds
-            )
+            _global_cache = RouteDecisionCache(max_size=max_size, ttl_seconds=ttl_seconds)
         return _global_cache

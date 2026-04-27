@@ -49,16 +49,10 @@ class MemoryClient(BaseStoreClient):
 
     # Short-term memory operations
 
-    async def add_message(
-        self, conversation_id: str, msg: dict[str, Any]
-    ) -> dict[str, Any] | None:
-        return await self._post(
-            f"/api/v1/memory/conversations/{conversation_id}/messages", msg
-        )
+    async def add_message(self, conversation_id: str, msg: dict[str, Any]) -> dict[str, Any] | None:
+        return await self._post(f"/api/v1/memory/conversations/{conversation_id}/messages", msg)
 
-    async def get_conversation(
-        self, conversation_id: str, limit: int = 100
-    ) -> list[ShortTermMemoryInfo]:
+    async def get_conversation(self, conversation_id: str, limit: int = 100) -> list[ShortTermMemoryInfo]:
         data = await self._get(
             f"/api/v1/memory/conversations/{conversation_id}",
             params={"limit": str(limit)},
@@ -90,9 +84,7 @@ class MemoryClient(BaseStoreClient):
 
     # Long-term memory operations
 
-    async def store_long_term(
-        self, memory: dict[str, Any]
-    ) -> dict[str, Any] | None:
+    async def store_long_term(self, memory: dict[str, Any]) -> dict[str, Any] | None:
         return await self._post("/api/v1/memory/long-term", memory)
 
     async def get_long_term(self, memory_id: str) -> LongTermMemoryInfo | None:
@@ -140,9 +132,7 @@ class MemoryClient(BaseStoreClient):
             for m in data.get("memories", [])
         ]
 
-    async def update_long_term(
-        self, memory_id: str, memory: dict[str, Any]
-    ) -> dict[str, Any] | None:
+    async def update_long_term(self, memory_id: str, memory: dict[str, Any]) -> dict[str, Any] | None:
         return await self._put(f"/api/v1/memory/long-term/{memory_id}", memory)
 
     async def delete_long_term(self, memory_id: str) -> dict[str, Any] | None:

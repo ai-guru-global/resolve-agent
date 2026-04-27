@@ -141,9 +141,7 @@ class SolutionGenerator:
 
         return results
 
-    async def _generate_single(
-        self, error: Any, *, include_rag: bool = True
-    ) -> SolutionDocument:
+    async def _generate_single(self, error: Any, *, include_rag: bool = True) -> SolutionDocument:
         """Generate a single solution document."""
 
         # 1. Attempt RAG retrieval for additional context
@@ -169,31 +167,22 @@ class SolutionGenerator:
             )
             chunks = result.get("chunks", [])
             if chunks:
-                return "\n\n".join(
-                    c.get("content", "") for c in chunks[:3]
-                )
+                return "\n\n".join(c.get("content", "") for c in chunks[:3])
         except Exception:
             logger.debug("RAG retrieval failed for %s", error.error_type, exc_info=True)
         return ""
 
-    async def _generate_with_llm(
-        self, error: Any, rag_context: str
-    ) -> SolutionDocument:
+    async def _generate_with_llm(self, error: Any, rag_context: str) -> SolutionDocument:
         """Generate solution using LLM (optionally RAG-augmented)."""
         from resolveagent.llm.provider import ChatMessage
 
         context_block = ""
         if rag_context:
-            context_block = (
-                f"\n\n已知相关解决方案参考:\n{rag_context}\n"
-            )
+            context_block = f"\n\n已知相关解决方案参考:\n{rag_context}\n"
 
         stack_text = ""
         if hasattr(error, "stack_trace") and error.stack_trace:
-            stack_text = "\n".join(
-                f"  {f.file_path}:{f.line_number} in {f.function_name}"
-                for f in error.stack_trace[:10]
-            )
+            stack_text = "\n".join(f"  {f.file_path}:{f.line_number} in {f.function_name}" for f in error.stack_trace[:10])
             stack_text = f"\n\n调用栈:\n{stack_text}"
 
         prompt = (
@@ -226,9 +215,7 @@ class SolutionGenerator:
             )
             return self._parse_llm_response(response.content, error)
         except Exception:
-            logger.warning(
-                "LLM generation failed for %s", error.error_type, exc_info=True
-            )
+            logger.warning("LLM generation failed for %s", error.error_type, exc_info=True)
             return self._generate_template(error, rag_context)
 
     def _parse_llm_response(self, content: str, error: Any) -> SolutionDocument:

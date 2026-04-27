@@ -26,7 +26,7 @@ def init_tracing(
 
     try:
         from opentelemetry import trace
-        from opentelemetry.sdk.resources import Resource, SERVICE_NAME
+        from opentelemetry.sdk.resources import SERVICE_NAME, Resource
         from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
@@ -52,9 +52,7 @@ def init_tracing(
                     extra={"endpoint": endpoint},
                 )
             except ImportError:
-                logger.warning(
-                    "OTLP exporter not available. Install with: pip install opentelemetry-exporter-otlp"
-                )
+                logger.warning("OTLP exporter not available. Install with: pip install opentelemetry-exporter-otlp")
 
         # Set global tracer provider
         trace.set_tracer_provider(_tracer_provider)
@@ -66,9 +64,7 @@ def init_tracing(
         )
 
     except ImportError:
-        logger.warning(
-            "OpenTelemetry not installed. Install with: pip install opentelemetry-api opentelemetry-sdk"
-        )
+        logger.warning("OpenTelemetry not installed. Install with: pip install opentelemetry-api opentelemetry-sdk")
         _tracer = None
 
 
@@ -95,6 +91,7 @@ def create_span(name: str, kind: str = "internal", attributes: dict[str, Any] | 
     if _tracer is None:
         # Return a no-op context manager
         from contextlib import nullcontext
+
         return nullcontext()
 
     from opentelemetry.trace import SpanKind

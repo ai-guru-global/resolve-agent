@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 
 class ChatMessage(BaseModel):
@@ -61,7 +64,7 @@ class LLMProvider(ABC):
         temperature: float = 0.7,
         max_tokens: int = 2048,
         **kwargs: Any,
-    ) -> AsyncIterator[str]:
+    ) -> AsyncGenerator[str, None]:
         """Generate a streaming chat completion.
 
         Args:

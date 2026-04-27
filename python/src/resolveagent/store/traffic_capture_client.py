@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, List
 
 from resolveagent.store.base_client import BaseStoreClient
 
@@ -67,7 +67,7 @@ class TrafficCaptureClient(BaseStoreClient):
             labels=data.get("labels", {}),
         )
 
-    async def list(self) -> list[TrafficCaptureInfo]:
+    async def list(self) -> List[TrafficCaptureInfo]:
         data = await self._get("/api/v1/traffic/captures")
         if not data:
             return []
@@ -85,23 +85,19 @@ class TrafficCaptureClient(BaseStoreClient):
             for c in data.get("captures", [])
         ]
 
-    async def update(
-        self, capture_id: str, capture: dict[str, Any]
-    ) -> dict[str, Any] | None:
+    async def update(self, capture_id: str, capture: dict[str, Any]) -> dict[str, Any] | None:
         return await self._put(f"/api/v1/traffic/captures/{capture_id}", capture)
 
     async def delete(self, capture_id: str) -> dict[str, Any] | None:
         return await self._delete(f"/api/v1/traffic/captures/{capture_id}")
 
-    async def add_records(
-        self, capture_id: str, records: list[dict[str, Any]]
-    ) -> dict[str, Any] | None:
+    async def add_records(self, capture_id: str, records: List[dict[str, Any]]) -> dict[str, Any] | None:
         return await self._post(
             f"/api/v1/traffic/captures/{capture_id}/records",
             {"records": records},
         )
 
-    async def list_records(self, capture_id: str) -> list[TrafficRecordInfo]:
+    async def list_records(self, capture_id: str) -> List[TrafficRecordInfo]:
         data = await self._get(f"/api/v1/traffic/captures/{capture_id}/records")
         if not data:
             return []

@@ -55,6 +55,23 @@ PORT_WEB=3000
 # 工具函数
 # =============================================================================
 
+run_with_timeout() {
+  local seconds=$1; shift
+  (
+    "$@" &
+    local pid=$!
+    (
+      sleep "$seconds"
+      kill "$pid" 2>/dev/null
+    ) &
+    local watcher=$!
+    wait "$pid" 2>/dev/null
+    local exit_code=$?
+    kill "$watcher" 2>/dev/null
+    return $exit_code
+  )
+}
+
 banner() {
   echo ""
   echo -e "${CYAN}${BOLD}╔══════════════════════════════════════════════╗${NC}"
@@ -192,7 +209,7 @@ ensure_python_venv() {
 
   # 2. 健康检查：核心依赖是否可导入
   if [ $need_install -eq 0 ]; then
-    if ! PYTHONPATH="$PYTHON_DIR/src" "$venv_python" -c "import uvicorn, fastapi" 2>/dev/null; then
+    if ! PYTHONPATH="$PYTHON_DIR/src" run_with_timeout 15 "$venv_python" -c "import uvicorn, fastapi" 2>/dev/null; then
       warn "Python 虚拟环境损坏（核心依赖缺失），正在修复..."
       need_install=1
     fi
@@ -200,7 +217,7 @@ ensure_python_venv() {
 
   # 3. 检查 resolveagent 包是否可导入（Python 3.14 .pth 兼容性问题）
   if [ $need_install -eq 0 ]; then
-    if ! PYTHONPATH="$PYTHON_DIR/src" "$venv_python" -c "import resolveagent" 2>/dev/null; then
+    if ! PYTHONPATH="$PYTHON_DIR/src" run_with_timeout 10 "$venv_python" -c "import resolveagent" 2>/dev/null; then
       warn "resolveagent 包不可导入，正在重新安装..."
       need_install=1
     fi
@@ -210,7 +227,7 @@ ensure_python_venv() {
   if [ $need_install -eq 1 ]; then
     info "安装 Python 依赖..."
     # 如果 venv 存在但损坏，先彻底重建
-    if [ -d "$venv_dir" ] && ! PYTHONPATH="$PYTHON_DIR/src" "$venv_python" -c "import uvicorn" 2>/dev/null; then
+    if [ -d "$venv_dir" ] && ! PYTHONPATH="$PYTHON_DIR/src" run_with_timeout 10 "$venv_python" -c "import uvicorn" 2>/dev/null; then
       info "重建虚拟环境..."
       if command -v uv &>/dev/null; then
         uv venv --clear --python 3.14 "$venv_dir" 2>/dev/null
@@ -224,7 +241,7 @@ ensure_python_venv() {
       (cd "$PYTHON_DIR" && "$venv_python" -m pip install -e ".[rag]") 2>&1 | tail -3
     fi
     # 验证安装
-    if PYTHONPATH="$PYTHON_DIR/src" "$venv_python" -c "import uvicorn, fastapi, resolveagent" 2>/dev/null; then
+    if PYTHONPATH="$PYTHON_DIR/src" run_with_timeout 20 "$venv_python" -c "import uvicorn, fastapi, resolveagent" 2>/dev/null; then
       ok "Python 依赖安装成功"
     else
       fail "Python 依赖安装失败，请手动执行: cd python && uv pip install --python .venv/bin/python -e '.[rag]'"
@@ -667,7 +684,7 @@ run_doctor() {
     ok "venv 存在 ($py_ver)"
 
     # 核心依赖
-    if PYTHONPATH="$PYTHON_DIR/src" "$venv_python" -c "import uvicorn, fastapi" 2>/dev/null; then
+    if PYTHONPATH="$PYTHON_DIR/src" run_with_timeout 20 "$venv_python" -c "import uvicorn, fastapi" 2>/dev/null; then
       ok "核心依赖 (uvicorn, fastapi) 正常"
     else
       warn "核心依赖缺失 — 自动修复中..."
@@ -676,7 +693,7 @@ run_doctor() {
     fi
 
     # resolveagent 包
-    if PYTHONPATH="$PYTHON_DIR/src" "$venv_python" -c "import resolveagent" 2>/dev/null; then
+    if PYTHONPATH="$PYTHON_DIR/src" run_with_timeout 10 "$venv_python" -c "import resolveagent" 2>/dev/null; then
       ok "resolveagent 包可导入 (PYTHONPATH 模式)"
     else
       warn "resolveagent 不可导入 — 需要 PYTHONPATH=src"

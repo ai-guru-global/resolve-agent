@@ -84,17 +84,13 @@ class FTADocumentClient(BaseStoreClient):
             for d in data.get("documents", [])
         ]
 
-    async def update_document(
-        self, doc_id: str, doc: dict[str, Any]
-    ) -> dict[str, Any] | None:
+    async def update_document(self, doc_id: str, doc: dict[str, Any]) -> dict[str, Any] | None:
         return await self._put(f"/api/v1/fta/documents/{doc_id}", doc)
 
     async def delete_document(self, doc_id: str) -> dict[str, Any] | None:
         return await self._delete(f"/api/v1/fta/documents/{doc_id}")
 
-    async def create_result(
-        self, doc_id: str, result: dict[str, Any]
-    ) -> dict[str, Any] | None:
+    async def create_result(self, doc_id: str, result: dict[str, Any]) -> dict[str, Any] | None:
         return await self._post(f"/api/v1/fta/documents/{doc_id}/results", result)
 
     async def list_results(self, doc_id: str) -> list[FTAAnalysisResultInfo]:

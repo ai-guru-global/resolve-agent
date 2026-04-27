@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from resolveagent.traffic.graph_builder import TrafficGraphData
+if TYPE_CHECKING:
+    from resolveagent.traffic.graph_builder import TrafficGraphData
 
 logger = logging.getLogger(__name__)
 
@@ -116,69 +117,78 @@ class ReportGenerator:
         sorted_nodes = sorted(graph.nodes, key=lambda n: n.request_count, reverse=True)
         for node in sorted_nodes[:5]:
             if node.request_count > 0:
-                report.hotspots.append({
-                    "service": node.label,
-                    "description": f"请求量 {node.request_count}，"
-                    f"平均延迟 {node.avg_latency_ms:.1f}ms，"
-                    f"错误数 {node.error_count}",
-                    "request_count": node.request_count,
-                    "avg_latency_ms": node.avg_latency_ms,
-                })
+                report.hotspots.append(
+                    {
+                        "service": node.label,
+                        "description": f"请求量 {node.request_count}，平均延迟 {node.avg_latency_ms:.1f}ms，错误数 {node.error_count}",
+                        "request_count": node.request_count,
+                        "avg_latency_ms": node.avg_latency_ms,
+                    }
+                )
 
         # Detect anomalies
         for node in graph.nodes:
             # High error rate
             if node.request_count > 0 and node.error_count / node.request_count > 0.1:
-                report.anomalies.append({
-                    "type": "high_error_rate",
-                    "service": node.label,
-                    "description": f"服务 {node.label} 错误率 "
-                    f"{node.error_count / node.request_count * 100:.1f}%",
-                    "severity": "high",
-                })
+                report.anomalies.append(
+                    {
+                        "type": "high_error_rate",
+                        "service": node.label,
+                        "description": f"服务 {node.label} 错误率 {node.error_count / node.request_count * 100:.1f}%",
+                        "severity": "high",
+                    }
+                )
 
             # High latency (> 1000ms)
             if node.avg_latency_ms > 1000:
-                report.anomalies.append({
-                    "type": "high_latency",
-                    "service": node.label,
-                    "description": f"服务 {node.label} 平均延迟 "
-                    f"{node.avg_latency_ms:.0f}ms，超过阈值",
-                    "severity": "medium",
-                })
+                report.anomalies.append(
+                    {
+                        "type": "high_latency",
+                        "service": node.label,
+                        "description": f"服务 {node.label} 平均延迟 {node.avg_latency_ms:.0f}ms，超过阈值",
+                        "severity": "medium",
+                    }
+                )
 
         for edge in graph.edges:
             # High error rate on edge
             if edge.request_count > 10 and edge.error_count / edge.request_count > 0.05:
-                report.anomalies.append({
-                    "type": "edge_errors",
-                    "service": f"{edge.source} -> {edge.target}",
-                    "description": f"链路 {edge.source} -> {edge.target} "
-                    f"错误率 {edge.error_count / edge.request_count * 100:.1f}%",
-                    "severity": "high",
-                })
+                report.anomalies.append(
+                    {
+                        "type": "edge_errors",
+                        "service": f"{edge.source} -> {edge.target}",
+                        "description": f"链路 {edge.source} -> {edge.target} 错误率 {edge.error_count / edge.request_count * 100:.1f}%",
+                        "severity": "high",
+                    }
+                )
 
         # Generate suggestions based on anomalies
         if any(a["type"] == "high_error_rate" for a in report.anomalies):
-            report.suggestions.append({
-                "title": "排查高错误率服务",
-                "description": "建议检查错误率异常的服务日志，确认是否有代码缺陷或依赖故障。",
-                "priority": "high",
-            })
+            report.suggestions.append(
+                {
+                    "title": "排查高错误率服务",
+                    "description": "建议检查错误率异常的服务日志，确认是否有代码缺陷或依赖故障。",
+                    "priority": "high",
+                }
+            )
 
         if any(a["type"] == "high_latency" for a in report.anomalies):
-            report.suggestions.append({
-                "title": "优化高延迟链路",
-                "description": "建议对高延迟服务进行性能剖析，检查数据库查询、外部API调用等瓶颈。",
-                "priority": "medium",
-            })
+            report.suggestions.append(
+                {
+                    "title": "优化高延迟链路",
+                    "description": "建议对高延迟服务进行性能剖析，检查数据库查询、外部API调用等瓶颈。",
+                    "priority": "medium",
+                }
+            )
 
         if len(graph.edges) > len(graph.nodes) * 2:
-            report.suggestions.append({
-                "title": "简化服务依赖",
-                "description": "服务间调用关系复杂度较高，建议评估是否可以合并服务或引入网关收敛调用。",
-                "priority": "low",
-            })
+            report.suggestions.append(
+                {
+                    "title": "简化服务依赖",
+                    "description": "服务间调用关系复杂度较高，建议评估是否可以合并服务或引入网关收敛调用。",
+                    "priority": "low",
+                }
+            )
 
         report.metadata = {
             "analysis_type": "rule_based",
@@ -187,9 +197,7 @@ class ReportGenerator:
 
         return report
 
-    async def _generate_with_llm(
-        self, graph: TrafficGraphData, rule_report: AnalysisReport
-    ) -> AnalysisReport:
+    async def _generate_with_llm(self, graph: TrafficGraphData, rule_report: AnalysisReport) -> AnalysisReport:
         """Generate report using LLM with graph context."""
         from resolveagent.llm.provider import ChatMessage
 
@@ -204,9 +212,7 @@ class ReportGenerator:
             for e in sorted(graph.edges, key=lambda e: e.request_count, reverse=True)[:20]
         )
 
-        rule_anomalies = "\n".join(
-            f"- [{a['type']}] {a['description']}" for a in rule_report.anomalies
-        )
+        rule_anomalies = "\n".join(f"- [{a['type']}] {a['description']}" for a in rule_report.anomalies)
 
         prompt = (
             "请基于以下服务流量数据，生成详细的分析报告。\n\n"
@@ -230,9 +236,7 @@ class ReportGenerator:
                 )
                 chunks = rag_result.get("chunks", [])
                 if chunks:
-                    rag_context = "\n\n相关历史分析参考:\n" + "\n".join(
-                        c.get("content", "") for c in chunks[:3]
-                    )
+                    rag_context = "\n\n相关历史分析参考:\n" + "\n".join(c.get("content", "") for c in chunks[:3])
             except Exception:
                 logger.debug("RAG context retrieval failed", exc_info=True)
 

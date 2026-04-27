@@ -5,12 +5,14 @@ from __future__ import annotations
 import logging
 import re
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from resolveagent.corpus.config import CorpusConfig
-from resolveagent.corpus.progress import ProgressTracker
 from resolveagent.rag.ingest.chunker import TextChunker
 from resolveagent.rag.pipeline import RAGPipeline
+
+if TYPE_CHECKING:
+    from resolveagent.corpus.config import CorpusConfig
+    from resolveagent.corpus.progress import ProgressTracker
 
 logger = logging.getLogger(__name__)
 
@@ -41,28 +43,19 @@ class RAGCorpusImporter:
         total_chunks = 0
 
         # Discover domain directories
-        domain_dirs = sorted(
-            d for d in root.iterdir()
-            if d.is_dir() and _DOMAIN_PATTERN.match(d.name)
-        )
+        domain_dirs = sorted(d for d in root.iterdir() if d.is_dir() and _DOMAIN_PATTERN.match(d.name))
 
         for domain_dir in domain_dirs:
             for md_file in sorted(domain_dir.rglob("*.md")):
                 if config.is_excluded(str(md_file)):
                     continue
                 try:
-                    chunks = await self._import_single_file(
-                        md_file, collection_id, config, domain=domain_dir.name
-                    )
+                    chunks = await self._import_single_file(md_file, collection_id, config, domain=domain_dir.name)
                     docs_processed += 1
                     total_chunks += chunks
-                    await progress.file_processed(
-                        "rag", str(md_file.relative_to(root)), chunks=chunks
-                    )
+                    await progress.file_processed("rag", str(md_file.relative_to(root)), chunks=chunks)
                 except Exception as e:
-                    await progress.file_error(
-                        "rag", str(md_file.relative_to(root)), str(e)
-                    )
+                    await progress.file_error("rag", str(md_file.relative_to(root)), str(e))
 
         return {"documents": docs_processed, "chunks": total_chunks}
 
@@ -83,9 +76,7 @@ class RAGCorpusImporter:
         """
         chunker = TextChunker(strategy=strategy, chunk_size=chunk_size)
         doc = {"content": content, "metadata": metadata}
-        result = await self._pipeline.ingest(
-            collection_id, [doc], chunker=chunker
-        )
+        result = await self._pipeline.ingest(collection_id, [doc], chunker=chunker)
         return result.get("chunks_created", 0)
 
     async def _import_single_file(
@@ -117,7 +108,5 @@ class RAGCorpusImporter:
         }
 
         doc = {"content": content, "metadata": metadata}
-        result = await self._pipeline.ingest(
-            collection_id, [doc], chunker=chunker
-        )
+        result = await self._pipeline.ingest(collection_id, [doc], chunker=chunker)
         return result.get("chunks_created", 0)

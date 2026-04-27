@@ -70,3 +70,9 @@ func Load(configPath string) (*Config, error) {
 
 	return &cfg, nil
 }
+
+// DefaultConfig returns a Config populated with default values.
+func DefaultConfig() *Config {
+	cfg, _ := Load("")
+	return cfg
+}

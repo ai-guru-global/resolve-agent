@@ -43,31 +43,19 @@ class ParsedError:
 # Compiled regex patterns for each supported language
 
 _PYTHON_TRACEBACK_START = re.compile(r"Traceback \(most recent call last\):")
-_PYTHON_FRAME = re.compile(
-    r'^\s+File "([^"]+)", line (\d+), in (\w+)$'
-)
-_PYTHON_ERROR_LINE = re.compile(
-    r"^(\w+(?:\.\w+)*(?:Error|Exception|Warning))\s*:\s*(.*)"
-)
+_PYTHON_FRAME = re.compile(r'^\s+File "([^"]+)", line (\d+), in (\w+)$')
+_PYTHON_ERROR_LINE = re.compile(r"^(\w+(?:\.\w+)*(?:Error|Exception|Warning))\s*:\s*(.*)")
 
 _GO_PANIC = re.compile(r"^(?:panic|fatal error|runtime error): (.+)")
 _GO_GOROUTINE = re.compile(r"^goroutine \d+ \[.+\]:")
 _GO_FRAME = re.compile(r"^(\S+)\(.*\)$")
 _GO_FRAME_LOC = re.compile(r"^\s+(\S+\.go):(\d+)")
 
-_JS_ERROR = re.compile(
-    r"^(?:Uncaught\s+)?(\w+(?:Error|Exception))\s*:\s*(.*)"
-)
-_JS_FRAME = re.compile(
-    r"^\s+at\s+(?:(\S+)\s+)?\(?([^:]+):(\d+):\d+\)?"
-)
+_JS_ERROR = re.compile(r"^(?:Uncaught\s+)?(\w+(?:Error|Exception))\s*:\s*(.*)")
+_JS_FRAME = re.compile(r"^\s+at\s+(?:(\S+)\s+)?\(?([^:]+):(\d+):\d+\)?")
 
-_JAVA_EXCEPTION = re.compile(
-    r"^([\w.$]+(?:Exception|Error))\s*:\s*(.*)"
-)
-_JAVA_FRAME = re.compile(
-    r"^\s+at\s+([\w.$]+)\(([\w.]+):(\d+)\)"
-)
+_JAVA_EXCEPTION = re.compile(r"^([\w.$]+(?:Exception|Error))\s*:\s*(.*)")
+_JAVA_FRAME = re.compile(r"^\s+at\s+([\w.$]+)\(([\w.]+):(\d+)\)")
 
 
 class ErrorParser:
@@ -162,20 +150,20 @@ class ErrorParser:
                 # Standalone error line (e.g. from pytest output)
                 m = _PYTHON_ERROR_LINE.match(lines[i])
                 if m:
-                    errors.append(ParsedError(
-                        error_type=m.group(1),
-                        message=m.group(2),
-                        language="python",
-                        raw_text=lines[i],
-                    ))
+                    errors.append(
+                        ParsedError(
+                            error_type=m.group(1),
+                            message=m.group(2),
+                            language="python",
+                            raw_text=lines[i],
+                        )
+                    )
                 i += 1
 
         return errors
 
     @staticmethod
-    def _parse_python_traceback(
-        lines: list[str], start: int
-    ) -> tuple[list[StackFrame], ParsedError | None, int]:
+    def _parse_python_traceback(lines: list[str], start: int) -> tuple[list[StackFrame], ParsedError | None, int]:
         frames: list[StackFrame] = []
         i = start + 1  # Skip "Traceback ..." line
 
@@ -235,24 +223,28 @@ class ErrorParser:
                     func_match = _GO_FRAME.match(lines[i])
                     loc_match = _GO_FRAME_LOC.match(lines[i + 1]) if func_match else None
                     if func_match and loc_match:
-                        frames.append(StackFrame(
-                            function_name=func_match.group(1),
-                            file_path=loc_match.group(1),
-                            line_number=int(loc_match.group(2)),
-                        ))
+                        frames.append(
+                            StackFrame(
+                                function_name=func_match.group(1),
+                                file_path=loc_match.group(1),
+                                line_number=int(loc_match.group(2)),
+                            )
+                        )
                         i += 2
                     else:
                         break
 
-                errors.append(ParsedError(
-                    error_type="panic",
-                    message=panic_match.group(1),
-                    language="go",
-                    stack_trace=frames,
-                    file_path=frames[0].file_path if frames else "",
-                    line_number=frames[0].line_number if frames else 0,
-                    raw_text="\n".join(lines[raw_start:i]),
-                ))
+                errors.append(
+                    ParsedError(
+                        error_type="panic",
+                        message=panic_match.group(1),
+                        language="go",
+                        stack_trace=frames,
+                        file_path=frames[0].file_path if frames else "",
+                        line_number=frames[0].line_number if frames else 0,
+                        raw_text="\n".join(lines[raw_start:i]),
+                    )
+                )
             else:
                 i += 1
 
@@ -277,24 +269,28 @@ class ErrorParser:
                 while i < len(lines):
                     fm = _JS_FRAME.match(lines[i])
                     if fm:
-                        frames.append(StackFrame(
-                            function_name=fm.group(1) or "<anonymous>",
-                            file_path=fm.group(2),
-                            line_number=int(fm.group(3)),
-                        ))
+                        frames.append(
+                            StackFrame(
+                                function_name=fm.group(1) or "<anonymous>",
+                                file_path=fm.group(2),
+                                line_number=int(fm.group(3)),
+                            )
+                        )
                         i += 1
                     else:
                         break
 
-                errors.append(ParsedError(
-                    error_type=m.group(1),
-                    message=m.group(2),
-                    language="javascript",
-                    stack_trace=frames,
-                    file_path=frames[0].file_path if frames else "",
-                    line_number=frames[0].line_number if frames else 0,
-                    raw_text="\n".join(lines[raw_start:i]),
-                ))
+                errors.append(
+                    ParsedError(
+                        error_type=m.group(1),
+                        message=m.group(2),
+                        language="javascript",
+                        stack_trace=frames,
+                        file_path=frames[0].file_path if frames else "",
+                        line_number=frames[0].line_number if frames else 0,
+                        raw_text="\n".join(lines[raw_start:i]),
+                    )
+                )
             else:
                 i += 1
 
@@ -319,24 +315,28 @@ class ErrorParser:
                 while i < len(lines):
                     fm = _JAVA_FRAME.match(lines[i])
                     if fm:
-                        frames.append(StackFrame(
-                            function_name=fm.group(1),
-                            file_path=fm.group(2),
-                            line_number=int(fm.group(3)),
-                        ))
+                        frames.append(
+                            StackFrame(
+                                function_name=fm.group(1),
+                                file_path=fm.group(2),
+                                line_number=int(fm.group(3)),
+                            )
+                        )
                         i += 1
                     else:
                         break
 
-                errors.append(ParsedError(
-                    error_type=m.group(1),
-                    message=m.group(2),
-                    language="java",
-                    stack_trace=frames,
-                    file_path=frames[0].file_path if frames else "",
-                    line_number=frames[0].line_number if frames else 0,
-                    raw_text="\n".join(lines[raw_start:i]),
-                ))
+                errors.append(
+                    ParsedError(
+                        error_type=m.group(1),
+                        message=m.group(2),
+                        language="java",
+                        stack_trace=frames,
+                        file_path=frames[0].file_path if frames else "",
+                        line_number=frames[0].line_number if frames else 0,
+                        raw_text="\n".join(lines[raw_start:i]),
+                    )
+                )
             else:
                 i += 1
 
@@ -357,10 +357,12 @@ class ErrorParser:
         for line in text.splitlines():
             m = generic_error.search(line)
             if m:
-                errors.append(ParsedError(
-                    error_type="generic_error",
-                    message=m.group(1).strip(),
-                    language=language,
-                    raw_text=line,
-                ))
+                errors.append(
+                    ParsedError(
+                        error_type="generic_error",
+                        message=m.group(1).strip(),
+                        language=language,
+                        raw_text=line,
+                    )
+                )
         return errors

@@ -1,6 +1,6 @@
 """Unit tests for the FTA Markdown parser."""
 
-from resolveagent.corpus.fta_parser import FTAMarkdownParser, FTAParseResult
+from resolveagent.corpus.fta_parser import FTAMarkdownParser
 from resolveagent.fta.tree import EventType, GateType
 
 

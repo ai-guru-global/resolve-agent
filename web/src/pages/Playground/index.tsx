@@ -12,6 +12,8 @@ import {
   Trash2,
   Clock,
   X,
+  Sparkles,
+  FlaskConical,
 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
@@ -39,6 +41,43 @@ interface Message {
   content: string;
   metadata?: Record<string, unknown>;
 }
+
+const isMegaAgent = (agent: Agent) => agent.type === 'mega';
+
+const MOCK_RECOMMENDED_QUESTIONS = [
+  '集群节点 cn-hangzhou.10.0.3.47 内存使用率 91%，部分 Pod 出现重启',
+  '线上服务响应延迟突然升高，P99 从 50ms 飙升到 800ms',
+  '明天凌晨 2 点有变更发布，如何评估对生产环境的影响？',
+  '最近一周 CPU 使用率趋势异常，帮我分析一下',
+];
+
+const MOCK_QUESTIONS_BY_AGENT_TYPE: Record<string, string[]> = {
+  mega: [
+    '集群节点 cn-hangzhou.10.0.3.47 内存使用率 91%，部分 Pod 出现重启',
+    '线上服务响应延迟突然升高，P99 从 50ms 飙升到 800ms',
+    '明天凌晨 2 点有变更发布，如何评估对生产环境的影响？',
+    '最近一周 CPU 使用率趋势异常，帮我分析一下',
+  ],
+  fta: [
+    'Pod 启动后立即崩溃，帮我做故障树分析',
+    '服务间调用链路出现大量超时，根因是什么？',
+    '数据库连接数突然打满，分析故障传播路径',
+  ],
+  rag: [
+    'HPA 自动扩缩容的配置规范是什么？',
+    '如何在不停机的情况下升级集群版本？',
+    '如何配置 Prometheus 告警规则监控 Pod 内存？',
+  ],
+  skill: [
+    '帮我分析最近 30 分钟的日志中的错误',
+    '执行一次完整的集群健康检查',
+    '生成上周的运维报告摘要',
+  ],
+  custom: [
+    '分析当前入口流量的来源分布',
+    '帮我查看 SLB 后端服务器的连接状态',
+  ],
+};
 
 function formatRelativeTime(dateStr: string): string {
   const now = Date.now();
@@ -69,8 +108,10 @@ export default function Playground() {
   );
   const [showHistory, setShowHistory] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [mockMode, setMockMode] = useState(false);
+  const mockApiRef = useRef<typeof import('@/api/mock').mockApi | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const conversationCreatedRef = useRef<string>(new Date().toISOString());
+  let conversationCreated = new Date().toISOString();
 
   const {
     history,
@@ -97,7 +138,7 @@ export default function Playground() {
     setMessages([]);
     const newId = crypto.randomUUID();
     setConversationId(newId);
-    conversationCreatedRef.current = new Date().toISOString();
+    conversationCreated = new Date().toISOString();
   };
 
   // Persist the current conversation to history
@@ -114,7 +155,7 @@ export default function Playground() {
       agentName: currentAgentName,
       title,
       messages,
-      createdAt: conversationCreatedRef.current,
+      createdAt: conversationCreated,
     });
   };
 
@@ -125,7 +166,7 @@ export default function Playground() {
     // Load the selected one
     setConversationId(record.id);
     setMessages(record.messages);
-    conversationCreatedRef.current = record.createdAt;
+    conversationCreated = record.createdAt;
     // Switch to the correct agent if needed
     if (record.agentId !== selectedAgent) {
       setSelectedAgent(record.agentId);
@@ -145,7 +186,7 @@ export default function Playground() {
         setMessages([]);
         const newId = crypto.randomUUID();
         setConversationId(newId);
-        conversationCreatedRef.current = new Date().toISOString();
+        conversationCreated = new Date().toISOString();
       }
     }, 200);
   };
@@ -154,13 +195,13 @@ export default function Playground() {
     const loadAgents = async () => {
       try {
         const data = await api.listAgents();
-        const list = (data as any).agents ?? data;
+        const list = data.agents ?? data;
         setAgents(list);
         const first = list[0];
         if (first) {
           setSelectedAgent(first.id);
           setConversationId(crypto.randomUUID());
-          conversationCreatedRef.current = new Date().toISOString();
+          conversationCreated = new Date().toISOString();
         }
       } catch {
         // ignore
@@ -189,7 +230,7 @@ export default function Playground() {
         agentName: currentAgentName,
         title,
         messages,
-        createdAt: conversationCreatedRef.current,
+        createdAt: conversationCreated,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -204,11 +245,16 @@ export default function Playground() {
     setLoading(true);
 
     try {
-      const response = await api.executeAgent(
-        selectedAgent,
-        input.trim(),
-        conversationId,
-      );
+      let response;
+      if (mockMode) {
+        if (!mockApiRef.current) {
+          const mod = await import('@/api/mock');
+          mockApiRef.current = mod.mockApi;
+        }
+        response = await mockApiRef.current.executeAgent(selectedAgent, input.trim());
+      } else {
+        response = await api.executeAgent(selectedAgent, input.trim(), conversationId);
+      }
       const assistantMsg: Message = {
         role: 'assistant',
         content:
@@ -219,11 +265,69 @@ export default function Playground() {
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: '请求失败，请重试' },
+        { role: 'assistant', content: mockMode ? 'Mock 请求失败，请重试' : '请求失败，请重试' },
       ]);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Get recommended questions based on selected agent type
+  const getRecommendedQuestions = useMemo(() => {
+    if (!selectedAgent) return MOCK_RECOMMENDED_QUESTIONS;
+    const agent = agents.find((a) => a.id === selectedAgent);
+    if (!agent) return MOCK_RECOMMENDED_QUESTIONS;
+    return MOCK_QUESTIONS_BY_AGENT_TYPE[agent.type] ?? MOCK_RECOMMENDED_QUESTIONS;
+  }, [selectedAgent, agents]);
+
+  const handleRecommendedQuestion = (question: string) => {
+    if (!selectedAgent) return;
+    setLoading(true);
+    const userMsg: Message = { role: 'user', content: question };
+    setMessages((prev) => [...prev, userMsg]);
+    (async () => {
+      try {
+        let response;
+        if (mockMode) {
+          if (!mockApiRef.current) {
+            const mod = await import('@/api/mock');
+            mockApiRef.current = mod.mockApi;
+          }
+          response = await mockApiRef.current.executeAgent(selectedAgent, question);
+        } else {
+          response = await api.executeAgent(selectedAgent, question, conversationId);
+        }
+        const assistantMsg: Message = {
+          role: 'assistant',
+          content:
+            response.content ?? response.response ?? JSON.stringify(response),
+          metadata: response.metadata as Record<string, unknown> | undefined,
+        };
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last?.role === 'assistant' && last.content === '') {
+            return [...prev.slice(0, -1), assistantMsg];
+          }
+          return [...prev, assistantMsg];
+        });
+      } catch {
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last?.role === 'assistant' && last.content === '') {
+            return [
+              ...prev.slice(0, -1),
+              { role: 'assistant', content: mockMode ? 'Mock 请求失败，请重试' : '请求失败，请重试' },
+            ];
+          }
+          return [
+            ...prev,
+            { role: 'assistant', content: mockMode ? 'Mock 请求失败，请重试' : '请求失败，请重试' },
+          ];
+        });
+      } finally {
+        setLoading(false);
+      }
+    })();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -240,7 +344,7 @@ export default function Playground() {
       <PageHeader
         title="Playground"
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -271,7 +375,7 @@ export default function Playground() {
               <MessageSquarePlus className="h-4 w-4" />
               新对话
             </Button>
-            <div className="w-56">
+            <div className="w-auto min-w-[180px]">
               <Select
                 value={selectedAgent}
                 onValueChange={(v) => {
@@ -280,7 +384,7 @@ export default function Playground() {
                   setMessages([]);
                   const newId = crypto.randomUUID();
                   setConversationId(newId);
-                  conversationCreatedRef.current = new Date().toISOString();
+                  conversationCreated = new Date().toISOString();
                 }}
                 disabled={loadingAgents}
               >
@@ -293,11 +397,23 @@ export default function Playground() {
                   {agents.map((a) => (
                     <SelectItem key={a.id} value={a.id}>
                       {a.name}
+                      {isMegaAgent(a) ? ' (Mega)' : ' (Traditional)'}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+            <Button
+              variant={mockMode ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setMockMode(!mockMode)}
+              aria-pressed={mockMode}
+              className={cn('gap-1.5', mockMode && 'bg-primary/90 border-primary/30')}
+              title="Mock 模式下使用模拟数据，无需后端支持"
+            >
+              <FlaskConical className="h-4 w-4" />
+              Mock {mockMode ? 'ON' : 'OFF'}
+            </Button>
           </div>
         }
       />
@@ -310,7 +426,7 @@ export default function Playground() {
           </span>
           <Badge
             variant="secondary"
-            className="text-[10px] gap-1 border border-primary/20 bg-primary/5 text-primary"
+            className="text-[10px] gap-1 bg-primary/10 text-primary"
           >
             {currentAgent.mode === 'all_skills' ? (
               <Layers className="h-3 w-3" />
@@ -331,6 +447,20 @@ export default function Playground() {
               0}{' '}
             hooks
           </span>
+          {mockMode && (
+            <Badge
+              variant="secondary"
+              className="text-[10px] gap-1"
+              style={{
+                borderColor: 'hsl(var(--status-mock-border))',
+                backgroundColor: 'hsl(var(--status-mock-bg))',
+                color: 'hsl(var(--status-mock-text))',
+              }}
+            >
+              <FlaskConical className="h-3 w-3" />
+              Mock
+            </Badge>
+          )}
         </div>
       )}
 
@@ -338,7 +468,7 @@ export default function Playground() {
       <div className="flex flex-1 gap-4 overflow-hidden">
         {/* History Sidebar */}
         {showHistory && (
-          <Card className="w-80 flex-shrink-0 flex flex-col overflow-hidden">
+          <Card className="w-80 flex-shrink-0 flex-col overflow-hidden max-lg:hidden">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div className="flex items-center gap-2">
                 <History className="h-4 w-4 text-muted-foreground" />
@@ -347,8 +477,9 @@ export default function Playground() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className="h-11 w-11"
                 onClick={() => setShowHistory(false)}
+                aria-label="关闭历史"
               >
                 <X className="h-3.5 w-3.5" />
               </Button>
@@ -366,53 +497,58 @@ export default function Playground() {
                     const isDeleting = record.id === deletingId;
                     const msgCount = record.messages.length;
                     return (
-                      <div
-                        key={record.id}
-                        onClick={() => !isActive && loadConversation(record)}
-                        className={cn(
-                          'group relative flex flex-col gap-1 rounded-lg px-3 py-2.5 text-sm transition-all cursor-pointer',
-                          isActive
-                            ? 'bg-primary/10 border border-primary/20'
-                            : 'hover:bg-accent/50 border border-transparent',
-                          isDeleting && 'opacity-50 scale-95',
-                        )}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <p
-                            className={cn(
-                              'text-xs font-medium leading-snug line-clamp-2',
-                              isActive
-                                ? 'text-primary'
-                                : 'text-foreground/80',
-                            )}
-                          >
-                            {record.title}
-                          </p>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive"
-                            onClick={(e) => handleDelete(record.id, e)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {formatRelativeTime(record.updatedAt)}
-                          </span>
-                          <span>·</span>
-                          <span>{msgCount} 条消息</span>
-                          {record.agentName && (
-                            <>
-                              <span>·</span>
-                              <span className="truncate max-w-[80px]">
-                                {record.agentName}
-                              </span>
-                            </>
+                      <div className="group relative">
+                        <button
+                          type="button"
+                          key={record.id}
+                          aria-current={isActive ? 'true' : undefined}
+                          onClick={() => !isActive && loadConversation(record)}
+                          className={cn(
+                            'w-full text-left rounded-lg px-3 py-2.5 pr-12 text-sm transition-colors',
+                            isActive
+                              ? 'bg-primary/10 border border-primary/20'
+                              : 'hover:bg-accent/50 border border-transparent',
+                            isDeleting && 'opacity-50 scale-95',
                           )}
-                        </div>
+                        >
+                          <span className="flex flex-col gap-1">
+                            <span
+                              className={cn(
+                                'text-xs font-medium leading-snug line-clamp-2',
+                                isActive
+                                  ? 'text-primary'
+                                  : 'text-foreground/80',
+                              )}
+                            >
+                              {record.title}
+                            </span>
+                            <span className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {formatRelativeTime(record.updatedAt)}
+                              </span>
+                              <span>·</span>
+                              <span>{msgCount} 条消息</span>
+                              {record.agentName && (
+                                <>
+                                  <span>·</span>
+                                  <span className="truncate max-w-[80px]">
+                                    {record.agentName}
+                                  </span>
+                                </>
+                              )}
+                            </span>
+                          </span>
+                        </button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-11 w-11 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive"
+                          onClick={(e) => handleDelete(record.id, e)}
+                          aria-label="删除对话"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
                     );
                   })
@@ -427,12 +563,42 @@ export default function Playground() {
           <ScrollArea className="flex-1">
             <CardContent className="p-4 space-y-4">
               {messages.length === 0 ? (
-                <EmptyState
-                  icon={Bot}
-                  title="开始对话"
-                  description="选择一个 Agent，输入问题开始 Harness 执行验证"
-                  className="py-20"
-                />
+                <div className="flex flex-col items-center justify-center py-12 space-y-6">
+                  <EmptyState
+                    icon={Bot}
+                    title="开始对话"
+                    description={
+                      mockMode
+                        ? '当前为 Mock 模式，使用模拟数据进行演示'
+                        : '选择一个 Agent，输入问题开始 Harness 执行验证'
+                    }
+                    className="py-8"
+                  />
+                  {selectedAgent && (
+                    <div className="w-full max-w-lg space-y-3">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Sparkles className="h-4 w-4" />
+                        <span>推荐问题（点击直接发送）</span>
+                      </div>
+                      <div className="grid gap-2">
+                        {getRecommendedQuestions.map((q, idx) => (
+                          <button
+                            type="button"
+                            key={idx}
+                            onClick={() => handleRecommendedQuestion(q)}
+                            className={cn(
+                              'text-left text-sm p-3 rounded-lg border border-border/50 bg-card/50 hover:bg-accent/50 hover:border-primary/30 hover:shadow-sm transition-colors duration-150',
+                              'flex items-start gap-2',
+                            )}
+                          >
+                            <Bot className="h-4 w-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
+                            <span className="leading-snug">{q}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
                 messages.map((msg, idx) => (
                   <div
@@ -455,7 +621,7 @@ export default function Playground() {
                         <div className="mt-2 flex gap-1.5 flex-wrap">
                           <Badge
                             variant="secondary"
-                            className="text-[10px] border border-primary/20 bg-primary/5 text-primary"
+                            className="text-[10px] bg-primary/10 text-primary"
                           >
                             {String(msg.metadata.route_type)}
                           </Badge>
@@ -501,8 +667,13 @@ export default function Playground() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={
-                  selectedAgent ? '输入问题...' : '请先选择 Agent'
+                  selectedAgent
+                    ? mockMode
+                      ? 'Mock 模式下输入问题（使用模拟数据）...'
+                      : '输入问题...'
+                    : '请先选择 Agent'
                 }
+                aria-label={selectedAgent ? (mockMode ? 'Mock 模式问题输入' : '问题输入') : '选择 Agent 后输入问题'}
                 disabled={!selectedAgent || loading}
               />
               <Button

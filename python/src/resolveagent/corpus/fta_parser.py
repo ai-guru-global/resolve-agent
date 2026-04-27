@@ -37,23 +37,23 @@ _JSON_BLOCK_RE = re.compile(r"```json\s*\n(.*?)```", re.DOTALL)
 # Mermaid node patterns (covers common syntax variants)
 # A["Label"]  A("Label")  A{{"Label"}}  A["Label"]  A[Label]
 _NODE_DEF_RE = re.compile(
-    r'^\s*(\w[\w-]*)\s*'              # optional whitespace + node id
-    r'(?:'
-    r'\["([^"]*?)"\]'                 # ["Label"]
-    r'|\("([^"]*?)"\)'               # ("Label")
-    r'|\{\{"([^"]*?)"\}\}'           # {{"Label"}}
-    r'|\{\{([^}]*?)\}\}'             # {{Label}}
-    r'|\[([^\]]*?)\]'                # [Label]
-    r')',
+    r"^\s*(\w[\w-]*)\s*"  # optional whitespace + node id
+    r"(?:"
+    r'\["([^"]*?)"\]'  # ["Label"]
+    r'|\("([^"]*?)"\)'  # ("Label")
+    r'|\{\{"([^"]*?)"\}\}'  # {{"Label"}}
+    r"|\{\{([^}]*?)\}\}"  # {{Label}}
+    r"|\[([^\]]*?)\]"  # [Label]
+    r")",
     re.MULTILINE,
 )
 
 # Edge patterns: A --> B, A -->|text| B, A --- B
 _EDGE_RE = re.compile(
-    r'(\w[\w-]*)\s*'                  # source
-    r'(?:-->|---)'                    # arrow
-    r'(?:\|[^|]*\|)?'                # optional label
-    r'\s*(\w[\w-]*)',                 # target
+    r"(\w[\w-]*)\s*"  # source
+    r"(?:-->|---)"  # arrow
+    r"(?:\|[^|]*\|)?"  # optional label
+    r"\s*(\w[\w-]*)",  # target
 )
 
 
@@ -96,9 +96,7 @@ class FTAMarkdownParser:
     # Mermaid -> FaultTree
     # ------------------------------------------------------------------
 
-    def _parse_mermaid(
-        self, mermaid_blocks: list[str], file_id: str, title: str
-    ) -> FaultTree:
+    def _parse_mermaid(self, mermaid_blocks: list[str], file_id: str, title: str) -> FaultTree:
         """Convert the first Mermaid diagram into a FaultTree."""
         diagram = mermaid_blocks[0]
 
@@ -147,15 +145,9 @@ class FTAMarkdownParser:
                 gate_ids.add(nid)
 
         # Build gates from detected gate nodes
-        gate_counter = 0
-        for nid in gate_ids:
+        for _, nid in enumerate(gate_ids, start=1):
             label = nodes[nid].upper().strip()
-            if "AND" in label:
-                gate_type = GateType.AND
-            else:
-                gate_type = GateType.OR
-
-            gate_counter += 1
+            gate_type = GateType.AND if "AND" in label else GateType.OR
             # Inputs are the children of this gate node
             input_ids = children_of.get(nid, [])
             # Output is the parent of this gate node
@@ -197,13 +189,7 @@ class FTAMarkdownParser:
 
         # For intermediate nodes that have children but no gate defined,
         # synthesize an implicit OR gate.
-        non_gate_parents = {
-            nid
-            for nid in nodes
-            if nid not in gate_ids
-            and nid not in leaves
-            and children_of.get(nid)
-        }
+        non_gate_parents = {nid for nid in nodes if nid not in gate_ids and nid not in leaves and children_of.get(nid)}
         for nid in non_gate_parents:
             child_list = children_of[nid]
             # Only create gate if children exist and are not already handled
@@ -232,9 +218,7 @@ class FTAMarkdownParser:
     # JSON block handling
     # ------------------------------------------------------------------
 
-    def _categorise_json_blocks(
-        self, json_blocks: list[str]
-    ) -> tuple[dict[str, Any], dict[str, Any]]:
+    def _categorise_json_blocks(self, json_blocks: list[str]) -> tuple[dict[str, Any], dict[str, Any]]:
         """Separate JSON blocks into base_events and workflow dicts."""
         base_events: dict[str, Any] = {}
         workflow: dict[str, Any] = {}
@@ -251,10 +235,7 @@ class FTAMarkdownParser:
                 if "flow_steps" in data:
                     workflow = data
                 # Base events often keyed by event name
-                elif any(
-                    isinstance(v, dict) and ("severity" in v or "probability" in v)
-                    for v in data.values()
-                ):
+                elif any(isinstance(v, dict) and ("severity" in v or "probability" in v) for v in data.values()):
                     base_events = data
                 else:
                     # Store first unclassified dict as base_events

@@ -99,15 +99,16 @@ class CodeExecutionSkill:
             Evaluation result.
         """
         # Wrap expression to capture result
-        code = f'''
+        code = f"""
 _result = eval({repr(expression)})
 print(json.dumps({{"result": _result}}))
-'''
+"""
         result = await self.execute(code, language="python")
 
         # Parse result from stdout
         try:
             import json
+
             output = json.loads(result["stdout"].strip())
             result["value"] = output.get("result")
         except Exception:
@@ -128,14 +129,14 @@ print(json.dumps({{"result": _result}}))
             Calculation result.
         """
         # Use Python for calculation
-        code = f'''
+        code = f"""
 try:
     import math
     result = eval({repr(expression)}, {{"__builtins__": {{"math": math}}}}, {{}})
     print(f"RESULT: {{result}}")
 except Exception as e:
     print(f"ERROR: {{e}}")
-'''
+"""
         result = await self.execute(code, language="python")
 
         # Parse result
@@ -157,11 +158,13 @@ class PythonCodeSkill(CodeExecutionSkill):
     """Specialized skill for Python code execution."""
 
     def __init__(self) -> None:
-        super().__init__(SandboxConfig(
-            timeout_seconds=30.0,
-            max_memory_mb=512,
-            allow_network=False,
-        ))
+        super().__init__(
+            SandboxConfig(
+                timeout_seconds=30.0,
+                max_memory_mb=512,
+                allow_network=False,
+            )
+        )
 
     async def run_function(
         self,
@@ -186,10 +189,11 @@ class PythonCodeSkill(CodeExecutionSkill):
 
         # Build code to execute the function
         import json
+
         args_json = json.dumps(args)
         kwargs_json = json.dumps(kwargs)
 
-        code = f'''
+        code = f"""
 {function_code}
 
 import json
@@ -201,7 +205,7 @@ result = {function_name}(*args, **kwargs)
 
 # Output result
 print(f"RESULT: {{json.dumps(result)}}")
-'''
+"""
         result = await self.execute(code, language="python")
 
         # Parse result
@@ -219,11 +223,13 @@ class BashSkill(CodeExecutionSkill):
     """Specialized skill for Bash command execution."""
 
     def __init__(self) -> None:
-        super().__init__(SandboxConfig(
-            timeout_seconds=10.0,
-            max_memory_mb=256,
-            allow_network=False,
-        ))
+        super().__init__(
+            SandboxConfig(
+                timeout_seconds=10.0,
+                max_memory_mb=256,
+                allow_network=False,
+            )
+        )
 
     async def run_command(self, command: str) -> dict[str, Any]:
         """Run a shell command.
@@ -250,6 +256,7 @@ class BashSkill(CodeExecutionSkill):
 
 
 # Convenience functions
+
 
 async def execute_code(
     code: str,

@@ -54,15 +54,19 @@ class ModelRegistry:
 
         if config.provider == "qwen":
             from resolveagent.llm.qwen import QwenProvider
+
             return QwenProvider(api_key=config.api_key, base_url=config.base_url)
         elif config.provider == "wenxin":
             from resolveagent.llm.wenxin import WenxinProvider
+
             return WenxinProvider(api_key=config.api_key)
         elif config.provider == "zhipu":
             from resolveagent.llm.zhipu import ZhipuProvider
+
             return ZhipuProvider(api_key=config.api_key)
         elif config.provider == "kimi":
             from resolveagent.llm.openai_compat import OpenAICompatProvider
+
             return OpenAICompatProvider(
                 api_key=config.api_key or os.getenv("KIMI_API_KEY", ""),
                 base_url=config.base_url or "https://api.moonshot.cn/v1",
@@ -70,6 +74,7 @@ class ModelRegistry:
             )
         else:
             from resolveagent.llm.openai_compat import OpenAICompatProvider
+
             return OpenAICompatProvider(
                 api_key=config.api_key,
                 base_url=config.base_url,

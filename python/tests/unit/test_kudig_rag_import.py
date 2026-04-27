@@ -50,9 +50,7 @@ class TestExtractBlockquoteMetadata:
         assert meta["文档类型"] == "架构设计文档"
 
     def test_mixed_format(self):
-        content = (
-            "> **适用版本**: v1.25 - v1.32 | **最后更新**: 2026-02 | **文档类型**: 架构设计文档"
-        )
+        content = "> **适用版本**: v1.25 - v1.32 | **最后更新**: 2026-02 | **文档类型**: 架构设计文档"
         # The pipe-separated format is on a single line, so the regex picks up the first key
         meta = MarkdownProcessor.extract_blockquote_metadata(content)
         assert "适用版本" in meta
@@ -85,12 +83,7 @@ class TestContentHash:
 
 class TestPrepareDocuments:
     def test_basic_file(self, tmp_path):
-        md_content = (
-            "# 测试文档 (Test Doc)\n\n"
-            "> **版本**：v1.0\n\n"
-            "## 1. 第一节\n\n第一节内容\n\n"
-            "## 2. 第二节\n\n第二节内容\n"
-        )
+        md_content = "# 测试文档 (Test Doc)\n\n> **版本**：v1.0\n\n## 1. 第一节\n\n第一节内容\n\n## 2. 第二节\n\n第二节内容\n"
         md_file = tmp_path / "domain-1" / "01-test.md"
         md_file.parent.mkdir(parents=True)
         md_file.write_text(md_content, encoding="utf-8")
@@ -203,9 +196,7 @@ class TestKudigRAGClient:
         create_resp.status_code = 201
         create_resp.json.return_value = {"id": "new-id", "name": "kudig-rag"}
 
-        with patch.object(
-            client._client, "request", side_effect=[list_resp, create_resp]
-        ):
+        with patch.object(client._client, "request", side_effect=[list_resp, create_resp]):
             cid = client.ensure_collection("kudig-rag")
             assert cid == "new-id"
 
@@ -221,8 +212,9 @@ class TestKudigRAGClient:
         ok_resp.json.return_value = {"collections": []}
         ok_resp.raise_for_status = MagicMock()
 
-        with patch.object(
-            client._client, "request", side_effect=[error_resp, ok_resp]
-        ), patch("resolveagent.corpus.kudig_rag_import.time.sleep"):
+        with (
+            patch.object(client._client, "request", side_effect=[error_resp, ok_resp]),
+            patch("resolveagent.corpus.kudig_rag_import.time.sleep"),
+        ):
             result = client.list_collections()
             assert result == []

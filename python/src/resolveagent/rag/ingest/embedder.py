@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any
 
 import httpx
 
@@ -101,7 +100,10 @@ class Embedder:
 
                 logger.debug(
                     "Embeddings generated",
-                    extra={"count": len(embeddings), "dimension": len(embeddings[0]) if embeddings else 0},
+                    extra={
+                        "count": len(embeddings),
+                        "dimension": len(embeddings[0]) if embeddings else 0,
+                    },
                 )
 
                 return embeddings
@@ -111,10 +113,10 @@ class Embedder:
                 "Embedding API HTTP error",
                 extra={"status": e.response.status_code, "response": e.response.text},
             )
-            raise RuntimeError(f"Embedding API error: {e.response.status_code}")
+            raise RuntimeError(f"Embedding API error: {e.response.status_code}") from e
         except Exception as e:
             logger.error("Embedding generation failed", extra={"error": str(e)})
-            raise RuntimeError(f"Failed to generate embeddings: {e}")
+            raise RuntimeError(f"Failed to generate embeddings: {e}") from e
 
     async def embed_query(self, query: str) -> list[float]:
         """Generate embedding for a single query.

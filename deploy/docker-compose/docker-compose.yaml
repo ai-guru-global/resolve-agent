@@ -149,7 +149,7 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ../docker/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${RESOLVEAGENT_DATABASE_USER:-resolveagent} -d ${RESOLVEAGENT_DATABASE_DBNAME:-resolveagent}"]
       interval: 10s

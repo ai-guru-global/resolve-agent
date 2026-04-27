@@ -7,17 +7,18 @@ for executing untrusted code safely.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import os
 import resource
-import signal
-import subprocess
 import sys
 import tempfile
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -164,7 +165,7 @@ class SandboxExecutor:
                         memory_usage_mb=0,  # TODO: Track actual memory usage
                     )
 
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     proc.kill()
                     await proc.wait()
                     return SandboxResult(
@@ -178,7 +179,7 @@ class SandboxExecutor:
                     )
 
             except Exception as e:
-                logger.error(f"Failed to execute Python code", extra={"error": str(e)})
+                logger.error("Failed to execute Python code", extra={"error": str(e)})
                 return SandboxResult(
                     success=False,
                     stdout="",
@@ -191,10 +192,8 @@ class SandboxExecutor:
 
         finally:
             # Clean up temp file
-            try:
+            with contextlib.suppress(Exception):
                 os.unlink(temp_file)
-            except Exception:
-                pass
 
     async def _execute_bash(
         self,
@@ -235,7 +234,7 @@ class SandboxExecutor:
                     memory_usage_mb=0,
                 )
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 proc.kill()
                 await proc.wait()
                 return SandboxResult(
@@ -249,7 +248,7 @@ class SandboxExecutor:
                 )
 
         except Exception as e:
-            logger.error(f"Failed to execute Bash code", extra={"error": str(e)})
+            logger.error("Failed to execute Bash code", extra={"error": str(e)})
             return SandboxResult(
                 success=False,
                 stdout="",
@@ -303,7 +302,7 @@ class SandboxExecutor:
                         memory_usage_mb=0,
                     )
 
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     proc.kill()
                     await proc.wait()
                     return SandboxResult(
@@ -328,10 +327,8 @@ class SandboxExecutor:
                 )
 
         finally:
-            try:
+            with contextlib.suppress(Exception):
                 os.unlink(temp_file)
-            except Exception:
-                pass
 
     def _set_resource_limits(self) -> None:
         """Set resource limits for the subprocess (called in child process)."""
@@ -364,7 +361,7 @@ class SandboxExecutor:
             resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
 
         except Exception as e:
-            logger.warning(f"Failed to set resource limits", extra={"error": str(e)})
+            logger.warning("Failed to set resource limits", extra={"error": str(e)})
 
     def _prepare_env(self) -> dict[str, str]:
         """Prepare environment variables for subprocess."""
@@ -376,10 +373,7 @@ class SandboxExecutor:
                 "LANG": "C.UTF-8",
             }
         else:
-            env = {
-                k: v for k, v in os.environ.items()
-                if k in self.config.allowed_env_vars
-            }
+            env = {k: v for k, v in os.environ.items() if k in self.config.allowed_env_vars}
 
         # Add extra env vars
         if self.config.extra_env_vars:
@@ -395,7 +389,7 @@ class SandboxExecutor:
         """Generate Python wrapper code."""
         inputs_json = json.dumps(inputs or {})
 
-        wrapper = f'''
+        wrapper = f"""
 import json
 import sys
 
@@ -408,7 +402,7 @@ for _key, _value in _inputs.items():
 
 # Execute user code
 {code}
-'''
+"""
         return wrapper
 
     def _generate_javascript_wrapper(
@@ -419,13 +413,13 @@ for _key, _value in _inputs.items():
         """Generate JavaScript wrapper code."""
         inputs_json = json.dumps(inputs or {})
 
-        wrapper = f'''
+        wrapper = f"""
 // Set up inputs
 const inputs = {inputs_json};
 
 // Execute user code
 {code}
-'''
+"""
         return wrapper
 
 

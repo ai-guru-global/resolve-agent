@@ -1,7 +1,7 @@
 """Unit tests for the FTA Engine."""
 
 from resolveagent.fta.gates import and_gate, or_gate, voting_gate
-from resolveagent.fta.tree import FaultTree, GateType
+from resolveagent.fta.tree import FaultTree
 
 
 def test_and_gate():

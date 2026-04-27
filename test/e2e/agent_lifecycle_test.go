@@ -13,6 +13,7 @@ import (
 
 // TestAgentLifecycle tests the complete agent lifecycle: create -> execute -> delete
 func TestAgentLifecycle(t *testing.T) {
+	skipIfNoServer(t)
 	if testing.Short() {
 		t.Skip("Skipping E2E test in short mode")
 	}
@@ -26,9 +27,9 @@ func TestAgentLifecycle(t *testing.T) {
 		"description": "Test agent for E2E",
 		"type":        "mega",
 		"config": map[string]interface{}{
-			"model_id":       "qwen-plus",
-			"system_prompt":  "You are a helpful assistant.",
-			"skill_names":    []string{"web_search", "code_exec"},
+			"model_id":          "qwen-plus",
+			"system_prompt":     "You are a helpful assistant.",
+			"skill_names":       []string{"web_search", "code_exec"},
 			"selector_strategy": "hybrid",
 		},
 	}

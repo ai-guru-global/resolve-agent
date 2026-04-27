@@ -117,12 +117,10 @@ class TestMegaSelectorModes:
             }
 
             # The hook selector will actually run, but we mock the execution part
-            with patch(
-                "resolveagent.selector.hook_selector.IntelligentSelector"
-            ) as MockSelector:
+            with patch("resolveagent.selector.hook_selector.IntelligentSelector") as mock_selector:
                 mock_sel_instance = AsyncMock()
                 mock_sel_instance.route.return_value = mock_decision
-                MockSelector.return_value = mock_sel_instance
+                mock_selector.return_value = mock_sel_instance
 
                 result = await agent.reply({"content": "test"})
                 assert result["content"] == "response"

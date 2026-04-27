@@ -12,7 +12,6 @@ Comprehensive tests for:
 import pytest
 
 from resolveagent.selector import (
-    CodeContext,
     ContextEnricher,
     EnrichedContext,
     IntelligentSelector,
@@ -26,7 +25,6 @@ from resolveagent.selector.strategies import (
     LLMStrategy,
     RuleStrategy,
 )
-
 
 # ==================== Intent Analyzer Tests ====================
 
@@ -49,9 +47,7 @@ class TestIntentAnalyzer:
         ]
         for input_text in inputs:
             result = await analyzer.classify(input_text)
-            assert result.intent_type == IntentType.WORKFLOW.value, (
-                f"Expected workflow for: {input_text}"
-            )
+            assert result.intent_type == IntentType.WORKFLOW.value, f"Expected workflow for: {input_text}"
             assert result.confidence > 0.5
 
     @pytest.mark.asyncio
@@ -65,9 +61,7 @@ class TestIntentAnalyzer:
         ]
         for input_text in inputs:
             result = await analyzer.classify(input_text)
-            assert result.intent_type == IntentType.SKILL.value, (
-                f"Expected skill for: {input_text}"
-            )
+            assert result.intent_type == IntentType.SKILL.value, f"Expected skill for: {input_text}"
 
     @pytest.mark.asyncio
     async def test_rag_intent(self, analyzer):
@@ -80,9 +74,7 @@ class TestIntentAnalyzer:
         ]
         for input_text in inputs:
             result = await analyzer.classify(input_text)
-            assert result.intent_type == IntentType.RAG.value, (
-                f"Expected rag for: {input_text}"
-            )
+            assert result.intent_type == IntentType.RAG.value, f"Expected rag for: {input_text}"
 
     @pytest.mark.asyncio
     async def test_code_analysis_intent(self, analyzer):
@@ -95,9 +87,7 @@ class TestIntentAnalyzer:
         ]
         for input_text in inputs:
             result = await analyzer.classify(input_text)
-            assert result.intent_type == IntentType.CODE_ANALYSIS.value, (
-                f"Expected code_analysis for: {input_text}"
-            )
+            assert result.intent_type == IntentType.CODE_ANALYSIS.value, f"Expected code_analysis for: {input_text}"
 
     @pytest.mark.asyncio
     async def test_empty_input(self, analyzer):
@@ -109,12 +99,12 @@ class TestIntentAnalyzer:
     @pytest.mark.asyncio
     async def test_code_detection(self, analyzer):
         """Test code block detection in input."""
-        code_input = '''
+        code_input = """
         ```python
         def calculate_sum(a, b):
             return a + b
         ```
-        '''
+        """
         result = await analyzer.classify(code_input)
         assert result.metadata.get("contains_code") is True
 
@@ -147,12 +137,12 @@ class TestContextEnricher:
     @pytest.mark.asyncio
     async def test_code_context_extraction(self, enricher):
         """Test code context extraction from input."""
-        code_input = '''
+        code_input = """
         ```python
         password = "hardcoded123"
         exec(user_input)
         ```
-        '''
+        """
         result = await enricher.enrich(
             input_text=code_input,
             agent_id="test-agent",
@@ -179,9 +169,7 @@ class TestContextEnricher:
                 context={},
             )
             if result.code_context:
-                assert result.code_context.language == expected_lang, (
-                    f"Expected {expected_lang} for: {code[:30]}"
-                )
+                assert result.code_context.language == expected_lang, f"Expected {expected_lang} for: {code[:30]}"
 
     @pytest.mark.asyncio
     async def test_to_dict(self, enricher):
@@ -215,9 +203,7 @@ class TestRuleStrategy:
         ]
         for input_text in inputs:
             decision = await strategy.decide(input_text, "agent", {})
-            assert decision.route_type == "code_analysis", (
-                f"Expected code_analysis for: {input_text}"
-            )
+            assert decision.route_type == "code_analysis", f"Expected code_analysis for: {input_text}"
 
     @pytest.mark.asyncio
     async def test_workflow_routing(self, strategy):
@@ -229,9 +215,7 @@ class TestRuleStrategy:
         ]
         for input_text in inputs:
             decision = await strategy.decide(input_text, "agent", {})
-            assert decision.route_type == "fta", (
-                f"Expected fta for: {input_text}"
-            )
+            assert decision.route_type == "fta", f"Expected fta for: {input_text}"
 
     @pytest.mark.asyncio
     async def test_skill_routing(self, strategy):
@@ -399,9 +383,7 @@ class TestIntelligentSelector:
     async def test_code_analysis_routing(self):
         """Test routing for code analysis requests."""
         selector = IntelligentSelector(strategy="hybrid")
-        decision = await selector.route(
-            "```python\ndef vulnerable(): exec(input())```\nfind security issues"
-        )
+        decision = await selector.route("```python\ndef vulnerable(): exec(input())```\nfind security issues")
         assert decision.route_type == "code_analysis"
 
     @pytest.mark.asyncio
@@ -488,7 +470,7 @@ class TestIntegration:
     async def test_full_pipeline_code_analysis(self):
         """Test full pipeline for code analysis request."""
         selector = IntelligentSelector(strategy="hybrid")
-        code_request = '''
+        code_request = """
         Review this function:
         ```python
         def process_user_input(data):
@@ -496,7 +478,7 @@ class TestIntegration:
             result = eval(data)
             return result
         ```
-        '''
+        """
         decision = await selector.route(code_request, enrich_context=True)
         assert decision.route_type == "code_analysis"
         assert decision.confidence > 0.6
@@ -506,8 +488,7 @@ class TestIntegration:
         """Test full pipeline for workflow/diagnostic request."""
         selector = IntelligentSelector(strategy="hybrid")
         decision = await selector.route(
-            "Why is the payment service returning 503 errors? "
-            "We need to diagnose the root cause.",
+            "Why is the payment service returning 503 errors? We need to diagnose the root cause.",
             enrich_context=True,
         )
         assert decision.route_type in ("fta", "workflow")

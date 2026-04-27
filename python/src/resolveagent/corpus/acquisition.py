@@ -59,9 +59,7 @@ class CorpusAcquisition:
         # Check for at least one expected subdirectory
         found = [d for d in EXPECTED_DIRS if (path / d).is_dir()]
         if not found:
-            raise AcquisitionError(
-                f"Path does not look like kudig-database: missing {EXPECTED_DIRS}"
-            )
+            raise AcquisitionError(f"Path does not look like kudig-database: missing {EXPECTED_DIRS}")
         logger.info("Using local corpus", extra={"path": str(path)})
         return str(path)
 
@@ -94,9 +92,9 @@ class CorpusAcquisition:
         except subprocess.CalledProcessError as e:
             raise AcquisitionError(f"git clone failed: {e.stderr.strip()}") from e
         except FileNotFoundError:
-            raise AcquisitionError("git is not installed or not on PATH")
+            raise AcquisitionError("git is not installed or not on PATH") from None
         except subprocess.TimeoutExpired:
-            raise AcquisitionError("git clone timed out after 300 seconds")
+            raise AcquisitionError("git clone timed out after 300 seconds") from None
 
         logger.info("Clone completed", extra={"path": str(target)})
         return str(target)

@@ -5,10 +5,14 @@ from __future__ import annotations
 import logging
 import time
 import uuid
-from typing import Any, AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 from resolveagent.fta.evaluator import NodeEvaluator
-from resolveagent.fta.tree import FaultTree
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
+    from resolveagent.fta.tree import FaultTree
 
 logger = logging.getLogger(__name__)
 

@@ -12,8 +12,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.opentelemetry.io/otel/sdk/resource"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 )
 
@@ -22,20 +22,20 @@ var (
 	prometheusRegistry *prometheus.Registry
 
 	// Common metrics
-	requestCounter   prometheus.Counter
-	requestDuration  prometheus.Histogram
-	activeRequests   prometheus.Gauge
-	agentExecutions  *prometheus.CounterVec
-	agentLatency     *prometheus.HistogramVec
+	requestCounter  prometheus.Counter
+	requestDuration prometheus.Histogram
+	activeRequests  prometheus.Gauge
+	agentExecutions *prometheus.CounterVec
+	agentLatency    *prometheus.HistogramVec
 )
 
 // MetricsConfig contains configuration for metrics
 type MetricsConfig struct {
-	ServiceName     string
-	ServiceVersion  string
-	Environment     string
-	PrometheusPort  string
-	PrometheusPath  string
+	ServiceName    string
+	ServiceVersion string
+	Environment    string
+	PrometheusPort string
+	PrometheusPath string
 }
 
 // InitMetrics initializes the OpenTelemetry metrics provider with Prometheus exporter.

@@ -34,7 +34,7 @@ class LLMStrategy:
     """
 
     # Detailed routing prompt with examples and constraints
-    ROUTING_PROMPT = '''You are an intelligent routing classifier for the ResolveAgent AIOps platform.
+    ROUTING_PROMPT = """You are an intelligent routing classifier for the ResolveAgent AIOps platform.
 Your task is to analyze the user's request and determine the optimal processing path.
 
 ## Available Routes
@@ -107,7 +107,7 @@ Important:
 - If code blocks are present, consider "code_analysis" first
 - Confidence should reflect how certain you are (0.7+ for clear cases, lower for ambiguous)
 
-Respond ONLY with the JSON object, no additional text.'''
+Respond ONLY with the JSON object, no additional text."""
 
     # Suggested targets for each route type
     SUGGESTED_TARGETS = {
@@ -126,9 +126,7 @@ Respond ONLY with the JSON object, no additional text.'''
         """
         self.model_id = model_id
 
-    async def decide(
-        self, input_text: str, agent_id: str, context: dict[str, Any]
-    ) -> RouteDecision:
+    async def decide(self, input_text: str, agent_id: str, context: dict[str, Any]) -> RouteDecision:
         """Use LLM to make an intelligent routing decision.
 
         Args:
@@ -150,7 +148,7 @@ Respond ONLY with the JSON object, no additional text.'''
             )
 
             # Call LLM (placeholder - in production would call actual LLM)
-            llm_response = await self._call_llm(prompt)
+            llm_response = await self._call_llm(prompt, original_input=input_text)
 
             # Parse the response
             decision = self._parse_llm_response(llm_response, input_text)
@@ -204,7 +202,7 @@ Respond ONLY with the JSON object, no additional text.'''
 
         return "\n".join(parts) if parts else "No additional context available."
 
-    async def _call_llm(self, prompt: str) -> str:
+    async def _call_llm(self, prompt: str, original_input: str = "") -> str:
         """Call the LLM with the routing prompt.
 
         Integrates with the actual LLM provider for intelligent routing.
@@ -214,16 +212,14 @@ Respond ONLY with the JSON object, no additional text.'''
             from resolveagent.llm.higress_provider import create_llm_provider
             from resolveagent.llm.provider import ChatMessage
 
-            # Create LLM provider (uses default model from config)
             llm = create_llm_provider(model=self.model_id)
 
-            # Call LLM with thinking disabled for clean JSON routing output
             response = await llm.chat(
                 messages=[ChatMessage(role="user", content=prompt)],
                 model=self.model_id,
-                temperature=0.3,  # Lower temperature for more deterministic routing
+                temperature=0.3,
                 max_tokens=500,
-                thinking={"type": "disabled"},  # Disable reasoning for routing decisions
+                thinking={"type": "disabled"},
             )
 
             logger.debug("LLM routing response received", extra={"model": response.model})
@@ -231,8 +227,7 @@ Respond ONLY with the JSON object, no additional text.'''
 
         except Exception as e:
             logger.warning(f"LLM call failed, using fallback: {e}")
-            # Fallback to simulated response
-            return self._simulate_llm_response(prompt)
+            return self._simulate_llm_response(original_input or prompt)
 
     def _simulate_llm_response(self, prompt: str) -> str:
         """Simulate LLM response based on keywords in the prompt.
@@ -244,66 +239,103 @@ Respond ONLY with the JSON object, no additional text.'''
         # Check for code blocks
         if "```" in prompt or "code detected" in prompt_lower:
             if any(kw in prompt_lower for kw in ["review", "analyze", "check", "bug", "issue"]):
-                return json.dumps({
-                    "route_type": "code_analysis",
-                    "route_target": "static-analysis",
-                    "confidence": 0.85,
-                    "reasoning": "Request contains code and asks for analysis/review",
-                })
+                return json.dumps(
+                    {
+                        "route_type": "code_analysis",
+                        "route_target": "static-analysis",
+                        "confidence": 0.85,
+                        "reasoning": "Request contains code and asks for analysis/review",
+                    }
+                )
             if any(kw in prompt_lower for kw in ["run", "execute", "eval"]):
-                return json.dumps({
-                    "route_type": "skill",
-                    "route_target": "code-exec",
-                    "confidence": 0.85,
-                    "reasoning": "Request asks to execute code",
-                })
+                return json.dumps(
+                    {
+                        "route_type": "skill",
+                        "route_target": "code-exec",
+                        "confidence": 0.85,
+                        "reasoning": "Request asks to execute code",
+                    }
+                )
 
         # Check for workflow indicators
-        if any(kw in prompt_lower for kw in [
-            "diagnose", "troubleshoot", "root cause", "why", "failed", "broken",
-            "incident", "outage", "investigate",
-        ]):
-            return json.dumps({
-                "route_type": "workflow",
-                "route_target": "incident-diagnosis",
-                "confidence": 0.8,
-                "reasoning": "Request requires multi-step diagnostic workflow",
-            })
+        if any(
+            kw in prompt_lower
+            for kw in [
+                "diagnose",
+                "troubleshoot",
+                "root cause",
+                "why",
+                "failed",
+                "broken",
+                "incident",
+                "outage",
+                "investigate",
+            ]
+        ):
+            return json.dumps(
+                {
+                    "route_type": "workflow",
+                    "route_target": "incident-diagnosis",
+                    "confidence": 0.8,
+                    "reasoning": "Request requires multi-step diagnostic workflow",
+                }
+            )
 
         # Check for skill indicators
-        if any(kw in prompt_lower for kw in [
-            "search", "find", "web", "execute", "run", "file", "calculate",
-        ]):
+        if any(
+            kw in prompt_lower
+            for kw in [
+                "search",
+                "find",
+                "web",
+                "execute",
+                "run",
+                "file",
+                "calculate",
+            ]
+        ):
             target = "web-search" if "search" in prompt_lower else "general"
-            return json.dumps({
-                "route_type": "skill",
-                "route_target": target,
-                "confidence": 0.75,
-                "reasoning": "Request requires specific tool execution",
-            })
+            return json.dumps(
+                {
+                    "route_type": "skill",
+                    "route_target": target,
+                    "confidence": 0.75,
+                    "reasoning": "Request requires specific tool execution",
+                }
+            )
 
         # Check for RAG indicators
-        if any(kw in prompt_lower for kw in [
-            "what is", "how to", "explain", "document", "guide", "manual",
-        ]):
-            return json.dumps({
-                "route_type": "rag",
-                "route_target": "product-docs",
-                "confidence": 0.7,
-                "reasoning": "Request seeks knowledge/documentation",
-            })
+        if any(
+            kw in prompt_lower
+            for kw in [
+                "what is",
+                "how to",
+                "explain",
+                "document",
+                "guide",
+                "manual",
+            ]
+        ):
+            return json.dumps(
+                {
+                    "route_type": "rag",
+                    "route_target": "product-docs",
+                    "confidence": 0.7,
+                    "reasoning": "Request seeks knowledge/documentation",
+                }
+            )
 
         # Default to direct
-        return json.dumps({
-            "route_type": "direct",
-            "route_target": "",
-            "confidence": 0.6,
-            "reasoning": "General request without specific routing indicators",
-        })
+        return json.dumps(
+            {
+                "route_type": "direct",
+                "route_target": "",
+                "confidence": 0.6,
+                "reasoning": "General request without specific routing indicators",
+            }
+        )
 
-    def _parse_llm_response(
-        self, response: str, original_input: str
-    ) -> RouteDecision:
+    def _parse_llm_response(self, response: str, original_input: str) -> RouteDecision:
         """Parse the LLM response into a RouteDecision."""
         try:
             # Extract JSON from response (handle markdown code blocks)
@@ -340,12 +372,10 @@ Respond ONLY with the JSON object, no additional text.'''
             logger.warning(f"Failed to parse LLM response: {e}")
             return self._fallback_decision(original_input, f"Parse error: {e}")
 
-    def _fallback_decision(
-        self, input_text: str, error_reason: str
-    ) -> RouteDecision:
+    def _fallback_decision(self, input_text: str, error_reason: str) -> RouteDecision:
         """Generate a fallback decision when LLM fails."""
         # Simple heuristic fallback
-        text_lower = input_text.lower()
+        input_text.lower()
 
         if "```" in input_text:
             return RouteDecision(

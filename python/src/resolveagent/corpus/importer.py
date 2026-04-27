@@ -6,16 +6,19 @@ import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 from resolveagent.corpus.acquisition import CorpusAcquisition
 from resolveagent.corpus.code_analysis_importer import CodeAnalysisCorpusImporter
-from resolveagent.corpus.config import CorpusConfig, load_profile_from_repo
+from resolveagent.corpus.config import load_profile_from_repo
 from resolveagent.corpus.fta_importer import FTACorpusImporter
 from resolveagent.corpus.progress import ProgressEvent, ProgressTracker
 from resolveagent.corpus.rag_importer import RAGCorpusImporter
 from resolveagent.corpus.skill_importer import SkillCorpusImporter
 from resolveagent.rag.pipeline import RAGPipeline
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 logger = logging.getLogger(__name__)
 
@@ -68,9 +71,7 @@ class CorpusImporter:
         self._code_analysis_engine = code_analysis_engine
         self._dual_writer = dual_writer
 
-    async def import_corpus(
-        self, request: CorpusImportRequest
-    ) -> AsyncIterator[dict[str, Any]]:
+    async def import_corpus(self, request: CorpusImportRequest) -> AsyncIterator[dict[str, Any]]:
         """Run the full import and yield progress events as dicts.
 
         Yields:
@@ -143,9 +144,7 @@ class CorpusImporter:
 
         # -- 5. RAG import --
         if "rag" in request.import_types:
-            rag_result = await rag_importer.import_domains(
-                repo_path, rag_collection, config, progress
-            )
+            await rag_importer.import_domains(repo_path, rag_collection, config, progress)
             await progress.phase_completed("rag")
             for evt in events:
                 yield evt
@@ -157,9 +156,7 @@ class CorpusImporter:
                 fta_client=self._fta_client,
                 rag_importer=rag_importer,
             )
-            fta_result = await fta_importer.import_fta(
-                repo_path, fta_rag_collection, config, progress
-            )
+            await fta_importer.import_fta(repo_path, fta_rag_collection, config, progress)
             await progress.phase_completed("fta")
             for evt in events:
                 yield evt
@@ -171,9 +168,7 @@ class CorpusImporter:
                 skill_client=self._skill_client,
                 rag_importer=rag_importer,
             )
-            skills_result = await skill_importer.import_skills(
-                repo_path, skills_rag_collection, config, progress
-            )
+            await skill_importer.import_skills(repo_path, skills_rag_collection, config, progress)
             await progress.phase_completed("skills")
             for evt in events:
                 yield evt
@@ -185,9 +180,7 @@ class CorpusImporter:
                 engine=self._code_analysis_engine,
                 dual_writer=self._dual_writer,
             )
-            ca_result = await ca_importer.import_code_analysis(
-                repo_path, config, progress
-            )
+            await ca_importer.import_code_analysis(repo_path, config, progress)
             await progress.phase_completed("code_analysis")
             for evt in events:
                 yield evt
@@ -215,10 +208,7 @@ class CorpusImporter:
         fta_dir = root / "topic-fta" / "list"
         if not fta_dir.is_dir():
             return 0
-        return sum(
-            1 for f in fta_dir.glob("*.md")
-            if f.name.lower() != "readme.md"
-        )
+        return sum(1 for f in fta_dir.glob("*.md") if f.name.lower() != "readme.md")
 
     @staticmethod
     def _count_skill_files(root: Path) -> int:
@@ -226,10 +216,7 @@ class CorpusImporter:
         if not skills_dir.is_dir():
             return 0
         skip = {"readme.md", "enhancement-record.md", "skill-schema.md"}
-        return sum(
-            1 for f in skills_dir.glob("*.md")
-            if f.name.lower() not in skip
-        )
+        return sum(1 for f in skills_dir.glob("*.md") if f.name.lower() not in skip)
 
     @staticmethod
     def _count_source_files(root: Path) -> int:

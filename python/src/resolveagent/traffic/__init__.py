@@ -7,8 +7,8 @@ and LLM-based analysis report generation.
 from resolveagent.traffic.collector import TrafficCollector
 from resolveagent.traffic.engine import DynamicAnalysisEngine
 from resolveagent.traffic.graph_builder import (
-    ServiceNode,
     ServiceEdge,
+    ServiceNode,
     TrafficGraphBuilder,
     TrafficGraphData,
 )

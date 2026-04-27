@@ -6,8 +6,6 @@ call chain data, covering all document types and metadata.
 
 from __future__ import annotations
 
-import pytest
-
 from resolveagent.corpus.call_chain_rag_generator import (
     CallChainData,
     CallChainRAGGenerator,
@@ -18,10 +16,10 @@ from resolveagent.corpus.call_chain_rag_generator import (
     RAGDocument,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_troubleshooting_chain() -> CallChainData:
     """Build a sample troubleshooting (event-driven) call chain."""
@@ -210,6 +208,7 @@ def _make_initialization_chain() -> CallChainData:
 # ---------------------------------------------------------------------------
 # Tests: CallChainRAGGenerator
 # ---------------------------------------------------------------------------
+
 
 class TestCallChainRAGGenerator:
     """Test suite for CallChainRAGGenerator."""

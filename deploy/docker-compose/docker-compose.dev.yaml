@@ -14,6 +14,7 @@ services:
   platform:
     build:
       target: builder
+    working_dir: /app
     volumes:
       - ../../:/app
       - go_mod_cache:/go/pkg/mod
@@ -42,7 +43,7 @@ services:
   webui:
     build:
       context: ../../web
-      dockerfile: ../deployment/docker/webui.dev.Dockerfile
+      dockerfile: ../deploy/docker/webui.dev.Dockerfile
     volumes:
       - ../../web/src:/app/src:ro
     ports:
@@ -57,7 +58,7 @@ services:
     container_name: resolveagent-milvus
     ports:
       - "19530:19530"
-      - "9091:9091"
+      - "9092:9091"
     environment:
       ETCD_USE_EMBED: "true"
       COMMON_STORAGETYPE: local

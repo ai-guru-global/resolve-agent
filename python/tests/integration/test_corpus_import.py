@@ -5,10 +5,7 @@ importable data structures, without requiring external services
 (no Milvus, no git clone, no running server).
 """
 
-import os
-import tempfile
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -16,7 +13,6 @@ from resolveagent.corpus.config import CorpusConfig
 from resolveagent.corpus.fta_parser import FTAMarkdownParser
 from resolveagent.corpus.skill_adapter import KudigSkillAdapter, parse_front_matter
 from resolveagent.rag.ingest.chunker import TextChunker
-
 
 # ---------------------------------------------------------------------------
 # Fixture: create a minimal kudig-database-like directory
@@ -293,16 +289,14 @@ class TestSkillAdaptationPipeline:
         # Registration dict
         reg = skill.to_registration_dict()
         assert reg["status"] == "active"
-        assert reg["source_type"] == "corpus"
+        assert reg["source_type"] == "kudig"
         assert reg["name"] == "dns-resolution-recovery"
 
     def test_skill_schema_file_skipped(self, corpus_dir: Path):
         """skill-schema.md should be skipped during import."""
         skills_dir = corpus_dir / "topic-skills"
         md_files = list(skills_dir.glob("*.md"))
-        skill_files = [
-            f for f in md_files if f.stem not in ("readme", "skill-schema", "enhancement-record")
-        ]
+        skill_files = [f for f in md_files if f.stem not in ("readme", "skill-schema", "enhancement-record")]
         assert len(skill_files) == 1
         assert skill_files[0].stem == "dns-resolution-recovery"
 

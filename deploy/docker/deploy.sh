@@ -28,12 +28,13 @@ NC='\033[0m'
 # Script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+COMPOSE_DIR="${PROJECT_ROOT}/deploy/docker-compose"
 
 # Files
-COMPOSE_FILE="${SCRIPT_DIR}/docker-compose.yml"
-COMPOSE_DEV_FILE="${SCRIPT_DIR}/docker-compose.dev.yml"
-ENV_FILE="${SCRIPT_DIR}/.env"
-ENV_EXAMPLE="${SCRIPT_DIR}/.env.example"
+COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.yaml"
+COMPOSE_DEV_FILE="${COMPOSE_DIR}/docker-compose.dev.yaml"
+ENV_FILE="${COMPOSE_DIR}/.env"
+ENV_EXAMPLE="${COMPOSE_DIR}/.env.example"
 
 # =============================================================================
 # Helper Functions
@@ -85,7 +86,7 @@ ensure_env() {
 }
 
 compose_cmd() {
-    docker compose --project-directory "${SCRIPT_DIR}" "$@"
+    docker compose --project-directory "${COMPOSE_DIR}" "$@"
 }
 
 # =============================================================================

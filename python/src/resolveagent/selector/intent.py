@@ -74,9 +74,18 @@ class IntentAnalyzer:
                 r"\b(why|how).*\b(failed|broken|not working|down)\b",
             ],
             keywords=[
-                "diagnose", "troubleshoot", "root cause", "incident",
-                "workflow", "decision tree", "fault tree", "investigation",
-                "outage", "failure analysis", "debug", "trace",
+                "diagnose",
+                "troubleshoot",
+                "root cause",
+                "incident",
+                "workflow",
+                "decision tree",
+                "fault tree",
+                "investigation",
+                "outage",
+                "failure analysis",
+                "debug",
+                "trace",
             ],
             weight=1.2,
         ),
@@ -91,9 +100,20 @@ class IntentAnalyzer:
                 r"\b(calculate|compute|convert|format)\b",
             ],
             keywords=[
-                "search", "execute", "run", "invoke", "calculate",
-                "convert", "format", "send", "fetch", "download",
-                "upload", "compress", "extract", "parse",
+                "search",
+                "execute",
+                "run",
+                "invoke",
+                "calculate",
+                "convert",
+                "format",
+                "send",
+                "fetch",
+                "download",
+                "upload",
+                "compress",
+                "extract",
+                "parse",
             ],
             weight=1.0,
         ),
@@ -108,9 +128,20 @@ class IntentAnalyzer:
                 r"\b(learn|understand|know)\b.*\b(about|more)\b",
             ],
             keywords=[
-                "what", "how", "explain", "describe", "document",
-                "knowledge", "reference", "guide", "manual", "documentation",
-                "learn", "understand", "definition", "meaning",
+                "what",
+                "how",
+                "explain",
+                "describe",
+                "document",
+                "knowledge",
+                "reference",
+                "guide",
+                "manual",
+                "documentation",
+                "learn",
+                "understand",
+                "definition",
+                "meaning",
             ],
             weight=0.8,  # Lower weight as these are more general
         ),
@@ -131,13 +162,34 @@ class IntentAnalyzer:
                 r"\b(def|class|function|method|import|from)\b.*:\s*$",  # Code syntax
             ],
             keywords=[
-                "code", "analyze", "review", "bug", "vulnerability",
-                "refactor", "optimize", "lint", "static analysis",
-                "ast", "syntax", "parse", "security", "dependency",
-                "function", "class", "method", "module",
-                "call graph", "call chain", "entry point",
-                "traffic", "packet", "capture", "tracing",
-                "service dependency", "latency", "error rate",
+                "code",
+                "analyze",
+                "review",
+                "bug",
+                "vulnerability",
+                "refactor",
+                "optimize",
+                "lint",
+                "static analysis",
+                "ast",
+                "syntax",
+                "parse",
+                "security",
+                "dependency",
+                "function",
+                "class",
+                "method",
+                "module",
+                "call graph",
+                "call chain",
+                "entry point",
+                "traffic",
+                "packet",
+                "capture",
+                "tracing",
+                "service dependency",
+                "latency",
+                "error rate",
             ],
             weight=1.1,
         ),
@@ -171,17 +223,30 @@ class IntentAnalyzer:
                 r"\bvar\s+\w+\s*=",
             ]
         ]
-        self._question_starters = frozenset([
-            "what", "how", "why", "when", "where", "who", "which",
-            "is", "are", "can", "could", "would", "should", "does", "do",
-        ])
+        self._question_starters = frozenset(
+            [
+                "what",
+                "how",
+                "why",
+                "when",
+                "where",
+                "who",
+                "which",
+                "is",
+                "are",
+                "can",
+                "could",
+                "would",
+                "should",
+                "does",
+                "do",
+            ]
+        )
 
     def _compile_patterns(self) -> None:
         """Pre-compile regex patterns for efficiency."""
         for pattern_def in self.INTENT_PATTERNS:
-            self._compiled_patterns[pattern_def.intent_type] = [
-                re.compile(p, re.IGNORECASE) for p in pattern_def.patterns
-            ]
+            self._compiled_patterns[pattern_def.intent_type] = [re.compile(p, re.IGNORECASE) for p in pattern_def.patterns]
 
     async def classify(self, input_text: str) -> IntentClassification:
         """Classify the intent of the user input.
@@ -248,10 +313,7 @@ class IntentAnalyzer:
             )
 
         total_score = sum(scores.values())
-        normalized: dict[IntentType, float] = {
-            k: v / total_score if total_score > 0 else 0
-            for k, v in scores.items()
-        }
+        normalized: dict[IntentType, float] = {k: v / total_score if total_score > 0 else 0 for k, v in scores.items()}
 
         sorted_intents = sorted(normalized.items(), key=lambda kv: kv[1], reverse=True)
         best_intent = sorted_intents[0][0]
@@ -265,10 +327,7 @@ class IntentAnalyzer:
 
         confidence = min(best_norm * 1.5, 1.0)
 
-        sub_intents = [
-            k.value for k, v in normalized.items()
-            if v > 0.2 and k != best_intent
-        ]
+        sub_intents = [k.value for k, v in normalized.items() if v > 0.2 and k != best_intent]
 
         suggested_target = self._get_suggested_target(best_intent, text_lower)
 
@@ -288,18 +347,14 @@ class IntentAnalyzer:
         scores: dict[IntentType, float] = {}
 
         for pattern_def in self.INTENT_PATTERNS:
-            matched_keywords = [
-                kw for kw in pattern_def.keywords if kw in text
-            ]
+            matched_keywords = [kw for kw in pattern_def.keywords if kw in text]
             if matched_keywords:
                 score = len(matched_keywords) * 0.15 * pattern_def.weight
                 scores[pattern_def.intent_type] = score
 
         return scores
 
-    def _score_patterns(
-        self, text: str
-    ) -> tuple[dict[IntentType, float], list[str]]:
+    def _score_patterns(self, text: str) -> tuple[dict[IntentType, float], list[str]]:
         """Score based on pattern matching."""
         scores: dict[IntentType, float] = {}
         matched_patterns: list[str] = []
@@ -309,20 +364,14 @@ class IntentAnalyzer:
             for pattern in patterns:
                 if pattern.search(text):
                     score = 0.3 * pattern_def.weight
-                    scores[pattern_def.intent_type] = (
-                        scores.get(pattern_def.intent_type, 0) + score
-                    )
+                    scores[pattern_def.intent_type] = scores.get(pattern_def.intent_type, 0) + score
                     matched_patterns.append(pattern.pattern)
 
         return scores, matched_patterns
 
     def _contains_code(self, text: str) -> bool:
         """Check if input contains code blocks or code-like content."""
-        return bool(
-            self._code_block_re.search(text)
-            or self._inline_code_re.search(text)
-            or any(p.search(text) for p in self._code_syntax_patterns)
-        )
+        return bool(self._code_block_re.search(text) or self._inline_code_re.search(text) or any(p.search(text) for p in self._code_syntax_patterns))
 
     def _is_question(self, text: str) -> bool:
         """Check if input is a question."""
@@ -330,18 +379,14 @@ class IntentAnalyzer:
         first_word = text.split()[0] if text else ""
         return first_word in self._question_starters or text.endswith("?")
 
-    def _get_suggested_target(
-        self, intent_type: IntentType, text: str
-    ) -> str:
+    def _get_suggested_target(self, intent_type: IntentType, text: str) -> str:
         """Get suggested target based on intent and text analysis."""
         if intent_type == IntentType.SKILL:
             # Suggest specific skill based on keywords
             if "search" in text and "web" in text:
                 return "web-search"
-            if ("execute" in text or "run" in text) and (
-                "code" in text or "script" in text
-            ):
-                    return "code-exec"
+            if ("execute" in text or "run" in text) and ("code" in text or "script" in text):
+                return "code-exec"
             if "file" in text:
                 return "file-ops"
         elif intent_type == IntentType.CODE_ANALYSIS:

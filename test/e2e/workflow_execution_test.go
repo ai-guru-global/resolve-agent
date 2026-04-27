@@ -13,6 +13,7 @@ import (
 
 // TestWorkflowExecution tests the complete workflow lifecycle
 func TestWorkflowExecution(t *testing.T) {
+	skipIfNoServer(t)
 	if testing.Short() {
 		t.Skip("Skipping E2E test in short mode")
 	}
@@ -158,6 +159,7 @@ func TestWorkflowExecution(t *testing.T) {
 
 // TestRAGWorkflow tests RAG collection creation, document ingestion, and query
 func TestRAGWorkflow(t *testing.T) {
+	skipIfNoServer(t)
 	if testing.Short() {
 		t.Skip("Skipping E2E test in short mode")
 	}

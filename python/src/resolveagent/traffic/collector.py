@@ -51,19 +51,21 @@ class _OTelAdapter(_BaseAdapter):
 
         for span in spans:
             attrs = span.get("attributes", {})
-            records.append(RawRecord(
-                source_service=span.get("serviceName", attrs.get("service.name", "")),
-                dest_service=attrs.get("peer.service", attrs.get("net.peer.name", "")),
-                protocol=attrs.get("rpc.system", attrs.get("http.scheme", "http")),
-                method=attrs.get("http.method", attrs.get("rpc.method", "")),
-                path=attrs.get("http.url", attrs.get("http.target", "")),
-                status_code=int(attrs.get("http.status_code", 0)),
-                latency_ms=int(span.get("duration", 0) / 1000) if span.get("duration") else 0,
-                trace_id=span.get("traceId", ""),
-                span_id=span.get("spanId", ""),
-                timestamp=span.get("startTime", ""),
-                metadata={"source": "otel", "kind": span.get("kind", "")},
-            ))
+            records.append(
+                RawRecord(
+                    source_service=span.get("serviceName", attrs.get("service.name", "")),
+                    dest_service=attrs.get("peer.service", attrs.get("net.peer.name", "")),
+                    protocol=attrs.get("rpc.system", attrs.get("http.scheme", "http")),
+                    method=attrs.get("http.method", attrs.get("rpc.method", "")),
+                    path=attrs.get("http.url", attrs.get("http.target", "")),
+                    status_code=int(attrs.get("http.status_code", 0)),
+                    latency_ms=int(span.get("duration", 0) / 1000) if span.get("duration") else 0,
+                    trace_id=span.get("traceId", ""),
+                    span_id=span.get("spanId", ""),
+                    timestamp=span.get("startTime", ""),
+                    metadata={"source": "otel", "kind": span.get("kind", "")},
+                )
+            )
 
         return records
 
@@ -76,20 +78,22 @@ class _ProxyLogAdapter(_BaseAdapter):
         entries = raw_data if isinstance(raw_data, list) else raw_data.get("entries", [])
 
         for entry in entries:
-            records.append(RawRecord(
-                source_service=entry.get("downstream_service", entry.get("source", "")),
-                dest_service=entry.get("upstream_cluster", entry.get("dest", "")),
-                protocol=entry.get("protocol", "http"),
-                method=entry.get("method", ""),
-                path=entry.get("path", ""),
-                status_code=int(entry.get("response_code", 0)),
-                latency_ms=int(entry.get("duration", 0)),
-                request_size=int(entry.get("bytes_received", 0)),
-                response_size=int(entry.get("bytes_sent", 0)),
-                trace_id=entry.get("x_request_id", ""),
-                timestamp=entry.get("timestamp", ""),
-                metadata={"source": "proxy"},
-            ))
+            records.append(
+                RawRecord(
+                    source_service=entry.get("downstream_service", entry.get("source", "")),
+                    dest_service=entry.get("upstream_cluster", entry.get("dest", "")),
+                    protocol=entry.get("protocol", "http"),
+                    method=entry.get("method", ""),
+                    path=entry.get("path", ""),
+                    status_code=int(entry.get("response_code", 0)),
+                    latency_ms=int(entry.get("duration", 0)),
+                    request_size=int(entry.get("bytes_received", 0)),
+                    response_size=int(entry.get("bytes_sent", 0)),
+                    trace_id=entry.get("x_request_id", ""),
+                    timestamp=entry.get("timestamp", ""),
+                    metadata={"source": "proxy"},
+                )
+            )
 
         return records
 
@@ -102,19 +106,21 @@ class _EBPFAdapter(_BaseAdapter):
         packets = raw_data if isinstance(raw_data, list) else raw_data.get("packets", [])
 
         for pkt in packets:
-            records.append(RawRecord(
-                source_service=pkt.get("src_addr", ""),
-                dest_service=pkt.get("dst_addr", ""),
-                protocol=pkt.get("protocol", "tcp"),
-                method=pkt.get("method", ""),
-                path=pkt.get("path", ""),
-                status_code=int(pkt.get("status", 0)),
-                latency_ms=int(pkt.get("latency_us", 0) / 1000) if pkt.get("latency_us") else 0,
-                request_size=int(pkt.get("req_bytes", 0)),
-                response_size=int(pkt.get("resp_bytes", 0)),
-                timestamp=pkt.get("timestamp", ""),
-                metadata={"source": "ebpf", "interface": pkt.get("iface", "")},
-            ))
+            records.append(
+                RawRecord(
+                    source_service=pkt.get("src_addr", ""),
+                    dest_service=pkt.get("dst_addr", ""),
+                    protocol=pkt.get("protocol", "tcp"),
+                    method=pkt.get("method", ""),
+                    path=pkt.get("path", ""),
+                    status_code=int(pkt.get("status", 0)),
+                    latency_ms=int(pkt.get("latency_us", 0) / 1000) if pkt.get("latency_us") else 0,
+                    request_size=int(pkt.get("req_bytes", 0)),
+                    response_size=int(pkt.get("resp_bytes", 0)),
+                    timestamp=pkt.get("timestamp", ""),
+                    metadata={"source": "ebpf", "interface": pkt.get("iface", "")},
+                )
+            )
 
         return records
 
@@ -138,9 +144,7 @@ class TrafficCollector:
     """
 
     def __init__(self) -> None:
-        self._adapters: dict[str, _BaseAdapter] = {
-            name: cls() for name, cls in _ADAPTERS.items()
-        }
+        self._adapters: dict[str, _BaseAdapter] = {name: cls() for name, cls in _ADAPTERS.items()}
 
     @property
     def supported_sources(self) -> list[str]:
@@ -167,17 +171,13 @@ class TrafficCollector:
 
         try:
             records = adapter.parse(raw_data)
-            logger.info(
-                "Collected %d records from %s", len(records), source_type
-            )
+            logger.info("Collected %d records from %s", len(records), source_type)
             return records
         except Exception:
             logger.exception("Failed to collect from %s", source_type)
             return []
 
-    def collect_multi(
-        self, sources: list[dict[str, Any]]
-    ) -> list[RawRecord]:
+    def collect_multi(self, sources: list[dict[str, Any]]) -> list[RawRecord]:
         """Collect from multiple sources at once.
 
         Args:

@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class EventType(str, Enum):
+class EventType(StrEnum):
     """FTA event types."""
 
     TOP = "top"
@@ -17,7 +17,7 @@ class EventType(str, Enum):
     CONDITIONING = "conditioning"
 
 
-class GateType(str, Enum):
+class GateType(StrEnum):
     """FTA gate types."""
 
     AND = "and"

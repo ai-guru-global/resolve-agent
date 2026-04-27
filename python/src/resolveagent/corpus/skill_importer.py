@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from resolveagent.corpus.config import CorpusConfig
-from resolveagent.corpus.progress import ProgressTracker
-from resolveagent.corpus.rag_importer import RAGCorpusImporter
 from resolveagent.corpus.skill_adapter import KudigSkillAdapter, parse_front_matter
+
+if TYPE_CHECKING:
+    from resolveagent.corpus.config import CorpusConfig
+    from resolveagent.corpus.progress import ProgressTracker
+    from resolveagent.corpus.rag_importer import RAGCorpusImporter
 
 logger = logging.getLogger(__name__)
 
@@ -56,9 +58,7 @@ class SkillCorpusImporter:
                 continue
 
             try:
-                registered = await self._import_single(
-                    md_file, rag_collection_id, root
-                )
+                registered = await self._import_single(md_file, rag_collection_id, root)
                 if registered:
                     skills_registered += 1
                 await progress.file_processed(
@@ -67,9 +67,7 @@ class SkillCorpusImporter:
                     extra={"skill_name": md_file.stem},
                 )
             except Exception as e:
-                await progress.file_error(
-                    "skills", str(md_file.relative_to(root)), str(e)
-                )
+                await progress.file_error("skills", str(md_file.relative_to(root)), str(e))
 
         return {"skills": skills_registered, "errors": progress.stats["skills"].errors}
 
@@ -109,8 +107,11 @@ class SkillCorpusImporter:
                 "skill_id": adapted.name,
             }
             await self._rag_importer.import_to_rag(
-                rag_collection_id, body, metadata,
-                strategy="by_section", chunk_size=3000,
+                rag_collection_id,
+                body,
+                metadata,
+                strategy="by_section",
+                chunk_size=3000,
             )
 
         return True

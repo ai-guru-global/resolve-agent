@@ -46,7 +46,7 @@ class RuleStrategy:
         RoutingRule(
             route_type="code_analysis",
             patterns=[
-                r"```[\s\S]*```",  # Code blocks
+                r"```[\s\S]*```",
                 r"\b(analyze|review|check|inspect)\b.*\b(code|function|class|method)\b",
                 r"\b(find|detect|identify)\b.*\b(bug|issue|vulnerability|error|problem)\b",
                 r"\b(static analysis|code review|security scan|lint|linting)\b",
@@ -54,6 +54,9 @@ class RuleStrategy:
                 r"\b(ast|syntax tree|parse tree|call graph|dependency graph)\b",
                 r"\b(code quality|code smell|technical debt|complexity)\b",
                 r"\b(security|vulnerable|cve|injection|xss|csrf)\b.*\b(code|scan|check)\b",
+                r"(分析|审查|检查).*(代码|bug|漏洞|安全)",
+                r"(代码|bug|漏洞).*(分析|审查|检查|review)",
+                r"review.*(function|代码|这段)",
             ],
             target="static-analysis",
             confidence=0.85,
@@ -62,40 +65,43 @@ class RuleStrategy:
         RoutingRule(
             route_type="code_analysis",
             patterns=[
-                r"\bdef\s+\w+\s*\(",  # Python function definition
-                r"\bclass\s+\w+.*:",  # Python class definition
-                r"\bfunction\s+\w+\s*\(",  # JavaScript function
-                r"\bfunc\s+\w+\s*\(",  # Go function
-                r"\bpublic\s+class\s+\w+",  # Java class
+                r"\bdef\s+\w+\s*\(",
+                r"\bclass\s+\w+.*:",
+                r"\bfunction\s+\w+\s*\(",
+                r"\bfunc\s+\w+\s*\(",
+                r"\bpublic\s+class\s+\w+",
             ],
             target="code-exec",
             confidence=0.75,
             description="Code snippet execution or analysis",
         ),
-
         # ========== Workflow/FTA Rules ==========
         RoutingRule(
             route_type="fta",
             patterns=[
                 r"\b(diagnose|troubleshoot|investigate)\b.*\b(issue|problem|failure|error)\b",
-                r"\b(root cause|rca)\b.*\b(analysis|find|determine)\b",
+                r"\b(diagnose|troubleshoot|investigate)\b.*\b(root cause|outage|incident|degradation)\b",
+                r"\b(root cause|rca)\b.*\b(analysis|find|determine|of)\b",
                 r"\bfault tree\b.*\b(analysis|build|create)\b",
                 r"\b(decision tree|workflow)\b.*\b(run|execute|start)\b",
                 r"\b(incident|outage|degradation)\s+(analysis|investigation|triage)\b",
                 r"\b(why|how).*\b(failed|broken|not working|crashed|down)\b",
                 r"\b(step.?by.?step|multi.?step|complex)\s+(process|diagnosis|analysis)\b",
+                r"\broot cause of\b",
+                r"(诊断|排查|分析).*(故障|根因|原因|问题)",
+                r"(故障|根因|原因).*(诊断|排查|分析)",
             ],
             target="incident-diagnosis",
             confidence=0.85,
             description="Complex diagnostic workflows",
         ),
-
         # ========== Skill Rules ==========
         RoutingRule(
             route_type="skill",
             patterns=[
                 r"\b(search|find|look up)\b.*\b(web|internet|online|google)\b",
                 r"\b(search for|find me|look for)\b.*\b(information|results|articles)\b",
+                r"(搜索|查找|检索)",
             ],
             target="web-search",
             confidence=0.9,
@@ -106,6 +112,7 @@ class RuleStrategy:
             patterns=[
                 r"\b(run|execute|eval|evaluate)\b.*\b(code|script|command|program)\b",
                 r"\b(python|javascript|bash|shell)\b.*\b(run|execute)\b",
+                r"(运行|执行).*(代码|脚本|程序)",
             ],
             target="code-exec",
             confidence=0.85,
@@ -117,6 +124,7 @@ class RuleStrategy:
                 r"\b(read|open|view|show|display)\b.*\b(file|document|content)\b",
                 r"\b(write|save|create|append)\b.*\b(file|document)\b",
                 r"\b(delete|remove)\b.*\b(file|folder|directory)\b",
+                r"(读取|查看|打开).*(文件|日志)",
             ],
             target="file-ops",
             confidence=0.85,
@@ -142,7 +150,6 @@ class RuleStrategy:
             confidence=0.75,
             description="Calculation and conversion",
         ),
-
         # ========== RAG Rules ==========
         RoutingRule(
             route_type="rag",
@@ -153,6 +160,8 @@ class RuleStrategy:
                 r"\b(documentation|docs|manual|guide)\b.*\b(for|about|on)\b",
                 r"\b(find|search)\b.*\b(documentation|docs|info|information)\b",
                 r"\b(according to|based on|per|as per)\b.*\b(docs|documentation|manual)\b",
+                r"(什么是|如何|怎么|怎样|查看文档)",
+                r"(文档|手册|指南|部署|配置).*(查看|查询|搜索)",
             ],
             target="product-docs",
             confidence=0.7,
@@ -190,15 +199,10 @@ class RuleStrategy:
     def _compile_patterns(self) -> None:
         """Pre-compile regex patterns for efficiency."""
         for rule in self.ROUTING_RULES:
-            compiled = [
-                re.compile(p, re.IGNORECASE | re.MULTILINE)
-                for p in rule.patterns
-            ]
+            compiled = [re.compile(p, re.IGNORECASE | re.MULTILINE) for p in rule.patterns]
             self._compiled_rules.append((rule, compiled))
 
-    async def decide(
-        self, input_text: str, agent_id: str, context: dict[str, Any]
-    ) -> RouteDecision:
+    async def decide(self, input_text: str, agent_id: str, context: dict[str, Any]) -> RouteDecision:
         """Use rules to make routing decision with confidence scoring.
 
         Args:
@@ -223,8 +227,7 @@ class RuleStrategy:
                     matched_patterns.append(pattern.pattern[:50])
 
             if match_count > 0:
-                # Score based on number of patterns matched and rule confidence
-                score = (match_count / len(patterns)) * rule.confidence
+                score = rule.confidence * (0.7 + 0.3 * min(match_count / max(len(patterns), 1), 1.0))
                 all_matches.append((rule.route_type, score, rule.target))
 
                 if score > best_score:

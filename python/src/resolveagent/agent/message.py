@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel
 
 
-class MessageRole(str, Enum):
+class MessageRole(StrEnum):
     """Message roles."""
 
     SYSTEM = "system"

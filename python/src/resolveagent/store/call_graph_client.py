@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, List
 
 from resolveagent.store.base_client import BaseStoreClient
 
@@ -80,7 +80,7 @@ class CallGraphClient(BaseStoreClient):
             graph_data=data.get("graph_data", {}),
         )
 
-    async def list(self, analysis_id: str | None = None) -> list[CallGraphInfo]:
+    async def list(self, analysis_id: str | None = None) -> List[CallGraphInfo]:
         params = {}
         if analysis_id:
             params["analysis_id"] = analysis_id
@@ -106,21 +106,13 @@ class CallGraphClient(BaseStoreClient):
     async def delete(self, graph_id: str) -> dict[str, Any] | None:
         return await self._delete(f"/api/v1/call-graphs/{graph_id}")
 
-    async def add_nodes(
-        self, graph_id: str, nodes: list[dict[str, Any]]
-    ) -> dict[str, Any] | None:
-        return await self._post(
-            f"/api/v1/call-graphs/{graph_id}/nodes", {"nodes": nodes}
-        )
+    async def add_nodes(self, graph_id: str, nodes: List[dict[str, Any]]) -> dict[str, Any] | None:
+        return await self._post(f"/api/v1/call-graphs/{graph_id}/nodes", {"nodes": nodes})
 
-    async def add_edges(
-        self, graph_id: str, edges: list[dict[str, Any]]
-    ) -> dict[str, Any] | None:
-        return await self._post(
-            f"/api/v1/call-graphs/{graph_id}/edges", {"edges": edges}
-        )
+    async def add_edges(self, graph_id: str, edges: List[dict[str, Any]]) -> dict[str, Any] | None:
+        return await self._post(f"/api/v1/call-graphs/{graph_id}/edges", {"edges": edges})
 
-    async def list_nodes(self, graph_id: str) -> list[CallGraphNodeInfo]:
+    async def list_nodes(self, graph_id: str) -> List[CallGraphNodeInfo]:
         data = await self._get(f"/api/v1/call-graphs/{graph_id}/nodes")
         if not data:
             return []
@@ -139,7 +131,7 @@ class CallGraphClient(BaseStoreClient):
             for n in data.get("nodes", [])
         ]
 
-    async def list_edges(self, graph_id: str) -> list[CallGraphEdgeInfo]:
+    async def list_edges(self, graph_id: str) -> List[CallGraphEdgeInfo]:
         data = await self._get(f"/api/v1/call-graphs/{graph_id}/edges")
         if not data:
             return []
@@ -156,9 +148,7 @@ class CallGraphClient(BaseStoreClient):
             for e in data.get("edges", [])
         ]
 
-    async def get_subgraph(
-        self, graph_id: str, entry_node_id: str, depth: int = 5
-    ) -> dict[str, Any]:
+    async def get_subgraph(self, graph_id: str, entry_node_id: str, depth: int = 5) -> dict[str, Any]:
         data = await self._get(
             f"/api/v1/call-graphs/{graph_id}/subgraph",
             params={"entry": entry_node_id, "depth": str(depth)},

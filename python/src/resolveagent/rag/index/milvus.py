@@ -215,6 +215,7 @@ class MilvusStore(VectorStore):
             # Generate IDs if not provided
             if ids is None:
                 import uuid
+
                 ids = [str(uuid.uuid4()) for _ in range(len(vectors))]
 
             if metadata is None:
@@ -228,7 +229,7 @@ class MilvusStore(VectorStore):
                     "text": text,
                     "metadata": meta,
                 }
-                for id_, vector, text, meta in zip(ids, vectors, texts, metadata)
+                for id_, vector, text, meta in zip(ids, vectors, texts, metadata, strict=False)
             ]
 
             # Insert data
@@ -296,12 +297,14 @@ class MilvusStore(VectorStore):
             formatted_results = []
             for hits in results:
                 for hit in hits:
-                    formatted_results.append({
-                        "id": hit.get("id"),
-                        "text": hit.get("entity", {}).get("text"),
-                        "metadata": hit.get("entity", {}).get("metadata"),
-                        "score": hit.get("distance", 0.0),
-                    })
+                    formatted_results.append(
+                        {
+                            "id": hit.get("id"),
+                            "text": hit.get("entity", {}).get("text"),
+                            "metadata": hit.get("entity", {}).get("metadata"),
+                            "score": hit.get("distance", 0.0),
+                        }
+                    )
 
             logger.debug(
                 f"Search completed in {collection_name}",

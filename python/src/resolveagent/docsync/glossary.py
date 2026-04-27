@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import yaml
 
 from resolveagent.docsync.models import GlossaryFile, GlossaryTerm
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class GlossaryManager:
@@ -81,12 +84,9 @@ class GlossaryManager:
             target_term = term.term(target_lang)
             accepted_targets = [target_term, *term.aliases(target_lang)]
             if self._contains_term(source_text, source_term, source_lang) and not any(
-                self._contains_term(target_text, candidate, target_lang)
-                for candidate in accepted_targets
+                self._contains_term(target_text, candidate, target_lang) for candidate in accepted_targets
             ):
-                issues.append(
-                    f"术语 `{source_term}` 应统一翻译为 `{target_term}`"
-                )
+                issues.append(f"术语 `{source_term}` 应统一翻译为 `{target_term}`")
         return issues
 
     def _contains_term(self, text: str, term: str, lang: str) -> bool:

@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import logging
 import time
-import uuid
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from resolveagent.hooks.models import HookContext, HookResult
-from resolveagent.store.hook_client import HookClient, HookInfo
+
+if TYPE_CHECKING:
+    from resolveagent.store.hook_client import HookClient, HookInfo
 
 logger = logging.getLogger(__name__)
 
@@ -129,9 +130,7 @@ class HookRunner:
             )
             return HookResult(success=False, error=str(e))
 
-    async def _record_execution(
-        self, hook: HookInfo, ctx: HookContext, result: HookResult
-    ) -> None:
+    async def _record_execution(self, hook: HookInfo, ctx: HookContext, result: HookResult) -> None:
         """Record hook execution to Go platform.
 
         Args:

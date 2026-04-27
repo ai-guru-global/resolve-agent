@@ -1,0 +1,276 @@
+{
+  "id": "2026-04-21-000030",
+  "generated_at": "2026-04-20T16:00:30.234971Z",
+  "language": "zh",
+  "pages": [
+    {
+      "slug": "1-xiang-mu-gai-shu-resolveagent-mian-xiang-wen-ti-jie-jue-de-aiops-zhi-neng-ti-ping-tai",
+      "title": "项目概述：ResolveAgent 面向问题解决的 AIOps 智能体平台",
+      "file": "1-xiang-mu-gai-shu-resolveagent-mian-xiang-wen-ti-jie-jue-de-aiops-zhi-neng-ti-ping-tai.md",
+      "section": "快速入门",
+      "level": "Beginner"
+    },
+    {
+      "slug": "2-kuai-su-shang-shou-cong-ling-da-jian-ben-di-kai-fa-huan-jing",
+      "title": "快速上手：从零搭建本地开发环境",
+      "file": "2-kuai-su-shang-shou-cong-ling-da-jian-ben-di-kai-fa-huan-jing.md",
+      "section": "快速入门",
+      "level": "Beginner"
+    },
+    {
+      "slug": "3-cli-ming-ling-xing-gong-ju-shi-yong-zhi-nan",
+      "title": "CLI 命令行工具使用指南",
+      "file": "3-cli-ming-ling-xing-gong-ju-shi-yong-zhi-nan.md",
+      "section": "快速入门",
+      "level": "Beginner"
+    },
+    {
+      "slug": "4-zheng-ti-jia-gou-she-ji-san-ceng-wei-fu-wu-yu-shuang-yu-yan-yun-xing-shi",
+      "title": "整体架构设计：三层微服务与双语言运行时",
+      "file": "4-zheng-ti-jia-gou-she-ji-san-ceng-wei-fu-wu-yu-shuang-yu-yan-yun-xing-shi.md",
+      "section": "深入理解",
+      "group": "系统架构",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "5-go-ping-tai-fu-wu-ceng-api-server-zhu-ce-biao-yu-cun-chu-hou-duan",
+      "title": "Go 平台服务层：API Server、注册表与存储后端",
+      "file": "5-go-ping-tai-fu-wu-ceng-api-server-zhu-ce-biao-yu-cun-chu-hou-duan.md",
+      "section": "深入理解",
+      "group": "系统架构",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "6-python-agent-yun-xing-shi-ceng-zhi-xing-yin-qing-yu-sheng-ming-zhou-qi-guan-li",
+      "title": "Python Agent 运行时层：执行引擎与生命周期管理",
+      "file": "6-python-agent-yun-xing-shi-ceng-zhi-xing-yin-qing-yu-sheng-ming-zhou-qi-guan-li.md",
+      "section": "深入理解",
+      "group": "系统架构",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "7-web-qian-duan-ceng-react-zu-jian-jia-gou-yu-ye-mian-zu-zhi",
+      "title": "Web 前端层：React 组件架构与页面组织",
+      "file": "7-web-qian-duan-ceng-react-zu-jian-jia-gou-yu-ye-mian-zu-zhi.md",
+      "section": "深入理解",
+      "group": "系统架构",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "8-zhi-neng-lu-you-jue-ce-yin-qing-yi-tu-fen-xi-yu-san-jie-duan-chu-li-liu-cheng",
+      "title": "智能路由决策引擎：意图分析与三阶段处理流程",
+      "file": "8-zhi-neng-lu-you-jue-ce-yin-qing-yi-tu-fen-xi-yu-san-jie-duan-chu-li-liu-cheng.md",
+      "section": "深入理解",
+      "group": "智能选择器（Intelligent Selector）",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "9-lu-you-ce-lue-xiang-jie-gui-ze-ce-lue-llm-ce-lue-yu-hun-he-ce-lue",
+      "title": "路由策略详解：规则策略、LLM 策略与混合策略",
+      "file": "9-lu-you-ce-lue-xiang-jie-gui-ze-ce-lue-llm-ce-lue-yu-hun-he-ce-lue.md",
+      "section": "深入理解",
+      "group": "智能选择器（Intelligent Selector）",
+      "level": "Advanced"
+    },
+    {
+      "slug": "10-xuan-ze-qi-gua-pei-qi-hook-gua-pei-yu-skill-gua-pei-mo-shi",
+      "title": "选择器适配器：Hook 适配与 Skill 适配模式",
+      "file": "10-xuan-ze-qi-gua-pei-qi-hook-gua-pei-yu-skill-gua-pei-mo-shi.md",
+      "section": "深入理解",
+      "group": "智能选择器（Intelligent Selector）",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "11-gu-zhang-shu-shu-ju-jie-gou-shi-jian-men-yu-shu-mo-xing",
+      "title": "故障树数据结构：事件、门与树模型",
+      "file": "11-gu-zhang-shu-shu-ju-jie-gou-shi-jian-men-yu-shu-mo-xing.md",
+      "section": "深入理解",
+      "group": "FTA 故障树分析引擎",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "12-liu-chong-men-lei-xing-qiu-zhi-and-or-voting-inhibit-priority-and",
+      "title": "六种门类型求值：AND / OR / VOTING / INHIBIT / PRIORITY-AND",
+      "file": "12-liu-chong-men-lei-xing-qiu-zhi-and-or-voting-inhibit-priority-and.md",
+      "section": "深入理解",
+      "group": "FTA 故障树分析引擎",
+      "level": "Advanced"
+    },
+    {
+      "slug": "13-fta-gong-zuo-liu-zhi-xing-zi-di-xiang-shang-qiu-zhi-yu-jie-guo-chi-jiu-hua",
+      "title": "FTA 工作流执行：自底向上求值与结果持久化",
+      "file": "13-fta-gong-zuo-liu-zhi-xing-zi-di-xiang-shang-qiu-zhi-yu-jie-guo-chi-jiu-hua.md",
+      "section": "深入理解",
+      "group": "FTA 故障树分析引擎",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "14-rag-guan-dao-quan-jing-wen-dang-she-qu-xiang-liang-suo-yin-yu-yu-yi-jian-suo",
+      "title": "RAG 管道全景：文档摄取、向量索引与语义检索",
+      "file": "14-rag-guan-dao-quan-jing-wen-dang-she-qu-xiang-liang-suo-yin-yu-yu-yi-jian-suo.md",
+      "section": "深入理解",
+      "group": "RAG 检索增强生成管道",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "15-xiang-liang-cun-chu-hou-duan-milvus-yu-qdrant-ji-cheng",
+      "title": "向量存储后端：Milvus 与 Qdrant 集成",
+      "file": "15-xiang-liang-cun-chu-hou-duan-milvus-yu-qdrant-ji-cheng.md",
+      "section": "深入理解",
+      "group": "RAG 检索增强生成管道",
+      "level": "Advanced"
+    },
+    {
+      "slug": "16-fen-kuai-ce-lue-yu-qian-ru-mo-xing-yu-yi-ju-zi-gu-ding-fen-kuai-bge-large-zh",
+      "title": "分块策略与嵌入模型：语义/句子/固定分块 + BGE-large-zh",
+      "file": "16-fen-kuai-ce-lue-yu-qian-ru-mo-xing-yu-yi-ju-zi-gu-ding-fen-kuai-bge-large-zh.md",
+      "section": "深入理解",
+      "group": "RAG 检索增强生成管道",
+      "level": "Advanced"
+    },
+    {
+      "slug": "17-zhong-pai-xu-yu-cha-xun-jiao-cha-bian-ma-qi-zhong-pai-xu-yu-xiang-si-du-sou-suo",
+      "title": "重排序与查询：交叉编码器重排序与相似度搜索",
+      "file": "17-zhong-pai-xu-yu-cha-xun-jiao-cha-bian-ma-qi-zhong-pai-xu-yu-xiang-si-du-sou-suo.md",
+      "section": "深入理解",
+      "group": "RAG 检索增强生成管道",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "18-ji-neng-qing-dan-gui-fan-sheng-ming-shi-shu-ru-shu-chu-yu-quan-xian-mo-xing",
+      "title": "技能清单规范：声明式输入输出与权限模型",
+      "file": "18-ji-neng-qing-dan-gui-fan-sheng-ming-shi-shu-ru-shu-chu-yu-quan-xian-mo-xing.md",
+      "section": "深入理解",
+      "group": "专家技能系统",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "19-ji-neng-lei-xing-ti-xi-tong-yong-ji-neng-general-yu-chang-jing-ji-neng-scenario",
+      "title": "技能类型体系：通用技能（general）与场景技能（scenario）",
+      "file": "19-ji-neng-lei-xing-ti-xi-tong-yong-ji-neng-general-yu-chang-jing-ji-neng-scenario.md",
+      "section": "深入理解",
+      "group": "专家技能系统",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "20-sha-xiang-zhi-xing-qi-zi-yuan-ge-chi-yu-an-quan-yue-shu",
+      "title": "沙箱执行器：资源隔离与安全约束",
+      "file": "20-sha-xiang-zhi-xing-qi-zi-yuan-ge-chi-yu-an-quan-yue-shu.md",
+      "section": "深入理解",
+      "group": "专家技能系统",
+      "level": "Advanced"
+    },
+    {
+      "slug": "21-yu-liao-ku-dao-ru-yu-ji-neng-fa-xian-kudig-ji-neng-dao-ru-liu-cheng",
+      "title": "语料库导入与技能发现：Kudig 技能导入流程",
+      "file": "21-yu-liao-ku-dao-ru-yu-ji-neng-fa-xian-kudig-ji-neng-dao-ru-liu-cheng.md",
+      "section": "深入理解",
+      "group": "专家技能系统",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "22-megaagent-he-xin-luo-ji-xuan-ze-qi-ji-cheng-yu-duo-lu-you-fen-fa",
+      "title": "MegaAgent 核心逻辑：选择器集成与多路由分发",
+      "file": "22-megaagent-he-xin-luo-ji-xuan-ze-qi-ji-cheng-yu-duo-lu-you-fen-fa.md",
+      "section": "深入理解",
+      "group": "MegaAgent 编排器",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "23-agent-ji-yi-xi-tong-duan-qi-dui-hua-yu-chang-qi-zhi-shi-cun-chu",
+      "title": "Agent 记忆系统：短期对话与长期知识存储",
+      "file": "23-agent-ji-yi-xi-tong-duan-qi-dui-hua-yu-chang-qi-zhi-shi-cun-chu.md",
+      "section": "深入理解",
+      "group": "MegaAgent 编排器",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "24-12-da-zhu-ce-biao-ti-xi-tong-crud-jie-kou-yu-nei-cun-postgres-shuang-hou-duan",
+      "title": "12 大注册表体系：统一 CRUD 接口与内存/Postgres 双后端",
+      "file": "24-12-da-zhu-ce-biao-ti-xi-tong-crud-jie-kou-yu-nei-cun-postgres-shuang-hou-duan.md",
+      "section": "深入理解",
+      "group": "数据存储与注册表",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "25-shu-ju-ku-schema-yu-qian-yi-10-bu-qian-yi-jiao-ben-yu-chong-zi-shu-ju",
+      "title": "数据库 Schema 与迁移：10 步迁移脚本与种子数据",
+      "file": "25-shu-ju-ku-schema-yu-qian-yi-10-bu-qian-yi-jiao-ben-yu-chong-zi-shu-ju.md",
+      "section": "深入理解",
+      "group": "数据存储与注册表",
+      "level": "Advanced"
+    },
+    {
+      "slug": "26-redis-huan-cun-yu-nats-shi-jian-zong-xian-ji-cheng",
+      "title": "Redis 缓存与 NATS 事件总线集成",
+      "file": "26-redis-huan-cun-yu-nats-shi-jian-zong-xian-ji-cheng.md",
+      "section": "深入理解",
+      "group": "数据存储与注册表",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "27-duo-mo-xing-tong-jie-kou-tong-yi-qian-wen-wen-xin-yan-zhi-pu-qing-yan-yu-openai-jian-rong",
+      "title": "多模型统一接口：通义千问、文心一言、智谱清言与 OpenAI 兼容",
+      "file": "27-duo-mo-xing-tong-jie-kou-tong-yi-qian-wen-wen-xin-yan-zhi-pu-qing-yan-yu-openai-jian-rong.md",
+      "section": "深入理解",
+      "group": "LLM 提供者抽象层",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "28-higress-ai-wang-guan-ji-cheng-mo-xing-lu-you-yu-wang-guan-ren-zheng",
+      "title": "Higress AI 网关集成：模型路由与网关认证",
+      "file": "28-higress-ai-wang-guan-ji-cheng-mo-xing-lu-you-yu-wang-guan-ren-zheng.md",
+      "section": "深入理解",
+      "group": "LLM 提供者抽象层",
+      "level": "Advanced"
+    },
+    {
+      "slug": "29-docker-compose-bu-shu-quan-zhan-rong-qi-hua-bian-pai",
+      "title": "Docker Compose 部署：全栈容器化编排",
+      "file": "29-docker-compose-bu-shu-quan-zhan-rong-qi-hua-bian-pai.md",
+      "section": "深入理解",
+      "group": "部署与运维",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "30-kubernetes-yu-helm-chart-sheng-chan-bu-shu",
+      "title": "Kubernetes 与 Helm Chart 生产部署",
+      "file": "30-kubernetes-yu-helm-chart-sheng-chan-bu-shu.md",
+      "section": "深入理解",
+      "group": "部署与运维",
+      "level": "Advanced"
+    },
+    {
+      "slug": "31-ke-guan-ce-xing-opentelemetry-zhi-biao-ri-zhi-yu-lian-lu-zhui-zong",
+      "title": "可观测性：OpenTelemetry 指标、日志与链路追踪",
+      "file": "31-ke-guan-ce-xing-opentelemetry-zhi-biao-ri-zhi-yu-lian-lu-zhui-zong.md",
+      "section": "深入理解",
+      "group": "部署与运维",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "32-rest-api-wan-zheng-can-kao-duan-dian-qing-qiu-xiang-ying-ge-shi-yu-cuo-wu-chu-li",
+      "title": "REST API 完整参考：端点、请求/响应格式与错误处理",
+      "file": "32-rest-api-wan-zheng-can-kao-duan-dian-qing-qiu-xiang-ying-ge-shi-yu-cuo-wu-chu-li.md",
+      "section": "深入理解",
+      "group": "开发实践",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "33-makefile-gou-jian-xi-tong-gou-jian-ce-shi-dai-ma-jian-cha-yu-dai-ma-sheng-cheng",
+      "title": "Makefile 构建系统：构建、测试、代码检查与代码生成",
+      "file": "33-makefile-gou-jian-xi-tong-gou-jian-ce-shi-dai-ma-jian-cha-yu-dai-ma-sheng-cheng.md",
+      "section": "深入理解",
+      "group": "开发实践",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "34-ce-shi-ti-xi-dan-yuan-ce-shi-ji-cheng-ce-shi-yu-duan-dao-duan-ce-shi",
+      "title": "测试体系：单元测试、集成测试与端到端测试",
+      "file": "34-ce-shi-ti-xi-dan-yuan-ce-shi-ji-cheng-ce-shi-yu-duan-dao-duan-ce-shi.md",
+      "section": "深入理解",
+      "group": "开发实践",
+      "level": "Intermediate"
+    }
+  ]
+}

@@ -111,15 +111,11 @@ class CallGraphBuilder:
         func_index, call_index = self._build_indexes(modules)
 
         # Determine entry points
-        resolved_entries = self._resolve_entry_points(
-            entry_points, func_index, modules
-        )
+        resolved_entries = self._resolve_entry_points(entry_points, func_index, modules)
         logger.info("Resolved %d entry points", len(resolved_entries))
 
         # BFS from entry points
-        result = self._bfs_traverse(
-            resolved_entries, func_index, call_index, max_depth
-        )
+        result = self._bfs_traverse(resolved_entries, func_index, call_index, max_depth)
 
         result.stats = {
             "files_parsed": len(source_files),
@@ -147,10 +143,7 @@ class CallGraphBuilder:
             "java": [".java"],
         }
 
-        if language:
-            exts = lang_extensions.get(language, [f".{language}"])
-        else:
-            exts = [ext for group in lang_extensions.values() for ext in group]
+        exts = lang_extensions.get(language, [f".{language}"]) if language else [ext for group in lang_extensions.values() for ext in group]
 
         excludes = exclude_patterns or []
         files: list[Path] = []
@@ -291,11 +284,13 @@ class CallGraphBuilder:
                         )
 
                 # Add edge
-                edges.append(GraphEdge(
-                    caller_id=current_key,
-                    callee_id=callee_key,
-                    call_type="direct",
-                ))
+                edges.append(
+                    GraphEdge(
+                        caller_id=current_key,
+                        callee_id=callee_key,
+                        call_type="direct",
+                    )
+                )
 
                 # Enqueue if not visited and not external
                 if callee_key not in visited and not callee_key.startswith("<external>"):
@@ -321,9 +316,7 @@ class CallGraphBuilder:
         )
 
     @staticmethod
-    def _resolve_callee(
-        callee_name: str, func_index: dict[str, FunctionDef]
-    ) -> str | None:
+    def _resolve_callee(callee_name: str, func_index: dict[str, FunctionDef]) -> str | None:
         """Resolve a callee name to a function index key."""
         # Direct match
         if callee_name in func_index:

@@ -98,10 +98,7 @@ class StructuredSolution(BaseModel):
                     "skipped": "⊘",
                     "error": "⚠",
                 }.get(step.status, "?")
-                lines.append(
-                    f"{i}. [{status_icon}] **{step.step_name}** "
-                    f"({step.duration_ms}ms)"
-                )
+                lines.append(f"{i}. [{status_icon}] **{step.step_name}** ({step.duration_ms}ms)")
                 if step.finding:
                     lines.append(f"   - 发现: {step.finding}")
                 if step.output:

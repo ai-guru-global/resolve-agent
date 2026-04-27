@@ -85,7 +85,7 @@ class WebSearchSkill:
             List of search results.
         """
         logger.info(
-            f"Web search",
+            "Web search",
             extra={"provider": self.provider, "query": query, "top_k": top_k},
         )
 
@@ -139,7 +139,7 @@ class WebSearchSkill:
                 return results[:top_k]
 
         except Exception as e:
-            logger.error(f"Bing search failed", extra={"error": str(e)})
+            logger.error("Bing search failed", extra={"error": str(e)})
             return []
 
     async def _search_google(
@@ -186,7 +186,7 @@ class WebSearchSkill:
                 return results[:top_k]
 
         except Exception as e:
-            logger.error(f"Google search failed", extra={"error": str(e)})
+            logger.error("Google search failed", extra={"error": str(e)})
             return []
 
     async def _search_searx(
@@ -225,7 +225,7 @@ class WebSearchSkill:
                 return results
 
         except Exception as e:
-            logger.error(f"Searx search failed", extra={"error": str(e)})
+            logger.error("Searx search failed", extra={"error": str(e)})
             return []
 
     async def _search_duckduckgo(
@@ -301,7 +301,7 @@ class WebSearchSkill:
                     return []
 
         except Exception as e:
-            logger.error(f"DuckDuckGo search failed", extra={"error": str(e)})
+            logger.error("DuckDuckGo search failed", extra={"error": str(e)})
             return []
 
     async def search_and_summarize(
@@ -352,6 +352,7 @@ class WebSearchSkill:
 
 
 # Convenience functions
+
 
 async def web_search(query: str, top_k: int = 5) -> list[SearchResult]:
     """Convenience function for web search.

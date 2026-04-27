@@ -8,7 +8,6 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, model_validator
 
-
 # ---------------------------------------------------------------------------
 # Skill Type Classification
 # ---------------------------------------------------------------------------
@@ -111,9 +110,7 @@ class SkillManifest(BaseModel):
     @model_validator(mode="after")
     def _validate_scenario_config(self) -> SkillManifest:
         if self.skill_type == SkillType.SCENARIO and self.scenario is None:
-            raise ValueError(
-                "Scenario skills must include a 'scenario' configuration block"
-            )
+            raise ValueError("Scenario skills must include a 'scenario' configuration block")
         return self
 
 

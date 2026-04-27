@@ -13,11 +13,14 @@ from __future__ import annotations
 import json
 import logging
 import os
-from typing import Any, AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 import httpx
 
 from resolveagent.llm.provider import ChatMessage, ChatResponse, LLMProvider
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -87,10 +90,12 @@ class OpenAICompatProvider(LLMProvider):
         # Convert messages to OpenAI format
         openai_messages = []
         for msg in messages:
-            openai_messages.append({
-                "role": msg.role,
-                "content": msg.content,
-            })
+            openai_messages.append(
+                {
+                    "role": msg.role,
+                    "content": msg.content,
+                }
+            )
 
         payload = {
             "model": model,
@@ -142,19 +147,19 @@ class OpenAICompatProvider(LLMProvider):
                 "OpenAI API HTTP error",
                 extra={"status": e.response.status_code, "response": e.response.text},
             )
-            raise RuntimeError(f"OpenAI API error: {e.response.status_code}")
+            raise RuntimeError(f"OpenAI API error: {e.response.status_code}") from e
         except Exception as e:
             logger.error("OpenAI API error", extra={"error": str(e)})
-            raise RuntimeError(f"OpenAI API call failed: {e}")
+            raise RuntimeError(f"OpenAI API call failed: {e}") from e
 
-    async def chat_stream(
+    async def chat_stream(  # type: ignore[override]
         self,
         messages: list[ChatMessage],
         model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
         **kwargs: Any,
-    ) -> AsyncIterator[str]:
+    ) -> AsyncGenerator[str]:
         """Stream completion via OpenAI-compatible API."""
         model = model or self.default_model
         # K2.5 models require specific temperature values based on thinking mode
@@ -171,10 +176,7 @@ class OpenAICompatProvider(LLMProvider):
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
 
-        openai_messages = [
-            {"role": msg.role, "content": msg.content}
-            for msg in messages
-        ]
+        openai_messages = [{"role": msg.role, "content": msg.content} for msg in messages]
 
         payload = {
             "model": model,
@@ -186,47 +188,49 @@ class OpenAICompatProvider(LLMProvider):
         payload.update(kwargs)
 
         try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                async with client.stream(
+            async with (
+                httpx.AsyncClient(timeout=60.0) as client,
+                client.stream(
                     "POST",
                     f"{self.base_url}/chat/completions",
                     headers=headers,
                     json=payload,
-                ) as response:
-                    response.raise_for_status()
+                ) as response,
+            ):
+                response.raise_for_status()
 
-                    async for line in response.aiter_lines():
-                        line = line.strip()
-                        if not line:
+                async for line in response.aiter_lines():
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    if line.startswith("data: "):
+                        data_str = line[6:]
+
+                        if data_str == "[DONE]":
+                            break
+
+                        try:
+                            data = json.loads(data_str)
+                            choice = data.get("choices", [{}])[0]
+                            delta = choice.get("delta", {})
+                            content = delta.get("content", "") or ""
+
+                            if content:
+                                yield content
+
+                        except json.JSONDecodeError:
                             continue
-
-                        if line.startswith("data: "):
-                            data_str = line[6:]
-
-                            if data_str == "[DONE]":
-                                break
-
-                            try:
-                                data = json.loads(data_str)
-                                choice = data.get("choices", [{}])[0]
-                                delta = choice.get("delta", {})
-                                content = delta.get("content", "") or ""
-
-                                if content:
-                                    yield content
-
-                            except json.JSONDecodeError:
-                                continue
 
         except httpx.HTTPStatusError as e:
             logger.error(
                 "OpenAI streaming API HTTP error",
                 extra={"status": e.response.status_code},
             )
-            raise RuntimeError(f"OpenAI streaming API error: {e.response.status_code}")
+            raise RuntimeError(f"OpenAI streaming API error: {e.response.status_code}") from e
         except Exception as e:
             logger.error("OpenAI streaming API error", extra={"error": str(e)})
-            raise RuntimeError(f"OpenAI streaming API call failed: {e}")
+            raise RuntimeError(f"OpenAI streaming API call failed: {e}") from e
 
 
 class OllamaProvider(OpenAICompatProvider):
@@ -254,14 +258,14 @@ class OllamaProvider(OpenAICompatProvider):
         )
 
 
-class vLLMProvider(OpenAICompatProvider):
-    """Provider for vLLM (self-hosted).
+class VllmProvider(OpenAICompatProvider):
+    """Provider for VLLM (self-hosted).
 
     vLLM provides an OpenAI-compatible API server.
     """
 
     def __init__(self, base_url: str = "", api_key: str = "", default_model: str = "") -> None:
-        """Initialize vLLM provider.
+        """Initialize VLLM provider.
 
         Args:
             base_url: vLLM API URL.

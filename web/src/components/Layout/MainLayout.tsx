@@ -15,6 +15,13 @@ import {
   Bell,
   GraduationCap,
   ExternalLink,
+  Layers,
+  Code2,
+  BookOpen,
+  FileBox,
+  Users,
+  Play,
+  Smartphone,
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -36,10 +43,17 @@ const navigationItems: {
   external?: boolean;
 }[] = [
   { name: '首页', href: '/', icon: Home },
-  { name: 'Harness 概览', href: '/dashboard', icon: LayoutDashboard },
+  { name: '全局看板', href: '/dashboard', icon: LayoutDashboard },
+  { name: '架构说明', href: '/architecture', icon: Layers },
+  { name: 'Mobile App', href: '/mobile', icon: Smartphone },
+  { name: 'Demo 演示', href: '/demo', icon: Play },
   { name: 'Agent 管理', href: '/agents', icon: Bot },
+  { name: 'Agent 模板', href: '/agents/templates', icon: FileBox },
+  { name: '多 Agent 协作', href: '/agents/collaboration', icon: Users },
   { name: 'Skills 技能', href: '/skills', icon: Zap },
   { name: 'FTA 工作流', href: '/workflows', icon: GitBranch },
+  { name: '结构化标准方案', href: '/solutions', icon: BookOpen },
+  { name: '代码分析语料', href: '/code-analysis', icon: Code2 },
   { name: 'RAG 知识库', href: '/rag/collections', icon: Database },
   { name: '知识文档', href: '/rag/documents', icon: Database },
   { name: 'Playground', href: '/playground', icon: MessageSquare },

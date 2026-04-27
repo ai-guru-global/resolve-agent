@@ -36,7 +36,7 @@ RUN rm -rf /usr/share/nginx/html/* /etc/nginx/conf.d/default.conf
 
 # Copy build output and custom nginx config
 COPY --from=builder /build/dist /usr/share/nginx/html
-COPY deployment/docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY deploy/docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 

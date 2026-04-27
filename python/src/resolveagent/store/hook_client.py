@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, List
 
 from resolveagent.store.base_client import BaseStoreClient
 
@@ -62,7 +62,7 @@ class HookClient(BaseStoreClient):
             labels=data.get("labels", {}),
         )
 
-    async def list(self) -> list[HookInfo]:
+    async def list(self) -> List[HookInfo]:
         data = await self._get("/api/v1/hooks")
         if not data:
             return []
@@ -88,7 +88,7 @@ class HookClient(BaseStoreClient):
     async def delete(self, hook_id: str) -> dict[str, Any] | None:
         return await self._delete(f"/api/v1/hooks/{hook_id}")
 
-    async def list_executions(self, hook_id: str) -> list[HookExecutionInfo]:
+    async def list_executions(self, hook_id: str) -> List[HookExecutionInfo]:
         data = await self._get(f"/api/v1/hooks/{hook_id}/executions")
         if not data:
             return []

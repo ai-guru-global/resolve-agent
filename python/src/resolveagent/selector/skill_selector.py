@@ -31,6 +31,7 @@ class SkillSelectorAdapter:
         """Lazy-load the selector skill's entry function."""
         if self._callable is None:
             from resolveagent.skills.builtin.selector_skill import run
+
             self._callable = run
         return self._callable
 

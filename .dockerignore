@@ -1,0 +1,62 @@
+# =============================================================================
+# ResolveAgent - Docker Build Ignore
+# =============================================================================
+# Placed at project root, controls what gets sent to Docker build context.
+# =============================================================================
+
+# Version control
+.git
+.gitignore
+
+# IDE & editor
+.idea/
+.vscode/
+.qoder/
+*.swp
+*.swo
+*~
+
+# Documentation (not needed in images)
+docs/
+*.md
+!README.md
+LICENSE
+
+# Build artifacts
+bin/
+*.out
+coverage.*
+
+# Python artifacts
+python/.pytest_cache/
+python/__pycache__/
+python/dist/
+python/.mypy_cache/
+python/.ruff_cache/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# Web artifacts (built in Docker)
+web/node_modules/
+web/dist/
+
+# Deployment files (avoid recursive context)
+deploy/
+deployment/
+
+# Temporary files
+.tmp_pypandoc/
+*.tmp
+*.log
+
+# Test files
+test/
+python/tests/
+
+# CI/CD
+.github/
+
+# Tools
+tools/
+hack/

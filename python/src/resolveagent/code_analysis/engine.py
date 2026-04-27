@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 from resolveagent.code_analysis.ast_parser import ASTParser
 from resolveagent.code_analysis.call_graph import CallGraphBuilder, CallGraphResult
@@ -18,6 +18,9 @@ from resolveagent.code_analysis.solution_generator import (
     SolutionDocument,
     SolutionGenerator,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 logger = logging.getLogger(__name__)
 
@@ -246,18 +249,20 @@ class StaticAnalysisEngine:
     ) -> None:
         """Persist call graph to Go platform store."""
         try:
-            graph_data = await self._cg_client.create({
-                "analysis_id": analysis_id,
-                "repository_url": result.repository_url,
-                "branch": result.branch,
-                "language": result.language,
-                "entry_point": cg_result.entry_points[0] if cg_result.entry_points else "",
-                "node_count": len(cg_result.nodes),
-                "edge_count": len(cg_result.edges),
-                "max_depth": cg_result.max_depth_reached,
-                "status": "completed",
-                "graph_data": cg_result.stats,
-            })
+            graph_data = await self._cg_client.create(
+                {
+                    "analysis_id": analysis_id,
+                    "repository_url": result.repository_url,
+                    "branch": result.branch,
+                    "language": result.language,
+                    "entry_point": cg_result.entry_points[0] if cg_result.entry_points else "",
+                    "node_count": len(cg_result.nodes),
+                    "edge_count": len(cg_result.edges),
+                    "max_depth": cg_result.max_depth_reached,
+                    "status": "completed",
+                    "graph_data": cg_result.stats,
+                }
+            )
 
             if graph_data and graph_data.get("id"):
                 graph_id = graph_data["id"]

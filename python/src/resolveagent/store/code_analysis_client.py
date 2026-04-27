@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, List
 
 from resolveagent.store.base_client import BaseStoreClient
 
@@ -71,7 +71,7 @@ class CodeAnalysisClient(BaseStoreClient):
             triggered_by=data.get("triggered_by", ""),
         )
 
-    async def list(self) -> list[CodeAnalysisInfo]:
+    async def list(self) -> List[CodeAnalysisInfo]:
         data = await self._get("/api/v1/analyses")
         if not data:
             return []
@@ -93,25 +93,19 @@ class CodeAnalysisClient(BaseStoreClient):
             for a in data.get("analyses", [])
         ]
 
-    async def update(
-        self, analysis_id: str, analysis: dict[str, Any]
-    ) -> dict[str, Any] | None:
+    async def update(self, analysis_id: str, analysis: dict[str, Any]) -> dict[str, Any] | None:
         return await self._put(f"/api/v1/analyses/{analysis_id}", analysis)
 
     async def delete(self, analysis_id: str) -> dict[str, Any] | None:
         return await self._delete(f"/api/v1/analyses/{analysis_id}")
 
-    async def add_findings(
-        self, analysis_id: str, findings: list[dict[str, Any]]
-    ) -> dict[str, Any] | None:
+    async def add_findings(self, analysis_id: str, findings: List[dict[str, Any]]) -> dict[str, Any] | None:
         return await self._post(
             f"/api/v1/analyses/{analysis_id}/findings",
             {"findings": findings},
         )
 
-    async def list_findings(
-        self, analysis_id: str, severity: str | None = None
-    ) -> list[CodeAnalysisFindingInfo]:
+    async def list_findings(self, analysis_id: str, severity: str | None = None) -> List[CodeAnalysisFindingInfo]:
         params = {}
         if severity:
             params["severity"] = severity

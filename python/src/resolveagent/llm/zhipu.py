@@ -6,11 +6,14 @@ import json
 import logging
 import os
 import time
-from typing import Any, AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 import httpx
 
 from resolveagent.llm.provider import ChatMessage, ChatResponse, LLMProvider
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -94,10 +97,12 @@ class ZhipuProvider(LLMProvider):
         # Convert messages to Zhipu format
         zhipu_messages = []
         for msg in messages:
-            zhipu_messages.append({
-                "role": msg.role,
-                "content": msg.content,
-            })
+            zhipu_messages.append(
+                {
+                    "role": msg.role,
+                    "content": msg.content,
+                }
+            )
 
         payload = {
             "model": model,
@@ -149,19 +154,19 @@ class ZhipuProvider(LLMProvider):
                 "Zhipu API HTTP error",
                 extra={"status": e.response.status_code, "response": e.response.text},
             )
-            raise RuntimeError(f"Zhipu API error: {e.response.status_code}")
+            raise RuntimeError(f"Zhipu API error: {e.response.status_code}") from e
         except Exception as e:
             logger.error("Zhipu API error", extra={"error": str(e)})
-            raise RuntimeError(f"Zhipu API call failed: {e}")
+            raise RuntimeError(f"Zhipu API call failed: {e}") from e
 
-    async def chat_stream(
+    async def chat_stream(  # type: ignore[override]
         self,
         messages: list[ChatMessage],
         model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
         **kwargs: Any,
-    ) -> AsyncIterator[str]:
+    ) -> AsyncGenerator[str]:
         """Stream completion via Zhipu API.
 
         Args:
@@ -189,10 +194,7 @@ class ZhipuProvider(LLMProvider):
         }
 
         # Convert messages
-        zhipu_messages = [
-            {"role": msg.role, "content": msg.content}
-            for msg in messages
-        ]
+        zhipu_messages = [{"role": msg.role, "content": msg.content} for msg in messages]
 
         payload = {
             "model": model,
@@ -204,47 +206,49 @@ class ZhipuProvider(LLMProvider):
         payload.update(kwargs)
 
         try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                async with client.stream(
+            async with (
+                httpx.AsyncClient(timeout=60.0) as client,
+                client.stream(
                     "POST",
                     f"{self.BASE_URL}/chat/completions",
                     headers=headers,
                     json=payload,
-                ) as response:
-                    response.raise_for_status()
+                ) as response,
+            ):
+                response.raise_for_status()
 
-                    async for line in response.aiter_lines():
-                        line = line.strip()
-                        if not line:
+                async for line in response.aiter_lines():
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    if line.startswith("data: "):
+                        data_str = line[6:]
+
+                        if data_str == "[DONE]":
+                            break
+
+                        try:
+                            data = json.loads(data_str)
+                            choice = data.get("choices", [{}])[0]
+                            delta = choice.get("delta", {})
+                            content = delta.get("content", "")
+
+                            if content:
+                                yield content
+
+                        except json.JSONDecodeError:
                             continue
-
-                        if line.startswith("data: "):
-                            data_str = line[6:]
-
-                            if data_str == "[DONE]":
-                                break
-
-                            try:
-                                data = json.loads(data_str)
-                                choice = data.get("choices", [{}])[0]
-                                delta = choice.get("delta", {})
-                                content = delta.get("content", "")
-
-                                if content:
-                                    yield content
-
-                            except json.JSONDecodeError:
-                                continue
 
         except httpx.HTTPStatusError as e:
             logger.error(
                 "Zhipu streaming API HTTP error",
                 extra={"status": e.response.status_code},
             )
-            raise RuntimeError(f"Zhipu streaming API error: {e.response.status_code}")
+            raise RuntimeError(f"Zhipu streaming API error: {e.response.status_code}") from e
         except Exception as e:
             logger.error("Zhipu streaming API error", extra={"error": str(e)})
-            raise RuntimeError(f"Zhipu streaming API call failed: {e}")
+            raise RuntimeError(f"Zhipu streaming API call failed: {e}") from e
 
 
 class ZhipuProviderError(Exception):

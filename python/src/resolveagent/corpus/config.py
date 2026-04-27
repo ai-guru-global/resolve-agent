@@ -41,9 +41,7 @@ class CorpusConfig:
     description: str = ""
     sources: list[SourceConfig] = field(default_factory=list)
     exclude_patterns: list[str] = field(default_factory=list)
-    _strategy_map: dict[str, tuple[str, int]] = field(
-        default_factory=lambda: dict(DEFAULT_STRATEGIES)
-    )
+    _strategy_map: dict[str, tuple[str, int]] = field(default_factory=lambda: dict(DEFAULT_STRATEGIES))
 
     def get_chunking_strategy(self, file_path: str) -> tuple[str, int]:
         """Return (strategy, chunk_size) for a given file path.

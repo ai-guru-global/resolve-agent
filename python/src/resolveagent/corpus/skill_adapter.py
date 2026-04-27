@@ -93,10 +93,7 @@ class KudigSkillAdapter:
 
         # Description: prefer English name, fall back to any available
         skill_name = front_matter.get("skill_name", {})
-        if isinstance(skill_name, dict):
-            description = skill_name.get("en", skill_name.get("zh", name))
-        else:
-            description = str(skill_name) if skill_name else name
+        description = skill_name.get("en", skill_name.get("zh", name)) if isinstance(skill_name, dict) else str(skill_name) if skill_name else name
 
         author = str(front_matter.get("author", "kudig")).strip()
 
@@ -174,7 +171,7 @@ class KudigSkillAdapter:
             if heading_match:
                 heading = heading_match.group(1).strip()
                 # Remove the heading line from the body
-                section_body = part[heading_match.end():].strip()
+                section_body = part[heading_match.end() :].strip()
                 sections[heading] = section_body
             else:
                 # Content before first heading
@@ -202,5 +199,5 @@ def parse_front_matter(content: str) -> tuple[dict[str, Any], str]:
         logger.warning("Failed to parse YAML front matter", extra={"error": str(e)})
         fm = {}
 
-    body = content[match.end():]
+    body = content[match.end() :]
     return fm, body

@@ -11,7 +11,12 @@ import logging
 import time
 from typing import Any
 
-from resolveagent.skills.manifest import ScenarioConfig, SkillManifest, SkillType, TroubleshootingStep
+from resolveagent.skills.manifest import (
+    ScenarioConfig,
+    SkillManifest,
+    SkillType,
+    TroubleshootingStep,
+)
 from resolveagent.skills.solution import (
     DiagnosticEvidence,
     StructuredSolution,
@@ -81,10 +86,7 @@ class TroubleshootingEngine:
             ValueError: If the manifest is not a scenario skill.
         """
         if manifest.skill_type != SkillType.SCENARIO:
-            raise ValueError(
-                f"TroubleshootingEngine requires a scenario skill, "
-                f"got skill_type={manifest.skill_type!r}"
-            )
+            raise ValueError(f"TroubleshootingEngine requires a scenario skill, got skill_type={manifest.skill_type!r}")
 
         scenario = manifest.scenario
         if scenario is None:
@@ -167,12 +169,9 @@ class TroubleshootingEngine:
 
             # Determine step status
             status = "passed"
-            if step.step_type == "diagnose" and step.expected_output:
-                if step.expected_output.lower() not in output.lower():
-                    status = "failed"
-                    finding = (
-                        f"Expected '{step.expected_output}' not found in output"
-                    )
+            if step.step_type == "diagnose" and step.expected_output and step.expected_output.lower() not in output.lower():
+                status = "failed"
+                finding = f"Expected '{step.expected_output}' not found in output"
 
             # Extract finding from diagnostic steps
             if step.step_type in ("diagnose", "verify") and not finding:
@@ -180,9 +179,7 @@ class TroubleshootingEngine:
 
             # Collect symptoms from failed diagnostics
             if status == "failed" and step.step_type == "diagnose":
-                context.add_symptom(
-                    f"{step.name}: {finding or 'diagnostic check failed'}"
-                )
+                context.add_symptom(f"{step.name}: {finding or 'diagnostic check failed'}")
 
             duration_ms = int((time.monotonic() - start) * 1000)
 
@@ -338,15 +335,11 @@ class TroubleshootingEngine:
                 resolution_steps.append(f"Address: {sr.finding}")
 
         if not resolution_steps:
-            resolution_steps.append(
-                "Review the diagnostic results above and apply appropriate fixes"
-            )
+            resolution_steps.append("Review the diagnostic results above and apply appropriate fixes")
 
         # Calculate confidence based on step completion
         total = len(context.step_results)
-        completed = sum(
-            1 for r in context.step_results if r.status in ("passed", "failed")
-        )
+        completed = sum(1 for r in context.step_results if r.status in ("passed", "failed"))
         confidence = completed / total if total > 0 else 0.0
 
         return StructuredSolution(

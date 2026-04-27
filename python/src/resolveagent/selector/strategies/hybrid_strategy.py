@@ -76,9 +76,7 @@ class HybridStrategy:
         self.rule_strategy = RuleStrategy()
         self.llm_strategy = LLMStrategy()
 
-    async def decide(
-        self, input_text: str, agent_id: str, context: dict[str, Any]
-    ) -> RouteDecision:
+    async def decide(self, input_text: str, agent_id: str, context: dict[str, Any]) -> RouteDecision:
         """Make routing decision using hybrid rule+LLM approach.
 
         The decision flow:
@@ -97,14 +95,9 @@ class HybridStrategy:
             RouteDecision with optimal routing choice.
         """
         # Phase 1: Fast path with rules
-        rule_decision = await self.rule_strategy.decide(
-            input_text, agent_id, context
-        )
+        rule_decision = await self.rule_strategy.decide(input_text, agent_id, context)
 
-        logger.debug(
-            f"Rule decision: {rule_decision.route_type} "
-            f"(confidence: {rule_decision.confidence:.2f})"
-        )
+        logger.debug(f"Rule decision: {rule_decision.route_type} (confidence: {rule_decision.confidence:.2f})")
 
         # High confidence rule match - return immediately
         if rule_decision.confidence >= self.config.rule_confidence_threshold:
@@ -113,14 +106,9 @@ class HybridStrategy:
             return rule_decision
 
         # Phase 2: Slow path with LLM
-        llm_decision = await self.llm_strategy.decide(
-            input_text, agent_id, context
-        )
+        llm_decision = await self.llm_strategy.decide(input_text, agent_id, context)
 
-        logger.debug(
-            f"LLM decision: {llm_decision.route_type} "
-            f"(confidence: {llm_decision.confidence:.2f})"
-        )
+        logger.debug(f"LLM decision: {llm_decision.route_type} (confidence: {llm_decision.confidence:.2f})")
 
         # Phase 3: Ensemble when both strategies provide input
         if self.config.use_ensemble and rule_decision.confidence > 0.3:
@@ -146,10 +134,7 @@ class HybridStrategy:
         """
         if rule_decision.route_type == llm_decision.route_type:
             # Agreement - combine confidence scores
-            combined_confidence = (
-                rule_decision.confidence * self.config.rule_weight +
-                llm_decision.confidence * self.config.llm_weight
-            )
+            combined_confidence = rule_decision.confidence * self.config.rule_weight + llm_decision.confidence * self.config.llm_weight
 
             # Use the target from the higher confidence decision
             if rule_decision.confidence >= llm_decision.confidence:
@@ -178,15 +163,13 @@ class HybridStrategy:
             # Disagreement - choose higher confidence
             if rule_decision.confidence > llm_decision.confidence:
                 rule_decision.reasoning = (
-                    f"Hybrid (rule preferred): {rule_decision.reasoning} "
-                    f"(rule: {rule_decision.confidence:.2f} > LLM: {llm_decision.confidence:.2f})"
+                    f"Hybrid (rule preferred): {rule_decision.reasoning} (rule: {rule_decision.confidence:.2f} > LLM: {llm_decision.confidence:.2f})"
                 )
                 rule_decision.parameters["llm_suggestion"] = llm_decision.route_type
                 return rule_decision
             else:
                 llm_decision.reasoning = (
-                    f"Hybrid (LLM preferred): {llm_decision.reasoning} "
-                    f"(LLM: {llm_decision.confidence:.2f} > rule: {rule_decision.confidence:.2f})"
+                    f"Hybrid (LLM preferred): {llm_decision.reasoning} (LLM: {llm_decision.confidence:.2f} > rule: {rule_decision.confidence:.2f})"
                 )
                 llm_decision.parameters["rule_suggestion"] = rule_decision.route_type
                 return llm_decision
@@ -202,9 +185,7 @@ class HybridStrategy:
         if decision.route_type == "code_analysis":
             code_context = context.get("code_context")
             if code_context and code_context.get("has_code_blocks"):
-                decision.confidence = min(
-                    decision.confidence + self.config.code_boost, 1.0
-                )
+                decision.confidence = min(decision.confidence + self.config.code_boost, 1.0)
                 decision.parameters["code_boost_applied"] = True
             # Extra boost for high-complexity code
             if code_context and code_context.get("complexity_hint") == "high":

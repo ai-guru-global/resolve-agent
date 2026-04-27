@@ -59,22 +59,26 @@ class HookSelectorAdapter:
             return
         existing = await self._client.list()
         if not existing:
-            await self._client.create({
-                "name": "intent-pre-analysis",
-                "hook_type": "pre",
-                "trigger_point": "selector.route",
-                "handler_type": "intent_analysis",
-                "execution_order": 0,
-                "enabled": True,
-            })
-            await self._client.create({
-                "name": "decision-audit",
-                "hook_type": "post",
-                "trigger_point": "selector.route",
-                "handler_type": "decision_audit",
-                "execution_order": 0,
-                "enabled": True,
-            })
+            await self._client.create(
+                {
+                    "name": "intent-pre-analysis",
+                    "hook_type": "pre",
+                    "trigger_point": "selector.route",
+                    "handler_type": "intent_analysis",
+                    "execution_order": 0,
+                    "enabled": True,
+                }
+            )
+            await self._client.create(
+                {
+                    "name": "decision-audit",
+                    "hook_type": "post",
+                    "trigger_point": "selector.route",
+                    "handler_type": "decision_audit",
+                    "execution_order": 0,
+                    "enabled": True,
+                }
+            )
         self._default_hooks_installed = True
 
     async def route(
@@ -142,8 +146,5 @@ class HookSelectorAdapter:
         return {
             "strategy": "hooks",
             "underlying_strategy": self._strategy,
-            "description": (
-                "Hook-based selector adapter"
-                " (pre/post hooks around IntelligentSelector)"
-            ),
+            "description": ("Hook-based selector adapter (pre/post hooks around IntelligentSelector)"),
         }

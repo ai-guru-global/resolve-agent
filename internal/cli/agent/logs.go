@@ -3,8 +3,8 @@ package agent
 import (
 	"context"
 	"fmt"
-	"text/tabwriter"
 	"os"
+	"text/tabwriter"
 
 	"github.com/ai-guru-global/resolve-agent/internal/cli/client"
 	"github.com/spf13/cobra"

@@ -11,11 +11,13 @@ alternative until protobuf stubs are generated.
 from __future__ import annotations
 
 import logging
-import os
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 import httpx
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 logger = logging.getLogger(__name__)
 

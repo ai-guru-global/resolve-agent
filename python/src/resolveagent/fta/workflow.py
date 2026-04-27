@@ -41,9 +41,7 @@ class Workflow:
 
     def get_next_nodes(self, node_id: str) -> list[WorkflowNode]:
         """Get nodes that follow the given node."""
-        next_ids = [
-            edge["to"] for edge in self.edges if edge.get("from") == node_id
-        ]
+        next_ids = [edge["to"] for edge in self.edges if edge.get("from") == node_id]
         return [n for n in self.nodes if n.id in next_ids]
 
     def validate(self) -> tuple[bool, list[str]]:

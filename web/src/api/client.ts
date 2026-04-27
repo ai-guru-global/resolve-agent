@@ -134,7 +134,7 @@ const realApi = {
     request<CollectionDetail>(`/rag/collections/${id}`),
   listDocuments: (collectionId?: string) =>
     request<{ documents: Document[]; total: number }>(
-      collectionId ? `/rag/documents?collection_id=${collectionId}` : '/rag/documents',
+      collectionId ? `/rag/collections/${collectionId}/documents` : '/rag/documents',
     ),
   getDashboardMetrics: () =>
     request<DashboardMetrics>('/dashboard/metrics'),
@@ -143,7 +143,7 @@ const realApi = {
   getPlatformStatus: () =>
     request<PlatformStatus>('/platform/status'),
   getSettings: () =>
-    request<SystemSettings>('/settings'),
+    request<SystemSettings>('/config'),
   executeAgent: (id: string, message: string, conversationId?: string) =>
     request<{ agent_id: string; response?: string; content?: string; conversation_id?: string; metadata?: Record<string, unknown> }>(
       `/agents/${id}/execute`,
@@ -213,13 +213,13 @@ const realApi = {
 
   // Memory endpoints
   listConversations: (agentId: string) =>
-    request<{ conversations: Conversation[]; total: number }>(`/memory/${agentId}/conversations`),
+    request<{ conversations: Conversation[]; total: number }>(`/memory/agents/${agentId}/conversations`),
   getConversation: (conversationId: string) =>
     request<{ messages: ConversationMessage[]; total: number }>(`/memory/conversations/${conversationId}`),
   deleteConversation: (conversationId: string) =>
     request<void>(`/memory/conversations/${conversationId}`, { method: 'DELETE' }),
   searchLongTermMemory: (agentId: string) =>
-    request<{ memories: LongTermMemory[]; total: number }>(`/memory/${agentId}/long-term`),
+    request<{ memories: LongTermMemory[]; total: number }>(`/memory/agents/${agentId}/long-term`),
   deleteLongTermMemory: (memoryId: string) =>
     request<void>(`/memory/long-term/${memoryId}`, { method: 'DELETE' }),
   pruneMemories: () =>

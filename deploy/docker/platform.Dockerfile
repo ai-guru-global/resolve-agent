@@ -32,7 +32,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH:-amd64} \
 # ---------------------
 # Stage 2: Runtime
 # ---------------------
-FROM alpine:3.20
+FROM alpine:3.23
 
 LABEL maintainer="AI Guru Global <dev@resolveagent.io>"
 LABEL org.opencontainers.image.title="ResolveAgent Platform"

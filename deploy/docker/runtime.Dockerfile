@@ -5,7 +5,7 @@
 # FTA engine, intelligent selector, and skill execution.
 # =============================================================================
 
-FROM python:3.12-slim AS builder
+FROM python:3.14-slim AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential gcc && \
@@ -24,7 +24,7 @@ RUN uv venv /opt/venv && \
 # ---------------------
 # Runtime stage
 # ---------------------
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 LABEL maintainer="AI Guru Global <dev@resolveagent.io>"
 LABEL org.opencontainers.image.title="ResolveAgent Runtime"

@@ -24,7 +24,7 @@ RUN pnpm build
 # ---------------------
 # Stage 2: Nginx Runtime
 # ---------------------
-FROM nginx:1.27-alpine
+FROM nginx:1.29-alpine
 
 LABEL maintainer="AI Guru Global <dev@resolveagent.io>"
 LABEL org.opencontainers.image.title="ResolveAgent WebUI"

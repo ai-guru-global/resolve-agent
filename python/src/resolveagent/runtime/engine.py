@@ -43,6 +43,7 @@ class ExecutionEngine:
         registry_client: Any | None = None,
         memory_client: Any | None = None,
         hook_runner: Any | None = None,
+        mcp_adapter: Any | None = None,
     ) -> None:
         self._agent_pool: dict[str, MegaAgent] = {}
         self._selector = IntelligentSelector(strategy="hybrid", registry_client=registry_client)
@@ -51,6 +52,7 @@ class ExecutionEngine:
         self._registry_client = registry_client
         self._memory_client = memory_client
         self._hook_runner = hook_runner
+        self._mcp_adapter = mcp_adapter
 
     async def execute(
         self,
@@ -662,29 +664,49 @@ class ExecutionEngine:
                             yield chunk
 
                 elif node.type == "skill":
-                    from resolveagent.skills.executor import SkillExecutor
-                    from resolveagent.skills.loader import SkillLoader
-
-                    executor = SkillExecutor()
-                    loader = SkillLoader()
                     skill_name = node.config.get("skill_name", "")
-                    loaded_skill = loader.get(skill_name)
-                    if loaded_skill is None:
-                        yield {
-                            "type": "content",
-                            "content": f"Skill '{skill_name}' not found",
-                            "metadata": {"step": node.id, "success": False},
-                        }
-                    else:
-                        result = await executor.execute(
-                            skill=loaded_skill,
-                            inputs=current_data,
+                    execution_mode = node.config.get("execution_mode", "direct")
+
+                    # Check if skill should be executed via MCP
+                    if execution_mode == "mcp" and self._mcp_adapter is not None:
+                        mcp_result = await self._mcp_adapter.execute(
+                            tool_name=skill_name,
+                            params=current_data,
                         )
                         yield {
                             "type": "content",
-                            "content": str(result.outputs) if result.success else str(result.error),
-                            "metadata": {"step": node.id, "success": result.success},
+                            "content": str(mcp_result.data) if mcp_result.success else str(mcp_result.error),
+                            "metadata": {
+                                "step": node.id,
+                                "success": mcp_result.success,
+                                "execution_mode": "mcp",
+                                "duration_ms": mcp_result.duration_ms,
+                            },
                         }
+                    else:
+                        # Native skill execution
+                        from resolveagent.skills.executor import SkillExecutor
+                        from resolveagent.skills.loader import SkillLoader
+
+                        executor = SkillExecutor()
+                        loader = SkillLoader()
+                        loaded_skill = loader.get(skill_name)
+                        if loaded_skill is None:
+                            yield {
+                                "type": "content",
+                                "content": f"Skill '{skill_name}' not found",
+                                "metadata": {"step": node.id, "success": False},
+                            }
+                        else:
+                            result = await executor.execute(
+                                skill=loaded_skill,
+                                inputs=current_data,
+                            )
+                            yield {
+                                "type": "content",
+                                "content": str(result.outputs) if result.success else str(result.error),
+                                "metadata": {"step": node.id, "success": result.success},
+                            }
 
                 yield {
                     "type": "event",
@@ -755,4 +777,5 @@ class ExecutionEngine:
             "active_conversations": len(self._conversations),
             "memory_client_connected": self._memory_client is not None,
             "hook_runner_enabled": self._hook_runner is not None,
+            "mcp_enabled": self._mcp_adapter is not None and getattr(self._mcp_adapter, "enabled", False),
         }

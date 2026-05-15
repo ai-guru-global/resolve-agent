@@ -88,3 +88,24 @@ store:
     short_term_max_entries: 200
     long_term_prune_interval: "1h"
     long_term_default_ttl: "720h"
+
+# MCP (Model Context Protocol) Integration
+# Allows ResolveAgent to call external tools via standardized MCP protocol
+mcp:
+  enabled: false
+  servers:
+    # Example: filesystem access via MCP
+    # - name: filesystem
+    #   transport: stdio
+    #   command: npx
+    #   args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
+    #   env:
+    #     HOME: /tmp
+    #
+    # Example: HTTP-based MCP server
+    # - name: fetch
+    #   transport: http
+    #   url: http://localhost:3001/sse
+    #   headers:
+    #     Authorization: Bearer ${FETCH_TOKEN}
+    #   timeout_seconds: 30

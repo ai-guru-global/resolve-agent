@@ -704,6 +704,73 @@ def test_run_timeout():
 
 ---
 
+## MCP 集成
+
+ResolveAgent 支持通过 **MCP (Model Context Protocol)** 协议调用外部工具，将 MCP Server 作为技能的后端执行引擎。
+
+### 什么是 MCP？
+
+MCP 是 Anthropic 提出的开放协议，用于标准化 AI 模型与外部工具、数据源之间的通信。通过 MCP，ResolveAgent 可以：
+
+- 调用社区提供的 MCP 工具（文件系统、数据库、浏览器等）
+- 与 LangChain、Claude Desktop 等生态互操作
+- 无需编写 Python 代码即可扩展能力
+
+### 配置 MCP Server
+
+在 `resolveagent.yaml` 中启用 MCP：
+
+```yaml
+mcp:
+  enabled: true
+  servers:
+    - name: filesystem
+      transport: stdio
+      command: npx
+      args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
+      env:
+        HOME: /tmp
+
+    - name: fetch
+      transport: http
+      url: http://localhost:3001/sse
+      headers:
+        Authorization: Bearer ${FETCH_TOKEN}
+```
+
+### 在技能中使用 MCP
+
+将技能的 `execution_mode` 设置为 `"mcp"`：
+
+```yaml
+skill:
+  name: read_file
+  execution_mode: mcp  # direct | sandbox | mcp
+  parameters:
+    - name: path
+      type: string
+      required: true
+```
+
+在工作流中调用时，ResolveAgent 会自动通过 MCPAdapter 路由到对应的 MCP Server。
+
+### 支持的传输方式
+
+| 传输方式 | 说明 | 适用场景 |
+|---------|------|---------|
+| **stdio** | 子进程标准输入输出 | 本地命令行工具 |
+| **http** | HTTP POST 请求 | 远程 HTTP 服务 |
+| **sse** | Server-Sent Events | 流式响应服务 |
+
+### 工具名称限定
+
+当多个 MCP Server 提供同名工具时，使用 `server.tool` 限定：
+
+```python
+# 调用 filesystem server 的 read_file 工具
+result = await adapter.execute("filesystem.read_file", {"path": "/tmp/log.txt"})
+```
+
 ## 相关文档
 
 - [FTA 工作流引擎](./fta-engine.md) - 在工作流中使用技能

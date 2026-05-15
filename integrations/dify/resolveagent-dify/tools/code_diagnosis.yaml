@@ -1,0 +1,78 @@
+identity:
+  name: code_diagnosis
+  author: ResolveAgent Team
+  label:
+    en_US: Code Diagnosis
+    zh_Hans: 代码诊断
+  description:
+    en_US: Diagnose code issues by analyzing call graphs and AST structure across multiple languages.
+    zh_Hans: 通过分析多语言的调用图和 AST 结构来诊断代码问题。
+description:
+  human:
+    en_US: Analyzes code to find bugs, performance issues, and architectural problems. Supports Python, Java, Go, and Rust.
+    zh_Hans: 分析代码以查找错误、性能问题和架构问题。支持 Python、Java、Go 和 Rust。
+  llm: A tool that performs static code analysis to diagnose issues. It parses source code into AST, builds call graphs, and identifies potential problems.
+parameters:
+  - name: code_snippet
+    type: string
+    required: true
+    label:
+      en_US: Code Snippet
+      zh_Hans: 代码片段
+    human_description:
+      en_US: The source code to analyze.
+      zh_Hans: 要分析的源代码。
+    llm_description: A code snippet or full source file content to analyze for issues.
+    form: llm
+  - name: language
+    type: select
+    required: true
+    options:
+      - value: python
+        label:
+          en_US: Python
+      - value: java
+        label:
+          en_US: Java
+      - value: go
+        label:
+          en_US: Go
+      - value: rust
+        label:
+          en_US: Rust
+    label:
+      en_US: Programming Language
+      zh_Hans: 编程语言
+    human_description:
+      en_US: The programming language of the code.
+      zh_Hans: 代码的编程语言。
+    llm_description: The programming language of the provided code snippet.
+    form: llm
+  - name: diagnosis_type
+    type: select
+    required: false
+    default: general
+    options:
+      - value: general
+        label:
+          en_US: General Analysis
+          zh_Hans: 通用分析
+      - value: performance
+        label:
+          en_US: Performance
+          zh_Hans: 性能
+      - value: security
+        label:
+          en_US: Security
+          zh_Hans: 安全
+    label:
+      en_US: Diagnosis Type
+      zh_Hans: 诊断类型
+    human_description:
+      en_US: Type of diagnosis to perform.
+      zh_Hans: 要执行的诊断类型。
+    llm_description: The type of diagnosis to run (general, performance, or security).
+    form: llm
+extra:
+  python:
+    source: tools/code_diagnosis.py

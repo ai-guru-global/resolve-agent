@@ -16,19 +16,19 @@
     - 2.5: 实现 Rust AST Parser（基于 tree-sitter-rust）
     - 2.6: 编写多语言代码分析单元测试
 
-- [ ] 任务 3: LangGraph 集成
+- [x] 任务 3: LangGraph 集成
     - 3.1: 创建 `python/src/resolveagent/integrations/langgraph/` 模块
     - 3.2: 实现 `ResolveAgentNode` 类（LangGraph Node 接口）
     - 3.3: 编写 LangGraph 集成示例（多 Agent 诊断工作流）
     - 3.4: 编写集成测试
 
-- [ ] 任务 4: Dify 插件导出
+- [x] 任务 4: Dify 插件导出
     - 4.1: 创建 `integrations/dify/` 目录和插件配置
     - 4.2: 实现 FTA 诊断工具 API（封装为 HTTP endpoint）
     - 4.3: 编写 Dify 插件 manifest 和工具定义
     - 4.4: 编写插件使用文档
 
-- [ ] 任务 5: 验证与文档
+- [x] 任务 5: 验证与文档
     - 5.1: 运行全量 Python 测试确保无回归
     - 5.2: 运行 mypy 和 ruff 检查
     - 5.3: 更新 `docs/ROADMAP.md` 标记 Phase 1 完成项

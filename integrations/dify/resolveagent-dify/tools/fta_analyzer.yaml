@@ -1,0 +1,61 @@
+identity:
+  name: fta_analyzer
+  author: ResolveAgent Team
+  label:
+    en_US: FTA Analyzer
+    zh_Hans: 故障树分析器
+  description:
+    en_US: Analyze system failures using Fault Tree Analysis (FTA) to identify root causes.
+    zh_Hans: 使用故障树分析（FTA）分析系统故障，识别根因。
+description:
+  human:
+    en_US: Analyzes fault trees to find root causes of system failures. Supports AND, OR, VOTING gates and parallel evaluation.
+    zh_Hans: 分析故障树以查找系统故障的根因。支持 AND、OR、VOTING 门和并行评估。
+  llm: A tool that performs Fault Tree Analysis (FTA) on system failure descriptions. It evaluates fault trees with various gate types (AND, OR, VOTING) to determine the root cause of an incident.
+parameters:
+  - name: incident_description
+    type: string
+    required: true
+    label:
+      en_US: Incident Description
+      zh_Hans: 故障描述
+    human_description:
+      en_US: Description of the system incident or failure to analyze.
+      zh_Hans: 要分析的系统故障或失效描述。
+    llm_description: A detailed description of the system incident, including symptoms, affected components, and observed errors.
+    form: llm
+  - name: system_context
+    type: string
+    required: false
+    label:
+      en_US: System Context
+      zh_Hans: 系统上下文
+    human_description:
+      en_US: Additional context about the system architecture and components.
+      zh_Hans: 关于系统架构和组件的额外上下文。
+    llm_description: Optional context about the system architecture, dependencies, and relevant configuration.
+    form: llm
+  - name: evaluation_mode
+    type: select
+    required: false
+    default: parallel
+    options:
+      - value: parallel
+        label:
+          en_US: Parallel (Fast)
+          zh_Hans: 并行（快速）
+      - value: sequential
+        label:
+          en_US: Sequential (Standard)
+          zh_Hans: 串行（标准）
+    label:
+      en_US: Evaluation Mode
+      zh_Hans: 评估模式
+    human_description:
+      en_US: Choose parallel evaluation for faster results on complex fault trees.
+      zh_Hans: 对于复杂故障树，选择并行评估以获得更快的结果。
+    llm_description: Evaluation mode - parallel is faster for complex trees.
+    form: llm
+extra:
+  python:
+    source: tools/fta_analyzer.py

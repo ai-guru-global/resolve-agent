@@ -45,10 +45,10 @@ This document outlines the high-level roadmap for the ResolveAgent project.
 
 **Focus: FTA + Code Diagnosis dual core, ecosystem integration**
 
-- [ ] FTA engine performance optimization (large-scale fault tree real-time computation)
-- [ ] Multi-language code analysis (Java, Go, Rust AST parsers)
-- [ ] LangGraph integration (ResolveAgent as Expert Node)
-- [ ] Dify plugin export (FTA diagnosis capability as custom tool)
+- [x] FTA engine performance optimization (large-scale fault tree real-time computation)
+- [x] Multi-language code analysis (Java, Go, Rust AST parsers)
+- [x] LangGraph integration (ResolveAgent as Expert Node)
+- [x] Dify plugin export (FTA diagnosis capability as custom tool)
 - [ ] OpenAPI specification auto-generation
 - [ ] Load testing benchmarks
 

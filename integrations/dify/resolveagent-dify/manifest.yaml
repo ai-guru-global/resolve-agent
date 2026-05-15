@@ -1,0 +1,28 @@
+version: 0.0.1
+type: plugin
+author: ResolveAgent Team
+name: resolveagent-dify
+label:
+  en_US: ResolveAgent Diagnosis
+  zh_Hans: ResolveAgent 智能诊断
+description:
+  en_US: Fault Tree Analysis and intelligent diagnosis powered by ResolveAgent.
+  zh_Hans: 基于 ResolveAgent 的故障树分析与智能诊断工具。
+icon: icon.svg
+resource:
+  memory: 268435456
+  permission:
+    tool:
+      enabled: true
+    model:
+      enabled: true
+      llm: true
+    endpoint:
+      enabled: true
+plugins:
+  tools:
+    - provider/resolveagent-dify.yaml
+tags:
+  - monitoring
+  - ops
+  - diagnosis

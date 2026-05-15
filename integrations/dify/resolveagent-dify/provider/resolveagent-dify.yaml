@@ -1,0 +1,16 @@
+identity:
+  author: ResolveAgent Team
+  name: resolveagent-dify
+  label:
+    en_US: ResolveAgent Diagnosis
+    zh_Hans: ResolveAgent 智能诊断
+  description:
+    en_US: Fault tree analysis, code diagnostics, and intelligent troubleshooting powered by ResolveAgent.
+    zh_Hans: 基于 ResolveAgent 的故障树分析、代码诊断和智能排障工具。
+  icon: icon.svg
+tools:
+  - tools/fta_analyzer.yaml
+  - tools/code_diagnosis.yaml
+extra:
+  python:
+    source: provider/resolveagent-dify.py

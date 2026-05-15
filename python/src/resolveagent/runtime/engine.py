@@ -663,18 +663,28 @@ class ExecutionEngine:
 
                 elif node.type == "skill":
                     from resolveagent.skills.executor import SkillExecutor
+                    from resolveagent.skills.loader import SkillLoader
 
                     executor = SkillExecutor()
-                    result = await executor.execute(
-                        skill_name=node.config.get("skill_name", ""),
-                        parameters=current_data,
-                        context=context or {},
-                    )
-                    yield {
-                        "type": "content",
-                        "content": str(result.output) if result.success else str(result.error),
-                        "metadata": {"step": node.id, "success": result.success},
-                    }
+                    loader = SkillLoader()
+                    skill_name = node.config.get("skill_name", "")
+                    loaded_skill = loader.get(skill_name)
+                    if loaded_skill is None:
+                        yield {
+                            "type": "content",
+                            "content": f"Skill '{skill_name}' not found",
+                            "metadata": {"step": node.id, "success": False},
+                        }
+                    else:
+                        result = await executor.execute(
+                            skill=loaded_skill,
+                            inputs=current_data,
+                        )
+                        yield {
+                            "type": "content",
+                            "content": str(result.outputs) if result.success else str(result.error),
+                            "metadata": {"step": node.id, "success": result.success},
+                        }
 
                 yield {
                     "type": "event",

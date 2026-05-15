@@ -144,7 +144,7 @@ class IntelligentSelector:
             "rule": self._route_rule,
             "hybrid": self._route_hybrid,
         }
-        self._intent_analyzer = None
+        self._intent_analyzer: Any | None = None
         self._context_enricher: Any | None = None
         self._registry_client = registry_client
 

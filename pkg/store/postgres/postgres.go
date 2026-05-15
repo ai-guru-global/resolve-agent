@@ -431,6 +431,26 @@ func (s *Store) Migrate(ctx context.Context) error {
 				CREATE INDEX IF NOT EXISTS idx_mem_long_importance ON memory_long_term(importance DESC)
 			`,
 		},
+		// =====================================================================
+		// RAG Collections Store
+		// =====================================================================
+		{
+			version: 14,
+			sql: `
+				CREATE TABLE IF NOT EXISTS rag_collections (
+					id VARCHAR(64) PRIMARY KEY,
+					name VARCHAR(255) NOT NULL,
+					description TEXT,
+					config JSONB NOT NULL DEFAULT '{}',
+					status VARCHAR(50) NOT NULL DEFAULT 'active',
+					labels JSONB DEFAULT '{}',
+					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+					updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+				);
+				CREATE INDEX IF NOT EXISTS idx_rag_collections_status ON rag_collections(status);
+				CREATE INDEX IF NOT EXISTS idx_rag_collections_name ON rag_collections(name)
+			`,
+		},
 	}
 
 	for _, migration := range migrations {

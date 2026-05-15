@@ -1,6 +1,6 @@
 [project]
 name = "resolveagent"
-version = "0.1.0"
+version = "0.3.0"
 description = "ResolveAgent Runtime - Mega Agent Platform"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -69,10 +69,17 @@ ignore = ["UP006", "UP035"]
 [tool.mypy]
 python_version = "3.11"
 strict = false
-warn_return_any = false
+warn_return_any = true
 ignore_missing_imports = true
-warn_unused_ignores = false
-disable_error_code = ["attr-defined", "call-arg", "assignment", "return-value", "arg-type", "union-attr"]
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = "resolveagent.rag.index.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "resolveagent.code_analysis.ast_parser"
+ignore_errors = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

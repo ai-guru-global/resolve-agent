@@ -160,7 +160,7 @@ class WenxinProvider(LLMProvider):
             logger.error("Wenxin API error", extra={"error": str(e)})
             raise RuntimeError(f"Wenxin API call failed: {e}") from e
 
-    async def chat_stream(  # type: ignore[override]
+    async def chat_stream(
         self,
         messages: list[ChatMessage],
         model: str | None = None,

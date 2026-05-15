@@ -16,7 +16,7 @@ from resolveagent.llm.provider import ChatMessage, ChatResponse, LLMProvider
 from resolveagent.runtime.registry_client import get_registry_client
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator
+    from collections.abc import AsyncIterator
 
 logger = logging.getLogger(__name__)
 
@@ -218,14 +218,14 @@ class HigressLLMProvider(LLMProvider):
             logger.error("LLM request error", extra={"error": str(e)})
             raise
 
-    async def chat_stream(  # type: ignore[override]
+    async def chat_stream(
         self,
         messages: list[ChatMessage],
         model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
         **kwargs: Any,
-    ) -> AsyncGenerator[str]:
+    ) -> AsyncIterator[str]:
         """Generate a streaming chat completion through Higress gateway.
 
         Args:

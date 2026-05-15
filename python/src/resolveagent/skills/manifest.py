@@ -101,6 +101,8 @@ class SkillManifest(BaseModel):
     author: str = ""
     entry_point: str
     skill_type: SkillType = SkillType.GENERAL
+    execution_mode: str = "direct"  # direct | sandbox
+    parameters: list[SkillParameter] = []
     inputs: list[SkillParameter] = []
     outputs: list[SkillParameter] = []
     dependencies: list[str] = []

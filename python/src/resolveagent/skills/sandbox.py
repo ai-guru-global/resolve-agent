@@ -54,7 +54,7 @@ class SandboxResult:
     success: bool
     stdout: str
     stderr: str
-    return_code: int
+    return_code: int | None
     execution_time_ms: float
     memory_usage_mb: float
     error: str | None = None

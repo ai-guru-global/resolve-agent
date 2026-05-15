@@ -159,7 +159,7 @@ class ZhipuProvider(LLMProvider):
             logger.error("Zhipu API error", extra={"error": str(e)})
             raise RuntimeError(f"Zhipu API call failed: {e}") from e
 
-    async def chat_stream(  # type: ignore[override]
+    async def chat_stream(
         self,
         messages: list[ChatMessage],
         model: str | None = None,

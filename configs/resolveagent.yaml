@@ -10,7 +10,8 @@ database:
   host: localhost
   port: 5432
   user: resolveagent
-  password: resolveagent
+  # SECURITY: Set password via environment variable RESOLVEAGENT_DATABASE_PASSWORD
+  password: ""
   dbname: resolveagent
   sslmode: disable
 

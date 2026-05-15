@@ -11,6 +11,7 @@ import (
 
 	"github.com/ai-guru-global/resolve-agent/pkg/config"
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
+	"github.com/ai-guru-global/resolve-agent/pkg/store/postgres"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -42,22 +43,55 @@ type Server struct {
 // New creates a new Server instance.
 func New(cfg *config.Config, logger *slog.Logger) (*Server, error) {
 	s := &Server{
-		cfg:                    cfg,
-		logger:                 logger,
-		agentRegistry:          registry.NewInMemoryAgentRegistry(),
-		skillRegistry:          registry.NewInMemorySkillRegistry(),
-		workflowRegistry:       registry.NewInMemoryWorkflowRegistry(),
-		ragRegistry:            registry.NewInMemoryRAGRegistry(),
-		hookRegistry:           registry.NewInMemoryHookRegistry(),
-		ragDocumentRegistry:    registry.NewInMemoryRAGDocumentRegistry(),
-		ftaDocumentRegistry:    registry.NewInMemoryFTADocumentRegistry(),
-		codeAnalysisRegistry:   registry.NewInMemoryCodeAnalysisRegistry(),
-		memoryRegistry:         registry.NewInMemoryMemoryRegistry(),
-		solutionRegistry:       registry.NewInMemoryTroubleshootingSolutionRegistry(),
-		callGraphRegistry:      registry.NewInMemoryCallGraphRegistry(),
-		trafficCaptureRegistry: registry.NewInMemoryTrafficCaptureRegistry(),
-		trafficGraphRegistry:   registry.NewInMemoryTrafficGraphRegistry(),
-		runtimeClient:          NewRuntimeClient(cfg),
+		cfg:    cfg,
+		logger: logger,
+	}
+
+	// Select registry backend based on configuration
+	if cfg.Store.Backend == "postgres" {
+		pgStore, err := postgres.New(cfg.Database.DSN(), logger)
+		if err != nil {
+			return nil, fmt.Errorf("failed to connect to postgres: %w", err)
+		}
+
+		// Run migrations
+		if err := pgStore.Migrate(context.Background()); err != nil {
+			pgStore.Close()
+			return nil, fmt.Errorf("failed to migrate postgres: %w", err)
+		}
+
+		logger.Info("Using PostgreSQL backend for registries")
+		s.agentRegistry = postgres.NewPostgresAgentRegistry(pgStore)
+		s.skillRegistry = postgres.NewPostgresSkillRegistry(pgStore)
+		s.workflowRegistry = postgres.NewPostgresWorkflowRegistry(pgStore)
+		s.ragRegistry = postgres.NewPostgresRAGRegistry(pgStore)
+		s.hookRegistry = postgres.NewPostgresHookRegistry(pgStore)
+		s.ragDocumentRegistry = postgres.NewPostgresRAGDocumentRegistry(pgStore)
+		s.ftaDocumentRegistry = postgres.NewPostgresFTADocumentRegistry(pgStore)
+		s.codeAnalysisRegistry = postgres.NewPostgresCodeAnalysisRegistry(pgStore)
+		s.memoryRegistry = postgres.NewPostgresMemoryRegistry(pgStore)
+		s.callGraphRegistry = postgres.NewPostgresCallGraphRegistry(pgStore)
+		s.trafficCaptureRegistry = postgres.NewPostgresTrafficCaptureRegistry(pgStore)
+		s.trafficGraphRegistry = postgres.NewPostgresTrafficGraphRegistry(pgStore)
+		// Solution registry remains in-memory until PostgreSQL implementation is added
+		s.solutionRegistry = registry.NewInMemoryTroubleshootingSolutionRegistry()
+		s.runtimeClient = NewRuntimeClient(cfg)
+	} else {
+		logger.Info("Using in-memory backend for registries")
+		s.agentRegistry = registry.NewInMemoryAgentRegistry()
+		s.skillRegistry = registry.NewInMemorySkillRegistry()
+		s.workflowRegistry = registry.NewInMemoryWorkflowRegistry()
+		s.ragRegistry = registry.NewInMemoryRAGRegistry()
+		s.hookRegistry = registry.NewInMemoryHookRegistry()
+		s.ragDocumentRegistry = registry.NewInMemoryRAGDocumentRegistry()
+		s.ftaDocumentRegistry = registry.NewInMemoryFTADocumentRegistry()
+		s.codeAnalysisRegistry = registry.NewInMemoryCodeAnalysisRegistry()
+		s.memoryRegistry = registry.NewInMemoryMemoryRegistry()
+		s.solutionRegistry = registry.NewInMemoryTroubleshootingSolutionRegistry()
+		s.callGraphRegistry = registry.NewInMemoryCallGraphRegistry()
+		s.trafficCaptureRegistry = registry.NewInMemoryTrafficCaptureRegistry()
+		s.trafficGraphRegistry = registry.NewInMemoryTrafficGraphRegistry()
+		s.runtimeClient = NewRuntimeClient(cfg)
 	}
 
 	// Initialize gRPC server

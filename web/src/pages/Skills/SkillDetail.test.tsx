@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SkillDetailInfo } from '@/types';
@@ -107,8 +108,12 @@ describe('SkillDetail page', () => {
     expect(screen.getByText('Lv.4')).toBeTruthy();
     expect(screen.getByText('3680 XP')).toBeTruthy();
     expect(screen.getByText('关联 Agents')).toBeTruthy();
-    expect(screen.getByText('收集 DNS 事件')).toBeTruthy();
     expect(screen.getByText('4200 XP')).toBeTruthy();
+    // Click the "排查流程" tab to reveal troubleshooting flow content
+    const user = userEvent.setup();
+    const scenarioTab = screen.getByRole('tab', { name: '排查流程' });
+    await user.click(scenarioTab);
+    expect(await screen.findByText('收集 DNS 事件')).toBeTruthy();
     await waitFor(() => {
       expect(getSkillMock).toHaveBeenCalledWith('SKILL-NET-001');
     });

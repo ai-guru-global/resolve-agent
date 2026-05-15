@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 from pydantic import BaseModel
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator
+    from collections.abc import AsyncIterator
 
 
 class ChatMessage(BaseModel):
@@ -34,6 +34,8 @@ class LLMProvider(ABC):
     both synchronous and streaming completions.
     """
 
+    default_model: str = ""
+
     @abstractmethod
     async def chat(
         self,
@@ -57,14 +59,14 @@ class LLMProvider(ABC):
         ...
 
     @abstractmethod
-    async def chat_stream(
+    def chat_stream(
         self,
         messages: list[ChatMessage],
         model: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
         **kwargs: Any,
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncIterator[str]:
         """Generate a streaming chat completion.
 
         Args:
@@ -72,6 +74,7 @@ class LLMProvider(ABC):
             model: Model identifier.
             temperature: Sampling temperature.
             max_tokens: Maximum tokens to generate.
+            **kwargs: Additional parameters.
 
         Yields:
             Content chunks as they are generated.

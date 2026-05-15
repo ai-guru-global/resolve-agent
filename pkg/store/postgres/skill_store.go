@@ -99,3 +99,39 @@ func (r *PostgresSkillRegistry) Unregister(ctx context.Context, name string) err
 	_, err := r.store.pool.Exec(ctx, "DELETE FROM skills WHERE name = $1", name)
 	return err
 }
+
+func (r *PostgresSkillRegistry) ListByType(ctx context.Context, skillType string, opts registry.ListOptions) ([]*registry.SkillDefinition, int, error) {
+	var total int
+	if err := r.store.pool.QueryRow(ctx,
+		"SELECT COUNT(*) FROM skills WHERE source_type = $1", skillType,
+	).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	limit := opts.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+
+	rows, err := r.store.pool.Query(ctx, `
+		SELECT name, version, description, author, manifest, source_type, source_uri, status, labels
+		FROM skills WHERE source_type = $1 ORDER BY name LIMIT $2 OFFSET $3
+	`, skillType, limit, opts.Offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var skills []*registry.SkillDefinition
+	for rows.Next() {
+		var s registry.SkillDefinition
+		if err := rows.Scan(
+			&s.Name, &s.Version, &s.Description, &s.Author,
+			&s.Manifest, &s.SourceType, &s.SourceURI, &s.Status, &s.Labels,
+		); err != nil {
+			return nil, 0, err
+		}
+		skills = append(skills, &s)
+	}
+	return skills, total, nil
+}

@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -17,7 +18,7 @@ func Load(configPath string) (*Config, error) {
 	v.SetDefault("database.host", "localhost")
 	v.SetDefault("database.port", 5432)
 	v.SetDefault("database.user", "resolveagent")
-	v.SetDefault("database.password", "resolveagent")
+	v.SetDefault("database.password", "")
 	v.SetDefault("database.dbname", "resolveagent")
 	v.SetDefault("database.sslmode", "disable")
 	v.SetDefault("redis.addr", "localhost:6379")
@@ -68,6 +69,8 @@ func Load(configPath string) (*Config, error) {
 		return nil, fmt.Errorf("unmarshaling config: %w", err)
 	}
 
+	validateSensitiveFields(&cfg)
+
 	return &cfg, nil
 }
 
@@ -75,4 +78,18 @@ func Load(configPath string) (*Config, error) {
 func DefaultConfig() *Config {
 	cfg, _ := Load("")
 	return cfg
+}
+
+// validateSensitiveFields logs warnings when sensitive configuration
+// fields are empty or use insecure defaults.
+func validateSensitiveFields(cfg *Config) {
+	if cfg.Database.Password == "" {
+		log.Println("[WARN] database password is empty; ensure RESOLVEAGENT_DATABASE_PASSWORD is set in production")
+	}
+	if cfg.Gateway.Auth.Enabled && cfg.Gateway.Auth.JWTSecret == "" {
+		log.Println("[WARN] gateway auth is enabled but jwt_secret is empty; set RESOLVEAGENT_GATEWAY_AUTH_JWT_SECRET")
+	}
+	if cfg.Redis.Password == "" {
+		log.Println("[WARN] redis password is empty; set RESOLVEAGENT_REDIS_PASSWORD if Redis requires authentication")
+	}
 }

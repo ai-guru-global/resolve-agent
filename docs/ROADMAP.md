@@ -28,32 +28,56 @@ This document outlines the high-level roadmap for the ResolveAgent project.
 - [x] Retry with exponential backoff (`pkg/retry/`)
 - [ ] Load testing benchmarks
 
-## v0.3.0 — WebUI & DevEx (Current)
+## v0.3.0 — Quality & Foundation (Current)
 
-- [x] WebUI mock data system with backend auto-detection
-- [x] Project directory cleanup and consolidation
-- [x] Deployment config unification (`deploy/`)
-- [x] Root-level project scaffolding (`examples/`, `scripts/`, `third_party/`)
+- [x] CI/CD workflow with GitHub Actions
+- [x] Unified version management across all modules
+- [x] Router refactoring (2160 lines → 15 domain-specific files)
+- [x] Web route lazy loading optimization
+- [x] MyPy type checking tightening
+- [x] Web & Python test infrastructure
+- [x] Health check endpoint consistency
+- [x] Security hardening (remove hardcoded passwords)
+- [x] PostgreSQL Registry persistence layer
+- [x] MCP (Model Context Protocol) adapter
+
+## v0.4.0 — Core Capability Strengthening (Phase 1)
+
+**Focus: FTA + Code Diagnosis dual core, ecosystem integration**
+
+- [ ] FTA engine performance optimization (large-scale fault tree real-time computation)
+- [ ] Multi-language code analysis (Java, Go, Rust AST parsers)
+- [ ] LangGraph integration (ResolveAgent as Expert Node)
+- [ ] Dify plugin export (FTA diagnosis capability as custom tool)
 - [ ] OpenAPI specification auto-generation
+- [ ] Load testing benchmarks
 
-## v0.4.0 — Ecosystem
+## v0.5.0 — Enterprise Readiness (Phase 2)
 
-- [ ] Skill marketplace / registry
+**Focus: Multi-tenant, audit, RBAC — enterprise procurement "ticket items"**
+
+- [ ] Multi-tenant support (namespace isolation, resource quotas)
+- [ ] RBAC (Role-Based Access Control) with fine-grained permissions
+- [ ] Comprehensive audit logging (user actions, API calls, data access)
+- [ ] SSO integration (OIDC/SAML support)
+- [ ] Data encryption at rest and in transit
+- [ ] Compliance reporting (GDPR, SOC2 templates)
+
+## v0.6.0 — Ecosystem & Scale (Phase 3)
+
+**Focus: Data flywheel, community, horizontal scaling**
+
+- [ ] Skill marketplace / registry with MCP tool discovery
+- [ ] Fault case community (anonymized fault tree template library)
 - [ ] Plugin SDK for third-party skill development
-- [ ] Multi-tenant support
-- [ ] RBAC (Role-Based Access Control)
-- [ ] Audit logging dashboard
-
-## v0.5.0 — Scale
-
 - [ ] Horizontal scaling for agent runtime
 - [ ] Distributed workflow execution
-- [ ] Event-driven architecture (NATS JetStream)
 - [ ] Advanced RAG strategies (hybrid search, re-ranking)
 
 ## Long-term Vision
 
-- [ ] Multi-cloud deployment support
+- [ ] Multi-cloud deployment support (AWS/Azure/GCP/Alibaba Cloud)
 - [ ] Edge deployment for on-premise scenarios
-- [ ] Visual workflow designer in WebUI
+- [ ] Visual workflow designer in WebUI (80% of Dify experience)
 - [ ] AI-powered observability and self-healing
+- [ ] ResolveAgent Expert Certification program

@@ -8,10 +8,12 @@ Workflow, Skills, RAG, or Code Analysis.
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any
 
 from pydantic import BaseModel, Field
 
+from resolveagent.selector.audit import DecisionAuditLogger
 from resolveagent.selector.cache import RouteDecisionCache, get_global_cache
 
 logger = logging.getLogger(__name__)
@@ -157,6 +159,9 @@ class IntelligentSelector:
         else:
             self._cache = RouteDecisionCache(max_size=cache_max_size, ttl_seconds=cache_ttl_seconds)
 
+        # Decision audit logger for observability
+        self._audit = DecisionAuditLogger()
+
     async def route(
         self,
         input_text: str,
@@ -191,14 +196,16 @@ class IntelligentSelector:
         if enrich_context:
             ctx = await self._enrich_context(input_text, agent_id, ctx)
 
-        # Make routing decision
+        # Make routing decision with timing
+        start_time = time.perf_counter()
         route_fn = self._strategies.get(self.strategy, self._route_hybrid)
         decision = await route_fn(input_text, agent_id, ctx)
+        latency_ms = (time.perf_counter() - start_time) * 1000
 
         # Store in cache.
         self._cache.put(cache_key, decision)
 
-        # Log decision
+        # Log decision and audit
         logger.info(
             "Route decision made",
             extra={
@@ -207,7 +214,16 @@ class IntelligentSelector:
                 "target": decision.route_target,
                 "confidence": decision.confidence,
                 "agent_id": agent_id,
+                "latency_ms": round(latency_ms, 2),
             },
+        )
+
+        # Audit logging (async, non-blocking)
+        await self._audit.log(
+            decision=decision,
+            context=ctx,
+            latency_ms=latency_ms,
+            strategy=self.strategy,
         )
 
         return decision

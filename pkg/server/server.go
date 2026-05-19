@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/ai-guru-global/resolve-agent/pkg/config"
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
@@ -108,7 +109,12 @@ func New(cfg *config.Config, logger *slog.Logger) (*Server, error) {
 	mux := http.NewServeMux()
 	s.registerHTTPRoutes(mux)
 	s.httpServer = &http.Server{
-		Handler: mux,
+		Handler:           mux,
+		ReadTimeout:       30 * time.Second,
+		ReadHeaderTimeout: 10 * time.Second,
+		WriteTimeout:      60 * time.Second,
+		IdleTimeout:       120 * time.Second,
+		MaxHeaderBytes:    1 << 20,
 	}
 
 	return s, nil

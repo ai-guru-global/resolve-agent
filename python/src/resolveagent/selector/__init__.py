@@ -30,6 +30,13 @@ from resolveagent.selector.intent import (
     IntentType,
 )
 from resolveagent.selector.selector import IntelligentSelector, RouteDecision
+from resolveagent.selector.resilient_selector import (
+    ReEnricher,
+    ResilientConfig,
+    ResilientSelector,
+    RouteAttempt,
+    RoutingSession,
+)
 
 __all__ = [
     # Main components
@@ -51,6 +58,12 @@ __all__ = [
     "ContextEnricher",
     "EnrichedContext",
     "CodeContext",
+    # Resilient selector
+    "ReEnricher",
+    "ResilientConfig",
+    "ResilientSelector",
+    "RouteAttempt",
+    "RoutingSession",
 ]
 
 

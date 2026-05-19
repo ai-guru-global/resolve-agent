@@ -266,8 +266,7 @@ class ContextEnricher:
                     for skill in skills
                 ]
             except Exception as e:
-                logger = logging.getLogger(__name__)
-                logger.warning(f"Failed to query skill registry: {e}")
+                self._logger.warning(f"Failed to query skill registry: {e}")
 
         # Fallback to default skills
         return [
@@ -319,8 +318,7 @@ class ContextEnricher:
                     if workflow.status == "active"
                 ]
             except Exception as e:
-                logger = logging.getLogger(__name__)
-                logger.warning(f"Failed to query workflow registry: {e}")
+                self._logger.warning(f"Failed to query workflow registry: {e}")
 
         # Fallback to default workflows
         return [
@@ -365,8 +363,7 @@ class ContextEnricher:
                     for coll in collections
                 ]
             except Exception as e:
-                logger = logging.getLogger(__name__)
-                logger.warning(f"Failed to query RAG registry: {e}")
+                self._logger.warning(f"Failed to query RAG registry: {e}")
 
         # Fallback to default collections
         return [
@@ -399,19 +396,105 @@ class ContextEnricher:
     async def _get_conversation_history(self, agent_id: str, conversation_id: str | None) -> list[dict[str, Any]]:
         """Get conversation history for context continuity.
 
-        In production, this would query the memory manager.
+        Uses MemoryClient to query actual conversation history from the platform store.
+        Falls back to empty list if no conversation_id provided or client unavailable.
         """
-        # TODO: Query actual memory manager
+        if not conversation_id:
+            return []
+
+        # Try to use memory client if registry provides one
+        if self._registry_client:
+            try:
+                memory_client = getattr(self._registry_client, "_memory_client", None)
+                if memory_client is None:
+                    # Try to get memory client from service endpoint
+                    endpoint = await self._registry_client.get_service_endpoint("memory")
+                    if endpoint:
+                        from resolveagent.store.memory_client import MemoryClient
+
+                        memory_client = MemoryClient(address=endpoint.url.replace("http://", "").replace("https://", ""))
+                        await memory_client.connect()
+            except Exception as e:
+                self._logger.warning(f"Failed to get memory client: {e}")
+                memory_client = None
+
+        if memory_client:
+            try:
+                messages = await memory_client.get_conversation(conversation_id, limit=50)
+                return [
+                    {
+                        "role": msg.role,
+                        "content": msg.content,
+                        "sequence_num": msg.sequence_num,
+                        "metadata": msg.metadata,
+                    }
+                    for msg in messages
+                ]
+            except Exception as e:
+                self._logger.warning(f"Failed to query conversation history: {e}")
+
         return []
 
     async def _infer_user_preferences(self, agent_id: str, history: list[dict[str, Any]]) -> dict[str, Any]:
-        """Infer user preferences from conversation history."""
-        # TODO: Implement preference inference
-        return {
+        """Infer user preferences from conversation history.
+
+        Analyzes conversation patterns to determine:
+        - preferred_detail_level: low, medium, high
+        - prefers_code_examples: whether user engages with code
+        - language: detected language preference (en/zh)
+        - response_format: preferred response format
+        """
+        if not history:
+            return {
+                "preferred_detail_level": "medium",
+                "prefers_code_examples": True,
+                "language": "en",
+            }
+
+        prefs: dict[str, Any] = {
             "preferred_detail_level": "medium",
-            "prefers_code_examples": True,
+            "prefers_code_examples": False,
             "language": "en",
         }
+
+        code_mentions = 0
+        detailed_responses = 0
+        zh_pattern = 0
+        total_content_length = 0
+
+        for msg in history[-10:]:  # Analyze last 10 messages
+            content = msg.get("content", "")
+            total_content_length += len(content)
+
+            # Check for code-related messages
+            if any(kw in content.lower() for kw in ["code", "function", "class", "def ", "import"]):
+                code_mentions += 1
+
+            # Check for detailed responses
+            if len(content) > 500:
+                detailed_responses += 1
+
+            # Check for Chinese language indicators
+            if any(ord(c) > 127 for c in content[:100]):
+                zh_pattern += 1
+
+        # Infer code preference
+        prefs["prefers_code_examples"] = code_mentions >= 2
+
+        # Infer detail level based on response lengths
+        avg_length = total_content_length / max(len(history), 1)
+        if avg_length > 800:
+            prefs["preferred_detail_level"] = "high"
+        elif avg_length > 300:
+            prefs["preferred_detail_level"] = "medium"
+        else:
+            prefs["preferred_detail_level"] = "low"
+
+        # Infer language (if majority of recent messages have Chinese chars)
+        if zh_pattern > len(history) * 0.4:
+            prefs["language"] = "zh"
+
+        return prefs
 
     def _analyze_code_context(self, text: str) -> CodeContext:
         """Analyze code content in the input text.

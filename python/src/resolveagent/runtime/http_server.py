@@ -5,11 +5,14 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time
+from collections import defaultdict
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from resolveagent.runtime.engine import ExecutionEngine
@@ -20,6 +23,28 @@ if TYPE_CHECKING:
     from collections.abc import AsyncIterator
 
 logger = logging.getLogger(__name__)
+
+
+class RateLimitMiddleware:
+    """Simple in-memory rate limiting middleware using a sliding window."""
+
+    def __init__(self, app, requests_per_minute: int = 60):
+        self.app = app
+        self.rpm = requests_per_minute
+        self.requests: dict[str, list[float]] = defaultdict(list)
+
+    async def __call__(self, scope, receive, send):
+        if scope['type'] == 'http':
+            client = scope.get('client', ('unknown', 0))[0]
+            now = time.time()
+            # Clean old entries
+            self.requests[client] = [t for t in self.requests[client] if now - t < 60]
+            if len(self.requests[client]) >= self.rpm:
+                response = JSONResponse({'detail': 'Rate limit exceeded'}, status_code=429)
+                await response(scope, receive, send)
+                return
+            self.requests[client].append(now)
+        await self.app(scope, receive, send)
 
 
 def _get_platform_address() -> str:
@@ -76,6 +101,36 @@ class RuntimeHTTPServer:
             lifespan=lifespan,
         )
 
+        # ------------------------------------------------------------------
+        # CORS middleware
+        # ------------------------------------------------------------------
+        cors_origins = os.environ.get('RESOLVEAGENT_CORS_ORIGINS', '*').split(',')
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=cors_origins,
+            allow_credentials=True,
+            allow_methods=['*'],
+            allow_headers=['*'],
+        )
+
+        # ------------------------------------------------------------------
+        # Rate limiting middleware
+        # ------------------------------------------------------------------
+        rpm = int(os.environ.get('RESOLVEAGENT_RATE_LIMIT_RPM', '60'))
+        app.add_middleware(RateLimitMiddleware, requests_per_minute=rpm)
+
+        # ------------------------------------------------------------------
+        # Security headers middleware
+        # ------------------------------------------------------------------
+        @app.middleware('http')
+        async def add_security_headers(request: Request, call_next):
+            response = await call_next(request)
+            response.headers['X-Content-Type-Options'] = 'nosniff'
+            response.headers['X-Frame-Options'] = 'DENY'
+            response.headers['X-XSS-Protection'] = '1; mode=block'
+            response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+            return response
+
         # Health check
         @app.get("/health")
         async def health() -> dict[str, str]:
@@ -104,7 +159,7 @@ class RuntimeHTTPServer:
                         yield "data: [DONE]\n\n"
                     except Exception as e:
                         logger.error(f"Execution error: {e}")
-                        yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+                        yield f"data: {json.dumps({'type': 'error', 'message': 'Internal server error'})}\n\n"
 
                 return StreamingResponse(
                     event_stream(),
@@ -117,7 +172,7 @@ class RuntimeHTTPServer:
 
             except Exception as e:
                 logger.error(f"Failed to execute agent: {e}")
-                raise HTTPException(status_code=500, detail=str(e)) from e
+                raise HTTPException(status_code=500, detail="Internal server error") from e
 
         # Workflow execution
         @app.post("/v1/workflows/{workflow_id}/execute")
@@ -140,7 +195,7 @@ class RuntimeHTTPServer:
                         yield "data: [DONE]\n\n"
                     except Exception as e:
                         logger.error(f"Workflow execution error: {e}")
-                        yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+                        yield f"data: {json.dumps({'type': 'error', 'message': 'Internal server error'})}\n\n"
 
                 return StreamingResponse(
                     event_stream(),
@@ -153,7 +208,7 @@ class RuntimeHTTPServer:
 
             except Exception as e:
                 logger.error(f"Failed to execute workflow: {e}")
-                raise HTTPException(status_code=500, detail=str(e)) from e
+                raise HTTPException(status_code=500, detail="Internal server error") from e
 
         # RAG query
         @app.post("/v1/rag/query")
@@ -187,7 +242,7 @@ class RuntimeHTTPServer:
 
             except Exception as e:
                 logger.error(f"RAG query error: {e}")
-                raise HTTPException(status_code=500, detail=str(e)) from e
+                raise HTTPException(status_code=500, detail="Internal server error") from e
 
         # RAG ingest
         @app.post("/v1/rag/ingest")
@@ -216,7 +271,7 @@ class RuntimeHTTPServer:
 
             except Exception as e:
                 logger.error(f"RAG ingest error: {e}")
-                raise HTTPException(status_code=500, detail=str(e)) from e
+                raise HTTPException(status_code=500, detail="Internal server error") from e
 
         # Skill execution
         @app.post("/v1/skills/{skill_name}/execute")
@@ -246,7 +301,7 @@ class RuntimeHTTPServer:
 
             except Exception as e:
                 logger.error(f"Skill execution error: {e}")
-                raise HTTPException(status_code=500, detail=str(e)) from e
+                raise HTTPException(status_code=500, detail="Internal server error") from e
 
         # Corpus import
         @app.post("/v1/corpus/import")
@@ -278,7 +333,7 @@ class RuntimeHTTPServer:
                         yield "data: [DONE]\n\n"
                     except Exception as e:
                         logger.error(f"Corpus import error: {e}")
-                        yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+                        yield f"data: {json.dumps({'type': 'error', 'message': 'Internal server error'})}\n\n"
 
                 return StreamingResponse(
                     event_stream(),
@@ -291,7 +346,7 @@ class RuntimeHTTPServer:
 
             except Exception as e:
                 logger.error(f"Failed to start corpus import: {e}")
-                raise HTTPException(status_code=500, detail=str(e)) from e
+                raise HTTPException(status_code=500, detail="Internal server error") from e
 
         # Solution RAG sync
         @app.post("/v1/solutions/sync-rag")
@@ -356,7 +411,7 @@ class RuntimeHTTPServer:
 
             except Exception as e:
                 logger.error(f"Solution RAG sync error: {e}")
-                raise HTTPException(status_code=500, detail=str(e)) from e
+                raise HTTPException(status_code=500, detail="Internal server error") from e
 
         # Solution semantic search
         @app.post("/v1/solutions/semantic-search")
@@ -411,7 +466,7 @@ class RuntimeHTTPServer:
                 raise
             except Exception as e:
                 logger.error(f"Solution semantic search error: {e}")
-                raise HTTPException(status_code=500, detail=str(e)) from e
+                raise HTTPException(status_code=500, detail="Internal server error") from e
 
         # ---------------------------------------------------------------
         # Code Analysis endpoints
@@ -442,7 +497,7 @@ class RuntimeHTTPServer:
                         yield "data: [DONE]\n\n"
                     except Exception as e:
                         logger.error(f"Static analysis error: {e}")
-                        yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+                        yield f"data: {json.dumps({'type': 'error', 'message': 'Internal server error'})}\n\n"
 
                 return StreamingResponse(
                     event_stream(),
@@ -452,7 +507,7 @@ class RuntimeHTTPServer:
 
             except Exception as e:
                 logger.error(f"Failed to start static analysis: {e}")
-                raise HTTPException(status_code=500, detail=str(e)) from e
+                raise HTTPException(status_code=500, detail="Internal server error") from e
 
         @app.post("/v1/code-analysis/traffic")
         async def traffic_analysis(request: Request) -> StreamingResponse:
@@ -475,7 +530,7 @@ class RuntimeHTTPServer:
                         yield "data: [DONE]\n\n"
                     except Exception as e:
                         logger.error(f"Traffic analysis error: {e}")
-                        yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+                        yield f"data: {json.dumps({'type': 'error', 'message': 'Internal server error'})}\n\n"
 
                 return StreamingResponse(
                     event_stream(),
@@ -485,7 +540,7 @@ class RuntimeHTTPServer:
 
             except Exception as e:
                 logger.error(f"Failed to start traffic analysis: {e}")
-                raise HTTPException(status_code=500, detail=str(e)) from e
+                raise HTTPException(status_code=500, detail="Internal server error") from e
 
         @app.post("/v1/code-analysis/errors/parse")
         async def parse_errors(request: Request) -> JSONResponse:
@@ -527,7 +582,7 @@ class RuntimeHTTPServer:
 
             except Exception as e:
                 logger.error(f"Error parsing failed: {e}")
-                raise HTTPException(status_code=500, detail=str(e)) from e
+                raise HTTPException(status_code=500, detail="Internal server error") from e
 
         @app.post("/v1/code-analysis/traffic/graphs/{graph_id}/analyze")
         async def analyze_traffic_graph(graph_id: str, request: Request) -> StreamingResponse:
@@ -604,7 +659,7 @@ class RuntimeHTTPServer:
                 raise
             except Exception as e:
                 logger.error(f"Traffic graph analysis failed: {e}")
-                raise HTTPException(status_code=500, detail=str(e)) from e
+                raise HTTPException(status_code=500, detail="Internal server error") from e
 
         return app
 

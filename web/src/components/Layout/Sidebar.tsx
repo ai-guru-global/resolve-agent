@@ -56,6 +56,14 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
+    label: '架构深度',
+    items: [
+      { name: 'Memory 记忆', href: '/architecture/memory', icon: DatabaseZap },
+      { name: 'Planner 规划', href: '/architecture/planner', icon: GitBranch },
+      { name: 'ToolHub 工具', href: '/architecture/toolhub', icon: Zap },
+    ],
+  },
+  {
     label: 'Agent 管理',
     items: [
       { name: 'Agent 管理', href: '/agents', icon: Bot },

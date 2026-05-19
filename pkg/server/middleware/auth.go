@@ -24,10 +24,10 @@ type AuthConfig struct {
 // DefaultAuthConfig returns default authentication configuration.
 func DefaultAuthConfig() AuthConfig {
 	return AuthConfig{
-		Enabled:     false,
+		Enabled:     true,
 		JWTIssuer:   "resolveagent",
 		APIKeyNames: []string{"X-API-Key", "Authorization"},
-		SkipPaths:   []string{"/health", "/ready", "/metrics"},
+		SkipPaths:   []string{"/health", "/ready", "/metrics", "/healthz", "/readyz", "/api/v1/health"},
 	}
 }
 

@@ -73,6 +73,27 @@ const subDocs: DocSection[] = [
     description: '知识生产引擎，将工单处理经验转化为组织能力增量',
     href: '/architecture/ticket-summary',
   },
+  {
+    id: 'memory',
+    title: 'Memory 记忆',
+    icon: Database,
+    description: '三层记忆架构 - Working / Episodic / Long-term',
+    href: '/architecture/memory',
+  },
+  {
+    id: 'planner',
+    title: 'Planner 规划',
+    icon: GitBranch,
+    description: 'Hybrid Planner 双模式 - REACTIVE / DELIBERATIVE',
+    href: '/architecture/planner',
+  },
+  {
+    id: 'toolhub',
+    title: 'ToolHub 工具',
+    icon: Zap,
+    description: '工具发现 + Schema 注册 + Capability 映射 + 安全策略',
+    href: '/architecture/toolhub',
+  },
 ];
 
 const innovations = [

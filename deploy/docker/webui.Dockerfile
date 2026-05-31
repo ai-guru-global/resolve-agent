@@ -7,7 +7,7 @@
 # ---------------------
 # Stage 1: Build
 # ---------------------
-FROM node:20-alpine AS builder
+FROM node:25-alpine AS builder
 
 RUN npm install -g pnpm
 
@@ -24,7 +24,7 @@ RUN pnpm build
 # ---------------------
 # Stage 2: Nginx Runtime
 # ---------------------
-FROM nginx:1.27-alpine
+FROM nginx:1.29-alpine
 
 LABEL maintainer="AI Guru Global <dev@resolveagent.io>"
 LABEL org.opencontainers.image.title="ResolveAgent WebUI"

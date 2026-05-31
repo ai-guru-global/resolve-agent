@@ -41,8 +41,8 @@ class BaseAgent:
         Returns:
             Response message dict.
         """
-        # TODO: Integrate with AgentScope's reply mechanism
-        # TODO: Call LLM via provider abstraction
+        # NOTE: Full LLM integration requires AgentScope>=1.0 and a configured provider.
+        #       This is a placeholder echo response for development/testing.
         return {
             "role": "assistant",
             "content": f"[{self.name}] Received: {message.get('content', '')}",

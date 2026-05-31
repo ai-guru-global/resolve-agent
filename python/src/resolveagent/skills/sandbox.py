@@ -23,6 +23,19 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _get_memory_usage_mb() -> float:
+    """Get the maximum resident memory usage of child processes in MB."""
+    try:
+        usage = resource.getrusage(resource.RUSAGE_CHILDREN)
+        maxrss = usage.ru_maxrss
+        # macOS returns bytes, Linux returns kilobytes
+        if sys.platform == "darwin":
+            return maxrss / (1024 * 1024)
+        return maxrss / 1024
+    except Exception:
+        return 0.0
+
+
 @dataclass
 class SandboxConfig:
     """Configuration for sandbox execution."""
@@ -162,7 +175,7 @@ class SandboxExecutor:
                         stderr=stderr.decode("utf-8", errors="replace"),
                         return_code=proc.returncode,
                         execution_time_ms=execution_time,
-                        memory_usage_mb=0,  # TODO: Track actual memory usage
+                        memory_usage_mb=_get_memory_usage_mb()
                     )
 
                 except TimeoutError:

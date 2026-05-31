@@ -94,7 +94,8 @@ class CapabilityMap:
         for cap in capabilities:
             self._capability_index[cap].append(tool_name)
 
-        # TODO: Implement keyword-to-capability semantic index
+        # NOTE: Semantic keyword-to-capability index requires an embedding model.
+        #       For now, exact capability matching via _capability_index is sufficient.
 
     def find_tools_by_capability(self, capability: ToolCapability) -> list[str]:
         """根据能力查找工具.

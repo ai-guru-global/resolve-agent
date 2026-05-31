@@ -37,7 +37,11 @@ class AgentPool:
         if len(self._pool) >= self.max_size:
             evicted_id, evicted_agent = self._pool.popitem(last=False)
             logger.info("Evicted agent from pool", extra={"agent_id": evicted_id})
-            # TODO: Call cleanup on evicted agent
+            if hasattr(evicted_agent, "cleanup") and callable(getattr(evicted_agent, "cleanup")):
+                try:
+                    evicted_agent.cleanup()
+                except Exception as e:
+                    logger.warning("Agent cleanup failed", extra={"agent_id": evicted_id, "error": str(e)})
 
         self._pool[agent_id] = agent
 
@@ -70,7 +74,8 @@ class AgentLifecycleManager:
         agent = self.pool.get(agent_id)
         if agent is not None:
             return agent
-        # TODO: Create agent from config via AgentScope
+        # NOTE: Full AgentScope integration requires agentscope>=1.0.
+        #       Falling back to lightweight dict agent for now.
         logger.info("Creating new agent", extra={"agent_id": agent_id})
         agent = {"id": agent_id, "config": agent_config or {}}
         self.pool.put(agent_id, agent)

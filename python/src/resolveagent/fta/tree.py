@@ -101,9 +101,40 @@ class FaultTree:
         return None
 
     def get_gates_bottom_up(self) -> list[FTAGate]:
-        """Get gates in bottom-up evaluation order."""
-        # TODO: Implement topological sort for proper ordering
-        return list(reversed(self.gates))
+        """Get gates in bottom-up evaluation order using topological sort."""
+        if not self.gates:
+            return []
+
+        # Build adjacency list: gate -> list of gates that depend on it
+        in_degree: dict[str, int] = {g.id: 0 for g in self.gates}
+        dependents: dict[str, list[str]] = {g.id: [] for g in self.gates}
+
+        for gate in self.gates:
+            for input_id in gate.input_ids:
+                # input_id may refer to an event or another gate
+                parent_gate = next((g for g in self.gates if g.id == input_id), None)
+                if parent_gate:
+                    dependents[parent_gate.id].append(gate.id)
+                    in_degree[gate.id] += 1
+
+        # Kahn's algorithm
+        queue = [gid for gid, deg in in_degree.items() if deg == 0]
+        ordered_ids: list[str] = []
+
+        while queue:
+            current_id = queue.pop(0)
+            ordered_ids.append(current_id)
+            for dependent_id in dependents[current_id]:
+                in_degree[dependent_id] -= 1
+                if in_degree[dependent_id] == 0:
+                    queue.append(dependent_id)
+
+        if len(ordered_ids) != len(self.gates):
+            # Cycle detected or disconnected graph; fall back to reverse order
+            return list(reversed(self.gates))
+
+        id_to_gate = {g.id: g for g in self.gates}
+        return [id_to_gate[gid] for gid in ordered_ids]
 
     def get_input_values(self, gate_id: str) -> list[bool]:
         """Get the boolean values of a gate's inputs."""

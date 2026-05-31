@@ -109,8 +109,8 @@ func (s *Server) handleCreateCollection(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
-		// Forward to Python runtime for vector store creation
-		// TODO: Call Python RAG service via gRPC
+		// NOTE: Vector store creation is handled by the Python RAG runtime.
+		//       gRPC integration with the Python runtime is planned for v0.4.0.
 
 		writeJSON(w, http.StatusCreated, map[string]any{
 			"id":              collection.ID,

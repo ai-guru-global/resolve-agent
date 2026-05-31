@@ -113,3 +113,7 @@ secrets.yaml
 # ===== Helm =====
 deploy/helm/resolveagent/charts/
 *.tgz
+
+# Coverage artifacts
+coverage.out
+coverage.html

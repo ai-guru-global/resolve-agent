@@ -127,9 +127,9 @@ export default function History() {
       {/* Stats Row */}
       <div className="grid grid-cols-3 gap-2 animate-fade-up" style={{ animationDelay: '60ms' }}>
         {([
-          { key: 'success' as FilterType, label: '已解决', value: stats.success },
-          { key: 'warning' as FilterType, label: '处理中', value: stats.warning },
-          { key: 'error' as FilterType, label: '待处理', value: stats.error },
+          { key: 'success' as const, label: '已解决', value: stats.success },
+          { key: 'warning' as const, label: '处理中', value: stats.warning },
+          { key: 'error' as const, label: '待处理', value: stats.error },
         ]).map((s) => {
           const cfg = statusConfig[s.key]
           return (

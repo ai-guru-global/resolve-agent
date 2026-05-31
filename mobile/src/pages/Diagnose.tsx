@@ -28,17 +28,6 @@ const DIAGNOSIS = {
   ],
 }
 
-function ProgressBar({ value, color }: { value: number; color: string }) {
-  return (
-    <div className="h-1 w-full rounded-full overflow-hidden" style={{ background: 'var(--color-border)' }}>
-      <div
-        className="h-full rounded-full transition-all duration-300"
-        style={{ width: `${value}%`, background: color }}
-      />
-    </div>
-  )
-}
-
 export default function Diagnose() {
   const navigate = useNavigate()
   const [state, setState] = useState<DiagnoseState>('idle')

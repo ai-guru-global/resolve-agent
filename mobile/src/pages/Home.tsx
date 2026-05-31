@@ -206,7 +206,7 @@ export default function Home() {
           { value: '127', label: '诊断次数', sub: '本月' },
           { value: '94%', label: '准确率', sub: 'AI' },
           { value: '2.1s', label: '平均耗时', sub: '本地' },
-        ].map((stat, i) => (
+        ].map((stat) => (
           <div
             key={stat.label}
             className="rounded-2xl p-4 text-center"

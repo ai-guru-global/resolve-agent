@@ -1,6 +1,8 @@
 import { useState } from 'react'
 
-const skills = {
+type SkillItem = { id: string; name: string; desc: string; installed: boolean; readonly: boolean; risk?: string }
+
+const skills: Record<'diagnostic' | 'action' | 'cloud', SkillItem[]> = {
   diagnostic: [
     { id: 'log_analyzer', name: 'Log Analyzer', desc: '分析日志文件，提取错误模式', installed: true, readonly: true },
     { id: 'error_classifier', name: 'Error Classifier', desc: '分类错误类型，给出标准解决方案', installed: true, readonly: true },

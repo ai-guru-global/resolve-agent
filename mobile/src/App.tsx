@@ -66,7 +66,7 @@ function TabBar() {
   )
 }
 
-function PhoneFrame({ children }: { children: React.ReactNode }) {
+function PhoneFrame({ children: _children }: { children: React.ReactNode }) {
   const [time, setTime] = useState('')
   const [battery] = useState(87)
   const [signal] = useState(4)

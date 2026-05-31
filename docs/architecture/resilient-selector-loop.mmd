@@ -1,0 +1,82 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e1f5fe', 'primaryTextColor': '#01579b', 'primaryBorderColor': '#0288d1', 'lineColor': '#0288d1', 'secondaryColor': '#fff3e0', 'tertiaryColor': '#e8f5e9'}}}%%
+
+flowchart TD
+    subgraph Input["🎯 输入层"]
+        U["用户输入<br/>input_text"]
+        A["agent_id + 初始上下文"]
+    end
+
+    subgraph Selector["🧠 Intelligent Selector"]
+        direction TB
+        I["意图分析<br/>Intent Analysis"]
+        CE["上下文丰富器<br/>Context Enricher"]
+        RD["路由决策<br/>Route Decision"]
+        W["权重计算 & 择优"]
+    end
+
+    subgraph Execution["⚡ 执行层"]
+        direction LR
+        S["Skill<br/>快速精确"]
+        R["RAG<br/>知识检索"]
+        F["FTA / Workflow<br/>复杂推理"]
+        CA["Code Analysis<br/>深度兜底"]
+    end
+
+    subgraph Feedback["🔄 反馈循环 — ReEnricher"]
+        direction TB
+        LR["记录失败<br/>last_failure"]
+        AR["累计已尝试路由<br/>attempted_routes"]
+        RP["调整路由偏好<br/>route_preferences"]
+        EC["降低置信度<br/>enrichment_confidence -= 0.15"]
+        FR["强制切换路由<br/>_force_alternative_route"]
+    end
+
+    subgraph Result["📤 结果层"]
+        OK["✅ 成功返回"]
+        FAIL["❌ 全部耗尽<br/>RoutingSession"]
+    end
+
+    U --> I
+    A --> CE
+    I --> CE
+    CE --> RD
+    RD --> W
+
+    W -->|权重最高| S
+    W -->|权重最高| R
+    W -->|权重最高| F
+    W -->|权重最高| CA
+
+    S -->|成功| OK
+    R -->|成功| OK
+    F -->|成功| OK
+    CA -->|成功| OK
+
+    S -->|失败| LR
+    R -->|失败| LR
+    F -->|失败| LR
+
+    LR --> AR
+    AR --> RP
+    RP --> EC
+    EC --> FR
+
+    FR -->|重新进入| CE
+    CE -->|上下文已增强<br/>含失败信息| RD
+    RD --> W
+
+    W -->|排除已尝试| S
+    W -->|排除已尝试| R
+    W -->|排除已尝试| F
+
+    %% 循环控制
+    FR -.->|max_retries 次后| CA
+    CA -->|失败| FAIL
+
+    %% 样式
+    style U fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    style OK fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style FAIL fill:#ffebee,stroke:#c62828,stroke-width:2px
+    style CE fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    style FR fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style W fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px

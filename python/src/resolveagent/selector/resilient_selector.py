@@ -23,6 +23,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Awaitable
 
+from resolveagent.resilience import CircuitBreaker, CircuitOpenError
 from resolveagent.selector.selector import IntelligentSelector, RouteDecision
 
 logger = logging.getLogger(__name__)
@@ -164,6 +165,28 @@ class ReEnricher:
 
         return ctx
 
+    # Error-type keyword mappings for smarter preference inference
+    _ERROR_PATTERNS: dict[str, list[str]] = {
+        "resource_missing": ["not found", "empty", "missing", "no results", "404", "不存在", "未找到"],
+        "timeout": ["timeout", "timed out", "deadline exceeded", "context deadline", "超时"],
+        "permission": ["permission", "unauthorized", "forbidden", "access denied", "403", "无权限"],
+        "connection": ["connection", "refused", "reset", "unreachable", "network", "连接"],
+        "logic_error": ["invalid", "validation", "syntax", "parse", "format", "逻辑", "格式"],
+        "rate_limit": ["rate limit", "too many requests", "throttled", "429", "限流"],
+        "capacity": ["out of memory", "oom", "resource exhausted", "quota", "容量", "内存不足"],
+    }
+
+    def _classify_error(self, error: str | None) -> str:
+        """Classify an error message into a high-level error type."""
+        if not error:
+            return "unknown"
+        error_lower = error.lower()
+        for error_type, patterns in self._ERROR_PATTERNS.items():
+            for pat in patterns:
+                if pat in error_lower:
+                    return error_type
+        return "unknown"
+
     def _compute_preferences(
         self,
         attempts: list[RouteAttempt],
@@ -171,8 +194,8 @@ class ReEnricher:
     ) -> dict[str, Any]:
         """Compute routing preferences based on failure history.
 
-        Returns preference adjustments that guide the next routing decision
-        away from failed routes and toward potentially successful ones.
+        Uses error-type classification (not just string matching) to infer
+        what went wrong and which route type is most likely to succeed next.
         """
         prefs = dict(existing)
         failed_routes = {a.route_type for a in attempts if not a.success}
@@ -180,18 +203,60 @@ class ReEnricher:
         # Mark failed routes as dispreferred
         prefs["dispreferred_routes"] = list(failed_routes)
 
-        # Suggest next route based on failure pattern
-        for attempt in reversed(attempts):
-            if attempt.route_type == "rag" and not attempt.success:
-                if "no results" in (attempt.error or "").lower() or "empty" in (attempt.error or "").lower():
-                    prefs["prefer_reasoning"] = True  # RAG had no docs, try LLM reasoning
-                break
-            if attempt.route_type == "skill" and not attempt.success:
-                prefs["prefer_knowledge"] = True  # Skill failed, try knowledge-based
-                break
-            if attempt.route_type == "fta" and not attempt.success:
-                prefs["prefer_analysis"] = True  # Workflow failed, try deep analysis
-                break
+        # Aggregate error types across all failed attempts
+        error_types: dict[str, int] = {}
+        for attempt in attempts:
+            if not attempt.success:
+                et = self._classify_error(attempt.error)
+                error_types[et] = error_types.get(et, 0) + 1
+
+        # Infer preferences based on dominant error patterns
+        if error_types.get("resource_missing", 0) > 0:
+            # RAG/Skill couldn't find something → try reasoning or analysis
+            if "rag" in failed_routes or "skill" in failed_routes:
+                prefs["prefer_reasoning"] = True
+
+        if error_types.get("timeout", 0) > 0 or error_types.get("connection", 0) > 0:
+            # Network/timeout issues → try local analysis (Code Analysis)
+            if "code_analysis" not in failed_routes:
+                prefs["prefer_analysis"] = True
+
+        if error_types.get("logic_error", 0) > 0:
+            # Syntax/validation/format errors → Code Analysis is ideal
+            if "code_analysis" not in failed_routes:
+                prefs["prefer_analysis"] = True
+
+        if error_types.get("permission", 0) > 0:
+            # Permission issues → try knowledge-based (may have workaround docs)
+            if "rag" not in failed_routes:
+                prefs["prefer_knowledge"] = True
+
+        if error_types.get("capacity", 0) > 0 or error_types.get("rate_limit", 0) > 0:
+            # Resource exhausted → fall back to lighter-weight routes
+            if "skill" not in failed_routes:
+                prefs["prefer_knowledge"] = True
+
+        # Per-route-specific heuristics (last-attempt granular analysis)
+        last_failed = next(
+            (a for a in reversed(attempts) if not a.success), None
+        )
+        if last_failed:
+            last_error_type = self._classify_error(last_failed.error)
+            if last_failed.route_type == "rag" and last_error_type == "resource_missing":
+                prefs["prefer_reasoning"] = True
+            elif last_failed.route_type == "skill" and last_error_type in ("timeout", "connection"):
+                prefs["prefer_analysis"] = True
+            elif last_failed.route_type == "fta" and last_error_type == "logic_error":
+                prefs["prefer_analysis"] = True
+
+        logger.info(
+            "Computed routing preferences",
+            extra={
+                "error_types": error_types,
+                "preferences": prefs,
+                "failed_routes": list(failed_routes),
+            },
+        )
 
         return prefs
 
@@ -236,6 +301,15 @@ class ResilientSelector:
         self._re_enricher = ReEnricher()
         self._session_counter = 0
 
+        # Circuit breakers per route type
+        self._circuit_breakers: dict[str, CircuitBreaker] = {}
+        if self._config.enable_circuit_breaker:
+            for route_type in self._config.route_priority:
+                self._circuit_breakers[route_type] = CircuitBreaker(
+                    failure_threshold=3,
+                    reset_timeout=30.0,
+                )
+
     async def route_and_execute(
         self,
         input_text: str,
@@ -243,27 +317,91 @@ class ResilientSelector:
         executor: Callable[[RouteDecision], Awaitable[Any]],
         context: dict[str, Any] | None = None,
     ) -> RoutingSession:
-        """Route a request with automatic retry on failure.
+        """Route a request with automatic retry on failure."""
+        return await self._route_and_execute_core(
+            input_text=input_text,
+            agent_id=agent_id,
+            executor=executor,
+            context=context,
+        )
 
-        Executes the following loop:
-        1. Route to the best available target
-        2. Execute via the provided executor
-        3. If failed: re-enrich context with failure info, re-route
-        4. Repeat up to max_retries times
-        5. Final fallback: Code Analysis
-        6. If still fails: return failure session
+    async def route_and_execute_with_clarification(
+        self,
+        input_text: str,
+        agent_id: str,
+        executor: Callable[[RouteDecision], Awaitable[Any]],
+        ask_user_callback: Callable[[str], Awaitable[str | None]],
+        context: dict[str, Any] | None = None,
+    ) -> RoutingSession:
+        """Route with interactive user clarification on repeated failures."""
+        session = await self._route_and_execute_core(
+            input_text=input_text,
+            agent_id=agent_id,
+            executor=executor,
+            context=context,
+        )
 
-        Args:
-            input_text: The user input to route and execute.
-            agent_id: The agent processing this request.
-            executor: Async function that takes a RouteDecision and returns
-                a result. Should have a .success attribute or return an
-                object with .success, or raise an exception on failure.
-            context: Optional initial context.
+        clarification_rounds = 0
+        max_clarifications = 2
+        while (
+            not session.success
+            and clarification_rounds < max_clarifications
+        ):
+            question = self._build_clarification_question(session)
+            clarification = await ask_user_callback(question)
 
-        Returns:
-            RoutingSession with full attempt history.
-        """
+            if not clarification:
+                break
+
+            input_text = f"{input_text}\n[用户补充: {clarification}]"
+            clarification_rounds += 1
+
+            new_session = await self._route_and_execute_core(
+                input_text=input_text,
+                agent_id=agent_id,
+                executor=executor,
+                context=context,
+            )
+            session.attempts.extend(new_session.attempts)
+            session.success = new_session.success
+            session.final_result = new_session.final_result
+            session.final_route = new_session.final_route
+            session.total_latency_ms += new_session.total_latency_ms
+
+        return session
+
+    def _build_clarification_question(self, session: RoutingSession) -> str:
+        """Build a question to ask the user when all routes have failed."""
+        attempted = [a.route_type for a in session.attempts]
+        errors = [a.error for a in session.attempts if a.error]
+        return (
+            f"已尝试 {len(session.attempts)} 种方案 ({', '.join(attempted)}) 但未解决。"
+            f"失败原因: {'; '.join(errors[:3])}. "
+            "能否补充更多信息或澄清您的需求？"
+        )
+
+    def _extract_suggested_rephrase(self, error: str) -> str | None:
+        """Extract a suggested rephrase hint from an error message."""
+        import re
+        patterns = [
+            r"suggested_rephrase[:：]\s*(.+?)(?:\n|$)",
+            r"请尝试[:：]\s*(.+?)(?:\n|$)",
+            r"hint[:：]\s*(.+?)(?:\n|$)",
+        ]
+        for pat in patterns:
+            m = re.search(pat, error, re.IGNORECASE)
+            if m:
+                return m.group(1).strip()
+        return None
+
+    async def _route_and_execute_core(
+        self,
+        input_text: str,
+        agent_id: str,
+        executor: Callable[[RouteDecision], Awaitable[Any]],
+        context: dict[str, Any] | None = None,
+    ) -> RoutingSession:
+        """Core routing loop implementation."""
         self._session_counter += 1
         session = RoutingSession(
             session_id=f"resilient-{self._session_counter}",
@@ -274,6 +412,7 @@ class ResilientSelector:
         start_time = time.monotonic()
         ctx = context or {}
         tried_routes: set[str] = set()
+        original_input = input_text
 
         for attempt_num in range(self._config.max_retries + 1):
             # Timeout check
@@ -287,7 +426,7 @@ class ResilientSelector:
 
             # Route decision
             bypass_cache = (
-                self._config.enable_cache_bypass_on_retry and attempt_num > 0
+                self._config.enable_circuit_bypass_on_retry and attempt_num > 0
             )
             decision = await self._selector.route(
                 input_text=input_text,
@@ -311,6 +450,16 @@ class ResilientSelector:
 
             session.attempts.append(attempt_record)
             tried_routes.add(decision.route_type)
+
+            # Check if executor suggested a rephrase
+            if not attempt_record.success and attempt_record.error:
+                rephrase = self._extract_suggested_rephrase(attempt_record.error)
+                if rephrase:
+                    input_text = f"{original_input}\n[系统提示: {rephrase}]"
+                    logger.info(
+                        "Input rephrased based on executor suggestion",
+                        extra={"original": original_input, "rephrased": input_text},
+                    )
 
             # Success → return
             if attempt_record.success:
@@ -376,11 +525,77 @@ class ResilientSelector:
         Handles multiple result formats:
         - Objects with .success attribute
         - Exceptions (treated as failure)
+        - Circuit breaker protection
         """
+        # Circuit breaker check
+        cb = self._circuit_breakers.get(decision.route_type)
+        if cb and not self._config.enable_circuit_breaker:
+            cb = None
+
+        if cb:
+            try:
+                result = await cb.call(executor, decision)
+            except CircuitOpenError:
+                logger.warning(
+                    "Circuit breaker open, skipping route",
+                    extra={
+                        "route_type": decision.route_type,
+                        "route_target": decision.route_target,
+                    },
+                )
+                return RouteAttempt(
+                    route_type=decision.route_type,
+                    route_target=decision.route_target,
+                    success=False,
+                    error="Circuit breaker open",
+                    attempt_number=attempt_number,
+                )
+            except Exception as e:
+                # Circuit breaker recorded the failure, treat as route failure
+                logger.warning(
+                    "Route execution failed (circuit breaker recorded)",
+                    extra={
+                        "route_type": decision.route_type,
+                        "route_target": decision.route_target,
+                        "error": str(e),
+                        "attempt": attempt_number,
+                    },
+                )
+                return RouteAttempt(
+                    route_type=decision.route_type,
+                    route_target=decision.route_target,
+                    success=False,
+                    error=str(e)[:500],
+                    attempt_number=attempt_number,
+                )
+
+            # Circuit breaker call succeeded — parse result
+            if hasattr(result, "success"):
+                success = bool(result.success)
+                summary = getattr(result, "output", "") or getattr(result, "data", "") or str(result)[:200]
+                error = getattr(result, "error", None)
+            elif isinstance(result, dict):
+                success = bool(result.get("success", False))
+                summary = str(result.get("output", result.get("data", "")))[:200]
+                error = result.get("error")
+            else:
+                success = result is not None
+                summary = str(result)[:200] if result else ""
+                error = None if success else "Empty result"
+
+            return RouteAttempt(
+                route_type=decision.route_type,
+                route_target=decision.route_target,
+                success=success,
+                error=error,
+                result_summary=summary,
+                attempt_number=attempt_number,
+            )
+
+        # No circuit breaker — direct execution
         try:
             result = await executor(decision)
 
-            # Handle different result formats
             if hasattr(result, "success"):
                 success = bool(result.success)
                 summary = getattr(result, "output", "") or getattr(result, "data", "") or str(result)[:200]

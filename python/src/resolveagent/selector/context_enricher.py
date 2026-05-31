@@ -40,10 +40,16 @@ class EnrichedContext:
     user_preferences: dict[str, Any] = field(default_factory=dict)
     session_metadata: dict[str, Any] = field(default_factory=dict)
     enrichment_confidence: float = 1.0
+    resilient_feedback: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for serialization."""
-        return {
+        """Convert to dictionary for serialization.
+
+        Resilient feedback is both nested (under 'resilient_feedback') and
+        flattened at the top level for backward compatibility with code that
+        reads ctx['attempted_routes'] directly.
+        """
+        result: dict[str, Any] = {
             "input_text": self.input_text,
             "agent_id": self.agent_id,
             "conversation_history": self.conversation_history,
@@ -65,7 +71,11 @@ class EnrichedContext:
             "user_preferences": self.user_preferences,
             "session_metadata": self.session_metadata,
             "enrichment_confidence": self.enrichment_confidence,
+            "resilient_feedback": self.resilient_feedback,
         }
+        # Flatten resilient feedback for backward compatibility
+        result.update(self.resilient_feedback)
+        return result
 
 
 class ContextEnricher:
@@ -241,8 +251,22 @@ class ContextEnricher:
         # Infer user preferences from history
         enriched.user_preferences = await self._infer_user_preferences(agent_id, enriched.conversation_history)
 
-        # Calculate enrichment confidence
-        enriched.enrichment_confidence = self._calculate_confidence(enriched)
+        # Preserve resilient feedback from previous attempts (ReEnricher injects these)
+        _RESILIENT_KEYS = (
+            "attempted_routes",
+            "last_failure",
+            "route_preferences",
+            "attempt_count",
+        )
+        enriched.resilient_feedback = {
+            k: v for k, v in context.items() if k in _RESILIENT_KEYS
+        }
+
+        # Calculate enrichment confidence — respect ReEnricher's decrement if in a retry loop
+        if "attempt_count" in context and "enrichment_confidence" in context:
+            enriched.enrichment_confidence = context["enrichment_confidence"]
+        else:
+            enriched.enrichment_confidence = self._calculate_confidence(enriched)
 
         return enriched
 

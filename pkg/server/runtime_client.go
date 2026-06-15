@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ai-guru-global/resolve-agent/pkg/config"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // RuntimeClient is an HTTP client for communicating with the Python runtime.
@@ -60,8 +61,20 @@ type ExecutionEvent struct {
 
 // ExecutionError represents an execution error.
 type ExecutionError struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	Code      string `json:"code"`
+	ErrorCode string `json:"error_code,omitempty"`
+	Category  string `json:"category,omitempty"`
+	Message   string `json:"message"`
+	TraceID   string `json:"trace_id,omitempty"`
+}
+
+// injectTraceparent adds the W3C traceparent header from the current span context.
+func injectTraceparent(ctx context.Context, req *http.Request) {
+	span := trace.SpanFromContext(ctx)
+	if sc := span.SpanContext(); sc.IsValid() {
+		req.Header.Set("traceparent",
+			fmt.Sprintf("00-%s-%s-%02x", sc.TraceID(), sc.SpanID(), sc.TraceFlags()))
+	}
 }
 
 // ExecuteAgent executes an agent and streams results.
@@ -91,6 +104,7 @@ func (c *RuntimeClient) ExecuteAgent(
 		}
 		httpReq.Header.Set("Content-Type", "application/json")
 		httpReq.Header.Set("Accept", "text/event-stream")
+		injectTraceparent(ctx, httpReq)
 
 		resp, err := c.httpClient.Do(httpReq)
 		if err != nil {
@@ -171,6 +185,7 @@ func (c *RuntimeClient) ExecuteWorkflow(
 		}
 		httpReq.Header.Set("Content-Type", "application/json")
 		httpReq.Header.Set("Accept", "text/event-stream")
+		injectTraceparent(ctx, httpReq)
 
 		resp, err := c.httpClient.Do(httpReq)
 		if err != nil {

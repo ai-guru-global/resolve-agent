@@ -24,6 +24,35 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+_EXCEPTION_TO_CODE: dict[type[Exception], tuple[str, str]] = {
+    ValueError: ("INVALID_ARGUMENT", "validation"),
+    TypeError: ("INVALID_ARGUMENT", "validation"),
+    KeyError: ("NOT_FOUND", "lookup"),
+    FileNotFoundError: ("NOT_FOUND", "filesystem"),
+    PermissionError: ("FORBIDDEN", "authorization"),
+    TimeoutError: ("TIMEOUT", "timeout"),
+    ConnectionError: ("UNAVAILABLE", "network"),
+    NotImplementedError: ("INTERNAL", "implementation"),
+}
+
+
+def _classify_exception(exc: Exception) -> tuple[str, str]:
+    for exc_type, code_pair in _EXCEPTION_TO_CODE.items():
+        if isinstance(exc, exc_type):
+            return code_pair
+    return ("INTERNAL", "unknown")
+
+
+def _build_error_event(exc: Exception, trace_id: str = "") -> dict[str, str]:
+    error_code, category = _classify_exception(exc)
+    return {
+        "type": "error",
+        "error_code": error_code,
+        "category": category,
+        "message": str(exc),
+        "trace_id": trace_id,
+    }
+
 
 class RateLimitMiddleware:
     """Simple in-memory rate limiting middleware using a sliding window."""
@@ -104,11 +133,13 @@ class RuntimeHTTPServer:
         # ------------------------------------------------------------------
         # CORS middleware
         # ------------------------------------------------------------------
-        cors_origins = os.environ.get('RESOLVEAGENT_CORS_ORIGINS', '*').split(',')
+        cors_origins_env = os.environ.get('RESOLVEAGENT_CORS_ORIGINS', '')
+        cors_origins = [o.strip() for o in cors_origins_env.split(',') if o.strip()] if cors_origins_env else ['http://localhost:5173']
+        cors_allow_credentials = '*' not in cors_origins
         app.add_middleware(
             CORSMiddleware,
             allow_origins=cors_origins,
-            allow_credentials=True,
+            allow_credentials=cors_allow_credentials,
             allow_methods=['*'],
             allow_headers=['*'],
         )
@@ -159,7 +190,7 @@ class RuntimeHTTPServer:
                         yield "data: [DONE]\n\n"
                     except Exception as e:
                         logger.error(f"Execution error: {e}")
-                        yield f"data: {json.dumps({'type': 'error', 'message': 'Internal server error'})}\n\n"
+                        yield f"data: {json.dumps(_build_error_event(e))}\n\n"
 
                 return StreamingResponse(
                     event_stream(),
@@ -195,7 +226,7 @@ class RuntimeHTTPServer:
                         yield "data: [DONE]\n\n"
                     except Exception as e:
                         logger.error(f"Workflow execution error: {e}")
-                        yield f"data: {json.dumps({'type': 'error', 'message': 'Internal server error'})}\n\n"
+                        yield f"data: {json.dumps(_build_error_event(e))}\n\n"
 
                 return StreamingResponse(
                     event_stream(),
@@ -333,7 +364,7 @@ class RuntimeHTTPServer:
                         yield "data: [DONE]\n\n"
                     except Exception as e:
                         logger.error(f"Corpus import error: {e}")
-                        yield f"data: {json.dumps({'type': 'error', 'message': 'Internal server error'})}\n\n"
+                        yield f"data: {json.dumps(_build_error_event(e))}\n\n"
 
                 return StreamingResponse(
                     event_stream(),
@@ -497,7 +528,7 @@ class RuntimeHTTPServer:
                         yield "data: [DONE]\n\n"
                     except Exception as e:
                         logger.error(f"Static analysis error: {e}")
-                        yield f"data: {json.dumps({'type': 'error', 'message': 'Internal server error'})}\n\n"
+                        yield f"data: {json.dumps(_build_error_event(e))}\n\n"
 
                 return StreamingResponse(
                     event_stream(),
@@ -530,7 +561,7 @@ class RuntimeHTTPServer:
                         yield "data: [DONE]\n\n"
                     except Exception as e:
                         logger.error(f"Traffic analysis error: {e}")
-                        yield f"data: {json.dumps({'type': 'error', 'message': 'Internal server error'})}\n\n"
+                        yield f"data: {json.dumps(_build_error_event(e))}\n\n"
 
                 return StreamingResponse(
                     event_stream(),

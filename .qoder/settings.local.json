@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent/python/tests/unit/ 2>/dev/null; echo \"---\"; ls /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent/python/tests/integration/ 2>/dev/null)",
+      "Bash(find /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent/web/src -name \"*.test.*\" -o -name \"*.spec.*\" | head -20)",
+      "Bash(ls /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent/docs/zh/ 2>/dev/null; echo \"---\"; ls /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent/docs/ 2>/dev/null)",
+      "Bash(ls:*)"
+    ]
+  }
+}

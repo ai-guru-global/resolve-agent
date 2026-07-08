@@ -32,3 +32,42 @@ memory:
     enabled: true
     default_importance: 0.5
     prune_interval_hours: 24
+
+# =============================================================================
+# Loop Engineering: Feedback Loop
+# Agent execution results feed back into the selector and RAG subsystems,
+# forming a continuous improvement cycle.
+# =============================================================================
+feedback_loop:
+  enabled: true
+  # Agent execution results feedback to selector at this interval
+  selector_update_interval: "30s"
+  # Workflow success score threshold to trigger RAG knowledge enrichment
+  rag_enrich_threshold: 0.8
+  # Skill success rate below this triggers automatic weight adjustment
+  skill_adapt_threshold: 0.6
+
+# =============================================================================
+# Loop Engineering: Circuit Breaker (Self-Healing)
+# Protects downstream services from cascading failures by tracking error
+# rates and opening the circuit when thresholds are exceeded.
+# States: CLOSED (normal) -> OPEN (failing) -> HALF_OPEN (probing) -> CLOSED
+# =============================================================================
+circuit_breaker:
+  enabled: true
+  failure_threshold: 5
+  recovery_timeout: "30s"
+  half_open_max_calls: 3
+
+# =============================================================================
+# Loop Engineering: Adaptive Behavior
+# The runtime adapts its behavior based on accumulated feedback signals,
+# enabling continuous self-improvement without manual intervention.
+# =============================================================================
+adaptive:
+  # Dynamically adjust selector strategy weights based on feedback
+  selector_weight_update: true
+  # Decay factor for skill confidence scores (0.0-1.0, higher = slower decay)
+  skill_confidence_decay: 0.95
+  # Automatically fall back to safer strategies when anomalies are detected
+  auto_fallback_enabled: true

@@ -24,6 +24,7 @@ import {
   Smartphone,
   GraduationCap,
   ExternalLink,
+  RefreshCw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/stores/app';
@@ -61,6 +62,7 @@ const navGroups: NavGroup[] = [
       { name: 'Memory 记忆', href: '/architecture/memory', icon: DatabaseZap },
       { name: 'Planner 规划', href: '/architecture/planner', icon: GitBranch },
       { name: 'ToolHub 工具', href: '/architecture/toolhub', icon: Zap },
+      { name: 'Loop Engineering', href: '/architecture/loop-engineering', icon: RefreshCw },
     ],
   },
   {

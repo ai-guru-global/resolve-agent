@@ -1,3 +1,186 @@
+# =============================================================================
+# ResolveAgent CI Pipeline — Loop Engineering Continuous Integration Cycle
+# =============================================================================
+# Forms the "commit -> lint -> test -> build -> verify" feedback loop.
+# Each stage gates the next; failures emit feedback signals for rapid iteration.
+# =============================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GO_VERSION: "1.23"
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "20"
+
+jobs:
+  # ===========================================================================
+  # Stage 1: Lint Gate
+  # ===========================================================================
+  lint-go:
+    name: Lint Go
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+  lint-python:
+    name: Lint Python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+      - name: Install dependencies
+        working-directory: python
+        run: uv sync
+      - name: Ruff check
+        working-directory: python
+        run: uv run ruff check src/ tests/
+      - name: Ruff format check
+        working-directory: python
+        run: uv run ruff format --check src/ tests/
+
+  lint-web:
+    name: Lint Web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install dependencies
+        working-directory: web
+        run: pnpm install --frozen-lockfile
+      - name: ESLint
+        working-directory: web
+        run: pnpm lint
+
+  # ===========================================================================
+  # Stage 2: Unit Tests
+  # ===========================================================================
+  test-go:
+    name: Test Go
+    runs-on: ubuntu-latest
+    needs: [lint-go]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Run Go tests
+        run: go test -race -coverprofile=coverage-go.out -covermode=atomic ./...
+      - name: Upload Go coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-go
+          path: coverage-go.out
+
+  test-python:
+    name: Test Python
+    runs-on: ubuntu-latest
+    needs: [lint-python]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: astral-sh/setup-uv@v3
+      - name: Install dependencies
+        working-directory: python
+        run: uv sync
+      - name: Run Python tests
+        working-directory: python
+        run: uv run pytest tests/ -v --cov=resolveagent --cov-report=xml
+      - name: Upload Python coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-python
+          path: python/coverage.xml
+
+  test-web:
+    name: Test Web
+    runs-on: ubuntu-latest
+    needs: [lint-web]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install dependencies
+        working-directory: web
+        run: pnpm install --frozen-lockfile
+      - name: Run Web tests
+        working-directory: web
+        run: pnpm test --passWithNoTests
+
+  # ===========================================================================
+  # Stage 3: Build
+  # ===========================================================================
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [test-go, test-python, test-web]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Build Go binaries
+        run: |
+          mkdir -p bin
+          go build -ldflags "-s -w" -o bin/resolveagent-server ./cmd/resolveagent-server
+          go build -ldflags "-s -w" -o bin/resolveagent ./cmd/resolveagent-cli
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: bin/
+
+  # ===========================================================================
+  # Stage 4: Quality Gate (feedback loop checkpoint)
+  # ===========================================================================
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Run quality gate
+        run: bash hack/quality-gate.sh
+      - name: Feedback loop summary
+        run: |
+          echo "=== Loop Engineering CI Feedback ==="
+          echo "Stage: Quality Gate"
+          echo "Status: PASSED"
+          echo "Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 name: CI
 
 on:

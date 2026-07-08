@@ -36,14 +36,36 @@ type Response struct {
 }
 
 // Checker aggregates component checks into a unified health endpoint.
+// It optionally emits feedback signals when health state transitions occur,
+// closing the observe loop in the Loop Engineering cycle.
 type Checker struct {
-	mu     sync.RWMutex
-	checks map[string]Check
+	mu       sync.RWMutex
+	checks   map[string]Check
+	emitter  FeedbackEmitter
+	prevStat map[string]Status // track previous status for transition detection
+}
+
+// FeedbackEmitter decouples health from the feedback package.
+// Typically backed by *feedback.Collector.
+type FeedbackEmitter interface {
+	EmitHealthSignal(ctx context.Context, component string, status Status, message string)
 }
 
 // NewChecker creates a new Checker.
 func NewChecker() *Checker {
-	return &Checker{checks: make(map[string]Check)}
+	return &Checker{
+		checks:   make(map[string]Check),
+		prevStat: make(map[string]Status),
+	}
+}
+
+// SetFeedbackEmitter attaches a feedback signal emitter to the checker.
+// Once set, health state transitions (e.g., UP->DOWN) automatically emit
+// feedback signals that close the health observe loop.
+func (c *Checker) SetFeedbackEmitter(e FeedbackEmitter) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.emitter = e
 }
 
 // Register adds a named health check.
@@ -54,9 +76,10 @@ func (c *Checker) Register(name string, check Check) {
 }
 
 // Run executes all registered checks and returns the aggregated response.
+// When a FeedbackEmitter is attached, it also emits signals on status transitions.
 func (c *Checker) Run(ctx context.Context) Response {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	resp := Response{
 		Status:     StatusUp,
@@ -71,6 +94,19 @@ func (c *Checker) Run(ctx context.Context) Response {
 			resp.Status = StatusDown
 		} else if ch.Status == StatusDegraded && resp.Status != StatusDown {
 			resp.Status = StatusDegraded
+		}
+
+		// Emit feedback signal on status transition.
+		if c.emitter != nil {
+			prev, hadPrev := c.prevStat[name]
+			if !hadPrev || prev != ch.Status {
+				msg := "health status: " + string(ch.Status)
+				if hadPrev {
+					msg = string(prev) + " -> " + string(ch.Status)
+				}
+				c.emitter.EmitHealthSignal(ctx, name, ch.Status, msg)
+			}
+			c.prevStat[name] = ch.Status
 		}
 	}
 

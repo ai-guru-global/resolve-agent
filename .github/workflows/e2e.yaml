@@ -1,0 +1,86 @@
+# =============================================================================
+# ResolveAgent E2E Test Pipeline — Loop Engineering Validation Cycle
+# =============================================================================
+# Runs end-to-end tests against a full stack deployment.
+# Triggered manually or on release branches to validate integration paths.
+# =============================================================================
+
+name: E2E Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to test"
+        required: false
+        default: "main"
+  push:
+    branches: ["release/**"]
+
+env:
+  GO_VERSION: "1.23"
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: resolveagent
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: resolveagent
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Apply migrations
+        env:
+          DATABASE_URL: "postgres://resolveagent:testpassword@localhost:5432/resolveagent?sslmode=disable"
+        run: make migrate-up
+
+      - name: Load seed data
+        env:
+          DATABASE_URL: "postgres://resolveagent:testpassword@localhost:5432/resolveagent?sslmode=disable"
+        run: make seed
+
+      - name: Build binaries
+        run: make build-go
+
+      - name: Start platform server
+        env:
+          RESOLVEAGENT_DATABASE_PASSWORD: testpassword
+        run: |
+          ./bin/resolveagent-server &
+          sleep 5
+
+      - name: Run E2E tests
+        env:
+          DATABASE_URL: "postgres://resolveagent:testpassword@localhost:5432/resolveagent?sslmode=disable"
+        run: go test -tags=e2e -v -timeout 5m ./test/e2e/...
+
+      - name: E2E feedback report
+        if: always()
+        run: |
+          echo "=== E2E Feedback Loop Report ==="
+          echo "Result: ${{ job.status }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"

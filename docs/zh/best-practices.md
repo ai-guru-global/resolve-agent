@@ -405,9 +405,91 @@ groups:
 
 ---
 
+## Loop Engineering 循环工程
+
+### 1. 反馈循环配置
+
+**生产环境建议**:
+
+```yaml
+# resolveagent.yaml - 推荐配置
+feedback:
+  enabled: true
+  ring_buffer_size: 2000        # 生产环境建议更大的缓冲区
+  aggregation_window: "5m"      # 5 分钟滑动窗口
+  dispatch:
+    log:
+      enabled: true
+      level: "info"
+    webhook:
+      enabled: true             # 启用 Webhook 对接外部监控系统
+      url: "https://monitor.example.com/webhook/feedback"
+```
+
+**调优建议**:
+- `ring_buffer_size`: 开发 500, 生产 2000-5000
+- `aggregation_window`: 高频场景 1-3m, 常规 5m
+- Webhook 分发器建议配置重试和超时
+
+### 2. 熔断器最佳实践
+
+| 参数 | 开发环境 | 生产环境 | 说明 |
+|------|----------|----------|------|
+| `failure_threshold` | 3 | 5-10 | 快速失败 vs 容忍瞬态故障 |
+| `recovery_timeout` | 10s | 30-60s | 快速恢复 vs 避免惊群 |
+| `half_open_max_calls` | 1 | 3-5 | 保守探测 vs 快速验证 |
+
+**关键原则**:
+- 每个下游服务使用独立的熔断器实例
+- 配置 `StateObserver` 接入反馈子系统
+- 监控 `circuit_breaker_state` 指标，OPEN 状态持续 > 5m 应告警
+
+### 3. 自适应选择器调优
+
+```yaml
+adaptive:
+  selector_weight_update: true
+  skill_confidence_decay: 0.95    # 0.9 = 快速响应, 0.99 = 平滑过渡
+  auto_fallback_enabled: true
+```
+
+- **新系统启动**: 使用默认权重 (decay=0.95)，让系统自然学习
+- **高负载场景**: 降低 decay (0.85-0.90)，加快权重调整速度
+- **稳定系统**: 提高 decay (0.97-0.99)，避免过度反应
+
+### 4. Hook 链模式使用
+
+所有自定义扩展都应遵循 `pre_hook → execute → post_hook → feedback` 模式：
+
+```python
+from resolveagent.hooks.patterns import HookChain, HookContext, HookResult
+
+chain = HookChain(
+    pre_hooks=[validate_input, enrich_context],
+    post_hooks=[log_result, update_metrics],
+    feedback_callback=send_to_collector,  # 闭合反馈循环
+)
+
+result = chain.run(execute_fn, HookContext(request_id="req-123"))
+```
+
+### 5. 监控告警配置
+
+**核心监控指标**:
+
+| 指标 | 告警阈值 | 动作 |
+|------|----------|------|
+| `workflow_success_rate` | < 0.7 | notify |
+| `retry_exhausted_total` | > 50 / 1m | circuit_break |
+| `circuit_breaker_state` | OPEN > 5m | notify |
+| `feedback_loop_duration_seconds` P99 | > 100ms | notify |
+
+---
+
 ## 相关文档
 
 - [快速入门](./quickstart.md) - 开始使用
 - [架构设计](./architecture.md) - 系统架构
+- [Loop Engineering](./loop-engineering.md) - 循环工程完整文档
 - [配置参考](./configuration.md) - 配置选项
 - [部署指南](./deployment.md) - 部署方案

@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <code>🧠 Intelligent Selector</code> · <code>🌳 Hybrid Planner</code> · <code>💾 Hierarchical Memory</code> · <code>🔧 ToolHub</code>
+  <code>🧠 Intelligent Selector</code> · <code>🌳 Hybrid Planner</code> · <code>💾 Hierarchical Memory</code> · <code>🔧 ToolHub</code> · <code>🔄 Loop Engineering</code>
 </p>
 
 <p align="center">
@@ -57,7 +57,7 @@
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-### 九大架构特性 | 9 Architecture Highlights
+### 十二大架构特性 | 12 Architecture Highlights
 
 | # | 特性 | 模块 | 说明 |
 |---|------|------|------|
@@ -70,6 +70,9 @@
 | 7 | **AgentMessageBus** | `message_bus.py` | 订阅-发布消息总线 |
 | 8 | **gRPC Server** | `runtime/server.py` | 带 HTTP fallback 的 gRPC 服务 |
 | 9 | **Resilient Selector** | `selector/resilient_selector.py` | 反馈驱动自适应路由：失败重试 + 上下文重丰富 + 渐进降级 |
+| 10 | **Feedback Loop** | `pkg/feedback/` | Observe-Orient-Decide-Act 持续反馈闭环：信号收集 → 聚合 → 分发 |
+| 11 | **Circuit Breaker** | `pkg/circuitbreaker/` | 三态熔断器自愈运维：Closed → Open → HalfOpen → Closed |
+| 12 | **Adaptive Selector** | `selector/resilient_selector.py` | 基于反馈的权重动态调整 + 时间衰减 + 自动降级 |
 
 ---
 
@@ -323,6 +326,97 @@ Skill (快速精确) → RAG (知识检索) → Workflow (LLM 推理) → Code A
 
 **核心思想:** 每一次失败都不是浪费，而是为下一次路由决策提供更丰富的上下文。
 
+### 10. Loop Engineering | 循环工程
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                     Loop Engineering 闭环                            │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  Observe          Orient           Decide           Act             │
+│  ┌─────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐   │
+│  │ Health  │     │Aggregator│     │  Alert   │     │ Circuit  │   │
+│  │ Retry   │────▶│ (滑动    │────▶│  Engine  │────▶│ Breaker  │   │
+│  │ Workflow│     │  窗口)   │     │ (规则)   │     │ Adaptive │   │
+│  │ Telemetry    │          │     │          │     │ Weight   │   │
+│  └─────────┘     └──────────┘     └──────────┘     └──────────┘   │
+│                                                     │             │
+│  ┌─────────────────────────────────────────────────▼──────────┐   │
+│  │              Feedback Dispatch                             │   │
+│  │         Log │ Webhook │ NATS                               │   │
+│  └────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**三大支柱:**
+
+| 支柱 | 说明 | 实现 |
+|------|------|------|
+| **持续反馈循环** | 信号收集 → 聚合 → 分发的闭环 | `pkg/feedback/` (Go) + `fta/feedback_loop.py` (Python) |
+| **自愈运维** | 三态熔断器保护下游，自动恢复 | `pkg/circuitbreaker/` |
+| **自适应行为** | 基于反馈的路由权重动态调整 | `AdaptiveWeightAdjuster` |
+
+```python
+# Go: 发射反馈信号
+collector.Emit(ctx, feedback.FeedbackSignal{
+    Source:   feedback.SourceHealth,
+    Event:    feedback.EventHealthDegraded,
+    Severity: feedback.SeverityWarn,
+    Message:  "Service health degraded",
+})
+
+# Python: FTA 工作流反馈循环
+loop = FeedbackLoop(history_window=100)
+suggestions = loop.record(metrics)
+# → [ImprovementSuggestion(target="selector", priority="high", ...)]
+```
+
+> 📖 详见 [Loop Engineering 文档](docs/zh/loop-engineering.md)
+
+### 11. Circuit Breaker | 三态熔断器
+
+```go
+// pkg/circuitbreaker/breaker.go
+breaker := circuitbreaker.New(circuitbreaker.Config{
+    Name:             "downstream-api",
+    FailureThreshold: 5,
+    RecoveryTimeout:  30 * time.Second,
+    HalfOpenMaxCalls: 3,
+    Observer:         feedbackObserver,  // 状态变化 → 反馈信号
+})
+
+err := breaker.Execute(ctx, func(ctx context.Context) error {
+    return callDownstreamAPI(ctx, request)
+})
+```
+
+**状态机:**
+```
+CLOSED  ──[failures >= 5]──▶  OPEN
+  ▲                            │
+  │                    [30s timeout]
+  │                            ▼
+CLOSED  ◀──[probe ok]──  HALF_OPEN
+```
+
+### 12. Adaptive Selector | 自适应选择器
+
+```python
+# selector/resilient_selector.py
+adjuster = AdaptiveWeightAdjuster(default_weight=1.0)
+
+# 每次执行后记录结果
+adjuster.record_outcome("skill", success=True, latency_ms=120)
+adjuster.record_outcome("rag", success=False, latency_ms=3500)
+
+# 时间衰减：权重向中性值 1.0 回归
+adjuster.apply_decay(decay_factor=0.95)
+
+# 获取当前权重
+weights = adjuster.get_weights()
+# → {"skill": 1.15, "rag": 0.85, "fta": 1.02, "code_analysis": 0.98}
+```
+
 ---
 
 ## 🚀 Quick Start | 快速开始
@@ -391,7 +485,7 @@ recent = memory.get_recent(limit=10)
 
 ## 📊 Feature Status | 功能状态
 
-> **v0.3.0** | 2026-05 Architecture Complete
+> **v0.4.0** | 2026-07 Loop Engineering Complete
 
 ### 架构组件
 
@@ -408,12 +502,22 @@ recent = memory.get_recent(limit=10)
 | Schema Registry | 🟢 Ready | `toolhub.py` |
 | Capability Map | 🟢 Ready | `toolhub.py` |
 | Security Policy | 🟢 Ready | `toolhub.py` |
-| Circuit Breaker | 🟢 Ready | `resilience.py` |
+| Circuit Breaker (Python) | 🟢 Ready | `resilience.py` |
 | Fallback Cascade | 🟢 Ready | `resilience.py` |
 | Agent Message Bus | 🟢 Ready | `message_bus.py` |
 | Message Bus Registry | 🟢 Ready | `message_bus.py` |
 | gRPC Server | 🟢 Ready | `runtime/server.py` |
-| Resilient Selector | 🟡 Planned | `selector/resilient_selector.py` |
+| Resilient Selector | 🟢 Ready | `selector/resilient_selector.py` |
+| **Feedback Collector** | 🟢 **New** | `pkg/feedback/collector.go` |
+| **Feedback Ring Buffer** | 🟢 **New** | `pkg/feedback/ring_buffer.go` |
+| **Feedback Aggregator** | 🟢 **New** | `pkg/feedback/aggregator.go` |
+| **Feedback Dispatchers** | 🟢 **New** | `pkg/feedback/dispatcher.go` |
+| **Alert Engine** | 🟢 **New** | `pkg/feedback/alerts.go` |
+| **Circuit Breaker (Go)** | 🟢 **New** | `pkg/circuitbreaker/breaker.go` |
+| **Adaptive Weight Adjuster** | 🟢 **New** | `selector/resilient_selector.py` |
+| **FTA Feedback Loop** | 🟢 **New** | `fta/feedback_loop.py` |
+| **Regression Validator** | 🟢 **New** | `fta/regression_validator.py` |
+| **Hook Chain Pattern** | 🟢 **New** | `hooks/patterns.py` |
 
 ### 核心引擎
 
@@ -437,18 +541,23 @@ resolve-agent/
 │   ├── resolveagent-cli/        # CLI 应用
 │   └── resolveagent-server/     # Platform Server
 ├── pkg/                         # Go 平台服务
+│   ├── circuitbreaker/          # 🔄 Loop Engineering: 熔断器
 │   ├── config/
 │   ├── event/
+│   ├── feedback/                # 🔄 Loop Engineering: 反馈循环
 │   ├── gateway/
+│   ├── health/                  # 健康检查 + 反馈集成
 │   ├── registry/
+│   ├── retry/                   # 重试机制 + 观察器
 │   ├── server/
-│   └── store/
+│   └── store/                   # Store 模式抽象
 ├── python/src/resolveagent/
 │   ├── selector/               # 🧠 智能选择器
 │   │   ├── audit.py           # Decision Audit Logger
 │   │   ├── cache.py           # 路由决策缓存
 │   │   ├── context_enricher.py # 上下文丰富
 │   │   ├── intent.py          # 意图分析
+│   │   ├── resilient_selector.py # 🔄 弹性自适应 + AdaptiveWeightAdjuster
 │   │   ├── router.py         # 路由决策
 │   │   └── strategies/        # 路由策略
 │   ├── memory.py              # 💾 分层记忆
@@ -456,17 +565,32 @@ resolve-agent/
 │   ├── toolhub.py             # 🔧 工具中心
 │   ├── resilience.py          # 🛡️ 弹性模式
 │   ├── message_bus.py         # 📡 消息总线
+│   ├── fta/                   # FTA 引擎 + 🔄 反馈循环
+│   │   ├── engine.py          # 故障树分析引擎
+│   │   ├── feedback_loop.py   # 🔄 工作流反馈循环
+│   │   └── regression_validator.py # 🔄 回归验证器
+│   ├── hooks/                 # 生命周期钩子
+│   │   └── patterns.py        # 🔄 Hook 链模式模板
 │   ├── agent/                 # Agent 定义
-│   ├── fta/                   # FTA 引擎
 │   ├── rag/                   # RAG 管道
 │   ├── skills/                # 技能系统
 │   ├── llm/                   # LLM 提供者
 │   ├── mcp/                   # MCP 适配器
 │   └── runtime/               # 运行时
+├── .github/workflows/          # 🔄 CI/CD 流水线
+│   ├── ci.yaml                # 主 CI (lint→test→build→quality-gate)
+│   ├── e2e.yaml               # E2E 测试 (PostgreSQL + Redis)
+│   └── release.yaml           # 发布流水线 (Docker + Helm)
+├── hack/                       # 开发工具脚本
+│   ├── quality-gate.sh        # 🔄 质量门禁
+│   └── coverage-report.sh     # 🔄 覆盖率报告
+├── test/                       # 测试套件
+│   ├── e2e/                   # E2E 测试 + 反馈循环验证
+│   ├── integration/           # 集成测试 + API 契约测试
+│   └── fixtures/              # 测试基线数据
 ├── web/                        # 🌐 React WebUI
 ├── deploy/                     # 部署配置
 └── docs/                       # 文档
-
 ```
 
 ---
@@ -492,6 +616,12 @@ MCP_STDIO_SERVERS=[]
 # 安全配置
 AUTH_ENABLED=true
 RATE_LIMIT_PER_MINUTE=100
+
+# Loop Engineering 配置
+FEEDBACK_ENABLED=true
+FEEDBACK_RING_BUFFER_SIZE=1000
+CIRCUIT_BREAKER_ENABLED=true
+CIRCUIT_BREAKER_FAILURE_THRESHOLD=5
 ```
 
 ---
@@ -501,6 +631,7 @@ RATE_LIMIT_PER_MINUTE=100
 | 文档 | 说明 |
 |------|------|
 | [Architecture](docs/zh/architecture.md) | 系统架构详解 |
+| [Loop Engineering](docs/zh/loop-engineering.md) | 🔄 循环工程方法论：反馈循环、熔断器、自适应选择器 |
 | [CLI Reference](docs/zh/cli-reference.md) | 命令行接口 |
 | [Configuration](docs/zh/configuration.md) | 配置指南 |
 | [API Reference](docs/api/) | API 文档 |
@@ -536,8 +667,13 @@ make test
 | `resolveagent_memory_promotions_total` | 记忆沉淀数 |
 | `resolveagent_planner_replans_total` | Replan 次数 |
 | `resolveagent_toolhub_executions_total` | 工具执行数 |
-| `resolveagent_circuit_breaker_state` | 熔断器状态 |
+| `resolveagent_circuit_breaker_state` | 熔断器状态 (0=closed, 1=open, 2=half_open) |
 | `resolveagent_message_bus_messages_total` | 消息总数 |
+| `resolveagent_feedback_signals_total` | 🔄 反馈信号总数 (by source, event) |
+| `resolveagent_feedback_loop_duration_seconds` | 🔄 反馈循环处理耗时 |
+| `resolveagent_retry_exhausted_total` | 🔄 重试耗尽次数 |
+| `resolveagent_workflow_success_rate` | 🔄 工作流成功率 |
+| `resolveagent_adaptive_selector_weights` | 🔄 自适应选择器权重 (by route_type) |
 
 ---
 
@@ -550,6 +686,8 @@ make test
 - **记忆面板** - 查看三层记忆状态
 - **审计日志** - 完整路由决策追踪
 - **工具市场** - ToolHub 可视化
+- **架构可视化** - 系统架构总览 + Loop Engineering 闭环图
+- **监控告警** - 反馈信号仪表盘 + 熔断器状态 + 自适应权重
 
 ---
 

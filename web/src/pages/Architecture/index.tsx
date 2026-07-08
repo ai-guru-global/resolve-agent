@@ -15,6 +15,7 @@ import {
   Sparkles,
   Route,
   Lightbulb,
+  RefreshCw,
 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -94,6 +95,14 @@ const subDocs: DocSection[] = [
     description: '工具发现 + Schema 注册 + Capability 映射 + 安全策略',
     href: '/architecture/toolhub',
   },
+  {
+    id: 'loop-engineering',
+    title: 'Loop Engineering 循环工程',
+    icon: RefreshCw,
+    description: 'Observe-Orient-Decide-Act 持续反馈闭环：信号收集、聚合、分发、熔断器、自适应',
+    href: '/architecture/loop-engineering',
+    badge: 'New',
+  },
 ];
 
 const innovations = [
@@ -139,11 +148,19 @@ const innovations = [
     color: 'text-cyan-400',
     bgColor: 'bg-cyan-500/10 border-cyan-500/20',
   },
+  {
+    title: 'Loop Engineering 循环工程',
+    description: 'Observe-Orient-Decide-Act 持续反馈闭环，信号收集→聚合→分发→熔断→自适应权重调整',
+    icon: RefreshCw,
+    color: 'text-rose-400',
+    bgColor: 'bg-rose-500/10 border-rose-500/20',
+  },
 ];
 
 const designPrinciples = [
   { label: 'Agent-Driven', desc: 'All operations orchestrated by intelligent agents' },
   { label: 'Adaptive', desc: 'Workflows dynamically adjust based on context' },
+  { label: 'Feedback-Driven', desc: 'Loop Engineering: observe-orient-decide-act continuous cycle' },
   { label: 'Pluggable', desc: 'Skills extensible without core changes' },
   { label: 'Observable', desc: 'Full telemetry with OpenTelemetry' },
   { label: 'Cloud Native', desc: 'Kubernetes-first with Helm and Kustomize' },
@@ -530,6 +547,82 @@ function HarnessDiagram() {
   );
 }
 
+function LoopEngineeringDiagram() {
+  const W = 720;
+  const H = 360;
+
+  return (
+    <div className="overflow-x-auto">
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: W, margin: '0 auto', display: 'block' }} xmlns="http://www.w3.org/2000/svg">
+        <style>{`text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }`}</style>
+        <SvgDefs />
+        <rect width={W} height={H} fill={COLORS.bg} />
+
+        <text x={W / 2} y={28} textAnchor="middle" fill={COLORS.text} fontSize="15" fontWeight="700">Loop Engineering 循环工程闭环</text>
+
+        {/* Observe box */}
+        <rect x={30} y={60} width={140} height={120} rx="12" fill={COLORS.blue} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={100} y={85} textAnchor="middle" fill={COLORS.text} fontSize="12" fontWeight="600">Observe</text>
+        <rect x={42} y={95} width={116} height={24} rx="6" fill="rgba(255,255,255,0.6)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={100} y={111} textAnchor="middle" fill={COLORS.text} fontSize="10">Health · Retry</text>
+        <rect x={42} y={125} width={116} height={24} rx="6" fill="rgba(255,255,255,0.6)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={100} y={141} textAnchor="middle" fill={COLORS.text} fontSize="10">Workflow · Telemetry</text>
+        <rect x={42} y={155} width={116} height={18} rx="4" fill="rgba(255,255,255,0.4)" stroke={COLORS.stroke} strokeWidth="0.5" />
+        <text x={100} y={168} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">FeedbackSignal</text>
+
+        {/* Arrow Observe → Orient */}
+        <Arrow x1={170} y1={120} x2={210} y2={120} />
+
+        {/* Orient box */}
+        <rect x={220} y={75} width={130} height={90} rx="12" fill={COLORS.beige} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={285} y={100} textAnchor="middle" fill={COLORS.text} fontSize="12" fontWeight="600">Orient</text>
+        <text x={285} y={120} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">RingBuffer (1000)</text>
+        <text x={285} y={138} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">Aggregator</text>
+        <text x={285} y={154} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">滑动窗口 5m</text>
+
+        {/* Arrow Orient → Decide */}
+        <Arrow x1={350} y1={120} x2={390} y2={120} />
+
+        {/* Decide box */}
+        <rect x={400} y={75} width={130} height={90} rx="12" fill={COLORS.orange} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={465} y={100} textAnchor="middle" fill={COLORS.text} fontSize="12" fontWeight="600">Decide</text>
+        <text x={465} y={120} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">Alert Engine</text>
+        <text x={465} y={138} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">规则评估</text>
+        <text x={465} y={154} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">notify / circuit_break</text>
+
+        {/* Arrow Decide → Act */}
+        <Arrow x1={530} y1={120} x2={560} y2={120} />
+
+        {/* Act box */}
+        <rect x={570} y={60} width={130} height={120} rx="12" fill={COLORS.purple} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={635} y={85} textAnchor="middle" fill={COLORS.text} fontSize="12" fontWeight="600">Act</text>
+        <rect x={582} y={95} width={106} height={24} rx="6" fill="rgba(255,255,255,0.6)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={635} y={111} textAnchor="middle" fill={COLORS.text} fontSize="10">Circuit Breaker</text>
+        <rect x={582} y={125} width={106} height={24} rx="6" fill="rgba(255,255,255,0.6)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={635} y={141} textAnchor="middle" fill={COLORS.text} fontSize="10">Adaptive Weight</text>
+        <rect x={582} y={155} width={106} height={18} rx="4" fill="rgba(255,255,255,0.4)" stroke={COLORS.stroke} strokeWidth="0.5" />
+        <text x={635} y={168} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">Hook Chain</text>
+
+        {/* Feedback loop arrow: Act → Observe (bottom arc) */}
+        <path d="M 635 180 Q 635 250 400 260 Q 100 270 100 180" fill="none" stroke={COLORS.arrow} strokeWidth="2" strokeDasharray="6,3" markerEnd="url(#arrow-main)" />
+        <text x={370} y={275} textAnchor="middle" fill={COLORS.textSecondary} fontSize="11" fontWeight="600">Feedback Dispatch</text>
+        <text x={370} y={292} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">Log · Webhook · NATS</text>
+
+        {/* State machine legend */}
+        <rect x={30} y={310} width={660} height={40} rx="8" fill="rgba(255,255,255,0.9)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={50} y={330} fill={COLORS.text} fontSize="10" fontWeight="600">熔断器状态机:</text>
+        <text x={150} y={330} fill={COLORS.textSecondary} fontSize="10">CLOSED ─[failures≥5]─→ OPEN ─[30s timeout]─→ HALF_OPEN ─[probe ok]─→ CLOSED</text>
+        <rect x={50} y={338} width={8} height={8} rx="2" fill={COLORS.green} />
+        <text x={64} y={346} fill={COLORS.textSecondary} fontSize="9">Closed (正常)</text>
+        <rect x={140} y={338} width={8} height={8} rx="2" fill={COLORS.orange} />
+        <text x={154} y={346} fill={COLORS.textSecondary} fontSize="9">Open (熔断)</text>
+        <rect x={220} y={338} width={8} height={8} rx="2" fill={COLORS.beige} />
+        <text x={234} y={346} fill={COLORS.textSecondary} fontSize="9">Half-Open (探测)</text>
+      </svg>
+    </div>
+  );
+}
+
 export default function ArchitecturePage() {
   return (
     <div className="space-y-6 animate-slide-up">
@@ -821,6 +914,38 @@ export default function ArchitecturePage() {
                 <Shield className="h-3.5 w-3.5 text-emerald-500 mt-0.5 shrink-0" />
                 <span><span className="font-medium text-foreground">故障隔离</span> — 运行时崩溃不影响平台服务；gRPC + SSE 提供清晰的边界契约</span>
               </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Loop Engineering */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <RefreshCw className="h-4 w-4 text-primary" />
+            Loop Engineering 循环工程
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            ResolveAgent 集成了 <span className="font-semibold text-foreground">Loop Engineering（循环工程）</span> 方法论，
+            实现 <span className="font-mono text-xs text-primary">Observe → Orient → Decide → Act</span> 持续闭环改进。
+            反馈信号从各子系统采集，经过环形缓冲和滑动窗口聚合，由告警引擎决策，最终驱动熔断器和自适应权重调整。
+          </p>
+          <LoopEngineeringDiagram />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-md bg-rose-500/5 border border-rose-500/20 p-3">
+              <p className="text-xs font-medium text-rose-600 dark:text-rose-400 mb-1">反馈循环</p>
+              <p className="text-xs text-muted-foreground">FeedbackSignal 原子单元 → RingBuffer (1000) → Aggregator (5m 窗口) → 三种分发器 (Log/Webhook/NATS)</p>
+            </div>
+            <div className="rounded-md bg-orange-500/5 border border-orange-500/20 p-3">
+              <p className="text-xs font-medium text-orange-600 dark:text-orange-400 mb-1">熔断器</p>
+              <p className="text-xs text-muted-foreground">三态机 (Closed→Open→HalfOpen→Closed)，failure_threshold=5，recovery_timeout=30s</p>
+            </div>
+            <div className="rounded-md bg-purple-500/5 border border-purple-500/20 p-3">
+              <p className="text-xs font-medium text-purple-600 dark:text-purple-400 mb-1">自适应选择器</p>
+              <p className="text-xs text-muted-foreground">AdaptiveWeightAdjuster 基于成功率调整权重，时间衰减因子 0.95 向中性值回归</p>
             </div>
           </div>
         </CardContent>

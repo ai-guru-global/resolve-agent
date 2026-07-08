@@ -109,3 +109,47 @@ mcp:
     #   headers:
     #     Authorization: Bearer ${FETCH_TOKEN}
     #   timeout_seconds: 30
+
+# =============================================================================
+# Loop Engineering: Feedback Loop Configuration
+# Closes the observe-orient-decide-act cycle across all subsystems.
+# Signals from health, retry, workflow, and telemetry are aggregated and
+# dispatched to external sinks for continuous improvement.
+# =============================================================================
+feedback:
+  enabled: true
+  ring_buffer_size: 1000
+  aggregation_window: "5m"
+  dispatch:
+    webhook:
+      enabled: false
+      url: ""
+    nats:
+      enabled: false
+      subject: "feedback.signals"
+    log:
+      enabled: true
+      level: "info"
+
+# =============================================================================
+# Loop Engineering: Observability Closed Loop
+# Metrics-driven decision making: collect -> aggregate -> alert -> act.
+# Feedback signals are exported as Prometheus metrics and trigger automated
+# actions (circuit breaking, notifications) based on configured thresholds.
+# =============================================================================
+observability_loop:
+  enabled: true
+  metrics:
+    feedback_signals_total: true
+    feedback_loop_duration_seconds: true
+    retry_exhausted_total: true
+    workflow_success_rate: true
+  alerts:
+    - name: "high_failure_rate"
+      condition: "workflow_success_rate < 0.7"
+      window: "5m"
+      action: "notify"
+    - name: "retry_storm"
+      condition: "retry_exhausted_total > 50"
+      window: "1m"
+      action: "circuit_break"

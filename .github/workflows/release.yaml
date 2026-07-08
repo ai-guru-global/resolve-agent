@@ -1,0 +1,91 @@
+# =============================================================================
+# ResolveAgent Release Pipeline — Loop Engineering Delivery Cycle
+# =============================================================================
+# Triggered on version tags. Builds Docker images and publishes Helm chart.
+# =============================================================================
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+env:
+  GO_VERSION: "1.23"
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+
+jobs:
+  release:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        component: [platform, runtime, webui]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract tag
+        id: tag
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build and push ${{ matrix.component }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/docker/${{ matrix.component }}.Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.component }}:${{ steps.tag.outputs.version }}
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.component }}:latest
+
+  helm:
+    name: Package Helm Chart
+    runs-on: ubuntu-latest
+    needs: [release]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Helm lint
+        run: helm lint deploy/helm/resolveagent
+      - name: Helm package
+        run: |
+          helm package deploy/helm/resolveagent \
+            --version ${{ github.ref_name }} \
+            --app-version ${{ github.ref_name }}
+      - name: Upload chart
+        uses: actions/upload-artifact@v4
+        with:
+          name: helm-chart
+          path: "*.tgz"
+
+  release-notes:
+    name: Release Notes
+    runs-on: ubuntu-latest
+    needs: [helm]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Generate release notes
+        run: |
+          echo "## ResolveAgent ${{ github.ref_name }}" > RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          echo "### Changes" >> RELEASE_NOTES.md
+          git log --oneline $(git describe --tags --abbrev=0 HEAD^)..HEAD >> RELEASE_NOTES.md
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: RELEASE_NOTES.md
+          files: "*.tgz"

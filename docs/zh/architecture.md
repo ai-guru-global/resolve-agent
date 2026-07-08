@@ -859,13 +859,117 @@ resolveagent_call_graph_edges_total          # 调用图边总数
 resolveagent_traffic_captures_total          # 流量捕获会话数
 resolveagent_traffic_graph_builds_total      # 流量图谱构建数
 resolveagent_rag_dual_write_total            # RAG 双写次数 (by collection, status)
+
+# Loop Engineering 指标
+resolveagent_feedback_signals_total          # 反馈信号总数 (by source, event, severity)
+resolveagent_feedback_loop_duration_seconds  # 反馈循环处理耗时直方图
+resolveagent_retry_exhausted_total           # 重试耗尽次数
+resolveagent_workflow_success_rate           # 工作流成功率
+resolveagent_circuit_breaker_state           # 熔断器状态 (0=closed, 1=open, 2=half_open)
+resolveagent_circuit_breaker_failures_total  # 熔断器累计失败数
+resolveagent_adaptive_selector_weights       # 自适应选择器权重 (by route_type)
 ```
+
+---
+
+## Loop Engineering 循环工程
+
+ResolveAgent 集成了 **Loop Engineering（循环工程）** 方法论，实现 Observe → Orient → Decide → Act 的持续闭环改进。
+
+### 架构总览
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                     Loop Engineering 闭环                            │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  Observe          Orient           Decide           Act             │
+│  ┌─────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐   │
+│  │ Health  │     │Aggregator│     │  Alert   │     │ Circuit  │   │
+│  │ Retry   │────▶│ (滑动    │────▶│  Engine  │────▶│ Breaker  │   │
+│  │ Workflow│     │  窗口)   │     │ (规则)   │     │ Adaptive │   │
+│  │ Telemetry    │          │     │          │     │ Weight   │   │
+│  └─────────┘     └──────────┘     └──────────┘     └──────────┘   │
+│                                                     │             │
+│  ┌─────────────────────────────────────────────────▼──────────┐   │
+│  │              Feedback Dispatch                             │   │
+│  │         Log │ Webhook │ NATS                               │   │
+│  └────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### 反馈循环子系统 (`pkg/feedback/`)
+
+核心信号管道：`Emit → RingBuffer → Subscribe → Aggregate → Dispatch`
+
+| 组件 | 文件 | 职责 |
+|------|------|------|
+| **FeedbackSignal** | `types.go` | 原子信号单元 (ID/Source/Event/Severity/Metrics/Labels) |
+| **Collector** | `collector.go` | 中央信号枢纽：接收、存储、通知订阅者、分发到外部 |
+| **RingBuffer** | `ring_buffer.go` | 线程安全固定窗口缓冲区 (默认 1000 条) |
+| **Aggregator** | `aggregator.go` | 滑动窗口统计聚合 (5 分钟窗口，按 source:event 分组) |
+| **Dispatcher** | `dispatcher.go` | 三种分发器：Log (slog) / Webhook (HTTP POST) / NATS (消息发布) |
+| **MetricsCollector** | `metrics.go` | atomic.Int64 高并发计数器/仪表盘 |
+| **AlertEngine** | `alerts.go` | 定时规则评估，支持 notify 和 circuit_break 动作 |
+
+**信号源**:
+
+| 源 | 说明 | 典型事件 |
+|-----|------|---------|
+| `health` | 健康检查 | `health.degraded`, `health.down`, `health.recovered` |
+| `retry` | 重试机制 | `retry.success`, `retry.exhausted` |
+| `workflow` | 工作流执行 | `workflow.complete`, `workflow.failed` |
+| `selector` | 智能选择器 | `selector.fallback` |
+| `circuit_breaker` | 熔断器 | `circuit_breaker.open`, `circuit_breaker.close` |
+| `skill` | 技能执行 | 自定义事件 |
+
+### 熔断器 (`pkg/circuitbreaker/`)
+
+三态状态机保护下游服务：
+
+```
+CLOSED  ──[failures >= threshold]──▶  OPEN
+  ▲                                    │
+  │                            [recovery timeout]
+  │                                    ▼
+CLOSED  ◀──[probe success]──    HALF_OPEN
+                                  │
+                                  └──[probe failure]──▶ OPEN
+```
+
+**与反馈子系统的集成**：熔断器通过 `StateObserver` 接口通知状态变化，可选接入反馈系统发射 `circuit_breaker.open` 等信号。
+
+### 自适应选择器 (`selector/resilient_selector.py`)
+
+`AdaptiveWeightAdjuster` 基于执行反馈动态调整路由权重：
+
+| 操作 | 说明 |
+|------|------|
+| `record_outcome(route, success, latency)` | 记录执行结果，调整权重 |
+| `apply_decay(decay_factor)` | 时间衰减，权重向 1.0 回归 |
+| `get_weights()` | 返回当前各路由类型权重 |
+
+### FTA 反馈循环 (`python/src/resolveagent/fta/feedback_loop.py`)
+
+Python 侧工作流反馈分析，自动检测回归并生成改进建议：
+
+- **持续时间回归** (当前 > 基线 × 1.5)
+- **成功率下降** (当前 < 基线 × 0.7)
+- **技能选择异常** (失败中关联的技能名)
+- **连续失败模式** (5 次中 3+ 失败 → 触发 RAG 知识丰富)
+
+### Hook 链模式 (`python/src/resolveagent/hooks/patterns.py`)
+
+标准化执行链：`pre_hook → execute → post_hook → feedback`
+
+确保所有操作都能闭合反馈循环，自动收集执行摘要（request_id、总耗时、成功率、错误数）。
 
 ---
 
 ## 相关文档
 
 - [智能选择器](./intelligent-selector.md) - 深入了解路由机制、六种路由类型、适配器架构、代码分析意图模式
+- [Loop Engineering](./loop-engineering.md) - 🔄 循环工程方法论完整实现文档
 - [FTA 工作流引擎](./fta-engine.md) - 故障树分析详解
 - [技能系统](./skill-system.md) - 技能开发与管理
 - [RAG 管道](./rag-pipeline.md) - 检索增强生成管道详解

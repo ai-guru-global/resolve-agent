@@ -701,6 +701,109 @@ tree:
 
 ---
 
+## Loop Engineering 配置
+
+### 反馈循环 (平台服务)
+
+文件：`resolveagent.yaml`
+
+```yaml
+# 反馈循环子系统
+feedback:
+  # 启用反馈循环
+  enabled: true
+  
+  # 环形缓冲区大小（保留最近 N 条信号）
+  ring_buffer_size: 1000
+  
+  # 滑动窗口聚合时间
+  aggregation_window: "5m"
+  
+  # 信号分发配置
+  dispatch:
+    # Webhook 分发
+    webhook:
+      enabled: false
+      url: ""                    # 设置 Webhook URL 启用
+    
+    # NATS 消息发布
+    nats:
+      enabled: false
+      subject: "feedback.signals"
+    
+    # 结构化日志输出
+    log:
+      enabled: true
+      level: "info"             # info / warn / error
+
+# 可观测性闭环
+observability_loop:
+  enabled: true
+  
+  # 启用的指标
+  metrics:
+    feedback_signals_total: true
+    feedback_loop_duration_seconds: true
+    retry_exhausted_total: true
+    workflow_success_rate: true
+  
+  # 告警规则
+  alerts:
+    - name: "high_failure_rate"
+      condition: "workflow_success_rate < 0.7"
+      window: "5m"
+      action: "notify"          # notify | circuit_break
+    - name: "retry_storm"
+      condition: "retry_exhausted_total > 50"
+      window: "1m"
+      action: "circuit_break"
+```
+
+### 反馈循环 (Agent 运行时)
+
+文件：`runtime.yaml`
+
+```yaml
+# 反馈循环
+feedback_loop:
+  enabled: true
+  
+  # 执行结果反馈到选择器的间隔
+  selector_update_interval: "30s"
+  
+  # 工作流成功分数阈值（低于此值触发 RAG 知识丰富）
+  rag_enrich_threshold: 0.8
+  
+  # 技能成功率阈值（低于此值触发自动权重调整）
+  skill_adapt_threshold: 0.6
+
+# 熔断器
+circuit_breaker:
+  enabled: true
+  
+  # 连续失败次数达到阈值后打开熔断
+  failure_threshold: 5
+  
+  # 熔断打开后等待恢复的时间
+  recovery_timeout: "30s"
+  
+  # 半开状态最大探测调用数
+  half_open_max_calls: 3
+
+# 自适应行为
+adaptive:
+  # 基于反馈动态调整选择器策略权重
+  selector_weight_update: true
+  
+  # 技能置信度衰减因子 (0.0-1.0, 越大衰减越慢)
+  skill_confidence_decay: 0.95
+  
+  # 检测到异常时自动回退到安全策略
+  auto_fallback_enabled: true
+```
+
+---
+
 ## 配置验证
 
 使用 CLI 验证配置：

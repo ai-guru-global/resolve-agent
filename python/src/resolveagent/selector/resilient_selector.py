@@ -696,3 +696,93 @@ class ResilientSelector:
                 "route_priority": self._config.route_priority,
             },
         }
+
+
+# ---------------------------------------------------------------------------
+# Loop Engineering: Adaptive Weight Adjuster
+# ---------------------------------------------------------------------------
+
+class AdaptiveWeightAdjuster:
+    """
+    Dynamically adjusts route selection weights based on accumulated
+    feedback from routing sessions. Implements the continuous improvement
+    loop: observe outcomes -> adjust weights -> improve future selections.
+
+    Weights are decayed over time (configurable decay factor) to ensure
+    the system adapts to changing conditions rather than being permanently
+    biased by old data.
+
+    This class is designed to be plugged into the ResilientSelector's
+    feedback path to close the routing improvement loop.
+    """
+
+    def __init__(
+        self,
+        decay_factor: float = 0.95,
+        learning_rate: float = 0.1,
+        min_weight: float = 0.1,
+        max_weight: float = 2.0,
+    ):
+        self._decay_factor = decay_factor
+        self._learning_rate = learning_rate
+        self._min_weight = min_weight
+        self._max_weight = max_weight
+        # Route type -> weight (1.0 = neutral)
+        self._weights: dict[str, float] = {}
+        # Route type -> running success count
+        self._success_counts: dict[str, int] = {}
+        # Route type -> running total count
+        self._total_counts: dict[str, int] = {}
+
+    def record_outcome(self, route_type: str, success: bool) -> None:
+        """Record a routing outcome and update the weight."""
+        self._total_counts[route_type] = self._total_counts.get(route_type, 0) + 1
+        if success:
+            self._success_counts[route_type] = self._success_counts.get(route_type, 0) + 1
+
+        # Compute success rate
+        total = self._total_counts[route_type]
+        successes = self._success_counts.get(route_type, 0)
+        success_rate = successes / total if total > 0 else 0.5
+
+        # Adjust weight based on success rate
+        current_weight = self._weights.get(route_type, 1.0)
+        adjustment = self._learning_rate * (success_rate - 0.5)
+        new_weight = current_weight + adjustment
+
+        # Clamp to bounds
+        new_weight = max(self._min_weight, min(self._max_weight, new_weight))
+        self._weights[route_type] = new_weight
+
+    def apply_decay(self) -> None:
+        """Apply time decay to all weights, pulling them toward 1.0 (neutral)."""
+        for route_type in self._weights:
+            w = self._weights[route_type]
+            # Decay toward neutral (1.0)
+            self._weights[route_type] = 1.0 + (w - 1.0) * self._decay_factor
+
+    def get_weight(self, route_type: str) -> float:
+        """Get the current weight for a route type."""
+        return self._weights.get(route_type, 1.0)
+
+    def get_all_weights(self) -> dict[str, float]:
+        """Get all current weights."""
+        return dict(self._weights)
+
+    def get_stats(self) -> dict[str, Any]:
+        """Get statistics about the adaptive adjuster."""
+        return {
+            "weights": dict(self._weights),
+            "success_counts": dict(self._success_counts),
+            "total_counts": dict(self._total_counts),
+            "config": {
+                "decay_factor": self._decay_factor,
+                "learning_rate": self._learning_rate,
+            },
+        }
+
+    def reset(self) -> None:
+        """Reset all weights and counts to defaults."""
+        self._weights.clear()
+        self._success_counts.clear()
+        self._total_counts.clear()

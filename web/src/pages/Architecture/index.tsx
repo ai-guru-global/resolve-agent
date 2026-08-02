@@ -16,6 +16,11 @@ import {
   Route,
   Lightbulb,
   RefreshCw,
+  Split,
+  BrainCircuit,
+  ToggleLeft,
+  Activity,
+  Workflow,
 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -623,6 +628,345 @@ function LoopEngineeringDiagram() {
   );
 }
 
+function SelectorFlowDiagram() {
+  const W = 900;
+  const H = 380;
+  const boxH = 54;
+  const row1Y = 60;
+  const row2Y = 200;
+
+  return (
+    <div className="overflow-x-auto">
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: W, margin: '0 auto', display: 'block' }} xmlns="http://www.w3.org/2000/svg">
+        <style>{`text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }`}</style>
+        <SvgDefs />
+        <rect width={W} height={H} fill={COLORS.bg} />
+        <text x={W / 2} y={28} textAnchor="middle" fill={COLORS.text} fontSize="15" fontWeight="700">Intelligent Selector 三阶段路由决策</text>
+
+        {/* ══════════ Row 1: 三阶段流水线 ══════════ */}
+        {/* Stage 1: Intent Analysis */}
+        <rect x={30} y={row1Y} width={220} height={boxH} rx="12" fill={COLORS.blue} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={140} y={row1Y + 22} textAnchor="middle" fill={COLORS.text} fontSize="12" fontWeight="600">① 意图分析</text>
+        <text x={140} y={row1Y + 40} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">用户输入 → 类型识别</text>
+
+        <Arrow x1={250} y1={row1Y + 27} x2={330} y2={row1Y + 27} />
+
+        {/* Stage 2: Context Enrichment */}
+        <rect x={340} y={row1Y} width={220} height={boxH} rx="12" fill={COLORS.green} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={450} y={row1Y + 22} textAnchor="middle" fill={COLORS.text} fontSize="12" fontWeight="600">② 上下文增强</text>
+        <text x={450} y={row1Y + 40} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">记忆 + 知识 + 会话历史</text>
+
+        <Arrow x1={560} y1={row1Y + 27} x2={640} y2={row1Y + 27} />
+
+        {/* Stage 3: Route Decision */}
+        <rect x={650} y={row1Y} width={220} height={boxH} rx="12" fill={COLORS.orange} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={760} y={row1Y + 22} textAnchor="middle" fill={COLORS.text} fontSize="12" fontWeight="600">③ 路由决策</text>
+        <text x={760} y={row1Y + 40} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">选择执行路径 + 缓存命中</text>
+
+        {/* Context sources under stage 2 */}
+        <rect x={370} y={row1Y + 66} width={80} height={26} rx="6" fill="rgba(255,255,255,0.7)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={410} y={row1Y + 83} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">短期记忆</text>
+        <rect x={458} y={row1Y + 66} width={80} height={26} rx="6" fill="rgba(255,255,255,0.7)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={498} y={row1Y + 83} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">RAG 知识库</text>
+        <rect x={546} y={row1Y + 66} width={80} height={26} rx="6" fill="rgba(255,255,255,0.7)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={586} y={row1Y + 83} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">FTA 证据</text>
+        <line x1={450} y1={row1Y + 92} x2={450} y2={row1Y + 100} stroke={COLORS.arrow} strokeWidth="1.5" markerEnd="url(#arrow-main)" />
+        <line x1={498} y1={row1Y + 92} x2={498} y2={row1Y + 100} stroke={COLORS.arrow} strokeWidth="1.5" markerEnd="url(#arrow-main)" />
+        <line x1={586} y1={row1Y + 92} x2={586} y2={row1Y + 100} stroke={COLORS.arrow} strokeWidth="1.5" markerEnd="url(#arrow-main)" />
+
+        {/* ══════════ Row 2: 四条执行路径 + 失败回退 ══════════ */}
+        <line x1={140} y1={row1Y + boxH} x2={140} y2={row2Y} stroke={COLORS.arrow} strokeWidth="1.5" />
+        <line x1={450} y1={row1Y + boxH} x2={450} y2={row2Y} stroke={COLORS.arrow} strokeWidth="1.5" />
+        <line x1={760} y1={row1Y + boxH} x2={760} y2={row2Y} stroke={COLORS.arrow} strokeWidth="1.5" />
+
+        {/* Route label under selector */}
+        <text x={450} y={row2Y - 8} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10" fontWeight="600">策略: 规则路由 / LLM 路由 / 混合路由 · 失败自动切换</text>
+
+        {/* Path 1: FTA */}
+        <rect x={40} y={row2Y} width={200} height={64} rx="10" fill={COLORS.beige} stroke={COLORS.stroke} strokeWidth="1.5" />
+        <text x={140} y={row2Y + 24} textAnchor="middle" fill={COLORS.text} fontSize="11" fontWeight="600">FTA 故障树分析</text>
+        <text x={140} y={row2Y + 42} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">根因诊断 · 最小割集</text>
+        <text x={140} y={row2Y + 56} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">蒙特卡洛仿真</text>
+
+        {/* Path 2: Skill */}
+        <rect x={255} y={row2Y} width={200} height={64} rx="10" fill={COLORS.green} stroke={COLORS.stroke} strokeWidth="1.5" />
+        <text x={355} y={row2Y + 24} textAnchor="middle" fill={COLORS.text} fontSize="11" fontWeight="600">专家技能执行</text>
+        <text x={355} y={row2Y + 42} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">WebSearch · CodeExec</text>
+        <text x={355} y={row2Y + 56} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">沙箱隔离</text>
+
+        {/* Path 3: RAG */}
+        <rect x={470} y={row2Y} width={200} height={64} rx="10" fill={COLORS.teal} stroke={COLORS.stroke} strokeWidth="1.5" />
+        <text x={570} y={row2Y + 24} textAnchor="middle" fill={COLORS.text} fontSize="11" fontWeight="600">RAG 知识检索</text>
+        <text x={570} y={row2Y + 42} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">向量检索 + 重排序</text>
+        <text x={570} y={row2Y + 56} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">Milvus / Qdrant</text>
+
+        {/* Path 4: Code Analysis */}
+        <rect x={685} y={row2Y} width={185} height={64} rx="10" fill={COLORS.purple} stroke={COLORS.stroke} strokeWidth="1.5" />
+        <text x={777} y={row2Y + 24} textAnchor="middle" fill={COLORS.text} fontSize="11" fontWeight="600">代码分析引擎</text>
+        <text x={777} y={row2Y + 42} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">静态 AST + 动态调用图</text>
+        <text x={777} y={row2Y + 56} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">修复方案生成</text>
+
+        {/* ══════════ Row 3: 失败回退链 ══════════ */}
+        <rect x={150} y={row2Y + 78} width={600} height={40} rx="8" fill="rgba(255,255,255,0.75)" stroke={COLORS.stroke} strokeWidth="1" strokeDasharray="5,3" />
+        <text x={450} y={row2Y + 100} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">失败回退: 重试(最多 N 次) → ReEnricher 重富化 → 切换备选路径 → 熔断降级</text>
+        <line x1={450} y1={row2Y + 64} x2={450} y2={row2Y + 78} stroke={COLORS.arrow} strokeWidth="1.5" strokeDasharray="4,3" markerEnd="url(#arrow-main)" />
+
+        {/* 决策逻辑说明卡 */}
+        <rect x={40} y={row2Y + 128} width={820} height={52} rx="8" fill={COLORS.gray} stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={60} y={row2Y + 148} fill={COLORS.text} fontSize="10" fontWeight="600">决策逻辑: </text>
+        <text x={140} y={row2Y + 148} fill={COLORS.textSecondary} fontSize="10">输入哈希 → 缓存命中直接返回 · 意图置信度 &lt; 阈值 → 转 LLM 路由 · 上下文路由偏好 (prefer_reasoning / prefer_knowledge / prefer_analysis) 影响路径选择</text>
+        <text x={60} y={row2Y + 168} fill={COLORS.textSecondary} fontSize="10">失败信号 (超时/资源缺失/逻辑错误) → ReEnricher 分类错误类型 → 动态调整 route_preferences → 下一轮路由携带经验重试</text>
+      </svg>
+    </div>
+  );
+}
+
+function MemoryHierarchyDiagram() {
+  const W = 820;
+  const H = 330;
+
+  return (
+    <div className="overflow-x-auto">
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: W, margin: '0 auto', display: 'block' }} xmlns="http://www.w3.org/2000/svg">
+        <style>{`text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }`}</style>
+        <SvgDefs />
+        <rect width={W} height={H} fill={COLORS.bg} />
+        <text x={W / 2} y={28} textAnchor="middle" fill={COLORS.text} fontSize="15" fontWeight="700">Hierarchical Memory 三层记忆架构</text>
+
+        {/* Layer 1: Short-term */}
+        <rect x={30} y={56} width={350} height={86} rx="12" fill={COLORS.blue} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={50} y={78} fill={COLORS.text} fontSize="12" fontWeight="600">① 短期记忆 · Working Memory</text>
+        <text x={50} y={98} fill={COLORS.textSecondary} fontSize="10">当前会话上下文 · 对话历史 · 中间推理状态</text>
+        <text x={50} y={116} fill={COLORS.textSecondary} fontSize="10">存储: Redis (TLL 过期) · 容量上限 + 逐出策略 (LRU)</text>
+        <text x={50} y={134} fill={COLORS.textSecondary} fontSize="10">并发安全: asyncio.Lock 串行化读写</text>
+
+        {/* Layer 2: Long-term */}
+        <rect x={30} y={158} width={350} height={86} rx="12" fill={COLORS.green} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={50} y={180} fill={COLORS.text} fontSize="12" fontWeight="600">② 长期记忆 · Episodic Memory</text>
+        <text x={50} y={200} fill={COLORS.textSecondary} fontSize="10">历史工单经验 · 已解决问题 · 用户画像</text>
+        <text x={50} y={218} fill={COLORS.textSecondary} fontSize="10">存储: PostgreSQL 持久化 + 语义索引</text>
+        <text x={50} y={236} fill={COLORS.textSecondary} fontSize="10">沉淀: 会话结束后由回放/总结任务写入</text>
+
+        {/* Layer 3: Knowledge base */}
+        <rect x={30} y={260} width={350} height={58} rx="12" fill={COLORS.beige} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={50} y={282} fill={COLORS.text} fontSize="12" fontWeight="600">③ 知识库 · Knowledge Base</text>
+        <text x={50} y={302} fill={COLORS.textSecondary} fontSize="10">RAG 管道: 文档 → 分块 → BGE 向量 → Milvus/Qdrant 检索</text>
+
+        {/* Consolidation arrow */}
+        <line x1={380} y1={100} x2={450} y2={100} stroke={COLORS.arrow} strokeWidth="2" markerEnd="url(#arrow-main)" />
+        <text x={415} y={92} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">巩固</text>
+        <line x1={380} y1={202} x2={450} y2={202} stroke={COLORS.arrow} strokeWidth="2" markerEnd="url(#arrow-main)" />
+        <text x={415} y={194} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">归纳</text>
+
+        {/* Right: 检索与生命周期 */}
+        <rect x={460} y={56} width={330} height={262} rx="12" fill={COLORS.gray} stroke={COLORS.stroke} strokeWidth="1.5" />
+        <text x={480} y={80} fill={COLORS.text} fontSize="12" fontWeight="600">读取路径 (Selector 上下文增强)</text>
+        <text x={480} y={104} fill={COLORS.textSecondary} fontSize="10">1. 短期记忆: 命中当前会话 → 直接使用</text>
+        <text x={480} y={124} fill={COLORS.textSecondary} fontSize="10">2. 未命中 → 语义查询长期记忆 (相似经验)</text>
+        <text x={480} y={144} fill={COLORS.textSecondary} fontSize="10">3. RAG 知识库: 补充领域文档证据</text>
+        <text x={480} y={164} fill={COLORS.textSecondary} fontSize="10">4. 多源融合注入 prompt, 提升路由质量</text>
+
+        <line x1={480} y1={178} x2={770} y2={178} stroke={COLORS.stroke} strokeWidth="0.5" strokeDasharray="4,3" />
+
+        <text x={480} y={198} fill={COLORS.text} fontSize="12" fontWeight="600">写入路径</text>
+        <text x={480} y={222} fill={COLORS.textSecondary} fontSize="10">· 实时: 会话消息写入短期记忆 (Redis)</text>
+        <text x={480} y={242} fill={COLORS.textSecondary} fontSize="10">· 异步: 回放任务将短期 → 长期巩固</text>
+        <text x={480} y={262} fill={COLORS.textSecondary} fontSize="10">· 离线: 工单总结 Agent 归纳 → 知识库</text>
+        <text x={480} y={282} fill={COLORS.textSecondary} fontSize="10">· 失效: TTL 过期 / 容量逐出 / 主动清理</text>
+        <text x={480} y={306} fill={COLORS.textSecondary} fontSize="9" fontStyle="italic">关键设计: 记忆带置信度与衰减, 过期自动回收</text>
+      </svg>
+    </div>
+  );
+}
+
+function HybridPlannerDiagram() {
+  const W = 860;
+  const H = 400;
+
+  return (
+    <div className="overflow-x-auto">
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: W, margin: '0 auto', display: 'block' }} xmlns="http://www.w3.org/2000/svg">
+        <style>{`text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }`}</style>
+        <SvgDefs />
+        <rect width={W} height={H} fill={COLORS.bg} />
+        <text x={W / 2} y={28} textAnchor="middle" fill={COLORS.text} fontSize="15" fontWeight="700">Hybrid Planner 双模式规划</text>
+
+        {/* Goal input */}
+        <rect x={330} y={48} width={200} height={42} rx="10" fill={COLORS.blue} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={430} y={74} textAnchor="middle" fill={COLORS.text} fontSize="12" fontWeight="600">用户目标 Goal</text>
+
+        {/* Mode switch box */}
+        <rect x={280} y={106} width={300} height={58} rx="12" fill={COLORS.beige} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={430} y={128} textAnchor="middle" fill={COLORS.text} fontSize="11" fontWeight="600">模式选择</text>
+        <text x={430} y={146} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">简单/紧急 → REACTIVE · 复杂/多步 → DELIBERATIVE</text>
+        <line x1={430} y1={90} x2={430} y2={106} stroke={COLORS.arrow} strokeWidth="2" markerEnd="url(#arrow-main)" />
+
+        {/* Branch lines */}
+        <line x1={330} y1={164} x2={205} y2={190} stroke={COLORS.arrow} strokeWidth="2" markerEnd="url(#arrow-main)" />
+        <line x1={530} y1={164} x2={655} y2={190} stroke={COLORS.arrow} strokeWidth="2" markerEnd="url(#arrow-main)" />
+
+        {/* ══════════ Left: REACTIVE ══════════ */}
+        <rect x={40} y={196} width={330} height={160} rx="12" fill={COLORS.green} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={205} y={220} textAnchor="middle" fill={COLORS.text} fontSize="12" fontWeight="600">REACTIVE 反应式</text>
+        <text x={205} y={238} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">低延迟 · 单轮推理</text>
+
+        <rect x={60} y={250} width={290} height={34} rx="7" fill="rgba(255,255,255,0.7)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={205} y={272} textAnchor="middle" fill={COLORS.text} fontSize="10">观察 → 行动 → 观察循环 (ReAct)</text>
+
+        <rect x={60} y={292} width={140} height={34} rx="7" fill="rgba(255,255,255,0.7)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={130} y={314} textAnchor="middle" fill={COLORS.text} fontSize="10">工具调用</text>
+        <rect x={210} y={292} width={140} height={34} rx="7" fill="rgba(255,255,255,0.7)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={280} y={314} textAnchor="middle" fill={COLORS.text} fontSize="10">结果反馈</text>
+        <text x={205} y={348} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9" fontStyle="italic">适用: 告警确认 · 单点故障 · 即时问答</text>
+
+        {/* ══════════ Right: DELIBERATIVE ══════════ */}
+        <rect x={490} y={196} width={330} height={160} rx="12" fill={COLORS.purple} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={655} y={220} textAnchor="middle" fill={COLORS.text} fontSize="12" fontWeight="600">DELIBERATIVE 深思式</text>
+        <text x={655} y={238} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">LLM 目标分解 · 逐步执行</text>
+
+        <rect x={510} y={250} width={290} height={34} rx="7" fill="rgba(255,255,255,0.7)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={655} y={272} textAnchor="middle" fill={COLORS.text} fontSize="10">LLM 分解 → JSON 步骤计划</text>
+
+        <rect x={510} y={292} width={140} height={34} rx="7" fill="rgba(255,255,255,0.7)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={580} y={314} textAnchor="middle" fill={COLORS.text} fontSize="10">顺序/并行执行</text>
+        <rect x={660} y={292} width={140} height={34} rx="7" fill="rgba(255,255,255,0.7)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={730} y={314} textAnchor="middle" fill={COLORS.text} fontSize="10">失败回退</text>
+        <text x={655} y={348} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9" fontStyle="italic">适用: 复杂工单 · 多子系统故障 · 变更方案</text>
+
+        {/* Fallback note */}
+        <rect x={140} y={370} width={580} height={22} rx="6" fill="rgba(255,255,255,0.75)" stroke={COLORS.stroke} strokeWidth="1" strokeDasharray="4,3" />
+        <text x={430} y={385} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">鲁棒性: LLM 分解失败/返回空步骤 → 自动回退规则式关键词分解, 保证任何输入都有计划产出</text>
+      </svg>
+    </div>
+  );
+}
+
+function ResilienceDiagram() {
+  const W = 860;
+  const H = 380;
+
+  return (
+    <div className="overflow-x-auto">
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: W, margin: '0 auto', display: 'block' }} xmlns="http://www.w3.org/2000/svg">
+        <style>{`text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }`}</style>
+        <SvgDefs />
+        <rect width={W} height={H} fill={COLORS.bg} />
+        <text x={W / 2} y={28} textAnchor="middle" fill={COLORS.text} fontSize="15" fontWeight="700">Resilience 熔断与降级策略</text>
+
+        {/* Request entry */}
+        <rect x={330} y={48} width={200} height={40} rx="10" fill={COLORS.blue} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={430} y={73} textAnchor="middle" fill={COLORS.text} fontSize="12" fontWeight="600">下游调用请求</text>
+
+        {/* Circuit breaker state machine */}
+        <rect x={250} y={104} width={360} height={70} rx="12" fill={COLORS.beige} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={430} y={126} textAnchor="middle" fill={COLORS.text} fontSize="12" fontWeight="600">Circuit Breaker 熔断器状态机</text>
+        <text x={430} y={146} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">CLOSED ─失败≥阈值→ OPEN ─超时→ HALF_OPEN ─探测成功→ CLOSED</text>
+        <text x={430} y={162} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">asyncio.Lock 并发安全 · 失败计数平滑衰减 · 可观测 get_state_info()</text>
+        <line x1={430} y1={88} x2={430} y2={104} stroke={COLORS.arrow} strokeWidth="2" markerEnd="url(#arrow-main)" />
+
+        {/* Three outcomes */}
+        <line x1={340} y1={174} x2={240} y2={200} stroke={COLORS.arrow} strokeWidth="1.5" markerEnd="url(#arrow-main)" />
+        <line x1={430} y1={174} x2={430} y2={200} stroke={COLORS.arrow} strokeWidth="1.5" markerEnd="url(#arrow-main)" />
+        <line x1={520} y1={174} x2={620} y2={200} stroke={COLORS.arrow} strokeWidth="1.5" markerEnd="url(#arrow-main)" />
+
+        {/* Success */}
+        <rect x={90} y={206} width={240} height={80} rx="10" fill={COLORS.green} stroke={COLORS.stroke} strokeWidth="1.5" />
+        <text x={210} y={230} textAnchor="middle" fill={COLORS.text} fontSize="11" fontWeight="600">正常调用</text>
+        <text x={210} y={250} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">CLOSED 直通 · 成功后</text>
+        <text x={210} y={266} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">失败计数减一 (衰减)</text>
+        <text x={210} y={282} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">HALF_OPEN 探测成功 → 闭合</text>
+
+        {/* Fallback cascade */}
+        <rect x={350} y={206} width={180} height={80} rx="10" fill={COLORS.orange} stroke={COLORS.stroke} strokeWidth="1.5" />
+        <text x={440} y={230} textAnchor="middle" fill={COLORS.text} fontSize="11" fontWeight="600">失败</text>
+        <text x={440} y={250} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">记录失败 → 计数+1</text>
+        <text x={440} y={266} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">达阈值 → 熔断 OPEN</text>
+        <text x={440} y={282} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">快速失败拒绝后续请求</text>
+
+        {/* Fallback value */}
+        <rect x={560} y={206} width={210} height={80} rx="10" fill={COLORS.purple} stroke={COLORS.stroke} strokeWidth="1.5" />
+        <text x={665} y={230} textAnchor="middle" fill={COLORS.text} fontSize="11" fontWeight="600">降级 Fallback</text>
+        <text x={665} y={250} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">返回降级值 / 缓存结果</text>
+        <text x={665} y={266} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">FallbackCascade 多级</text>
+        <text x={665} y={282} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">策略逐级尝试</text>
+
+        {/* Cascade detail */}
+        <rect x={90} y={300} width={680} height={62} rx="10" fill={COLORS.gray} stroke={COLORS.stroke} strokeWidth="1.5" />
+        <text x={110} y={322} fill={COLORS.text} fontSize="11" fontWeight="600">FallbackCascade 降级链</text>
+        <rect x={110} y={332} width={150} height={20} rx="5" fill="rgba(255,255,255,0.8)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={185} y={346} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">MCP 工具 → 原生 Skill</text>
+        <text x={265} y={346} fill={COLORS.textSecondary} fontSize="10">→</text>
+        <rect x={278} y={332} width={150} height={20} rx="5" fill="rgba(255,255,255,0.8)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={353} y={346} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">→ 规则引擎 → 直接 LLM</text>
+        <text x={440} y={346} fill={COLORS.textSecondary} fontSize="10">→</text>
+        <rect x={460} y={332} width={150} height={20} rx="5" fill="rgba(255,255,255,0.8)" stroke={COLORS.stroke} strokeWidth="1" />
+        <text x={535} y={346} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">→ 缓存快照 → 明确报错</text>
+        <text x={650} y={346} fill={COLORS.textSecondary} fontSize="10">每级失败记录日志, 最后返回结构化 FallbackResult</text>
+      </svg>
+    </div>
+  );
+}
+
+function FtaAIOpsFlowDiagram() {
+  const W = 900;
+  const H = 300;
+
+  return (
+    <div className="overflow-x-auto">
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: W, margin: '0 auto', display: 'block' }} xmlns="http://www.w3.org/2000/svg">
+        <style>{`text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }`}</style>
+        <SvgDefs />
+        <rect width={W} height={H} fill={COLORS.bg} />
+        <text x={W / 2} y={28} textAnchor="middle" fill={COLORS.text} fontSize="15" fontWeight="700">FTA 引擎在 AIOps 场景的应用流程</text>
+
+        {/* Row 1: 五个阶段 */}
+        <rect x={20} y={56} width={160} height={64} rx="10" fill={COLORS.blue} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={100} y={78} textAnchor="middle" fill={COLORS.text} fontSize="11" fontWeight="600">① 事件接入</text>
+        <text x={100} y={96} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">告警 · 日志 · 指标</text>
+        <text x={100} y={110} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">异常信号采集</text>
+
+        <Arrow x1={180} y1={88} x2={210} y2={88} />
+
+        <rect x={210} y={56} width={160} height={64} rx="10" fill={COLORS.green} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={290} y={78} textAnchor="middle" fill={COLORS.text} fontSize="11" fontWeight="600">② 建树分析</text>
+        <text x={290} y={96} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">AND/OR/NOT/VOTING</text>
+        <text x={290} y={110} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">故障树构造</text>
+
+        <Arrow x1={370} y1={88} x2={400} y2={88} />
+
+        <rect x={400} y={56} width={160} height={64} rx="10" fill={COLORS.beige} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={480} y={78} textAnchor="middle" fill={COLORS.text} fontSize="11" fontWeight="600">③ 定量分析</text>
+        <text x={480} y={96} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">最小割集 · 顶事件概率</text>
+        <text x={480} y={110} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">蒙特卡洛仿真</text>
+
+        <Arrow x1={560} y1={88} x2={590} y2={88} />
+
+        <rect x={590} y={56} width={160} height={64} rx="10" fill={COLORS.orange} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={670} y={78} textAnchor="middle" fill={COLORS.text} fontSize="11" fontWeight="600">④ 根因定位</text>
+        <text x={670} y={96} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">按割集概率排序</text>
+        <text x={670} y={110} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">最小割集 → 最可能根因</text>
+
+        <Arrow x1={750} y1={88} x2={780} y2={88} />
+
+        <rect x={780} y={56} width={110} height={64} rx="10" fill={COLORS.purple} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
+        <text x={835} y={78} textAnchor="middle" fill={COLORS.text} fontSize="11" fontWeight="600">⑤ 处置建议</text>
+        <text x={835} y={96} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">修复动作</text>
+        <text x={835} y={110} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">复盘沉淀</text>
+
+        {/* Row 2: 与 Selector 的协同 */}
+        <rect x={120} y={150} width={660} height={60} rx="10" fill={COLORS.gray} stroke={COLORS.stroke} strokeWidth="1.5" />
+        <text x={450} y={172} textAnchor="middle" fill={COLORS.text} fontSize="11" fontWeight="600">与 Intelligent Selector 协同</text>
+        <text x={450} y={192} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">选择器将复杂多步故障路由至 FTA → 结果写回记忆/知识库 → 同型故障二次触发时直接命中缓存或相似案例</text>
+        <line x1={450} y1={120} x2={450} y2={150} stroke={COLORS.arrow} strokeWidth="1.5" markerEnd="url(#arrow-main)" />
+
+        {/* Row 3: 失败回退 */}
+        <rect x={120} y={230} width={660} height={40} rx="8" fill="rgba(255,255,255,0.75)" stroke={COLORS.stroke} strokeWidth="1" strokeDasharray="5,3" />
+        <text x={450} y={254} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">FTA 引擎不可用/失败 → 选择器自动降级: RAG 相似案例 → 代码分析 → 直接 LLM 推理</text>
+      </svg>
+    </div>
+  );
+}
+
 export default function ArchitecturePage() {
   return (
     <div className="space-y-6 animate-slide-up">
@@ -722,7 +1066,166 @@ export default function ArchitecturePage() {
         </CardContent>
       </Card>
 
-      {/* ═══════════════ 第四层：系统设计详解 ═══════════════ */}
+      {/* ═══════════════ 第四层：核心方法论设计 ═══════════════ */}
+
+      {/* Intelligent Selector 工作流 */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Split className="h-4 w-4 text-primary" />
+            Intelligent Selector 智能路由机制
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Selector 是三阶段元路由引擎：<span className="font-semibold text-foreground">意图分析 → 上下文增强 → 路由决策</span>。
+            相比传统 Agent 的固定流程（LangGraph / CrewAI 的静态图），它根据用户意图与实时上下文动态选择执行路径，
+            并通过<span className="font-semibold text-foreground">失败回退 + 重富化</span>实现自适应调度：
+          </p>
+          <SelectorFlowDiagram />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-md bg-amber-500/5 border border-amber-500/20 p-3">
+              <p className="text-xs font-medium text-amber-600 dark:text-amber-400 mb-1">三策略路由</p>
+              <p className="text-xs text-muted-foreground">规则路由（确定性快路径）→ LLM 路由（语义理解）→ 混合路由（置信度分级），兼顾延迟与智能</p>
+            </div>
+            <div className="rounded-md bg-emerald-500/5 border border-emerald-500/20 p-3">
+              <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mb-1">失败感知</p>
+              <p className="text-xs text-muted-foreground">ReEnricher 对错误分类（超时/资源缺失/逻辑错误…）并动态调整 route_preferences，下一轮路由携带经验重试</p>
+            </div>
+            <div className="rounded-md bg-purple-500/5 border border-purple-500/20 p-3">
+              <p className="text-xs font-medium text-purple-600 dark:text-purple-400 mb-1">缓存加速</p>
+              <p className="text-xs text-muted-foreground">输入 SHA-256 哈希命中直接返回；重试时按配置绕过缓存，避免拿旧结果掩盖新失败</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Hierarchical Memory 三层记忆 */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <BrainCircuit className="h-4 w-4 text-primary" />
+            Hierarchical Memory 三层记忆架构
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            记忆系统按<span className="font-semibold text-foreground">时效性与抽象层级</span>分为三层：
+            短期记忆（会话态）→ 长期记忆（经验态）→ 知识库（组织态），各层独立存储、按需巩固沉淀：
+          </p>
+          <MemoryHierarchyDiagram />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-md bg-blue-500/5 border border-blue-500/20 p-3">
+              <p className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">短期记忆 · Working</p>
+              <p className="text-xs text-muted-foreground">Redis 会话缓存，TTL 过期 + 容量上限逐出（LRU），asyncio.Lock 保证并发读写安全</p>
+            </div>
+            <div className="rounded-md bg-emerald-500/5 border border-emerald-500/20 p-3">
+              <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mb-1">长期记忆 · Episodic</p>
+              <p className="text-xs text-muted-foreground">PostgreSQL 持久化历史工单/已解决问题，支持语义相似查询，会话结束后异步巩固写入</p>
+            </div>
+            <div className="rounded-md bg-amber-500/5 border border-amber-500/20 p-3">
+              <p className="text-xs font-medium text-amber-600 dark:text-amber-400 mb-1">知识库 · Knowledge</p>
+              <p className="text-xs text-muted-foreground">RAG 管道：文档解析 → 分块 → BGE 向量化 → Milvus/Qdrant 检索，为路由提供领域证据</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Hybrid Planner 双模式 */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <ToggleLeft className="h-4 w-4 text-primary" />
+            Hybrid Planner 混合规划
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Planner 在<span className="font-semibold text-foreground">反应式（REACTIVE）</span>与
+            <span className="font-semibold text-foreground">深思式（DELIBERATIVE）</span>双模式间动态切换：
+            简单/紧急任务走 ReAct 快路径，复杂多步任务由 LLM 分解为结构化计划逐步执行。
+          </p>
+          <HybridPlannerDiagram />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-md bg-emerald-500/5 border border-emerald-500/20 p-3">
+              <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mb-1">REACTIVE 反应式</p>
+              <p className="text-xs text-muted-foreground">单轮推理 + 工具调用循环，延迟最低；适合告警确认、单点故障、即时问答等确定性场景</p>
+            </div>
+            <div className="rounded-md bg-purple-500/5 border border-purple-500/20 p-3">
+              <p className="text-xs font-medium text-purple-600 dark:text-purple-400 mb-1">DELIBERATIVE 深思式</p>
+              <p className="text-xs text-muted-foreground">LLM 目标分解为 JSON 步骤计划，支持顺序/并行执行；适合复杂工单、多子系统故障排查</p>
+            </div>
+            <div className="rounded-md bg-orange-500/5 border border-orange-500/20 p-3">
+              <p className="text-xs font-medium text-orange-600 dark:text-orange-400 mb-1">容错回退</p>
+              <p className="text-xs text-muted-foreground">LLM 分解失败或返回空步骤 → 自动回退规则式关键词分解，任何输入都有计划产出</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Resilience 熔断降级 */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Activity className="h-4 w-4 text-primary" />
+            Resilience 熔断与降级策略
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Resilience 模块为下游依赖提供<span className="font-semibold text-foreground">熔断器 + 降级级联</span>双保险：
+            连续失败触发熔断快速失败，保护系统免遭雪崩；降级链逐级尝试备选策略，保证核心功能可用：
+          </p>
+          <ResilienceDiagram />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-md bg-rose-500/5 border border-rose-500/20 p-3">
+              <p className="text-xs font-medium text-rose-600 dark:text-rose-400 mb-1">熔断三态机</p>
+              <p className="text-xs text-muted-foreground">CLOSED → OPEN → HALF_OPEN 完整状态机；失败计数平滑衰减，探测成功后自动闭合；支持手动重置与状态观测</p>
+            </div>
+            <div className="rounded-md bg-orange-500/5 border border-orange-500/20 p-3">
+              <p className="text-xs font-medium text-orange-600 dark:text-orange-400 mb-1">降级级联</p>
+              <p className="text-xs text-muted-foreground">FallbackCascade 按序尝试 MCP 工具 → 原生 Skill → 规则引擎 → 直接 LLM → 缓存快照，逐级降级</p>
+            </div>
+            <div className="rounded-md bg-purple-500/5 border border-purple-500/20 p-3">
+              <p className="text-xs font-medium text-purple-600 dark:text-purple-400 mb-1">结构化结果</p>
+              <p className="text-xs text-muted-foreground">统一返回 FallbackResult（success / strategy_used / data / error），失败策略全程可观测、可审计</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* FTA AIOps 应用流程 */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Workflow className="h-4 w-4 text-primary" />
+            FTA 引擎在 AIOps 场景的应用流程
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            FTA（故障树分析）引擎将运维事件转化为<span className="font-semibold text-foreground">可量化的故障逻辑模型</span>：
+            从事件接入到建树分析、定量仿真、根因定位再到处置建议，形成完整的 AIOps 诊断闭环：
+          </p>
+          <FtaAIOpsFlowDiagram />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-md bg-amber-500/5 border border-amber-500/20 p-3">
+              <p className="text-xs font-medium text-amber-600 dark:text-amber-400 mb-1">六种门类型</p>
+              <p className="text-xs text-muted-foreground">AND / OR / NOT / VOTING / INHIBIT / PRIORITY_AND，支持因果、时序与优先级语义</p>
+            </div>
+            <div className="rounded-md bg-emerald-500/5 border border-emerald-500/20 p-3">
+              <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mb-1">定量分析</p>
+              <p className="text-xs text-muted-foreground">最小割集计算 + 蒙特卡洛仿真，按概率排序定位最可能根因，替代人工经验猜测</p>
+            </div>
+            <div className="rounded-md bg-purple-500/5 border border-purple-500/20 p-3">
+              <p className="text-xs font-medium text-purple-600 dark:text-purple-400 mb-1">经验闭环</p>
+              <p className="text-xs text-muted-foreground">结果写回记忆与知识库，同型故障再次触发时直接命中缓存或相似案例，越用越准</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ═══════════════ 第五层：系统设计详解 ═══════════════ */}
 
       {/* System Architecture Overview */}
       <Card>

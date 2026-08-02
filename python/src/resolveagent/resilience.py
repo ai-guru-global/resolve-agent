@@ -74,7 +74,8 @@ class CircuitBreaker:
                     raise CircuitOpenError("Circuit breaker is open")
 
             if self._state == CircuitState.HALF_OPEN:
-                if self._half_open_calls >= self._half_open_max_calls:
+                # 修复: 此前误写为 self._half_open_max_calls (不存在的属性)
+                if self._half_open_calls >= self.half_open_max_calls:
                     raise CircuitOpenError("Circuit breaker is half-open, max calls reached")
                 self._half_open_calls += 1
 
@@ -88,7 +89,9 @@ class CircuitBreaker:
 
     def _should_attempt_reset(self) -> bool:
         """Check if enough time has passed to attempt reset."""
-        return (time.monotonic() - self._last_failure_time) >= self._reset_timeout
+        # 修复: 此前误写为 self._reset_timeout (不存在的属性),
+        # 导致熔断器 OPEN 后尝试恢复时必然抛 AttributeError, 永远无法恢复
+        return (time.monotonic() - self._last_failure_time) >= self.reset_timeout
 
     async def _on_success(self) -> None:
         """Handle successful call."""
@@ -106,7 +109,9 @@ class CircuitBreaker:
             self._failure_count += 1
             self._last_failure_time = time.monotonic()
 
-            if self._failure_count >= self._failure_threshold:
+            # 修复: 此前误写为 self._failure_threshold (不存在的属性),
+            # 导致失败达到阈值时抛 AttributeError 而非正常打开熔断器
+            if self._failure_count >= self.failure_threshold:
                 logger.warning(
                     "Circuit breaker opening",
                     extra={"failure_count": self._failure_count},
@@ -122,6 +127,31 @@ class CircuitBreaker:
     def failure_count(self) -> int:
         """Get current failure count."""
         return self._failure_count
+
+    def reset(self) -> None:
+        """Manually reset the circuit breaker to closed state.
+
+        Useful for operational recovery after the downstream
+        service is confirmed healthy.
+        """
+        self._state = CircuitState.CLOSED
+        self._failure_count = 0
+        self._half_open_calls = 0
+        logger.info("Circuit breaker manually reset to closed")
+
+    def get_state_info(self) -> dict[str, Any]:
+        """Get observable state snapshot for monitoring/debugging."""
+        return {
+            "state": self._state.value,
+            "failure_count": self._failure_count,
+            "failure_threshold": self.failure_threshold,
+            "reset_timeout": self.reset_timeout,
+            "seconds_since_last_failure": (
+                round(time.monotonic() - self._last_failure_time, 2)
+                if self._last_failure_time > 0
+                else None
+            ),
+        }
 
 
 class CircuitOpenError(Exception):
@@ -189,6 +219,13 @@ class FallbackCascade:
         """
         if labels is None:
             labels = [f"strategy_{i}" for i in range(len(strategies))]
+
+        if not strategies:
+            return FallbackResult(
+                success=False,
+                strategy_used="none",
+                error="No fallback strategies provided",
+            )
 
         for i, (strategy, label) in enumerate(zip(strategies, labels, strict=True)):
             try:

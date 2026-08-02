@@ -8,7 +8,10 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
+import re
+import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable
@@ -177,18 +180,22 @@ class HybridPlanner:
                 model=getattr(self._llm, "default_model", "qwen-plus"),
             )
 
-            import json
-
-            data = json.loads(response.content)
+            data = self._extract_json(response.content)
             steps = [
                 PlanStep(
                     id=f"{plan_id}-step-{i+1}",
                     description=s["description"],
                     action=s.get("action", "execute"),
                     parameters=s.get("parameters", {}),
+                    expected_outcome=s.get("expected_outcome", ""),
                 )
                 for i, s in enumerate(data.get("steps", []))
             ]
+
+            # LLM 返回空步骤时回退规则分解, 避免产生空计划直接"完成"
+            if not steps:
+                logger.warning("LLM decomposition returned no steps, using simple fallback")
+                return self._simple_decompose_plan(plan_id, goal)
 
             return Plan(
                 id=plan_id,
@@ -202,6 +209,49 @@ class HybridPlanner:
         except Exception as e:
             logger.warning("LLM decomposition failed, using simple fallback: %s", e)
             return self._simple_decompose_plan(plan_id, goal)
+
+    @staticmethod
+    def _extract_json(content: str) -> dict[str, Any]:
+        """从 LLM 响应中容错提取 JSON 对象.
+
+        LLM 常在 JSON 外包裹 markdown 围栏或解释性文字,
+        直接 json.loads 会失败并静默降级到关键词分解.
+
+        Args:
+            content: LLM 原始响应文本
+
+        Returns:
+            解析后的字典
+
+        Raises:
+            ValueError: 无法提取到合法 JSON
+        """
+        text = content.strip()
+
+        # 1) 优先剔除 markdown 围栏 ```json ... ```
+        fence = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+        if fence:
+            return HybridPlanner._as_dict(json.loads(fence.group(1)))
+
+        # 2) 直接尝试全文解析
+        try:
+            return HybridPlanner._as_dict(json.loads(text))
+        except json.JSONDecodeError:
+            pass
+
+        # 3) 提取首个花括号到末个花括号的子串
+        start, end = text.find("{"), text.rfind("}")
+        if start != -1 and end > start:
+            return HybridPlanner._as_dict(json.loads(text[start : end + 1]))
+
+        raise ValueError("No valid JSON object found in LLM response")
+
+    @staticmethod
+    def _as_dict(parsed: Any) -> dict[str, Any]:
+        """校验解析结果为对象, 避免 LLM 返回数组/标量时下游 .get 崩溃."""
+        if not isinstance(parsed, dict):
+            raise ValueError(f"Expected JSON object, got {type(parsed).__name__}")
+        return parsed
 
     def _simple_decompose_plan(self, plan_id: str, goal: str) -> Plan:
         """简单分解 (无 LLM 时 fallback).
@@ -384,7 +434,7 @@ class HybridPlanner:
         plan.execution_history.append({
             "failed_step": failed_step.id,
             "error": error,
-            "timestamp": asyncio.get_event_loop().time(),
+            "timestamp": time.time(),
         })
 
         # 构建新的计划: 跳过失败步骤或插入修复步骤
@@ -411,6 +461,7 @@ class HybridPlanner:
                     description=step.description,
                     action=step.action,
                     parameters=step.parameters,
+                    expected_outcome=step.expected_outcome,
                 )
                 new_steps.append(new_step)
 
@@ -473,6 +524,9 @@ class HybridPlanner:
                         result.error or "Unknown error",
                     )
                     plan = new_plan
+                    # 修复: 新计划默认 status="pending", 不重置为 executing
+                    # 会导致 while 循环退出, replan 后的计划永远不被执行
+                    plan.status = "executing"
                     replan_count += 1
                     break  # 重新开始执行新计划
 

@@ -40,29 +40,49 @@ class WorkingMemory:
 
     max_size: int = 20
 
-    _entries: deque[MemoryEntry] = field(default_factory=lambda: deque(maxlen=20))
+    _entries: deque[MemoryEntry] = field(default_factory=deque)
     _lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
-    def add(self, role: str, content: str, **metadata: Any) -> None:
+    def __post_init__(self) -> None:
+        # 保证 rolling window 容量与 max_size 一致 (修复: 此前 maxlen 硬编码为 20)
+        self._entries = deque(self._entries, maxlen=self.max_size)
+
+    def add(
+        self,
+        role: str,
+        content: str,
+        importance: float = 0.5,
+        **metadata: Any,
+    ) -> None:
         """添加记忆条目.
+
+        注意: deque.append 本身是原子操作; 并发协程场景请使用 add_async().
 
         Args:
             role: 角色 (user/assistant/system)
             content: 内容
+            importance: 重要性 (0.0-1.0, >= 0.7 才会沉淀到 long-term)
             **metadata: 额外元数据
         """
         entry = MemoryEntry(
             role=role,
             content=content,
             timestamp=datetime.now().isoformat(),
+            importance=importance,
             metadata=metadata,
         )
         self._entries.append(entry)
 
-    async def add_async(self, role: str, content: str, **metadata: Any) -> None:
+    async def add_async(
+        self,
+        role: str,
+        content: str,
+        importance: float = 0.5,
+        **metadata: Any,
+    ) -> None:
         """异步添加记忆条目."""
         async with self._lock:
-            self.add(role, content, **metadata)
+            self.add(role, content, importance=importance, **metadata)
 
     def get_recent(self, limit: int | None = None) -> list[MemoryEntry]:
         """获取最近的记忆.
@@ -141,7 +161,9 @@ class EpisodicMemoryClient:
         try:
             import redis.asyncio as redis
 
-            self._client = redis.from_url(self._redis_url)
+            # decode_responses=True: hgetall 返回 str key/value,
+            # 否则 bytes key 会导致 load() 永远命中不了 "entries" 字段
+            self._client = redis.from_url(self._redis_url, decode_responses=True)
             await self._client.ping()
             self._connected = True
             logger.info("Episodic memory connected to Redis", extra={"url": self._redis_url})
@@ -190,7 +212,9 @@ class EpisodicMemoryClient:
                 },
             )
         else:
-            # Store raw entries
+            # Store raw entries (JSON 序列化, 替代此前脆弱的 str()/ast.literal_eval 方案)
+            import json
+
             entry_data = [
                 {
                     "role": e.role,
@@ -203,7 +227,7 @@ class EpisodicMemoryClient:
             await self._client.hset(
                 key,
                 mapping={
-                    "entries": str(entry_data),
+                    "entries": json.dumps(entry_data, ensure_ascii=False),
                     "entry_count": len(entry_data),
                     "last_updated": datetime.now().isoformat(),
                 },
@@ -249,12 +273,15 @@ class EpisodicMemoryClient:
         # Try to load entries
         entries_str = data.get("entries", "[]")
         try:
-            import ast
+            import json
 
-            return ast.literal_eval(entries_str)
+            loaded = json.loads(entries_str)
+            if isinstance(loaded, list):
+                return loaded
         except Exception:
-            # Fallback to summary
-            return [{"role": "system", "content": data.get("summary", ""), "type": "summary"}]
+            pass
+        # Fallback to summary
+        return [{"role": "system", "content": data.get("summary", ""), "type": "summary"}]
 
     async def clear_session(self, session_id: str) -> None:
         """清除 session 记忆."""
@@ -449,7 +476,13 @@ class HierarchicalMemory:
 
         # 如果重要性足够, 可以选择立即沉淀到 episodic
         if importance >= 0.7 and self._connected:
-            asyncio.create_task(self._persist_to_episodic())
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                # 同步上下文无事件循环: 跳过异步沉淀, 避免 create_task 抛 RuntimeError
+                logger.debug("No running event loop; skip async episodic persist")
+            else:
+                loop.create_task(self._persist_to_episodic())
 
     async def _persist_to_episodic(self) -> None:
         """异步持久化到 Episodic Memory."""
@@ -509,11 +542,18 @@ class HierarchicalMemory:
         Returns:
             嵌入向量
         """
-        # 简化实现: 基于文本长度的伪嵌入
+        # 简化实现: 基于 SHA-256 循环扩展的伪嵌入
+        # 修复: 此前仅产出 32 维, 与 Milvus 集合的 1024 维不匹配, 写入必败
         import hashlib
 
-        h = hashlib.sha256(text.encode()).digest()
-        return [float(b) / 255.0 for b in h[:32]][:1024]
+        dim = 1024
+        values: list[float] = []
+        counter = 0
+        while len(values) < dim:
+            h = hashlib.sha256(f"{text}:{counter}".encode()).digest()
+            values.extend(float(b) / 255.0 for b in h)
+            counter += 1
+        return values[:dim]
 
     async def promote_high_importance(self, embedding_model: str = "bge-large-zh") -> int:
         """将高重要性记忆提升到 Long-term Memory.

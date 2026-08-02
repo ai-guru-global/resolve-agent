@@ -21,7 +21,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Awaitable
+from typing import Any, Awaitable, Callable
 
 from resolveagent.resilience import CircuitBreaker, CircuitOpenError
 from resolveagent.selector.selector import IntelligentSelector, RouteDecision
@@ -150,8 +150,14 @@ class ReEnricher:
             all_attempts, ctx.get("route_preferences", {})
         )
 
-        # Lower enrichment confidence after failures
-        base_confidence = ctx.get("enrichment_confidence", 1.0)
+        # Lower enrichment confidence after failures.
+        # 修复: 此前直接读取上一轮已衰减的 enrichment_confidence 再减去
+        # 0.15 * len(all_attempts), 衰减被复合放大 (第 2 轮直接掉到 0.55)。
+        # 现固定以首轮基线为准做线性衰减。
+        base_confidence = ctx.get("enrichment_confidence_base")
+        if base_confidence is None:
+            base_confidence = ctx.get("enrichment_confidence", 1.0)
+            ctx["enrichment_confidence_base"] = base_confidence
         ctx["enrichment_confidence"] = max(0.3, base_confidence - 0.15 * len(all_attempts))
 
         logger.info(
@@ -212,29 +218,32 @@ class ReEnricher:
 
         # Infer preferences based on dominant error patterns
         if error_types.get("resource_missing", 0) > 0:
-            # RAG/Skill couldn't find something → try reasoning or analysis
-            if "rag" in failed_routes or "skill" in failed_routes:
+            # RAG 检索不到内容 → 知识库帮不上, 转推理
+            if "rag" in failed_routes:
                 prefs["prefer_reasoning"] = True
+            # 技能/工具缺失 → 知识库里可能有替代方案文档
+            elif "skill" in failed_routes:
+                prefs["prefer_knowledge"] = True
 
-        if error_types.get("timeout", 0) > 0 or error_types.get("connection", 0) > 0:
+        if (
+            error_types.get("timeout", 0) > 0 or error_types.get("connection", 0) > 0
+        ) and "code_analysis" not in failed_routes:
             # Network/timeout issues → try local analysis (Code Analysis)
-            if "code_analysis" not in failed_routes:
-                prefs["prefer_analysis"] = True
+            prefs["prefer_analysis"] = True
 
-        if error_types.get("logic_error", 0) > 0:
+        if error_types.get("logic_error", 0) > 0 and "code_analysis" not in failed_routes:
             # Syntax/validation/format errors → Code Analysis is ideal
-            if "code_analysis" not in failed_routes:
-                prefs["prefer_analysis"] = True
+            prefs["prefer_analysis"] = True
 
-        if error_types.get("permission", 0) > 0:
+        if error_types.get("permission", 0) > 0 and "rag" not in failed_routes:
             # Permission issues → try knowledge-based (may have workaround docs)
-            if "rag" not in failed_routes:
-                prefs["prefer_knowledge"] = True
+            prefs["prefer_knowledge"] = True
 
-        if error_types.get("capacity", 0) > 0 or error_types.get("rate_limit", 0) > 0:
+        if (
+            error_types.get("capacity", 0) > 0 or error_types.get("rate_limit", 0) > 0
+        ) and "skill" not in failed_routes:
             # Resource exhausted → fall back to lighter-weight routes
-            if "skill" not in failed_routes:
-                prefs["prefer_knowledge"] = True
+            prefs["prefer_knowledge"] = True
 
         # Per-route-specific heuristics (last-attempt granular analysis)
         last_failed = next(
@@ -246,7 +255,9 @@ class ReEnricher:
                 prefs["prefer_reasoning"] = True
             elif last_failed.route_type == "skill" and last_error_type in ("timeout", "connection"):
                 prefs["prefer_analysis"] = True
-            elif last_failed.route_type == "fta" and last_error_type == "logic_error":
+            elif last_failed.route_type == "fta" and "code_analysis" not in failed_routes:
+                # 故障树工作流自身失败 (逻辑错误/崩溃/未知原因) 时,
+                # 不再重试 FTA, 退化为本地代码分析
                 prefs["prefer_analysis"] = True
 
         logger.info(
@@ -426,7 +437,7 @@ class ResilientSelector:
 
             # Route decision
             bypass_cache = (
-                self._config.enable_circuit_bypass_on_retry and attempt_num > 0
+                self._config.enable_cache_bypass_on_retry and attempt_num > 0
             )
             decision = await self._selector.route(
                 input_text=input_text,

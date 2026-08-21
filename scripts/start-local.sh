@@ -49,7 +49,8 @@ LOG_DIR="$PID_DIR"  # 日志与 PID 同目录
 PORT_PLATFORM=${RESOLVEAGENT_HTTP_PORT:-8080}
 PORT_RUNTIME=${RESOLVEAGENT_RUNTIME_PORT:-9091}
 PORT_GRPC=${RESOLVEAGENT_GRPC_PORT:-9090}
-PORT_WEB=3000
+# 3000 端口常被其他项目 (next-server 等) 占用, 固定使用 5174
+PORT_WEB=5174
 
 # =============================================================================
 # 工具函数
@@ -141,8 +142,10 @@ is_running() {
 # ── 端口级检测与清理 ─────────────────────────────────────────────────────────
 get_port_pid() {
   # 获取监听指定端口的进程 PID
+  # 注意: lsof 无匹配时返回 1, 在 set -euo pipefail 下管道会失败,
+  # 导致调用方 `var=$(get_port_pid ...)` 赋值直接退出脚本, 故加 || true
   local port=$1
-  lsof -ti TCP:"$port" -sTCP:LISTEN 2>/dev/null | head -1
+  lsof -ti TCP:"$port" -sTCP:LISTEN 2>/dev/null | head -1 || true
 }
 
 is_port_listening() {
@@ -687,8 +690,7 @@ run_doctor() {
     if PYTHONPATH="$PYTHON_DIR/src" run_with_timeout 20 "$venv_python" -c "import uvicorn, fastapi" 2>/dev/null; then
       ok "核心依赖 (uvicorn, fastapi) 正常"
     else
-      warn "核心依赖缺失 — 自动修复中..."
-      ensure_python_venv
+      warn "核心依赖缺失 — 请执行: cd python && uv pip install --python .venv/bin/python -e '.[rag]'"
       issues=$((issues + 1))
     fi
 
@@ -708,8 +710,8 @@ run_doctor() {
       issues=$((issues + 1))
     fi
   else
-    warn "Python 虚拟环境不存在 — 自动创建中..."
-    ensure_python_venv
+    warn "Python 虚拟环境不存在 — 请执行: cd python && uv venv .venv && uv pip install --python .venv/bin/python -e '.[rag]'"
+    warn "或直接运行 ./scripts/start-local.sh runtime (会自动创建)"
     issues=$((issues + 1))
   fi
 

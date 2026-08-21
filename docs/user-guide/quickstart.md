@@ -145,7 +145,7 @@ uv run python -m resolveagent.runtime.server
 | Platform HTTP API | http://localhost:8080 |
 | Platform gRPC | localhost:9090 |
 | Agent Runtime gRPC | localhost:9091 |
-| WebUI | http://localhost:3000 |
+| WebUI | http://localhost:5174 |
 
 ---
 

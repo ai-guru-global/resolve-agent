@@ -5,78 +5,86 @@
 <h1 align="center">ResolveAgent</h1>
 
 <p align="center">
-  <strong>2026 Agent Engineering | 面向问题解决的 AIOps 智能体</strong>
+  <strong>2026 Agent Engineering | 面向问题解决的生产级 AIOps 智能体平台</strong>
 </p>
 
 <p align="center">
-  <code>🧠 Intelligent Selector</code> · <code>🌳 Hybrid Planner</code> · <code>💾 Hierarchical Memory</code> · <code>🔧 ToolHub</code> · <code>🔄 Loop Engineering</code>
+  <code>🧠 Intelligent Selector</code> · <code>🌳 Hybrid Planner</code> · <code>💾 Hierarchical Memory</code> · <code>🔍 FTA Engine</code> · <code>🔧 ToolHub</code> · <code>🔄 Loop Engineering</code>
 </p>
 
 <p align="center">
   <a href="https://github.com/ai-guru-global/resolve-agent/releases"><img src="https://img.shields.io/github/v/release/ai-guru-global/resolve-agent?style=flat-square" alt="Release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square" alt="License"></a>
   <a href="https://github.com/ai-guru-global/resolve-agent/actions"><img src="https://img.shields.io/github/actions/workflow/status/ai-guru-global/resolve-agent/ci.yaml?branch=main&style=flat-square" alt="CI Status"></a>
-  <a href="https://goreportcard.com/report/github.com/ai-guru-global/resolve-agent"><img src="https://img.shields.io/badge/Go-1.22-00ADD8.svg?style=flat-square&logo=go" alt="Go"></a>
+  <a href="https://goreportcard.com/report/github.com/ai-guru-global/resolve-agent"><img src="https://img.shields.io/badge/Go-1.25-00ADD8.svg?style=flat-square&logo=go" alt="Go"></a>
+  <a href="https://img.shields.io/badge/Python-3.11%2B-3776AB.svg?style=flat-square&logo=python"><img src="https://img.shields.io/badge/Python-3.11%2B-3776AB.svg?style=flat-square" alt="Python"></a>
 </p>
 
 ---
 
 ## 🌟 Overview | 概述
 
-**ResolveAgent** 是基于 **2026 Agent Engineering** 最佳实践构建的生产级 AIOps 智能体平台。
+**ResolveAgent** 是基于 **2026 Agent Engineering** 最佳实践构建的生产级 AIOps 智能体平台，面向**故障解决（Troubleshooting & Resolution）**场景：从工单接入、意图路由、知识检索、故障树分析（FTA）到修复执行与反馈闭环，全链路自动化。
 
 ### 核心架构 | Core Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         RESOLVEAGENT                                 │
-│                                                                      │
-│  ┌──────────┐    ┌──────────────┐    ┌────────────────────────────┐ │
-│  │  Client  │───▶│   Higress    │───▶│     Platform (Go)          │ │
-│  │  CLI/UI  │    │   Gateway    │    │  Registry │ Auth │ Route   │ │
-│  └──────────┘    └──────────────┘    └────────────────────────────┘ │
-│                                            │                         │
-│                                            ▼                         │
-│                          ┌─────────────────────────────────────┐   │
-│                          │       Agent Runtime (Python)         │   │
-│                          │                                      │   │
-│                          │  ┌─────────┐  ┌─────────┐  ┌───────┐ │   │
-│                          │  │Selector │  │Planner │  │Memory │ │   │
-│                          │  │ +Audit  │  │+ReAct  │  │+Hub   │ │   │
-│                          │  └─────────┘  └─────────┘  └───────┘ │   │
-│                          │                                      │   │
-│                          │  ┌─────────┐  ┌─────────┐  ┌───────┐ │   │
-│                          │  │   FTA   │  │ Skills  │  │  RAG  │ │   │
-│                          │  │ Engine  │  │ +ToolHub│  │Pipeline│ │   │
-│                          │  └─────────┘  └─────────┘  └───────┘ │   │
-│                          │                                      │   │
-│                          │  ┌─────────────────────────────────┐ │   │
-│                          │  │   AgentMessageBus (Pub/Sub)     │ │   │
-│                          │  └─────────────────────────────────┘ │   │
-│                          └─────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                            RESOLVEAGENT                                   │
+│                                                                           │
+│  ┌──────────┐    ┌──────────────┐    ┌─────────────────────────────────┐ │
+│  │  Client  │───▶│   Higress    │───▶│     Platform (Go)               │ │
+│  │ CLI/WebUI│    │ AI Gateway   │    │  Registry │ Auth │ Route │ Store │ │
+│  │ Mobile   │    │              │    │  Feedback │ CircuitBreaker       │ │
+│  └──────────┘    └──────────────┘    └──────────────┬──────────────────┘ │
+│                                                      │ HTTP/SSE + gRPC    │
+│                                                      ▼                    │
+│                            ┌─────────────────────────────────────────┐   │
+│                            │     Agent Runtime (Python)              │   │
+│                            │                                         │   │
+│                            │  ┌──────────┐ ┌──────────┐ ┌─────────┐ │   │
+│                            │  │ Selector │ │ Planner  │ │ Memory  │ │   │
+│                            │  │ (路由)    │ │ (规划)   │ │ (记忆)  │ │   │
+│                            │  └──────────┘ └──────────┘ └─────────┘ │   │
+│                            │  ┌──────────┐ ┌──────────┐ ┌─────────┐ │   │
+│                            │  │   FTA    │ │ Skills   │ │   RAG   │ │   │
+│                            │  │ 引擎     │ │ +沙箱    │ │ Pipeline│ │   │
+│                            │  └──────────┘ └──────────┘ └─────────┘ │   │
+│                            │  ┌───────────────────────────────────┐ │   │
+│                            │  │   Resilience │ MessageBus │ LLM   │ │   │
+│                            │  └───────────────────────────────────┘ │   │
+│                            └──────────────────┬──────────────────────┘   │
+│                                               │                          │
+│  ┌────────────────────────────────────────────▼──────────────────────┐   │
+│  │        Data Layer: PostgreSQL │ Redis │ NATS │ Milvus/Qdrant      │   │
+│  └───────────────────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### 十二大架构特性 | 12 Architecture Highlights
 
 | # | 特性 | 模块 | 说明 |
 |---|------|------|------|
-| 1 | **Intelligent Selector** | `selector/` | 意图分析 + 上下文丰富 + 路由决策 |
-| 2 | **Decision Audit Logger** | `selector/audit.py` | 完整路由决策审计追踪 |
-| 3 | **Hierarchical Memory** | `memory.py` | Working/Episodic/Long-term 三层记忆 |
-| 4 | **Hybrid Planner** | `planning.py` | REACTIVE + DELIBERATIVE 双模式 |
-| 5 | **ToolHub** | `toolhub.py` | 工具发现 + Schema注册 + Capability映射 |
-| 6 | **Resilience** | `resilience.py` | CircuitBreaker + FallbackCascade |
-| 7 | **AgentMessageBus** | `message_bus.py` | 订阅-发布消息总线 |
-| 8 | **gRPC Server** | `runtime/server.py` | 带 HTTP fallback 的 gRPC 服务 |
-| 9 | **Resilient Selector** | `selector/resilient_selector.py` | 反馈驱动自适应路由：失败重试 + 上下文重丰富 + 渐进降级 |
-| 10 | **Feedback Loop** | `pkg/feedback/` | Observe-Orient-Decide-Act 持续反馈闭环：信号收集 → 聚合 → 分发 |
-| 11 | **Circuit Breaker** | `pkg/circuitbreaker/` | 三态熔断器自愈运维：Closed → Open → HalfOpen → Closed |
-| 12 | **Adaptive Selector** | `selector/resilient_selector.py` | 基于反馈的权重动态调整 + 时间衰减 + 自动降级 |
+| 1 | **Intelligent Selector** | `selector/selector.py` | 三阶段元路由：意图分析 → 上下文增强 → 路由决策 |
+| 2 | **Decision Audit Logger** | `selector/audit.py` | 完整路由决策审计追踪（异步写入，不阻塞主流程） |
+| 3 | **Hierarchical Memory** | `memory.py` | Working / Episodic / Long-term 三层记忆（TTL + LRU） |
+| 4 | **Hybrid Planner** | `planning.py` | REACTIVE + DELIBERATIVE 双模式，LLM 分解 + 规则回退 |
+| 5 | **ToolHub** | `toolhub.py` | 工具发现 + Schema 注册 + Capability 映射 + 安全审计 |
+| 6 | **Resilience** | `resilience.py` | CircuitBreaker 三态熔断 + FallbackCascade 多级降级 |
+| 7 | **AgentMessageBus** | `message_bus.py` | Pub/Sub + Request/Response 消息总线 |
+| 8 | **FTA Engine** | `fta/` | 故障树分析：六种门类型 + 最小割集 + 蒙特卡洛仿真 |
+| 9 | **Resilient Selector** | `selector/resilient_selector.py` | 反馈驱动自适应路由：失败重试 + 上下文重增强 + 错误分类路由偏好 |
+| 10 | **Loop Engineering** | `pkg/feedback/` + `fta/feedback_loop.py` | Observe-Orient-Decide-Act 持续反馈闭环 |
+| 11 | **Circuit Breaker (Go)** | `pkg/circuitbreaker/` | 三态熔断器自愈运维：Closed → Open → HalfOpen → Closed |
+| 12 | **Adaptive Weight Adjuster** | `selector/resilient_selector.py` | 基于反馈的路由权重动态调整 + 时间衰减 + 自动降级 |
+
+> 📖 完整方法论与对标评估见 [COMPREHENSIVE_ASSESSMENT_AND_METHODOLOGY.md](documentation/COMPREHENSIVE_ASSESSMENT_AND_METHODOLOGY.md)
 
 ---
 
 ## 🏗️ Architecture Deep Dive | 架构深度解析
+
+> 以下代码路径均相对 `python/src/resolveagent/` 目录。
 
 ### 1. Intelligent Selector | 智能选择器
 
@@ -88,10 +96,8 @@ class IntelligentSelector:
         # 1. Intent Analysis - 意图分类
         intent = await intent_analyzer.classify(input_text)
 
-        # 2. Context Enrichment - 上下文丰富
-        enriched = await context_enricher.enrich(
-            input_text, agent_id, context
-        )
+        # 2. Context Enrichment - 上下文增强
+        enriched = await context_enricher.enrich(input_text, agent_id, context)
         #   - 记忆查询 (MemoryClient)
         #   - 偏好推断 (_infer_user_preferences)
         #   - 代码检测 (_analyze_code_context)
@@ -100,7 +106,7 @@ class IntelligentSelector:
         decision = await route_decider.decide(
             intent_type=intent.type,
             confidence=intent.confidence,
-            context=enriched
+            context=enriched,
         )
 
         # 4. Audit Logging - 审计记录
@@ -110,18 +116,60 @@ class IntelligentSelector:
 ```
 
 **路由策略:**
-- `rule` - 快速精确模式
-- `llm` - LLM 智能分类
-- `hybrid` - 规则优先 + LLM 回退 (推荐)
+- `rule` — 快速精确模式（规则匹配）
+- `llm` — LLM 智能分类
+- `hybrid` — 规则优先 + LLM 回退（推荐）
 
-### 2. Decision Audit Logger | 决策审计
+### 2. Resilient Selector | 弹性自适应路由
+
+```python
+# selector/resilient_selector.py
+class ResilientSelector:
+    """反馈驱动自适应路由，带优雅降级"""
+
+    MAX_RETRIES = 3
+
+    async def route_and_execute(self, input_text, agent_id, executor):
+        tried_routes = set()
+        for attempt in range(self.MAX_RETRIES + 1):
+            # 1. 上下文增强（首次全量，后续增量 + 失败上下文）
+            ctx = await self._enrich(input_text, agent_id, attempt, tried_routes)
+
+            # 2. 路由决策（排除已尝试路径）
+            decision = await self._selector.route(input_text, agent_id, context=ctx)
+
+            # 3. 执行
+            result = await executor(decision)
+            if result.success:
+                return result
+
+            # 4. 记录失败，为下一次决策提供上下文
+            tried_routes.add(decision.route_type)
+            ctx["last_failure"] = {"route": decision.route_type, "error": result.error}
+
+        # 最终兜底
+        return await self._fallback(input_text, agent_id)
+```
+
+**错误分类路由偏好**（本次工程强化）：
+
+| 失败类型 | 路由偏好 |
+|---------|---------|
+| `resource_missing` → RAG 失败 | 偏好 `reasoning`（LLM 推理兜底） |
+| `resource_missing` → Skill 失败 | 偏好 `knowledge`（知识库检索） |
+| FTA 任意失败（未试过 code_analysis） | 偏好 `code_analysis` |
+| 其他 | 按权重依次尝试剩余路径 |
+
+**核心思想:** 每一次失败都不是浪费，而是为下一次路由决策提供更丰富的上下文。
+
+### 3. Decision Audit Logger | 决策审计
 
 ```python
 # selector/audit.py
 @dataclass
 class AuditRecord:
     timestamp: str
-    decision_type: str      # fta/skill/rag/direct
+    decision_type: str      # fta/skill/rag/direct/code_analysis
     confidence: float
     reasoning: str
     context_snapshot: dict  # skills_count, code_issues, etc.
@@ -131,22 +179,22 @@ class AuditRecord:
 **特性:**
 - 异步写入，不阻塞主流程
 - 支持持久化到 Go Platform Store
-- 完整的上下文快照
+- 完整的上下文快照（可回溯路由依据）
 
-### 3. Hierarchical Memory | 分层记忆
+### 4. Hierarchical Memory | 分层记忆
 
 ```python
 # memory.py
 class HierarchicalMemory:
     """三层记忆架构"""
 
-    # Layer 1: Working Memory (in-process)
-    working = WorkingMemory(max_size=20)  # Rolling window
+    # Layer 1: Working Memory (进程内, 滚动窗口)
+    working = WorkingMemory(max_size=20)
 
-    # Layer 2: Episodic Memory (Redis)
-    episodic = EpisodicMemoryClient(redis_url="redis://...")
+    # Layer 2: Episodic Memory (Redis, TTL 过期)
+    episodic = EpisodicMemoryClient(redis_url="redis://localhost:6379")
 
-    # Layer 3: Long-term Memory (RAG Vector DB)
+    # Layer 3: Long-term Memory (Milvus/Qdrant 向量库, LRU 逐出)
     long_term = LongTermMemoryClient(collection="long_term_memory")
 ```
 
@@ -157,28 +205,27 @@ User Message → Working Memory (实时)
              → Long-term Memory (importance > 0.7)
 ```
 
-### 4. Hybrid Planner | 混合规划器
+### 5. Hybrid Planner | 混合规划器
 
 ```python
 # planning.py
 class PlanningMode(Enum):
-    REACTIVE = "reactive"      # 快速响应
+    REACTIVE = "reactive"          # 快速响应
     DELIBERATIVE = "deliberative"  # 深思熟虑
 
 class HybridPlanner:
     async def create_plan(goal, mode):
         if mode == REACTIVE:
-            # 单步执行
+            # 单步 ReAct 循环
             return Plan(steps=[...])
-        else:
-            # LLM 分解为多步骤
-            return await self._llm_decompose_plan(goal)
+        # DELIBERATIVE: LLM 分解目标 → 多步骤（失败时 Replan，最多 3 次）
+        return await self._llm_decompose_plan(goal)
 ```
 
 **执行流程:**
 ```
 DELIBERATIVE 模式:
-  1. LLM 分解目标 → 子步骤
+  1. LLM 分解目标 → 子步骤 (JSON 三级容错解析)
   2. 执行每步骤 → 监控状态
   3. 失败时触发 Replan
   4. 最多重试 3 次
@@ -188,7 +235,24 @@ REACTIVE 模式:
   2. Thought → Action → Observation
 ```
 
-### 5. ToolHub | 工具中心
+### 6. FTA Engine | 故障树分析引擎
+
+```python
+# fta/engine.py
+class FTAEngine:
+    """六种门类型 + 最小割集 + 蒙特卡洛仿真"""
+
+    gates = [AND, OR, NOT, VOTING, INHIBIT, PRIORITY_AND]
+
+    async def analyze(self, tree: FaultTree) -> FTAAnalysisResult:
+        cut_sets = await self._compute_minimal_cut_sets(tree)   # 最小割集
+        prob = await self._monte_carlo_simulation(tree)         # 蒙特卡洛仿真
+        return FTAAnalysisResult(cut_sets=cut_sets, failure_probability=prob)
+```
+
+**AIOps 应用流程:** 工单/告警接入 → 故障树建模 → 割集分析定位根因 → 修复建议生成 → 反馈闭环验证
+
+### 7. ToolHub | 工具中心
 
 ```python
 # toolhub.py
@@ -210,37 +274,39 @@ class ToolHub:
         return result
 ```
 
-**工具能力:**
+**技能系统能力:**
 | 能力 | 说明 |
 |------|------|
 | `WEB_SEARCH` | 网页搜索 |
-| `CODE_EXECUTION` | 代码执行 |
-| `FILE_OPERATIONS` | 文件操作 |
+| `CODE_EXECUTION` | 沙箱代码执行 |
 | `CODE_ANALYSIS` | 代码分析 |
-| `SECURITY_SCAN` | 安全扫描 |
+| `TROUBLESHOOT` | 故障排查 |
+| `SOLUTION` | 解决方案生成 |
 
-### 6. Resilience | 弹性模式
+### 8. Resilience | 弹性模式
 
 ```python
 # resilience.py
 class CircuitBreaker:
-    """熔断器保护下游服务"""
+    """熔断器保护下游服务 (asyncio.Lock 并发安全)"""
 
-    failure_threshold = 5
-    reset_timeout = 30.0
+    failure_threshold = 5     # 连续失败阈值
+    reset_timeout = 30.0      # 重置超时
+    half_open_max_calls = 3   # 半开探测上限
 
     # States: CLOSED → OPEN → HALF_OPEN → CLOSED
+    # 提供 reset() 手动重置 与 get_state_info() 可观测快照
 
 class FallbackCascade:
-    """多级降级策略"""
+    """多级降级策略, 返回结构化 FallbackResult"""
 
     async def execute(*strategies):
         for strategy in strategies:
             try:
                 return await strategy()
-            except Exception as e:
+            except Exception:
                 continue  # 尝试下一个
-        return FallbackResult(success=False)
+        return FallbackResult(success=False, message="No fallback strategies provided")
 ```
 
 **降级路径:**
@@ -248,7 +314,7 @@ class FallbackCascade:
 MCP Tool → Native Skill → LLM Direct → Cached Response
 ```
 
-### 7. AgentMessageBus | 消息总线
+### 9. AgentMessageBus | 消息总线
 
 ```python
 # message_bus.py
@@ -262,69 +328,8 @@ class AgentMessageBus:
         """发布消息"""
 
     async def request(sender, channel, content, timeout):
-        """请求-响应模式"""
+        """请求-响应模式 (带 correlation_id)"""
 ```
-
-**消息模式:**
-- **Pub/Sub** - 发布订阅
-- **Request/Response** - 请求响应 (带 correlation_id)
-- **Broadcast** - 广播
-
-### 8. gRPC Server | gRPC 服务
-
-```python
-# runtime/server.py
-class AgentExecutionServer:
-    async def start(self):
-        try:
-            # 优先使用 gRPC + Protobuf
-            server = grpc.aio.server()
-            agent_pb2_grpc.add_AgentExecutionServiceServicer_to_server(
-                AgentExecutionServicer(self._engine), server
-            )
-        except ImportError:
-            # Fallback 到 aiohttp HTTP 服务器
-            await self._start_http_fallback()
-```
-
-### 9. Resilient Selector | 弹性自适应路由
-
-```python
-# selector/resilient_selector.py
-class ResilientSelector:
-    """Feedback-driven adaptive routing with graceful degradation"""
-    
-    MAX_RETRIES = 3
-    ROUTE_PRIORITY = ["skill", "rag", "fta", "code_analysis"]
-    
-    async def route_and_execute(self, input_text, agent_id, executor):
-        tried_routes = set()
-        for attempt in range(self.MAX_RETRIES + 1):
-            # 1. Enrich context (first time: full, subsequent: incremental)
-            ctx = await self._enrich(input_text, agent_id, attempt, tried_routes)
-            
-            # 2. Route decision (exclude tried routes)
-            decision = await self._selector.route(input_text, agent_id, context=ctx)
-            
-            # 3. Execute
-            result = await executor(decision)
-            if result.success:
-                return result
-            
-            # 4. Record failure for next iteration
-            tried_routes.add(decision.route_type)
-            ctx["last_failure"] = {"route": decision.route_type, "error": result.error}
-        
-        # Final fallback: Code Analysis
-        return await self._code_analysis_fallback(input_text, agent_id)
-```
-
-**降级路径:**
-```
-Skill (快速精确) → RAG (知识检索) → Workflow (LLM 推理) → Code Analysis (深度兜底)
-```
-
-**核心思想:** 每一次失败都不是浪费，而是为下一次路由决策提供更丰富的上下文。
 
 ### 10. Loop Engineering | 循环工程
 
@@ -332,13 +337,12 @@ Skill (快速精确) → RAG (知识检索) → Workflow (LLM 推理) → Code A
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     Loop Engineering 闭环                            │
 ├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
 │  Observe          Orient           Decide           Act             │
 │  ┌─────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐   │
 │  │ Health  │     │Aggregator│     │  Alert   │     │ Circuit  │   │
 │  │ Retry   │────▶│ (滑动    │────▶│  Engine  │────▶│ Breaker  │   │
 │  │ Workflow│     │  窗口)   │     │ (规则)   │     │ Adaptive │   │
-│  │ Telemetry    │          │     │          │     │ Weight   │   │
+│  │ Telemetry│    │          │     │          │     │ Weight   │   │
 │  └─────────┘     └──────────┘     └──────────┘     └──────────┘   │
 │                                                     │             │
 │  ┌─────────────────────────────────────────────────▼──────────┐   │
@@ -352,12 +356,12 @@ Skill (快速精确) → RAG (知识检索) → Workflow (LLM 推理) → Code A
 
 | 支柱 | 说明 | 实现 |
 |------|------|------|
-| **持续反馈循环** | 信号收集 → 聚合 → 分发的闭环 | `pkg/feedback/` (Go) + `fta/feedback_loop.py` (Python) |
+| **持续反馈循环** | 信号收集 → 聚合 → 分发闭环 | `pkg/feedback/` (Go) + `fta/feedback_loop.py` (Python) |
 | **自愈运维** | 三态熔断器保护下游，自动恢复 | `pkg/circuitbreaker/` |
-| **自适应行为** | 基于反馈的路由权重动态调整 | `AdaptiveWeightAdjuster` |
+| **自适应行为** | 基于反馈的路由权重动态调整 + 时间衰减 | `AdaptiveWeightAdjuster` |
 
-```python
-# Go: 发射反馈信号
+```go
+// Go: 发射反馈信号
 collector.Emit(ctx, feedback.FeedbackSignal{
     Source:   feedback.SourceHealth,
     Event:    feedback.EventHealthDegraded,
@@ -365,15 +369,15 @@ collector.Emit(ctx, feedback.FeedbackSignal{
     Message:  "Service health degraded",
 })
 
-# Python: FTA 工作流反馈循环
+// Python: FTA 工作流反馈循环
 loop = FeedbackLoop(history_window=100)
 suggestions = loop.record(metrics)
-# → [ImprovementSuggestion(target="selector", priority="high", ...)]
+// → [ImprovementSuggestion(target="selector", priority="high", ...)]
 ```
 
 > 📖 详见 [Loop Engineering 文档](docs/zh/loop-engineering.md)
 
-### 11. Circuit Breaker | 三态熔断器
+### 11. Circuit Breaker (Go) | 三态熔断器
 
 ```go
 // pkg/circuitbreaker/breaker.go
@@ -399,7 +403,7 @@ CLOSED  ──[failures >= 5]──▶  OPEN
 CLOSED  ◀──[probe ok]──  HALF_OPEN
 ```
 
-### 12. Adaptive Selector | 自适应选择器
+### 12. Adaptive Selector | 自适应权重
 
 ```python
 # selector/resilient_selector.py
@@ -423,31 +427,73 @@ weights = adjuster.get_weights()
 
 ### 环境要求
 
-| Dependency | Version |
-|------------|---------|
-| Go | >= 1.22 |
-| Python | >= 3.11 |
-| Docker | >= 20.10 |
+| Dependency | Version | 说明 |
+|------------|---------|------|
+| Go | >= 1.25 | go.mod 锁定 1.25.0 |
+| Python | >= 3.11 | 运行时（开发环境已验证 3.14） |
+| Node.js | >= 20 | WebUI 开发（已验证 v22） |
+| Docker | >= 20.10 | 依赖服务容器化 |
+| Make | latest | 构建工具链 |
+| uv | 推荐 | Python 依赖管理（无则回退 pip） |
 
-### 启动服务
+### 一键启动（推荐）
 
 ```bash
-# 克隆仓库
+# 1. 克隆仓库
 git clone https://github.com/ai-guru-global/resolve-agent.git
 cd resolve-agent
 
-# 启动依赖
-make compose-deps
+# 2. 一键启动全部服务（依赖容器 + Go 平台 + Python 运行时 + WebUI）
+./scripts/start-local.sh all
 
-# 构建
-make build
+# 3. 查看状态
+./scripts/start-local.sh status
+```
 
-# 启动
-make compose-up
+启动完成后访问:
 
-# 访问
-# - API: http://localhost:8080
-# - WebUI: http://localhost:3000
+| 服务 | 地址 | 说明 |
+|------|------|------|
+| **WebUI** | http://localhost:5174 | React 可视化控制台 |
+| **Platform API** | http://localhost:8080 | Go 平台服务（健康检查 `/api/v1/health`） |
+| **Runtime API** | http://localhost:9091 | Python Agent 运行时（`/health`） |
+| gRPC | localhost:9090 | Platform gRPC 接口 |
+| PostgreSQL | localhost:5432 | 长期记忆 / 业务数据 |
+| Redis | localhost:6379 | 短期记忆 / 缓存 |
+| NATS | localhost:4222 | 消息总线 |
+| Milvus | localhost:19530 | RAG 向量存储 |
+
+### 分步启动
+
+```bash
+# 仅启动依赖容器 (PostgreSQL / Redis / NATS / Milvus / etcd)
+./scripts/start-local.sh deps
+
+# 仅启动 Go 平台服务（自动编译）
+./scripts/start-local.sh platform
+
+# 仅启动 Python Agent 运行时（自动重建 venv）
+./scripts/start-local.sh runtime
+
+# 仅启动 WebUI 开发服务器
+./scripts/start-local.sh web
+
+# 其他子命令
+./scripts/start-local.sh stop      # 停止全部（含依赖容器）
+./scripts/start-local.sh restart   # 重启全部
+./scripts/start-local.sh logs web  # 查看日志 (platform/runtime/webui/deps)
+./scripts/start-local.sh doctor    # 环境诊断
+```
+
+> ⚠️ 首次启动 `start-local.sh runtime` 会自动创建 `python/.venv` 并安装依赖（`.[rag]`），耗时数分钟属正常现象。
+
+### 替代启动方式（Makefile）
+
+```bash
+make setup-dev      # 初始化开发环境（依赖 + Git Hooks）
+make compose-deps   # 启动依赖容器
+make build          # 构建 Go / Python / WebUI
+make compose-up     # Docker Compose 全栈启动
 ```
 
 ### Python Agent 示例
@@ -465,14 +511,14 @@ planner = HybridPlanner()
 # 路由请求
 decision = await selector.route(
     input_text="分析代码中的安全漏洞",
-    agent_id="my-agent"
+    agent_id="my-agent",
 )
 # → RouteDecision(route_type="code_analysis", confidence=0.85)
 
 # 规划执行 (Deliberative 模式)
 plan = await planner.create_plan(
     goal="诊断 API 500 错误",
-    mode=PlanningMode.DELIBERATIVE
+    mode=PlanningMode.DELIBERATIVE,
 )
 # → Plan(steps=[Step(gather_info), Step(diagnose), Step(fix)])
 
@@ -483,51 +529,85 @@ recent = memory.get_recent(limit=10)
 
 ---
 
+## 🔧 Troubleshooting | 常见问题排查
+
+> 以下为本仓库实战验证过的本地启动问题与修复方案。
+
+### 1. `status` / `stop` 输出为空且退出码 1
+
+**根因**: `set -euo pipefail` 下 `lsof | head -1` 在端口空闲时（lsof 返回 1）导致命令替换赋值直接退出脚本。
+
+**修复**: `scripts/start-local.sh` 的 `get_port_pid()` 已加 `|| true`。如遇旧版本，同步该修复即可。
+
+### 2. Milvus 容器崩溃（SIGSEGV panic）
+
+**根因**: Milvus standalone 的**嵌入式 etcd** 在 macOS Docker Desktop（Apple Silicon）上必然触发 `etcd.InitEtcdServer` nil pointer panic（[milvus-io/milvus#31925](https://github.com/milvus-io/milvus/issues/31925) 同类问题）。
+
+**修复**: `deploy/docker-compose/docker-compose.deps.yaml` 已改用**外部 etcd 容器**（`quay.io/coreos/etcd:v3.5.16`），Milvus 配置 `ETCD_USE_EMBED=false` + `ETCD_ENDPOINTS=etcd:2379`（官方推荐的 standalone 部署方式）。
+
+### 3. Docker Hub 镜像拉取超时（国内网络）
+
+**现象**: `docker compose up` 报 `failed to resolve reference ... context deadline exceeded`。
+
+**方案**: 使用加速镜像源拉取后重打官方 tag（零侵入）:
+
+```bash
+docker pull docker.1ms.run/library/postgres:16-alpine
+docker tag docker.1ms.run/library/postgres:16-alpine postgres:16-alpine
+# 大镜像（如 Milvus）如过慢可换 docker.m.daocloud.io 重拉（已下载层自动复用）
+```
+
+### 4. `pnpm dev` 崩溃（供应链策略校验超时）
+
+**根因**: pnpm 11+ 在每次 run 前联网校验 lockfile 供应链策略（483 entries），网络慢时直接崩溃。
+
+**修复**: `web/.npmrc` 已写入 `verify-deps-before-run=false`（项目级配置）。
+
+### 5. `uv pip install` 卡死无输出
+
+**方案**: 指定国内镜像源重装:
+
+```bash
+cd python
+UV_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple uv pip install --python .venv/bin/python -e ".[rag]"
+```
+
+### 6. WebUI 端口冲突
+
+**约定**: WebUI 固定运行在 **5174** 端口（`web/vite.config.ts` 与 `scripts/start-local.sh` 已统一），避免与 3000/5173 等其他项目冲突。如需修改，两处需同步变更。
+
+---
+
 ## 📊 Feature Status | 功能状态
 
-> **v0.4.0** | 2026-07 Loop Engineering Complete
-
-### 架构组件
-
-| 组件 | 状态 | 文件 |
-|------|------|------|
-| Intelligent Selector | 🟢 Ready | `selector/selector.py` |
-| Decision Audit Logger | 🟢 Ready | `selector/audit.py` |
-| Context Enricher | 🟢 Ready | `selector/context_enricher.py` |
-| Route Decider | 🟢 Ready | `selector/router.py` |
-| Hierarchical Memory | 🟢 Ready | `memory.py` |
-| Hybrid Planner | 🟢 Ready | `planning.py` |
-| ReAct Executor | 🟢 Ready | `planning.py` |
-| ToolHub | 🟢 Ready | `toolhub.py` |
-| Schema Registry | 🟢 Ready | `toolhub.py` |
-| Capability Map | 🟢 Ready | `toolhub.py` |
-| Security Policy | 🟢 Ready | `toolhub.py` |
-| Circuit Breaker (Python) | 🟢 Ready | `resilience.py` |
-| Fallback Cascade | 🟢 Ready | `resilience.py` |
-| Agent Message Bus | 🟢 Ready | `message_bus.py` |
-| Message Bus Registry | 🟢 Ready | `message_bus.py` |
-| gRPC Server | 🟢 Ready | `runtime/server.py` |
-| Resilient Selector | 🟢 Ready | `selector/resilient_selector.py` |
-| **Feedback Collector** | 🟢 **New** | `pkg/feedback/collector.go` |
-| **Feedback Ring Buffer** | 🟢 **New** | `pkg/feedback/ring_buffer.go` |
-| **Feedback Aggregator** | 🟢 **New** | `pkg/feedback/aggregator.go` |
-| **Feedback Dispatchers** | 🟢 **New** | `pkg/feedback/dispatcher.go` |
-| **Alert Engine** | 🟢 **New** | `pkg/feedback/alerts.go` |
-| **Circuit Breaker (Go)** | 🟢 **New** | `pkg/circuitbreaker/breaker.go` |
-| **Adaptive Weight Adjuster** | 🟢 **New** | `selector/resilient_selector.py` |
-| **FTA Feedback Loop** | 🟢 **New** | `fta/feedback_loop.py` |
-| **Regression Validator** | 🟢 **New** | `fta/regression_validator.py` |
-| **Hook Chain Pattern** | 🟢 **New** | `hooks/patterns.py` |
+> **v0.3.0** | 核心组件经全面修复与测试加固（Python 测试 432+ 用例全绿）
 
 ### 核心引擎
 
 | 引擎 | 状态 | 说明 |
 |------|------|------|
-| FTA Engine | 🟢 Ready | 故障树分析 |
-| RAG Pipeline | 🟢 Ready | 检索增强生成 |
-| Skill Executor | 🟢 Ready | 技能执行 + 沙箱 |
-| LLM Providers | 🟢 Ready | 6 个 Provider |
+| Intelligent Selector | 🟢 Ready | 三阶段元路由 + rule/llm/hybrid 策略 |
+| Resilient Selector | 🟢 Ready | 失败重试 + 错误分类路由偏好 + 自适应权重 |
+| Hierarchical Memory | 🟢 Ready | 三层记忆（Working/Episodic/Long-term） |
+| Hybrid Planner | 🟢 Ready | 双模式 + LLM 分解 + JSON 容错解析 |
+| FTA Engine | 🟢 Ready | 六门类型 + 最小割集 + 蒙特卡洛仿真 |
+| RAG Pipeline | 🟢 Ready | Milvus / Qdrant 双后端向量检索 |
+| ToolHub & Skills | 🟢 Ready | 技能注册 + 沙箱执行 + 安全审计 |
+| Resilience | 🟢 Ready | CircuitBreaker + FallbackCascade |
+| Loop Engineering | 🟢 Ready | Go 反馈闭环 + Python 工作流反馈 |
+| LLM Providers | 🟢 Ready | Qwen / 文心 / 智谱 / Higress / OpenAI 兼容（Kimi 等） |
 | MCP Adapter | 🟢 Ready | Model Context Protocol |
+
+### 基础设施
+
+| 组件 | 状态 | 说明 |
+|------|------|------|
+| Go Platform | 🟢 Ready | Registry / Auth / Route / Store / Feedback |
+| Python Runtime | 🟢 Ready | HTTP + SSE 流式服务（`python -m resolveagent.runtime`） |
+| WebUI | 🟢 Ready | 22 个功能页面（React + Vite + Tailwind） |
+| Mobile Web | 🟢 Ready | `mobile/` 移动端适配 |
+| CI/CD | 🟢 Ready | `ci.yaml` / `e2e.yaml` / `release.yaml` / `docker-publish.yaml` |
+| 部署 | 🟢 Ready | Docker Compose + Helm + K8s manifests |
 
 ---
 
@@ -535,115 +615,148 @@ recent = memory.get_recent(limit=10)
 
 ```
 resolve-agent/
-├── api/
-│   └── proto/resolveagent/v1/   # Protocol Buffers
+├── api/                          # 协议定义
+│   ├── proto/resolveagent/v1/   # Protocol Buffers
+│   ├── openapi/v1/              # OpenAPI 规范
+│   └── jsonschema/              # JSON Schema
 ├── cmd/
 │   ├── resolveagent-cli/        # CLI 应用
-│   └── resolveagent-server/     # Platform Server
+│   └── resolveagent-server/     # Platform Server 入口
 ├── pkg/                         # Go 平台服务
-│   ├── circuitbreaker/          # 🔄 Loop Engineering: 熔断器
-│   ├── config/
-│   ├── event/
-│   ├── feedback/                # 🔄 Loop Engineering: 反馈循环
-│   ├── gateway/
-│   ├── health/                  # 健康检查 + 反馈集成
-│   ├── registry/
-│   ├── retry/                   # 重试机制 + 观察器
-│   ├── server/
-│   └── store/                   # Store 模式抽象
+│   ├── circuitbreaker/          # 🔄 三态熔断器
+│   ├── config/                  # 配置加载 (Viper)
+│   ├── event/                   # 事件体系
+│   ├── feedback/                # 🔄 反馈循环 (Collector/RingBuffer/Aggregator)
+│   ├── gateway/                 # Higress 网关集成
+│   ├── health/                  # 健康检查
+│   ├── registry/                # 9 大 Registry 注册表
+│   ├── retry/                   # 重试机制
+│   ├── server/                  # HTTP/gRPC 服务
+│   ├── store/                   # Store 模式抽象
+│   └── telemetry/               # 监控指标 (Prometheus/OTel)
 ├── python/src/resolveagent/
-│   ├── selector/               # 🧠 智能选择器
-│   │   ├── audit.py           # Decision Audit Logger
-│   │   ├── cache.py           # 路由决策缓存
-│   │   ├── context_enricher.py # 上下文丰富
-│   │   ├── intent.py          # 意图分析
-│   │   ├── resilient_selector.py # 🔄 弹性自适应 + AdaptiveWeightAdjuster
-│   │   ├── router.py         # 路由决策
-│   │   └── strategies/        # 路由策略
-│   ├── memory.py              # 💾 分层记忆
-│   ├── planning.py            # 🌳 混合规划器
-│   ├── toolhub.py             # 🔧 工具中心
-│   ├── resilience.py          # 🛡️ 弹性模式
-│   ├── message_bus.py         # 📡 消息总线
-│   ├── fta/                   # FTA 引擎 + 🔄 反馈循环
-│   │   ├── engine.py          # 故障树分析引擎
-│   │   ├── feedback_loop.py   # 🔄 工作流反馈循环
-│   │   └── regression_validator.py # 🔄 回归验证器
-│   ├── hooks/                 # 生命周期钩子
-│   │   └── patterns.py        # 🔄 Hook 链模式模板
-│   ├── agent/                 # Agent 定义
-│   ├── rag/                   # RAG 管道
-│   ├── skills/                # 技能系统
-│   ├── llm/                   # LLM 提供者
-│   ├── mcp/                   # MCP 适配器
-│   └── runtime/               # 运行时
-├── .github/workflows/          # 🔄 CI/CD 流水线
-│   ├── ci.yaml                # 主 CI (lint→test→build→quality-gate)
-│   ├── e2e.yaml               # E2E 测试 (PostgreSQL + Redis)
-│   └── release.yaml           # 发布流水线 (Docker + Helm)
-├── hack/                       # 开发工具脚本
-│   ├── quality-gate.sh        # 🔄 质量门禁
-│   └── coverage-report.sh     # 🔄 覆盖率报告
-├── test/                       # 测试套件
-│   ├── e2e/                   # E2E 测试 + 反馈循环验证
-│   ├── integration/           # 集成测试 + API 契约测试
-│   └── fixtures/              # 测试基线数据
-├── web/                        # 🌐 React WebUI
-├── deploy/                     # 部署配置
-└── docs/                       # 文档
+│   ├── selector/                # 🧠 智能选择器 (意图/上下文/路由/审计/弹性)
+│   ├── memory.py                # 💾 分层记忆
+│   ├── planning.py              # 🌳 混合规划器
+│   ├── toolhub.py               # 🔧 工具中心
+│   ├── resilience.py            # 🛡️ 弹性模式
+│   ├── message_bus.py           # 📡 消息总线
+│   ├── fta/                     # 🔍 FTA 引擎 + 反馈循环 + 回归验证
+│   ├── rag/                     # RAG 管道 (Milvus/Qdrant 双后端)
+│   ├── skills/                  # 技能系统 (manifest/executor/sandbox)
+│   ├── llm/                     # LLM Provider 体系
+│   ├── mcp/                     # MCP 适配器
+│   ├── hooks/                   # 生命周期钩子
+│   ├── code_analysis/           # 代码分析
+│   ├── docsync/                 # 文档同步
+│   ├── agent/                   # Agent 定义
+│   └── runtime/                 # 运行时服务
+├── web/                         # 🌐 React WebUI (Vite + Tailwind + shadcn/ui)
+├── mobile/                      # 📱 移动端 Web 应用
+├── docs-site/                   # 📚 Docusaurus 文档站点
+├── docs/                        # 文档 (架构/ADR/API/中文文档)
+│   └── zh/                      # 25 篇中文技术文档
+├── documentation/               # 综合评估与工程报告
+├── configs/                     # 运行配置
+│   ├── resolveagent.yaml        # 平台配置
+│   ├── runtime.yaml             # 运行时配置
+│   └── models.yaml              # 模型配置
+├── scripts/                     # 开发运维脚本
+│   └── start-local.sh           # 🚀 本地一键启动 (all/deps/platform/runtime/web/status/...)
+├── deploy/                      # 部署配置
+│   ├── docker/                  # Dockerfile (platform/runtime/webui)
+│   ├── docker-compose/          # Compose (deps 含 etcd / 全栈)
+│   ├── helm/                    # Helm Chart
+│   └── k8s/                     # K8s manifests
+├── skills/                      # 技能注册表 (registry.yaml)
+├── examples/                    # 示例 (quickstart / integrations)
+├── integrations/dify/           # Dify 集成
+├── test/                        # E2E / 集成 / 负载测试
+├── hack/                        # 开发工具 (quality-gate / coverage-report)
+└── .github/workflows/           # CI/CD 流水线
 ```
 
 ---
 
 ## 🔧 Configuration | 配置
 
-### 环境变量
+### 环境变量（.env）
+
+平台与运行时配置统一使用 `RESOLVEAGENT_*` 前缀（参考 `.env.example`）:
 
 ```bash
-# LLM 配置
-LLM_DEFAULT_MODEL=qwen-plus
-LLM_API_KEY=your-api-key
-HIGRESS_URL=http://localhost:8080
+# 服务地址
+RESOLVEAGENT_HTTP_ADDR=:8080
+RESOLVEAGENT_GRPC_ADDR=:9090
+RESOLVEAGENT_LOG_LEVEL=info
 
-# 记忆配置
-REDIS_URL=redis://localhost:6379
-MILVUS_URL=http://localhost:19530
+# 数据层
+DATABASE_URL=postgres://resolveagent:resolveagent@localhost:5432/resolveagent?sslmode=disable
+RESOLVEAGENT_REDIS_ADDR=localhost:6379
+RESOLVEAGENT_NATS_URL=nats://localhost:4222
 
-# MCP 配置
-MCP_ENABLED=true
-MCP_STDIO_SERVERS=[]
+# LLM (多 Provider)
+RESOLVEAGENT_LLM_QWEN_API_KEY=your-qwen-key
+RESOLVEAGENT_LLM_WENXIN_API_KEY=your-wenxin-key
+RESOLVEAGENT_LLM_ZHIPU_API_KEY=your-zhipu-key
+KIMI_API_KEY=your-kimi-key          # 经 OpenAI 兼容层接入
+LLM_BASE_URL=https://api.moonshot.cn/v1
+LLM_DEFAULT_MODEL=kimi-k2.5-turbo-preview
 
-# 安全配置
-AUTH_ENABLED=true
-RATE_LIMIT_PER_MINUTE=100
-
-# Loop Engineering 配置
-FEEDBACK_ENABLED=true
-FEEDBACK_RING_BUFFER_SIZE=1000
-CIRCUIT_BREAKER_ENABLED=true
-CIRCUIT_BREAKER_FAILURE_THRESHOLD=5
+# 网关与可观测性
+RESOLVEAGENT_GATEWAY_ENABLED=true
+RESOLVEAGENT_TELEMETRY_ENABLED=true
+RESOLVEAGENT_TELEMETRY_OTLP_ENDPOINT=http://localhost:4318
 ```
+
+> ⚠️ Kimi K2.5 等模型调用需在 `configs/models.yaml` / provider 配置中**禁用 thinking 模式**，详见 [Kimi K2.5 集成规范](docs/zh/agentscope-higress-integration.md) 与 [configuration.md](docs/zh/configuration.md)。
+
+### 配置文件
+
+| 文件 | 说明 |
+|------|------|
+| `configs/resolveagent.yaml` | Go 平台服务配置（注册表/网关/存储） |
+| `configs/runtime.yaml` | Python 运行时配置（Agent/记忆/技能） |
+| `configs/models.yaml` | LLM 模型路由与参数配置 |
+| `configs/examples/` | 各环境配置示例 |
 
 ---
 
 ## 📚 Documentation | 文档
 
+### 中文文档 (docs/zh/)
+
 | 文档 | 说明 |
 |------|------|
-| [Architecture](docs/zh/architecture.md) | 系统架构详解 |
-| [Loop Engineering](docs/zh/loop-engineering.md) | 🔄 循环工程方法论：反馈循环、熔断器、自适应选择器 |
-| [CLI Reference](docs/zh/cli-reference.md) | 命令行接口 |
-| [Configuration](docs/zh/configuration.md) | 配置指南 |
-| [API Reference](docs/api/) | API 文档 |
-| [Best Practices](docs/zh/best-practices.md) | 生产最佳实践 |
+| [快速开始](docs/zh/quickstart.md) | 本地部署与启动指南 |
+| [本地部署](docs/zh/local-deployment.md) | 本地开发环境搭建 |
+| [架构详解](docs/zh/architecture.md) | 系统架构深度解析 |
+| [智能选择器](docs/zh/intelligent-selector.md) | 路由机制与策略 |
+| [弹性选择器评估](docs/zh/resilient-selector-evaluation.md) | Resilient Selector 设计评估 |
+| [Loop Engineering](docs/zh/loop-engineering.md) | 循环工程方法论 |
+| [FTA 引擎](docs/zh/fta-engine.md) | 故障树分析引擎 |
+| [RAG 管道](docs/zh/rag-pipeline.md) | 检索增强生成 |
+| [技能系统](docs/zh/skill-system.md) | 技能注册与沙箱 |
+| [工单总结 Agent](docs/zh/ticket-summary-agent.md) | 核心业务场景设计 |
+| [配置指南](docs/zh/configuration.md) | 环境变量与配置详解 |
+| [CLI 参考](docs/zh/cli-reference.md) | 命令行接口 |
+| [最佳实践](docs/zh/best-practices.md) | 生产最佳实践 |
+| [部署指南](docs/zh/deployment.md) | Docker/Helm/K8s 部署 |
+
+### 文档站点
+
+在线文档站点（Docusaurus）：[`docs-site/`](docs-site/) —— 涵盖架构（architecture）、API、ADR、运维（ops）、开发指南（dev-guide）与用户指南（user-guide）。
 
 ---
 
 ## 🧪 Testing | 测试
 
 ```bash
-# Python 单元测试
-cd python && .venv/bin/python -m pytest tests/unit/ -v
+# 全量测试（Go + Python + WebUI 并行）
+make test
+
+# Python 单元测试（432+ 用例，含熔断器/降级/记忆/规划）
+cd python && PYTHONPATH=src .venv/bin/python -m pytest tests/unit/ -v
 
 # Go 测试
 go test -race -coverprofile=coverage.out ./...
@@ -651,9 +764,15 @@ go test -race -coverprofile=coverage.out ./...
 # WebUI 测试
 cd web && pnpm run test
 
-# 完整测试
-make test
+# 质量门禁（lint + test + coverage）
+make lint
+hack/quality-gate.sh
 ```
+
+**测试覆盖亮点**（`python/tests/unit/`）:
+- `test_resilience.py` — 熔断器三态机、50 并发失败、降级级联（19 用例）
+- `test_memory.py` — 三层记忆、TTL 过期、LRU 逐出
+- `test_planning.py` — 双模式规划、JSON 容错解析、Replan
 
 ---
 
@@ -668,7 +787,6 @@ make test
 | `resolveagent_planner_replans_total` | Replan 次数 |
 | `resolveagent_toolhub_executions_total` | 工具执行数 |
 | `resolveagent_circuit_breaker_state` | 熔断器状态 (0=closed, 1=open, 2=half_open) |
-| `resolveagent_message_bus_messages_total` | 消息总数 |
 | `resolveagent_feedback_signals_total` | 🔄 反馈信号总数 (by source, event) |
 | `resolveagent_feedback_loop_duration_seconds` | 🔄 反馈循环处理耗时 |
 | `resolveagent_retry_exhausted_total` | 🔄 重试耗尽次数 |
@@ -679,27 +797,60 @@ make test
 
 ## 🌐 WebUI | Web 界面
 
-访问 `http://localhost:3000` 查看可视化界面：
+访问 **http://localhost:5174** 查看可视化控制台，包含 22 个功能页面：
 
-- **Agent 管理** - 创建、配置、监控 Agent
-- **工作流编辑器** - 可视化 FTA 工作流
-- **记忆面板** - 查看三层记忆状态
-- **审计日志** - 完整路由决策追踪
-- **工具市场** - ToolHub 可视化
-- **架构可视化** - 系统架构总览 + Loop Engineering 闭环图
-- **监控告警** - 反馈信号仪表盘 + 熔断器状态 + 自适应权重
+- **Home / Dashboard** — 平台总览与执行模式
+- **Playground** — 与 Agent 多轮对话（Kimi K2.5 等模型）
+- **Selector** — 智能路由决策可视化 + 自适应权重
+- **FTA Engine** — 故障树编辑器与仿真
+- **Workflows** — 工作流编排
+- **Agents** — Agent 管理与配置
+- **Skills** — 技能系统管理
+- **RAG** — 知识库与向量检索
+- **Memory** — 三层记忆状态
+- **Monitoring / Traces** — 监控指标与链路追踪
+- **CodeAnalysis** — 代码分析
+- **TicketSummary** — 工单总结业务场景
+- **AgentScopeHigress** — 网关集成演示
+- **Database / DatabaseSchema** — 数据管理与 Schema
+- **Demo / Evaluation** — 演示与评估
+- **Settings** — 系统设置
+- **Mobile** — 移动端预览
+
+---
+
+## 📦 Deployment | 部署
+
+```bash
+# 构建镜像 (platform / runtime / webui)
+make docker
+
+# Docker Compose 全栈
+make compose-up
+
+# Helm 部署
+make helm-install
+
+# 数据库迁移与种子数据
+make migrate-up
+make seed
+```
+
+生产部署推荐使用 `deploy/helm/resolveagent/`（含健康检查、资源限制、HPA 配置），详见 [部署指南](docs/zh/deployment.md)。
 
 ---
 
 ## 📝 License
 
-Apache 2.0 License - 见 [LICENSE](LICENSE)
+Apache 2.0 License — 见 [LICENSE](LICENSE)
 
 ---
 
 ## 🙏 Acknowledgments
 
-- [AgentScope](https://github.com/modelscope/agentscope) - Agent 编排
-- [Higress](https://github.com/alibaba/higress) - AI 网关
-- [LangGraph](https://github.com/langchain-ai/langgraph) - 图编排
-- [MCP](https://modelcontextprotocol.io) - Model Context Protocol
+- [AgentScope](https://github.com/modelscope/agentscope) — Agent 编排
+- [Higress](https://github.com/alibaba/higress) — AI 网关
+- [LangGraph](https://github.com/langchain-ai/langgraph) — 图编排参考
+- [MCP](https://modelcontextprotocol.io) — Model Context Protocol
+- [Milvus](https://milvus.io) / [Qdrant](https://qdrant.tech) — 向量数据库
+- [Vite](https://vitejs.dev) / [React](https://react.dev) / [Tailwind CSS](https://tailwindcss.com) — WebUI 技术栈

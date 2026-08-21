@@ -469,7 +469,7 @@ ResolveAgent WebUI 提供可视化的 FTA 工作流编辑器（基于 React Flow
 make compose-up
 
 # 访问
-http://localhost:3000/workflows
+http://localhost:5174/workflows
 ```
 
 ---

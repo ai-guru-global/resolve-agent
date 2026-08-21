@@ -62,7 +62,7 @@ server:
   cors:
     enabled: true
     allowed_origins:
-      - "http://localhost:3000"
+      - "http://localhost:5174"
       - "https://app.example.com"
     allowed_methods:
       - GET

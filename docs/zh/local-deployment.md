@@ -19,7 +19,7 @@
 ```
 ┌──────────────────────────────────────────────────┐
 │                   WebUI (React)                   │
-│                 http://localhost:3000              │
+│                 http://localhost:5174              │
 └──────────────────┬───────────────────────────────┘
                    │ HTTP
 ┌──────────────────▼───────────────────────────────┐
@@ -256,7 +256,7 @@ cd ..
 
 | 服务 | 地址 | 说明 |
 |------|------|------|
-| **WebUI** | http://localhost:3000 | React 前端界面（热重载） |
+| **WebUI** | http://localhost:5174 | React 前端界面（热重载） |
 | **Platform HTTP** | http://localhost:8080 | Go 平台 REST API |
 | **Platform gRPC** | localhost:9090 | Go 平台 gRPC 接口 |
 | **Runtime gRPC** | localhost:9091 | Python Agent 运行时 |

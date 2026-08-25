@@ -12,7 +12,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-from .feedback_loop import FeedbackLoop, WorkflowExecutionMetrics
+from .feedback_loop import FeedbackLoop, WorkflowExecutionMetrics  # noqa: TC001  # 运行时构造参数
 
 logger = logging.getLogger(__name__)
 

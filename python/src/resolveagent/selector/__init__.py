@@ -29,7 +29,6 @@ from resolveagent.selector.intent import (
     IntentPattern,
     IntentType,
 )
-from resolveagent.selector.selector import IntelligentSelector, RouteDecision
 from resolveagent.selector.resilient_selector import (
     ReEnricher,
     ResilientConfig,
@@ -37,6 +36,7 @@ from resolveagent.selector.resilient_selector import (
     RouteAttempt,
     RoutingSession,
 )
+from resolveagent.selector.selector import IntelligentSelector, RouteDecision
 
 __all__ = [
     # Main components

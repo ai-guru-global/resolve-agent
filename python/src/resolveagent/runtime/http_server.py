@@ -250,7 +250,9 @@ class RuntimeHTTPServer:
                 collection_id = body.get("collection_id")
                 query = body.get("query", "")
                 top_k = body.get("top_k", 5)
-                filters = body.get("filters", {})
+                # NOTE: body 的 filters 字段仅做契约兼容, 当前 RAGPipeline.query
+                # 不支持 metadata 过滤 (签名无 filters), 透传会报
+                # unexpected keyword argument 导致 500
 
                 # Import here to avoid circular imports
                 from resolveagent.rag.pipeline import RAGPipeline
@@ -260,7 +262,6 @@ class RuntimeHTTPServer:
                     collection_id=collection_id,
                     query=query,
                     top_k=top_k,
-                    filters=filters,
                 )
 
                 return JSONResponse(

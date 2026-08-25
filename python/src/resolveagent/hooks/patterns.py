@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ class HookResult:
 
     success: bool
     data: dict[str, Any] = field(default_factory=dict)
-    error: Optional[str] = None
+    error: str | None = None
     duration_ms: float = 0.0
 
 

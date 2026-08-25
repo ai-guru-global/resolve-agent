@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
+	"github.com/google/uuid"
 )
 func (s *Server) handleListAgents(w http.ResponseWriter, _ *http.Request) {
 	ctx := context.Background()
@@ -39,10 +40,9 @@ func (s *Server) handleCreateAgent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate required fields
+	// Validate required fields; generate ID server-side when omitted (REST convention)
 	if agent.ID == "" {
-		writeError(w, http.StatusBadRequest, "agent ID is required")
-		return
+		agent.ID = uuid.NewString()
 	}
 	if agent.Name == "" {
 		writeError(w, http.StatusBadRequest, "agent name is required")

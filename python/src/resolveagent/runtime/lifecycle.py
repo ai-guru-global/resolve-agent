@@ -37,7 +37,7 @@ class AgentPool:
         if len(self._pool) >= self.max_size:
             evicted_id, evicted_agent = self._pool.popitem(last=False)
             logger.info("Evicted agent from pool", extra={"agent_id": evicted_id})
-            if hasattr(evicted_agent, "cleanup") and callable(getattr(evicted_agent, "cleanup")):
+            if hasattr(evicted_agent, "cleanup") and callable(evicted_agent.cleanup):
                 try:
                     evicted_agent.cleanup()
                 except Exception as e:

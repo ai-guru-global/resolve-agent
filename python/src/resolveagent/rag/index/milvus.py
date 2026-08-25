@@ -3,11 +3,27 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any
 
 from resolveagent.rag.index.base import VectorStore
 
 logger = logging.getLogger(__name__)
+
+
+def _sanitize_collection_name(name: str) -> str:
+    """Sanitize a collection ID into a valid Milvus collection name.
+
+    Milvus requires: starts with letter or underscore, contains only
+    letters/digits/underscores, max 255 chars. Collection IDs like
+    "1787645583449612000-6590" (timestamp-random) start with a digit and
+    contain hyphens, both invalid, so they must be normalized.
+    The mapping is deterministic so ingest/query resolve to the same name.
+    """
+    sanitized = re.sub(r"[^A-Za-z0-9_]", "_", name)[:255]
+    if not sanitized or not (sanitized[0].isalpha() or sanitized[0] == "_"):
+        sanitized = f"c_{sanitized}"[:255]
+    return sanitized
 
 
 class MilvusStore(VectorStore):
@@ -99,6 +115,8 @@ class MilvusStore(VectorStore):
         if not self._connected:
             raise RuntimeError("Not connected to Milvus")
 
+        collection_name = _sanitize_collection_name(collection_name)
+
         try:
             from pymilvus import DataType
 
@@ -161,6 +179,7 @@ class MilvusStore(VectorStore):
         if not self._connected:
             raise RuntimeError("Not connected to Milvus")
 
+        collection_name = _sanitize_collection_name(collection_name)
         try:
             self._client.drop_collection(collection_name)
             logger.info(f"Deleted collection {collection_name}")
@@ -210,6 +229,8 @@ class MilvusStore(VectorStore):
 
         if len(vectors) != len(texts):
             raise ValueError("vectors and texts must have same length")
+
+        collection_name = _sanitize_collection_name(collection_name)
 
         try:
             # Generate IDs if not provided
@@ -268,6 +289,8 @@ class MilvusStore(VectorStore):
         """
         if not self._connected:
             raise RuntimeError("Not connected to Milvus")
+
+        collection_name = _sanitize_collection_name(collection_name)
 
         try:
             # Build filter expression if provided
@@ -336,6 +359,8 @@ class MilvusStore(VectorStore):
         if not self._connected:
             raise RuntimeError("Not connected to Milvus")
 
+        collection_name = _sanitize_collection_name(collection_name)
+
         try:
             if ids:
                 # Delete by IDs
@@ -369,6 +394,8 @@ class MilvusStore(VectorStore):
         """
         if not self._connected:
             raise RuntimeError("Not connected to Milvus")
+
+        collection_name = _sanitize_collection_name(collection_name)
 
         try:
             stats = self._client.get_collection_stats(collection_name)

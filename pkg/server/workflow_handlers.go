@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
+	"github.com/google/uuid"
 )
 func (s *Server) handleListWorkflows(w http.ResponseWriter, _ *http.Request) {
 	ctx := context.Background()
@@ -39,9 +40,9 @@ func (s *Server) handleCreateWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Generate ID server-side when omitted (REST convention)
 	if workflow.ID == "" {
-		writeError(w, http.StatusBadRequest, "workflow ID is required")
-		return
+		workflow.ID = uuid.NewString()
 	}
 	if workflow.Name == "" {
 		writeError(w, http.StatusBadRequest, "workflow name is required")

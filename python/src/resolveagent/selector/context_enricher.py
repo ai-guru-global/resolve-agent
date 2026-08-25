@@ -252,7 +252,7 @@ class ContextEnricher:
         enriched.user_preferences = await self._infer_user_preferences(agent_id, enriched.conversation_history)
 
         # Preserve resilient feedback from previous attempts (ReEnricher injects these)
-        _RESILIENT_KEYS = (
+        _RESILIENT_KEYS = (  # noqa: N806  # 函数内局部常量, 大写表意
             "attempted_routes",
             "last_failure",
             "route_preferences",

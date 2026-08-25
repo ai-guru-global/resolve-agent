@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from pathlib import Path  # noqa: TC003  # pydantic 字段类型, 运行时必需
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 

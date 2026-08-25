@@ -72,6 +72,14 @@ class ModelRegistry:
                 base_url=config.base_url or "https://api.moonshot.cn/v1",
                 default_model=config.model_name,
             )
+        elif config.provider == "mimo":
+            from resolveagent.llm.openai_compat import OpenAICompatProvider
+
+            return OpenAICompatProvider(
+                api_key=config.api_key or os.getenv("XIAOMI_TOKEN_PLAN_API_KEY", ""),
+                base_url=config.base_url or "https://token-plan-cn.xiaomimimo.com/v1",
+                default_model=config.model_name,
+            )
         else:
             from resolveagent.llm.openai_compat import OpenAICompatProvider
 

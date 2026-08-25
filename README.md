@@ -702,6 +702,10 @@ RESOLVEAGENT_LLM_ZHIPU_API_KEY=your-zhipu-key
 KIMI_API_KEY=your-kimi-key          # 经 OpenAI 兼容层接入
 LLM_BASE_URL=https://api.moonshot.cn/v1
 LLM_DEFAULT_MODEL=kimi-k2.5-turbo-preview
+# 小米 MiMo Token Plan (可选): 切到 MiMo 时 LLM_BASE_URL/LLM_DEFAULT_MODEL 改为:
+#   LLM_BASE_URL=https://token-plan-cn.xiaomimimo.com/v1 (区域端点: cn/sgp/ams)
+#   LLM_DEFAULT_MODEL=mimo-v2.5-pro
+#   XIAOMI_TOKEN_PLAN_API_KEY=tp-xxxx (按 base_url 自动路由, 与 Kimi 互不干扰)
 
 # 网关与可观测性
 RESOLVEAGENT_GATEWAY_ENABLED=true

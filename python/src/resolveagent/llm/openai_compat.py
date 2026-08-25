@@ -119,7 +119,11 @@ class OpenAICompatProvider(LLMProvider):
                 if "error" in data:
                     raise RuntimeError(f"API error: {data['error']}")
 
-                choice = data.get("choices", [{}])[0]
+                # Some providers (e.g. MiMo reasoning) may return empty choices
+                choices = data.get("choices") or []
+                if not choices:
+                    raise RuntimeError(f"API error: empty choices in response: {data}")
+                choice = choices[0]
                 message = choice.get("message", {})
                 content = message.get("content", "") or ""
                 finish_reason = choice.get("finish_reason", "stop")
@@ -212,7 +216,12 @@ class OpenAICompatProvider(LLMProvider):
 
                         try:
                             data = json.loads(data_str)
-                            choice = data.get("choices", [{}])[0]
+                            # Reasoning providers (e.g. MiMo) may emit chunks
+                            # with empty choices (thinking delimiters, usage-only)
+                            choices = data.get("choices") or []
+                            if not choices:
+                                continue
+                            choice = choices[0]
                             delta = choice.get("delta", {})
                             content = delta.get("content", "") or ""
 

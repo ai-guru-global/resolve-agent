@@ -429,8 +429,13 @@ def create_llm_provider(
         # Direct mode: use OpenAI-compatible provider
         from resolveagent.llm.openai_compat import OpenAICompatProvider
 
-        api_key = os.getenv("KIMI_API_KEY", "") or os.getenv("RESOLVEAGENT_API_KEY", "")
         base_url = os.getenv("LLM_BASE_URL", "https://api.moonshot.cn/v1")
+        # MiMo (xiaomimimo.com) 使用独立的 Token Plan 密钥 (tp- 前缀),
+        # 按 base_url 路由避免把 tp- 密钥误发给 Moonshot 等其他端点
+        if "xiaomimimo.com" in base_url:
+            api_key = os.getenv("XIAOMI_TOKEN_PLAN_API_KEY", "") or os.getenv("KIMI_API_KEY", "")
+        else:
+            api_key = os.getenv("KIMI_API_KEY", "") or os.getenv("RESOLVEAGENT_API_KEY", "")
         default_model = os.getenv("LLM_DEFAULT_MODEL", model)
 
         logger.info(

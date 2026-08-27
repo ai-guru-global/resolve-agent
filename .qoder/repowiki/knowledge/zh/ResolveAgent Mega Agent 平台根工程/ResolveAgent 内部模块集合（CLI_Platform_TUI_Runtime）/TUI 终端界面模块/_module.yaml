@@ -1,0 +1,9 @@
+schema_version: 1
+module_path: internal_go/tui
+title: TUI 终端界面模块
+scope:
+    - internal/tui/
+source_files: []
+depends_on: []
+related_to:
+    - path: pkg_shared_libs/server/core_server

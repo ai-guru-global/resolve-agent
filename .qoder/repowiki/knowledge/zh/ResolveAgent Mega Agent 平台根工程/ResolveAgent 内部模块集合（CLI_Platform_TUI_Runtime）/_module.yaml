@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: internal_go
+title: ResolveAgent 内部模块集合（CLI/Platform/TUI/Runtime）
+scope:
+    - internal/
+source_files: []
+depends_on: []
+related_to: []

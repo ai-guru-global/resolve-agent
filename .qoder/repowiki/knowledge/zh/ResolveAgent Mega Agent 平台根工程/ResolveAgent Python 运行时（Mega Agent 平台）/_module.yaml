@@ -1,0 +1,9 @@
+schema_version: 1
+module_path: python_runtime
+title: ResolveAgent Python 运行时（Mega Agent 平台）
+scope:
+    - python/
+source_files: []
+depends_on: []
+related_to:
+    - path: deploy_infra

@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: internal_go/platform
+title: 平台核心业务包（Agent/Workflow/Skill）
+scope:
+    - internal/platform/
+source_files: []
+depends_on: []
+related_to: []

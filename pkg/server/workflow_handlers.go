@@ -40,6 +40,16 @@ func (s *Server) handleCreateWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Map "definition" field to Tree when Tree is empty (API contract compatibility)
+	if workflow.Tree == nil {
+		var raw struct {
+			Definition map[string]any `json:"definition"`
+		}
+		if err := json.Unmarshal(body, &raw); err == nil && raw.Definition != nil {
+			workflow.Tree = raw.Definition
+		}
+	}
+
 	// Generate ID server-side when omitted (REST convention)
 	if workflow.ID == "" {
 		workflow.ID = uuid.NewString()

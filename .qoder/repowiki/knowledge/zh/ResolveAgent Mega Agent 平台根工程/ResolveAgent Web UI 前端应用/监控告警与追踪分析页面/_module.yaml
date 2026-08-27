@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: web_ui/monitoring_traces
+title: 监控告警与追踪分析页面
+scope:
+    - web/src/pages/Monitoring/
+    - web/src/pages/Traces/
+    - web/src/hooks/useDashboard.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: pkg_shared_libs/server/core_server

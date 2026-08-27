@@ -111,7 +111,7 @@ export default function Playground() {
   const [mockMode, setMockMode] = useState(false);
   const mockApiRef = useRef<typeof import('@/api/mock').mockApi | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  let conversationCreated = new Date().toISOString();
+  const conversationCreatedRef = useRef(new Date().toISOString());
 
   const {
     history,
@@ -138,7 +138,7 @@ export default function Playground() {
     setMessages([]);
     const newId = crypto.randomUUID();
     setConversationId(newId);
-    conversationCreated = new Date().toISOString();
+    conversationCreatedRef.current = new Date().toISOString();
   };
 
   // Persist the current conversation to history
@@ -155,7 +155,7 @@ export default function Playground() {
       agentName: currentAgentName,
       title,
       messages,
-      createdAt: conversationCreated,
+      createdAt: conversationCreatedRef.current,
     });
   };
 
@@ -166,7 +166,7 @@ export default function Playground() {
     // Load the selected one
     setConversationId(record.id);
     setMessages(record.messages);
-    conversationCreated = record.createdAt;
+    conversationCreatedRef.current = record.createdAt;
     // Switch to the correct agent if needed
     if (record.agentId !== selectedAgent) {
       setSelectedAgent(record.agentId);
@@ -186,7 +186,7 @@ export default function Playground() {
         setMessages([]);
         const newId = crypto.randomUUID();
         setConversationId(newId);
-        conversationCreated = new Date().toISOString();
+        conversationCreatedRef.current = new Date().toISOString();
       }
     }, 200);
   };
@@ -201,7 +201,7 @@ export default function Playground() {
         if (first) {
           setSelectedAgent(first.id);
           setConversationId(crypto.randomUUID());
-          conversationCreated = new Date().toISOString();
+          conversationCreatedRef.current = new Date().toISOString();
         }
       } catch {
         // ignore
@@ -230,7 +230,7 @@ export default function Playground() {
         agentName: currentAgentName,
         title,
         messages,
-        createdAt: conversationCreated,
+        createdAt: conversationCreatedRef.current,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -384,7 +384,7 @@ export default function Playground() {
                   setMessages([]);
                   const newId = crypto.randomUUID();
                   setConversationId(newId);
-                  conversationCreated = new Date().toISOString();
+                  conversationCreatedRef.current = new Date().toISOString();
                 }}
                 disabled={loadingAgents}
               >

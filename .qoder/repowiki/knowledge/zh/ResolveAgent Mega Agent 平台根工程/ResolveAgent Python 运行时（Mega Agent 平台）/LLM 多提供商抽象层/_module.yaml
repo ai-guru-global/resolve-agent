@@ -1,0 +1,10 @@
+schema_version: 1
+module_path: python_runtime/llm
+title: LLM 多提供商抽象层
+scope:
+    - python/src/resolveagent/llm/
+source_files: []
+depends_on: []
+related_to:
+    - path: pkg_shared_libs/gateway
+    - path: python_runtime/mcp

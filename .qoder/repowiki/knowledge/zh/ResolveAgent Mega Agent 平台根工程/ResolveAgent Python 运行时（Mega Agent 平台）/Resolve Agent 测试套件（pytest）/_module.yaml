@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: python_runtime/tests
+title: Resolve Agent 测试套件（pytest）
+scope:
+    - python/tests/
+source_files: []
+depends_on: []
+related_to:
+    - path: python_runtime/fta
+    - path: python_runtime/hooks
+    - path: python_runtime/runtime_core
+    - path: python_runtime/selector

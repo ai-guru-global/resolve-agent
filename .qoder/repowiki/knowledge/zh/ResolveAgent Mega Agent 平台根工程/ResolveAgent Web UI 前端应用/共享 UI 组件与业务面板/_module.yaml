@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: web_ui/shared_components
+title: 共享 UI 组件与业务面板
+scope:
+    - web/src/components/ui/
+    - web/src/components/Layout/
+    - web/src/components/TreeEditor/
+    - web/src/components/ChatInterface/
+    - web/src/components/TrafficGraph/
+source_files: []
+depends_on: []
+related_to: []

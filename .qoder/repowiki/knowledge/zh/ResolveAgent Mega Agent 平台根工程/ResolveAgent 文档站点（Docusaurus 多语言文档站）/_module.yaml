@@ -1,0 +1,10 @@
+schema_version: 1
+module_path: docs_site
+title: ResolveAgent 文档站点（Docusaurus 多语言文档站）
+scope:
+    - docs/
+    - docs-site/
+source_files: []
+depends_on: []
+related_to:
+    - path: python_runtime/docsync

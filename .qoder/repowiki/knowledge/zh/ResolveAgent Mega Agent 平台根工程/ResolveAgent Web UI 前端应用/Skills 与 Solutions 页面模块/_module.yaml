@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: web_ui/skills_solutions
+title: Skills 与 Solutions 页面模块
+scope:
+    - web/src/pages/Skills/
+    - web/src/pages/Solutions/
+    - web/src/hooks/useSkills.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: pkg_shared_libs/server/core_server

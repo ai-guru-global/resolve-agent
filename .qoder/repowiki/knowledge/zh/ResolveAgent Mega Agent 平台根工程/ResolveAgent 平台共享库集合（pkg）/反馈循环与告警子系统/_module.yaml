@@ -1,0 +1,9 @@
+schema_version: 1
+module_path: pkg_shared_libs/feedback
+title: 反馈循环与告警子系统
+scope:
+    - pkg/feedback/
+source_files: []
+depends_on: []
+related_to:
+    - path: pkg_shared_libs/telemetry

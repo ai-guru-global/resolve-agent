@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: python_runtime/fta
+title: 故障树分析（FTA）工作流引擎
+scope:
+    - python/src/resolveagent/fta/
+source_files: []
+depends_on: []
+related_to:
+    - path: python_runtime/rag
+    - path: python_runtime/selector
+    - path: python_runtime/skills
+    - path: python_runtime/tests

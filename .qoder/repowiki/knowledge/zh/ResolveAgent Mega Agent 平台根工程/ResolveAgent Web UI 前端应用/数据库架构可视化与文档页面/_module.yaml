@@ -1,0 +1,10 @@
+schema_version: 1
+module_path: web_ui/database
+title: 数据库架构可视化与文档页面
+scope:
+    - web/src/pages/Database/
+    - web/src/pages/DatabaseSchema/
+    - web/src/data/dbSchema.ts
+source_files: []
+depends_on: []
+related_to: []

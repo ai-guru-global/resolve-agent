@@ -127,6 +127,7 @@ func TestAgentLifecycle(t *testing.T) {
 	t.Run("ExecuteAgent", func(t *testing.T) {
 		executeData := map[string]interface{}{
 			"message": "Hello, this is a test message",
+			"stream":  true,
 			"context": map[string]interface{}{
 				"test": true,
 			},

@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: pkg_shared_libs
+title: ResolveAgent 平台共享库集合（pkg）
+scope:
+    - pkg/
+source_files: []
+depends_on: []
+related_to: []

@@ -1,0 +1,687 @@
+# 知识卡导出索引文件
+schema_version: 1
+locale: zh-CN
+branch: main
+nodes_managed: true
+exported_at: "2026-08-26T16:02:16Z"
+modules:
+    "":
+        dir_name: ResolveAgent Mega Agent 平台根工程
+        title: ResolveAgent Mega Agent 平台根工程
+        scope:
+            - README.md
+            - CONTRIBUTING.md
+            - Makefile
+            - go.mod
+            - go.sum
+            - .gitignore
+            - .dockerignore
+            - .editorconfig
+            - .env.example
+            - .golangci.yml
+            - .pre-commit-config.yaml
+            - CODE_QUALITY_REPORT_2026-04-20.md
+            - LICENSE
+            - MAINTAINERS.md
+            - NOTICE
+            - PLAN.md
+            - PROJECT_STATUS_EVALUATION.md
+            - ROADMAP.md
+            - VERSION
+            - skills-lock.json
+        source_files: []
+        children:
+            - api_definitions
+            - config_and_skills
+            - deploy_infra
+            - docs_site
+            - examples_integrations
+            - hack_build_tools
+            - internal_go
+            - mobile_app
+            - pkg_shared_libs
+            - python_runtime
+            - test_suite
+            - web_ui
+        depends_on: []
+        related_to: []
+    api_definitions:
+        dir_name: ResolveAgent API 定义（gRPC_REST_JSON Schema）
+        title: ResolveAgent API 定义（gRPC/REST/JSON Schema）
+        scope:
+            - api/
+            - third_party/protobuf/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: hack_build_tools
+    config_and_skills:
+        dir_name: ResolveAgent 配置与技能注册中心
+        title: ResolveAgent 配置与技能注册中心
+        scope:
+            - configs/
+            - skills/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: examples_integrations
+    deploy_infra:
+        dir_name: ResolveAgent 部署基础设施（Docker_Helm_Kustomize）
+        title: ResolveAgent 部署基础设施（Docker/Helm/Kustomize）
+        scope:
+            - deploy/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: pkg_shared_libs/server/core_server
+            - path: python_runtime
+    docs_site:
+        dir_name: ResolveAgent 文档站点（Docusaurus 多语言文档站）
+        title: ResolveAgent 文档站点（Docusaurus 多语言文档站）
+        scope:
+            - docs/
+            - docs-site/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: python_runtime/docsync
+    examples_integrations:
+        dir_name: 示例与 Dify 集成插件
+        title: 示例与 Dify 集成插件
+        scope:
+            - examples/
+            - integrations/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: config_and_skills
+    hack_build_tools:
+        dir_name: 构建与质量门禁脚本集
+        title: 构建与质量门禁脚本集
+        scope:
+            - hack/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: api_definitions
+    internal_go:
+        dir_name: ResolveAgent 内部模块集合（CLI_Platform_TUI_Runtime）
+        title: ResolveAgent 内部模块集合（CLI/Platform/TUI/Runtime）
+        scope:
+            - internal/
+        source_files: []
+        children:
+            - internal_go/cli
+            - internal_go/platform
+            - internal_go/tui
+        depends_on: []
+        related_to: []
+    internal_go/cli:
+        dir_name: ResolveAgent CLI 命令行工具
+        title: ResolveAgent CLI 命令行工具
+        scope:
+            - internal/cli/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: pkg_shared_libs/server/core_server
+    internal_go/platform:
+        dir_name: 平台核心业务包（Agent_Workflow_Skill）
+        title: 平台核心业务包（Agent/Workflow/Skill）
+        scope:
+            - internal/platform/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    internal_go/tui:
+        dir_name: TUI 终端界面模块
+        title: TUI 终端界面模块
+        scope:
+            - internal/tui/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: pkg_shared_libs/server/core_server
+    mobile_app:
+        dir_name: 移动端 AI Ops 诊断应用（React + Vite）
+        title: 移动端 AI Ops 诊断应用（React + Vite）
+        scope:
+            - mobile/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: web_ui
+    pkg_shared_libs:
+        dir_name: ResolveAgent 平台共享库集合（pkg）
+        title: ResolveAgent 平台共享库集合（pkg）
+        scope:
+            - pkg/
+        source_files: []
+        children:
+            - pkg_shared_libs/feedback
+            - pkg_shared_libs/gateway
+            - pkg_shared_libs/registry
+            - pkg_shared_libs/server
+            - pkg_shared_libs/shared_utils
+            - pkg_shared_libs/store_backends
+            - pkg_shared_libs/telemetry
+        depends_on: []
+        related_to: []
+    pkg_shared_libs/feedback:
+        dir_name: 反馈循环与告警子系统
+        title: 反馈循环与告警子系统
+        scope:
+            - pkg/feedback/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: pkg_shared_libs/telemetry
+    pkg_shared_libs/gateway:
+        dir_name: Higress 网关客户端与路由同步
+        title: Higress 网关客户端与路由同步
+        scope:
+            - pkg/gateway/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: pkg_shared_libs/server/core_server
+            - path: python_runtime/llm
+    pkg_shared_libs/registry:
+        dir_name: AI 智能体与故障排查资源注册表（Registry）
+        title: AI 智能体与故障排查资源注册表（Registry）
+        scope:
+            - pkg/registry/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: pkg_shared_libs/server/core_server
+    pkg_shared_libs/server:
+        dir_name: AI 平台 HTTP_gRPC 服务网关
+        title: AI 平台 HTTP/gRPC 服务网关
+        scope:
+            - pkg/server/
+        source_files: []
+        children:
+            - pkg_shared_libs/server/core_server
+        depends_on: []
+        related_to: []
+    pkg_shared_libs/server/core_server:
+        dir_name: HTTP_gRPC 平台服务核心服务器
+        title: HTTP/gRPC 平台服务核心服务器
+        scope:
+            - pkg/server/
+            - pkg/server/middleware/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: deploy_infra
+            - path: internal_go/cli
+            - path: internal_go/tui
+            - path: pkg_shared_libs/gateway
+            - path: pkg_shared_libs/registry
+            - path: python_runtime/runtime_core
+            - path: python_runtime/store
+            - path: web_ui/agents
+            - path: web_ui/code_analysis
+            - path: web_ui/monitoring_traces
+            - path: web_ui/rag
+            - path: web_ui/shared_infrastructure
+            - path: web_ui/skills_solutions
+            - path: web_ui/workflows
+    pkg_shared_libs/shared_utils:
+        dir_name: ResolveAgent 共享基础库（配置、错误、事件、健康检查、日志、重试、服务注册与版本）
+        title: ResolveAgent 共享基础库（配置、错误、事件、健康检查、日志、重试、服务注册与版本）
+        scope:
+            - pkg/config/
+            - pkg/errors/
+            - pkg/event/
+            - pkg/health/
+            - pkg/logger/
+            - pkg/retry/
+            - pkg/service/
+            - pkg/version/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    pkg_shared_libs/store_backends:
+        dir_name: Store 后端抽象与多实现聚合层
+        title: Store 后端抽象与多实现聚合层
+        scope:
+            - pkg/store/
+        source_files: []
+        children:
+            - pkg_shared_libs/store_backends/postgres_backend
+            - pkg_shared_libs/store_backends/store_interfaces
+        depends_on: []
+        related_to: []
+    pkg_shared_libs/store_backends/postgres_backend:
+        dir_name: PostgreSQL 持久化存储后端
+        title: PostgreSQL 持久化存储后端
+        scope:
+            - pkg/store/postgres/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    pkg_shared_libs/store_backends/store_interfaces:
+        dir_name: 存储抽象接口与通用查询模式
+        title: 存储抽象接口与通用查询模式
+        scope:
+            - pkg/store/store.go
+            - pkg/store/patterns.go
+            - pkg/store/store_test.go
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    pkg_shared_libs/telemetry:
+        dir_name: 可观测性基础设施（日志_指标_链路追踪）
+        title: 可观测性基础设施（日志/指标/链路追踪）
+        scope:
+            - pkg/telemetry/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: pkg_shared_libs/feedback
+    python_runtime:
+        dir_name: ResolveAgent Python 运行时（Mega Agent 平台）
+        title: ResolveAgent Python 运行时（Mega Agent 平台）
+        scope:
+            - python/
+        source_files: []
+        children:
+            - python_runtime/code_analysis
+            - python_runtime/corpus
+            - python_runtime/docsync
+            - python_runtime/fta
+            - python_runtime/hooks
+            - python_runtime/integrations
+            - python_runtime/llm
+            - python_runtime/mcp
+            - python_runtime/rag
+            - python_runtime/runtime_core
+            - python_runtime/selector
+            - python_runtime/skills
+            - python_runtime/store
+            - python_runtime/tests
+            - python_runtime/top_level_runtime
+            - python_runtime/traffic
+        depends_on: []
+        related_to:
+            - path: deploy_infra
+    python_runtime/code_analysis:
+        dir_name: 静态代码分析与错误诊断引擎
+        title: 静态代码分析与错误诊断引擎
+        scope:
+            - python/src/resolveagent/code_analysis/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: python_runtime/selector
+    python_runtime/corpus:
+        dir_name: 外部语料库导入与RAG入库
+        title: 外部语料库导入与RAG入库
+        scope:
+            - python/src/resolveagent/corpus/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: python_runtime/rag
+    python_runtime/docsync:
+        dir_name: 双语文档同步与校对引擎
+        title: 双语文档同步与校对引擎
+        scope:
+            - python/src/resolveagent/docsync/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: docs_site
+    python_runtime/fta:
+        dir_name: 故障树分析（FTA）工作流引擎
+        title: 故障树分析（FTA）工作流引擎
+        scope:
+            - python/src/resolveagent/fta/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: python_runtime/rag
+            - path: python_runtime/selector
+            - path: python_runtime/skills
+            - path: python_runtime/tests
+    python_runtime/hooks:
+        dir_name: Agent 生命周期 Hook 执行框架
+        title: Agent 生命周期 Hook 执行框架
+        scope:
+            - python/src/resolveagent/hooks/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: python_runtime/runtime_core
+            - path: python_runtime/tests
+    python_runtime/integrations:
+        dir_name: ResolveAgent 外部集成适配层（Dify & LangGraph）
+        title: ResolveAgent 外部集成适配层（Dify & LangGraph）
+        scope:
+            - python/src/resolveagent/integrations/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    python_runtime/llm:
+        dir_name: LLM 多提供商抽象层
+        title: LLM 多提供商抽象层
+        scope:
+            - python/src/resolveagent/llm/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: pkg_shared_libs/gateway
+            - path: python_runtime/mcp
+    python_runtime/mcp:
+        dir_name: MCP（Model Context Protocol）适配器
+        title: MCP（Model Context Protocol）适配器
+        scope:
+            - python/src/resolveagent/mcp/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: python_runtime/llm
+    python_runtime/rag:
+        dir_name: RAG 检索增强生成流水线
+        title: RAG 检索增强生成流水线
+        scope:
+            - python/src/resolveagent/rag/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: python_runtime/corpus
+            - path: python_runtime/fta
+            - path: python_runtime/selector
+    python_runtime/runtime_core:
+        dir_name: ResolveAgent 运行时核心（HTTP_gRPC 服务与执行引擎）
+        title: ResolveAgent 运行时核心（HTTP/gRPC 服务与执行引擎）
+        scope:
+            - python/src/resolveagent/runtime/
+            - python/src/resolveagent/agent/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: pkg_shared_libs/server/core_server
+            - path: python_runtime/hooks
+            - path: python_runtime/tests
+    python_runtime/selector:
+        dir_name: ResolveAgent 智能路由选择器
+        title: ResolveAgent 智能路由选择器
+        scope:
+            - python/src/resolveagent/selector/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: python_runtime/code_analysis
+            - path: python_runtime/fta
+            - path: python_runtime/rag
+            - path: python_runtime/skills
+            - path: python_runtime/tests
+    python_runtime/skills:
+        dir_name: Agent Skill 插件系统与执行框架
+        title: Agent Skill 插件系统与执行框架
+        scope:
+            - python/src/resolveagent/skills/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: python_runtime/fta
+            - path: python_runtime/selector
+    python_runtime/store:
+        dir_name: Go 平台 Store REST 客户端
+        title: Go 平台 Store REST 客户端
+        scope:
+            - python/src/resolveagent/store/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: pkg_shared_libs/server/core_server
+    python_runtime/tests:
+        dir_name: Resolve Agent 测试套件（pytest）
+        title: Resolve Agent 测试套件（pytest）
+        scope:
+            - python/tests/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: python_runtime/fta
+            - path: python_runtime/hooks
+            - path: python_runtime/runtime_core
+            - path: python_runtime/selector
+    python_runtime/top_level_runtime:
+        dir_name: Agent 运行时核心：记忆、消息总线、规划与工具中心
+        title: Agent 运行时核心：记忆、消息总线、规划与工具中心
+        scope:
+            - python/src/resolveagent/memory.py
+            - python/src/resolveagent/message_bus.py
+            - python/src/resolveagent/planning.py
+            - python/src/resolveagent/resilience.py
+            - python/src/resolveagent/toolhub.py
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    python_runtime/traffic:
+        dir_name: 动态流量分析引擎
+        title: 动态流量分析引擎
+        scope:
+            - python/src/resolveagent/traffic/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    test_suite:
+        dir_name: 端到端与集成测试套件
+        title: 端到端与集成测试套件
+        scope:
+            - test/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    web_ui:
+        dir_name: ResolveAgent Web UI 前端应用
+        title: ResolveAgent Web UI 前端应用
+        scope:
+            - web/
+        source_files: []
+        children:
+            - web_ui/agents
+            - web_ui/app_shell
+            - web_ui/architecture
+            - web_ui/code_analysis
+            - web_ui/database
+            - web_ui/monitoring_traces
+            - web_ui/playground_evaluation
+            - web_ui/rag
+            - web_ui/shared_components
+            - web_ui/shared_infrastructure
+            - web_ui/skills_solutions
+            - web_ui/workflows
+        depends_on: []
+        related_to:
+            - path: mobile_app
+    web_ui/agents:
+        dir_name: Agent 管理与 K8s 代码图谱可视化
+        title: Agent 管理与 K8s 代码图谱可视化
+        scope:
+            - web/src/pages/Agents/
+            - web/src/components/K8sCorpus/
+            - web/src/hooks/useAgents.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: pkg_shared_libs/server/core_server
+    web_ui/app_shell:
+        dir_name: 应用外壳与架构文档页面集
+        title: 应用外壳与架构文档页面集
+        scope:
+            - web/src/pages/Dashboard/
+            - web/src/pages/Home/
+            - web/src/pages/Settings/
+            - web/src/pages/Demo/
+            - web/src/pages/Mobile/
+            - web/src/pages/TicketSummary/
+            - web/src/pages/AgentScopeHigress/
+            - web/src/pages/Selector/
+            - web/src/pages/SelectorAdapters/
+            - web/src/pages/FTAEngine/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    web_ui/architecture:
+        dir_name: 架构文档可视化页面（Architecture Pages）
+        title: 架构文档可视化页面（Architecture Pages）
+        scope:
+            - web/src/pages/Architecture/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    web_ui/code_analysis:
+        dir_name: 代码分析语料与可视化页面（Call Graph _ Traffic _ K8s Corpus）
+        title: 代码分析语料与可视化页面（Call Graph / Traffic / K8s Corpus）
+        scope:
+            - web/src/pages/CodeAnalysis/
+            - web/src/mocks/codeAnalysis/
+            - web/src/lib/ragCorpusGenerator.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: pkg_shared_libs/server/core_server
+    web_ui/database:
+        dir_name: 数据库架构可视化与文档页面
+        title: 数据库架构可视化与文档页面
+        scope:
+            - web/src/pages/Database/
+            - web/src/pages/DatabaseSchema/
+            - web/src/data/dbSchema.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    web_ui/monitoring_traces:
+        dir_name: 监控告警与追踪分析页面
+        title: 监控告警与追踪分析页面
+        scope:
+            - web/src/pages/Monitoring/
+            - web/src/pages/Traces/
+            - web/src/hooks/useDashboard.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: pkg_shared_libs/server/core_server
+    web_ui/playground_evaluation:
+        dir_name: Playground 与评估基准页面
+        title: Playground 与评估基准页面
+        scope:
+            - web/src/pages/Playground/
+            - web/src/pages/Evaluation/
+            - web/src/hooks/useCodeAnalysis.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    web_ui/rag:
+        dir_name: RAG 知识库管理页面
+        title: RAG 知识库管理页面
+        scope:
+            - web/src/pages/RAG/
+            - web/src/hooks/useRAG.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: pkg_shared_libs/server/core_server
+    web_ui/shared_components:
+        dir_name: 共享 UI 组件与业务面板
+        title: 共享 UI 组件与业务面板
+        scope:
+            - web/src/components/ui/
+            - web/src/components/Layout/
+            - web/src/components/TreeEditor/
+            - web/src/components/ChatInterface/
+            - web/src/components/TrafficGraph/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    web_ui/shared_infrastructure:
+        dir_name: Web 应用共享基础设施（API_数据层、状态与类型）
+        title: Web 应用共享基础设施（API/数据层、状态与类型）
+        scope:
+            - web/src/api/
+            - web/src/hooks/
+            - web/src/stores/
+            - web/src/types/
+            - web/src/constants/
+            - web/src/utils/
+            - web/src/lib/
+            - web/src/App.tsx
+            - web/src/main.tsx
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: pkg_shared_libs/server/core_server
+    web_ui/skills_solutions:
+        dir_name: Skills 与 Solutions 页面模块
+        title: Skills 与 Solutions 页面模块
+        scope:
+            - web/src/pages/Skills/
+            - web/src/pages/Solutions/
+            - web/src/hooks/useSkills.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: pkg_shared_libs/server/core_server
+    web_ui/workflows:
+        dir_name: 工作流（FTA）管理与可视化
+        title: 工作流（FTA）管理与可视化
+        scope:
+            - web/src/pages/Workflows/
+            - web/src/hooks/useWorkflows.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: pkg_shared_libs/server/core_server

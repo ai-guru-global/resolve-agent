@@ -1,0 +1,27 @@
+schema_version: 1
+module_path: ""
+title: ResolveAgent Mega Agent 平台根工程
+scope:
+    - README.md
+    - CONTRIBUTING.md
+    - Makefile
+    - go.mod
+    - go.sum
+    - .gitignore
+    - .dockerignore
+    - .editorconfig
+    - .env.example
+    - .golangci.yml
+    - .pre-commit-config.yaml
+    - CODE_QUALITY_REPORT_2026-04-20.md
+    - LICENSE
+    - MAINTAINERS.md
+    - NOTICE
+    - PLAN.md
+    - PROJECT_STATUS_EVALUATION.md
+    - ROADMAP.md
+    - VERSION
+    - skills-lock.json
+source_files: []
+depends_on: []
+related_to: []

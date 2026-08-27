@@ -1,0 +1,9 @@
+schema_version: 1
+module_path: python_runtime/code_analysis
+title: 静态代码分析与错误诊断引擎
+scope:
+    - python/src/resolveagent/code_analysis/
+source_files: []
+depends_on: []
+related_to:
+    - path: python_runtime/selector

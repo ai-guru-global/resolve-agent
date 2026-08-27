@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: web_ui/code_analysis
+title: 代码分析语料与可视化页面（Call Graph / Traffic / K8s Corpus）
+scope:
+    - web/src/pages/CodeAnalysis/
+    - web/src/mocks/codeAnalysis/
+    - web/src/lib/ragCorpusGenerator.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: pkg_shared_libs/server/core_server

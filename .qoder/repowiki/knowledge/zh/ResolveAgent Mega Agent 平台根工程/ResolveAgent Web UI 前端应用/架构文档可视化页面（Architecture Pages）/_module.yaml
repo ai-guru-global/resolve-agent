@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: web_ui/architecture
+title: 架构文档可视化页面（Architecture Pages）
+scope:
+    - web/src/pages/Architecture/
+source_files: []
+depends_on: []
+related_to: []

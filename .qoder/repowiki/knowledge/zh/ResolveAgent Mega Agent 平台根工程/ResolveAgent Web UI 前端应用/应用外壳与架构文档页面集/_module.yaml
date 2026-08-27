@@ -1,0 +1,17 @@
+schema_version: 1
+module_path: web_ui/app_shell
+title: 应用外壳与架构文档页面集
+scope:
+    - web/src/pages/Dashboard/
+    - web/src/pages/Home/
+    - web/src/pages/Settings/
+    - web/src/pages/Demo/
+    - web/src/pages/Mobile/
+    - web/src/pages/TicketSummary/
+    - web/src/pages/AgentScopeHigress/
+    - web/src/pages/Selector/
+    - web/src/pages/SelectorAdapters/
+    - web/src/pages/FTAEngine/
+source_files: []
+depends_on: []
+related_to: []

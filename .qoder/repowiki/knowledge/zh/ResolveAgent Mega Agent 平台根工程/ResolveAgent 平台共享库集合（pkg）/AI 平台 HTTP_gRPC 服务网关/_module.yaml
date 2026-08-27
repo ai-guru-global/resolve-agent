@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: pkg_shared_libs/server
+title: AI 平台 HTTP/gRPC 服务网关
+scope:
+    - pkg/server/
+source_files: []
+depends_on: []
+related_to: []

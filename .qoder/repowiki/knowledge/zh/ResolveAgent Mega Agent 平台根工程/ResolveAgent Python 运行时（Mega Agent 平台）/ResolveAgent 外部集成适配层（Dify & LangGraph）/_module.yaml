@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: python_runtime/integrations
+title: ResolveAgent 外部集成适配层（Dify & LangGraph）
+scope:
+    - python/src/resolveagent/integrations/
+source_files: []
+depends_on: []
+related_to: []

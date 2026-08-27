@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: python_runtime/top_level_runtime
+title: Agent 运行时核心：记忆、消息总线、规划与工具中心
+scope:
+    - python/src/resolveagent/memory.py
+    - python/src/resolveagent/message_bus.py
+    - python/src/resolveagent/planning.py
+    - python/src/resolveagent/resilience.py
+    - python/src/resolveagent/toolhub.py
+source_files: []
+depends_on: []
+related_to: []

@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: python_runtime/rag
+title: RAG 检索增强生成流水线
+scope:
+    - python/src/resolveagent/rag/
+source_files: []
+depends_on: []
+related_to:
+    - path: python_runtime/corpus
+    - path: python_runtime/fta
+    - path: python_runtime/selector

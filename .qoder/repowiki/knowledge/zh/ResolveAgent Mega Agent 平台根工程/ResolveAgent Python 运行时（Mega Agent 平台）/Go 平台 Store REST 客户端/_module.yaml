@@ -1,0 +1,9 @@
+schema_version: 1
+module_path: python_runtime/store
+title: Go 平台 Store REST 客户端
+scope:
+    - python/src/resolveagent/store/
+source_files: []
+depends_on: []
+related_to:
+    - path: pkg_shared_libs/server/core_server

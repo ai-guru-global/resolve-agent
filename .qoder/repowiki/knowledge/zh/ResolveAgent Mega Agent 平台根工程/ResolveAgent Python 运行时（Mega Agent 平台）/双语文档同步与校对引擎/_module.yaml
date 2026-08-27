@@ -1,0 +1,9 @@
+schema_version: 1
+module_path: python_runtime/docsync
+title: 双语文档同步与校对引擎
+scope:
+    - python/src/resolveagent/docsync/
+source_files: []
+depends_on: []
+related_to:
+    - path: docs_site

@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: python_runtime/runtime_core
+title: ResolveAgent 运行时核心（HTTP/gRPC 服务与执行引擎）
+scope:
+    - python/src/resolveagent/runtime/
+    - python/src/resolveagent/agent/
+source_files: []
+depends_on: []
+related_to:
+    - path: pkg_shared_libs/server/core_server
+    - path: python_runtime/hooks
+    - path: python_runtime/tests

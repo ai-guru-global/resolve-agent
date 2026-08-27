@@ -1,0 +1,10 @@
+schema_version: 1
+module_path: python_runtime/skills
+title: Agent Skill 插件系统与执行框架
+scope:
+    - python/src/resolveagent/skills/
+source_files: []
+depends_on: []
+related_to:
+    - path: python_runtime/fta
+    - path: python_runtime/selector

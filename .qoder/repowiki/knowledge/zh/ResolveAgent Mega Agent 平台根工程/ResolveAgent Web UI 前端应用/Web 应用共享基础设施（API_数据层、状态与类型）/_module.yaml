@@ -1,0 +1,17 @@
+schema_version: 1
+module_path: web_ui/shared_infrastructure
+title: Web 应用共享基础设施（API/数据层、状态与类型）
+scope:
+    - web/src/api/
+    - web/src/hooks/
+    - web/src/stores/
+    - web/src/types/
+    - web/src/constants/
+    - web/src/utils/
+    - web/src/lib/
+    - web/src/App.tsx
+    - web/src/main.tsx
+source_files: []
+depends_on: []
+related_to:
+    - path: pkg_shared_libs/server/core_server

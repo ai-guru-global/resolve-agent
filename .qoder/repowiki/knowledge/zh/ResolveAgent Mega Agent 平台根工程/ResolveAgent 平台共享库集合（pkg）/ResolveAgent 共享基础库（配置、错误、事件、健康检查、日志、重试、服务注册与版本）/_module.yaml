@@ -1,0 +1,15 @@
+schema_version: 1
+module_path: pkg_shared_libs/shared_utils
+title: ResolveAgent 共享基础库（配置、错误、事件、健康检查、日志、重试、服务注册与版本）
+scope:
+    - pkg/config/
+    - pkg/errors/
+    - pkg/event/
+    - pkg/health/
+    - pkg/logger/
+    - pkg/retry/
+    - pkg/service/
+    - pkg/version/
+source_files: []
+depends_on: []
+related_to: []

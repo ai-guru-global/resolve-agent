@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: pkg_shared_libs/store_backends
+title: Store 后端抽象与多实现聚合层
+scope:
+    - pkg/store/
+source_files: []
+depends_on: []
+related_to: []

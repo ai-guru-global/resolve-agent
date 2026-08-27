@@ -1,0 +1,10 @@
+schema_version: 1
+module_path: python_runtime/hooks
+title: Agent 生命周期 Hook 执行框架
+scope:
+    - python/src/resolveagent/hooks/
+source_files: []
+depends_on: []
+related_to:
+    - path: python_runtime/runtime_core
+    - path: python_runtime/tests

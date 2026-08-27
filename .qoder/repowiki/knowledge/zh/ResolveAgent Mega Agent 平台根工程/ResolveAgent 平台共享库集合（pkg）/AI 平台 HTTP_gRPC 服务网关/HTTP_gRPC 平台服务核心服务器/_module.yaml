@@ -1,0 +1,23 @@
+schema_version: 1
+module_path: pkg_shared_libs/server/core_server
+title: HTTP/gRPC 平台服务核心服务器
+scope:
+    - pkg/server/
+    - pkg/server/middleware/
+source_files: []
+depends_on: []
+related_to:
+    - path: deploy_infra
+    - path: internal_go/cli
+    - path: internal_go/tui
+    - path: pkg_shared_libs/gateway
+    - path: pkg_shared_libs/registry
+    - path: python_runtime/runtime_core
+    - path: python_runtime/store
+    - path: web_ui/agents
+    - path: web_ui/code_analysis
+    - path: web_ui/monitoring_traces
+    - path: web_ui/rag
+    - path: web_ui/shared_infrastructure
+    - path: web_ui/skills_solutions
+    - path: web_ui/workflows

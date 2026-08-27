@@ -1,0 +1,10 @@
+schema_version: 1
+module_path: deploy_infra
+title: ResolveAgent 部署基础设施（Docker/Helm/Kustomize）
+scope:
+    - deploy/
+source_files: []
+depends_on: []
+related_to:
+    - path: pkg_shared_libs/server/core_server
+    - path: python_runtime

@@ -1,0 +1,13 @@
+schema_version: 1
+module_path: python_runtime/selector
+title: ResolveAgent 智能路由选择器
+scope:
+    - python/src/resolveagent/selector/
+source_files: []
+depends_on: []
+related_to:
+    - path: python_runtime/code_analysis
+    - path: python_runtime/fta
+    - path: python_runtime/rag
+    - path: python_runtime/skills
+    - path: python_runtime/tests

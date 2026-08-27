@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: web_ui/agents
+title: Agent 管理与 K8s 代码图谱可视化
+scope:
+    - web/src/pages/Agents/
+    - web/src/components/K8sCorpus/
+    - web/src/hooks/useAgents.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: pkg_shared_libs/server/core_server

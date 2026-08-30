@@ -31,21 +31,28 @@ class Embedder:
 
     def __init__(
         self,
-        model: str = "bge-large-zh",
+        model: str | None = None,
         api_key: str | None = None,
         base_url: str | None = None,
     ) -> None:
         """Initialize embedder.
 
         Args:
-            model: Embedding model name.
-            api_key: API key for embedding service.
-            base_url: Base URL for embedding API.
+            model: Embedding model name. Defaults to EMBEDDING_MODEL env var,
+                then text-embedding-v2 (DashScope-compatible API model).
+            api_key: API key. Defaults to EMBEDDING_API_KEY, then DASHSCOPE_API_KEY.
+            base_url: Base URL. Defaults to EMBEDDING_BASE_URL env var.
         """
-        self.model = model
-        self.api_key = api_key or os.getenv("DASHSCOPE_API_KEY", "")
-        self.base_url = base_url or "https://dashscope.aliyuncs.com/compatible-mode/v1"
-        self.dimension = self.MODEL_DIMENSIONS.get(model, 1024)
+        self.model = model or os.getenv("EMBEDDING_MODEL", "text-embedding-v2")
+        self.api_key = (
+            api_key
+            or os.getenv("EMBEDDING_API_KEY", "")
+            or os.getenv("DASHSCOPE_API_KEY", "")
+        )
+        self.base_url = base_url or os.getenv(
+            "EMBEDDING_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        )
+        self.dimension = self.MODEL_DIMENSIONS.get(self.model, 1024)
 
     async def embed(self, texts: list[str]) -> list[list[float]]:
         """Generate embeddings for a list of texts.
@@ -155,13 +162,13 @@ class Embedder:
 
 
 def create_embedder(
-    model: str = "bge-large-zh",
+    model: str | None = None,
     api_key: str | None = None,
 ) -> Embedder:
     """Factory function to create an embedder.
 
     Args:
-        model: Model name.
+        model: Model name. Defaults to EMBEDDING_MODEL env var.
         api_key: API key.
 
     Returns:

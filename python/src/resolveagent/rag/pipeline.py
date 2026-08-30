@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import os
 import uuid
 from typing import Any
 
@@ -29,11 +30,11 @@ class RAGPipeline:
 
     def __init__(
         self,
-        embedding_model: str = "bge-large-zh",
+        embedding_model: str | None = None,
         vector_backend: str = "milvus",
         rag_document_client: Any | None = None,
     ) -> None:
-        self.embedding_model = embedding_model
+        self.embedding_model = embedding_model or os.getenv("EMBEDDING_MODEL", "text-embedding-v2")
         self.vector_backend = vector_backend
         self._chunker = TextChunker(strategy="sentence", chunk_size=512, chunk_overlap=50)
         self._embedder = Embedder(model=embedding_model)

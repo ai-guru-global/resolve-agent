@@ -1,0 +1,219 @@
+{
+  "title": "为 GTM 页面选定视觉世界",
+  "question": "骰子把构建权交给了「调度总图」。保留它、选一个对手方、或重掷。",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "调度总图 (The Dispatch Board)",
+      "kicker": "THE ROLL",
+      "lineage": "Beck 地铁线路图 × 翻牌发车板 × 轨道交通调度中心",
+      "thesis": "把每一次告警当作一趟列车：意图进站，四条线路分岔（FTA / 技能 / RAG / 代码分析），终点站是根因——页面本身就是一张运行中的调度总图。",
+      "palette": [
+        "#0b1220",
+        "#ff6b35",
+        "#00c2a8",
+        "#f5e9d0",
+        "#7c6cff"
+      ],
+      "materials": [
+        "线路色带与站点铭牌",
+        "split-flap 机械翻牌",
+        "时刻表表格排版"
+      ],
+      "viewport": "全宽调度总图：中央枢纽「告警入口 ALERT INTAKE」，四条彩色线路放射延伸至各自终点站「根因 ROOT CAUSE」，顶部琥珀色 split-flap 发车板滚动显示实时路由状态。",
+      "risk": "地铁隐喻偏「平和」，缺少故障排查的紧张感——必须用调度术语（延误、限速、事故）保持运维语境。",
+      "raised": [
+        {
+          "from": "challenger-film",
+          "raise": "每条线路携带「曝光累积」运行痕迹：使用越多线路越厚，语料飞轮成为可见的线宽证据。"
+        },
+        {
+          "from": "challenger-sewing",
+          "raise": "实线/虚线状态律：选中路径实线加粗，备选路径保持虚线，切换不破坏总图拓扑。"
+        },
+        {
+          "from": "challenger-pulp",
+          "raise": "三层固定文案：每条线路严格三层——线路名 / 一句机制 / 证据点，位置固定如封面三层 cover line。"
+        },
+        {
+          "from": "challenger-characters",
+          "raise": "站点铭牌家具：每站固定三件套——编号铭牌 + 一行说明 + 运行统计行。"
+        }
+      ],
+      "comp": ".impeccable/mocks/decision/assigned.png"
+    },
+    {
+      "id": "model-pick",
+      "label": "Shell 会话 (The Shell Session)",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "kubectl / tmux 终端会话文化",
+      "thesis": "页面即一次终端会话：GTM 战略以命令与回显呈现——$ resolve route --intent \"Pod NotReady\"，输出即是论证。",
+      "palette": [
+        "#0a0e12",
+        "#e6edf3",
+        "#3fb950",
+        "#ff7b72"
+      ],
+      "materials": [
+        "等宽字体",
+        "ANSI 语义色",
+        "命令回显流"
+      ],
+      "viewport": "一个真实比例的终端窗口占据首屏：输入意图命令，路由决策逐行打印，最后一行输出根因与修复建议。",
+      "risk": "终端深色+荧光绿是 AI 科技页最惯用的世界之一，与本类别校准风险最高——须超越 phosphor-green 惯例。",
+      "comp": ".impeccable/mocks/decision/model-pick.png"
+    },
+    {
+      "id": "challenger-algorave",
+      "label": "Algorave 现场 (Live Code Floor)",
+      "verdict": "competitive",
+      "lineage": "algorave 现场：投屏代码即音乐",
+      "thesis": "路由决策像现场代码：你看到下一次变更在循环边界生效——路由透明被做成可编辑的 live buffer。",
+      "palette": [
+        "#000000",
+        "#39ff14",
+        "#ff2ec4",
+        "#ffb000"
+      ],
+      "materials": [
+        "投影荧光",
+        "舞台级等宽字",
+        "循环节拍栅格"
+      ],
+      "viewport": "黑色投影幕上，路由决策代码占半屏，另一半是实时执行视窗；即将生效的变更以琥珀色预览。",
+      "case": "Fuses cleanly：路由透明 = 循环边界变更预告，受众轴强（live-coding 与 SRE 文化高度重合）；闭环飞轮的表达弱于调度图的「线路网生长」。",
+      "risk": "夜店荧光在决策者（高管/采购）面前可能显得娱乐化。",
+      "comp": ".impeccable/mocks/decision/challenger-algorave.png",
+      "hero": ".impeccable/algorave-hero.png"
+    },
+    {
+      "id": "challenger-collider",
+      "label": "对撞机事件显示 (Event Display)",
+      "verdict": "competitive",
+      "lineage": "粒子物理探测器事件显示图",
+      "thesis": "一次告警 = 一次对撞事件：四类分析径迹从事件顶点喷出，穿过探测器环层，在量能器楔形中沉积为根因证据。",
+      "palette": [
+        "#050810",
+        "#ffc94d",
+        "#38bdf8",
+        "#ef4444",
+        "#64748b"
+      ],
+      "materials": [
+        "同心环截面",
+        "信号色径迹线",
+        "量能器能量条"
+      ],
+      "viewport": "近黑真空底上，同心探测器环占据右半屏，一条告警事件从束流管顶点喷出黄色与青色径迹，红色能量条在楔形中堆叠。",
+      "case": "一次告警喷出四条分析径迹是机制最字面的可视化，产品轴极强；但受众识别面窄于调度图的日常公共性。",
+      "risk": "径迹美学可能被读成「又一张科技感背景图」而失去叙事。",
+      "comp": ".impeccable/mocks/decision/challenger-collider.png",
+      "hero": ".impeccable/collider-hero.png"
+    },
+    {
+      "id": "challenger-film",
+      "label": "手洗 16mm 胶片",
+      "verdict": "declined",
+      "lineage": "手工冲洗电影胶片",
+      "palette": [
+        "#1a1a1a",
+        "#c9c2b8",
+        "#ff8c42"
+      ],
+      "materials": [
+        "乳剂颗粒",
+        "片孔边码",
+        "漏光划痕"
+      ],
+      "case": "Fuses poorly：SRE 与手工艺胶片无文化关联，事件时间线映射牵强。",
+      "kept": "总图携带运行磨损的历史痕迹（曝光累积）。",
+      "hero": "https://impeccable.style/worlds/cards/cinema-cinematography-editing-hand-processed-film-bloom-hero.png"
+    },
+    {
+      "id": "challenger-sewing",
+      "label": "缝纫纸样信封",
+      "verdict": "declined",
+      "lineage": "纸样信封与薄纸裁剪图",
+      "palette": [
+        "#d8c9a3",
+        "#1f1c18",
+        "#c0392b"
+      ],
+      "materials": [
+        "薄纸描线",
+        "虚线裁剪路径",
+        "布纹箭头"
+      ],
+      "case": "Fuses poorly：缝纫世界与故障排查受众错位。",
+      "kept": "实线/虚线状态律。",
+      "hero": "https://impeccable.style/worlds/cards/fashion-folded-worlds-sewing-pattern-envelope-hero.png"
+    },
+    {
+      "id": "challenger-pulp",
+      "label": "Pulp 平装书架",
+      "verdict": "declined",
+      "lineage": "药店铁丝旋转书架上的低俗小说",
+      "palette": [
+        "#101828",
+        "#f2c94c",
+        "#eb5757"
+      ],
+      "materials": [
+        "手绘封面",
+        "三层 cover line",
+        "书脊陈列"
+      ],
+      "case": "Fuses poorly：「末日预告」的语气与证据先行的产品原则冲突。",
+      "kept": "三层固定文案层级。",
+      "hero": "https://impeccable.style/worlds/cards/posters-covers-sleeves-pulp-rack-hero.png"
+    },
+    {
+      "id": "challenger-characters",
+      "label": "角色商品目录",
+      "verdict": "declined",
+      "lineage": "角色 IP 商品人气排名目录页",
+      "palette": [
+        "#fdf6f0",
+        "#ff9eb5",
+        "#5aa9e6"
+      ],
+      "materials": [
+        "粉彩格网",
+        "白色描边",
+        "铭牌与生日行"
+      ],
+      "case": "Fuses poorly：吉祥物化消解运维工具的专业信任。",
+      "kept": "站点铭牌家具。",
+      "hero": "https://impeccable.style/worlds/cards/pop-culture-shelf-character-goods-catalog-hero.png"
+    }
+  ],
+  "reroll": {
+    "registers": [
+      "safer",
+      "bolder"
+    ]
+  },
+  "buildPath": {
+    "value": "comp",
+    "toggle": true
+  },
+  "canon": true,
+  "canonCard": {
+    "label": "类别标准",
+    "thesis": "这个类别总是发布的页面：深色 hero + 三卡片特性网格 + 信任条 + CTA，执行到极致。",
+    "palette": [
+      "#ffffff",
+      "#111827",
+      "#2563eb"
+    ],
+    "materials": [
+      "干净栅格",
+      "产品截图",
+      "渐变光晕"
+    ],
+    "viewport": "访客最预期的排布，做到满级工艺。",
+    "risk": "设计上就与竞品无法区分。",
+    "comp": ".impeccable/mocks/decision/canon.png"
+  },
+  "steer": true
+}

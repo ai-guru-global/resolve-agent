@@ -1,0 +1,1 @@
+Generated with Qoder ImageGen (text-to-image), 2026-08-28. Decision comp for the impeccable direction round (seed 69c678c1). Card: challenger-collider. Prompt sidecar; regenerate from the direction contract in payload.json if lost.

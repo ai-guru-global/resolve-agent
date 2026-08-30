@@ -112,6 +112,11 @@ class HigressLLMProvider(LLMProvider):
             extra={"gateway": self._gateway_url, "default_model": default_model},
         )
 
+    @property
+    def default_model(self) -> str:
+        # runtime.engine 通过 llm.default_model 解析生效模型, gateway 模式同样需要
+        return self._default_model
+
     def _build_headers(self) -> dict[str, str]:
         """Build common headers for requests."""
         headers = {
@@ -436,7 +441,10 @@ def create_llm_provider(
             api_key = os.getenv("XIAOMI_TOKEN_PLAN_API_KEY", "") or os.getenv("KIMI_API_KEY", "")
         else:
             api_key = os.getenv("KIMI_API_KEY", "") or os.getenv("RESOLVEAGENT_API_KEY", "")
-        default_model = os.getenv("LLM_DEFAULT_MODEL", model)
+        # agent.model_id 仅在与当前端点匹配时生效, 避免把 qwen 等其他厂商
+        # 模型名发给 mimo (engine 以 llm.default_model 为准)
+        use_agent_model = "xiaomimimo.com" in base_url and model.startswith("mimo")
+        default_model = model if use_agent_model else os.getenv("LLM_DEFAULT_MODEL", model)
 
         logger.info(
             "Creating direct LLM provider (no gateway)",

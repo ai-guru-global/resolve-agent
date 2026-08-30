@@ -13,7 +13,15 @@
 - [auth.go](file://pkg/server/middleware/auth.go)
 - [response.go](file://pkg/server/response.go)
 - [error_mapping.go](file://pkg/server/error_mapping.go)
+- [workflow.go](file://pkg/registry/workflow.go)
 </cite>
+
+## 更新摘要
+**所做更改**
+- 更新了工作流管理端点部分，添加了向后兼容性说明
+- 新增了工作流定义字段映射的详细说明
+- 更新了请求体示例以展示新旧字段格式
+- 增强了错误处理和兼容性行为的描述
 
 ## 目录
 1. [简介](#简介)
@@ -29,6 +37,8 @@
 
 ## 简介
 本参考文档基于 OpenAPI 3.1.0 规范，系统化记录 ResolveAgent 平台的 REST API，涵盖健康检查、Agent 管理、技能管理、工作流管理、模型路由等端点。文档包含每个端点的操作 ID、标签分类、业务用途、请求参数、响应格式、HTTP 状态码与认证方式，并提供示例路径以便快速定位实现代码。
+
+**重要更新**：工作流 API 现已支持向后兼容性，服务器会自动将 'definition' 字段映射到 'Tree' 字段，确保使用旧版字段命名约定的客户端能够无缝集成。
 
 ## 项目结构
 REST API 由 HTTP 服务器统一暴露，路由在注册阶段集中绑定到处理器函数；健康检查通过专用包提供 Liveness/Readiness 能力；认证中间件对请求进行鉴权并注入上下文；各业务处理器调用注册表（Registry）或运行时客户端完成具体逻辑。
@@ -64,6 +74,7 @@ Models --> Gateway["模型网关端点"]
 - 认证中间件：支持 JWT、API Key、网关透传头，默认跳过健康相关路径。
 - 响应封装：统一的 JSON 写入与错误响应格式。
 - 错误映射：将 Python 运行时错误码映射为内部错误类型。
+- **向后兼容性**：工作流 API 自动处理 'definition' 到 'Tree' 字段的映射。
 
 **章节来源**
 - [router.go:6-136](file://pkg/server/router.go#L6-L136)
@@ -223,15 +234,16 @@ Note over S,RT : 非流式模式则聚合内容后返回JSON
   - 标签: Workflows
   - 操作ID: createWorkflow
   - 请求体: WorkflowDefinition（必填 name；status 默认 draft；id 可省略由服务端生成）
+  - **向后兼容性增强**: 服务器自动将 'definition' 字段映射到 'Tree' 字段，如果 Tree 为空且存在 definition 字段
   - 响应: 201 Created，返回创建的工作流；400（无效 JSON/缺少必填字段）、409（冲突）
-  - 示例路径: [workflow_handlers.go:28-61](file://pkg/server/workflow_handlers.go#L28-L61)
+  - 示例路径: [workflow_handlers.go:28-71](file://pkg/server/workflow_handlers.go#L28-L71)
 
 - GET /api/v1/workflows/{id}
   - 标签: Workflows
   - 操作ID: getWorkflow
   - 路径参数: id
   - 响应: 200 OK，返回工作流详情；404 未找到
-  - 示例路径: [workflow_handlers.go:63-74](file://pkg/server/workflow_handlers.go#L63-L74)
+  - 示例路径: [workflow_handlers.go:73-84](file://pkg/server/workflow_handlers.go#L73-L84)
 
 - PUT /api/v1/workflows/{id}
   - 标签: Workflows
@@ -239,14 +251,14 @@ Note over S,RT : 非流式模式则聚合内容后返回JSON
   - 路径参数: id
   - 请求体: WorkflowDefinition（id 需与路径一致）
   - 响应: 200 OK，返回更新后的工作流；404 未找到
-  - 示例路径: [workflow_handlers.go:76-100](file://pkg/server/workflow_handlers.go#L76-L100)
+  - 示例路径: [workflow_handlers.go:86-110](file://pkg/server/workflow_handlers.go#L86-L110)
 
 - DELETE /api/v1/workflows/{id}
   - 标签: Workflows
   - 操作ID: deleteWorkflow
   - 路径参数: id
   - 响应: 200 OK，返回删除确认消息
-  - 示例路径: [workflow_handlers.go:102-112](file://pkg/server/workflow_handlers.go#L102-L112)
+  - 示例路径: [workflow_handlers.go:112-122](file://pkg/server/workflow_handlers.go#L112-L122)
 
 - POST /api/v1/workflows/{id}/validate
   - 标签: Workflows
@@ -254,7 +266,7 @@ Note over S,RT : 非流式模式则聚合内容后返回JSON
   - 路径参数: id
   - 响应: 200 OK，JSON 包含 workflow_id、valid、errors
   - 校验规则: 名称必填；节点至少一个且含 start/end；节点类型合法；边引用节点存在
-  - 示例路径: [workflow_handlers.go:114-228](file://pkg/server/workflow_handlers.go#L114-L228)
+  - 示例路径: [workflow_handlers.go:124-238](file://pkg/server/workflow_handlers.go#L124-L238)
 
 - POST /api/v1/workflows/{id}/execute
   - 标签: Workflows
@@ -265,10 +277,42 @@ Note over S,RT : 非流式模式则聚合内容后返回JSON
     - context: 对象，可选
   - 响应: 200 OK，SSE 事件 data: {...}，结束时发送 data: [DONE]
   - 错误: 400（无效 JSON）、500（执行失败）、408（超时）
-  - 示例路径: [workflow_handlers.go:230-347](file://pkg/server/workflow_handlers.go#L230-L347)
+  - 示例路径: [workflow_handlers.go:240-357](file://pkg/server/workflow_handlers.go#L240-L357)
+
+**向后兼容性说明**
+工作流创建端点现在支持两种请求格式：
+
+1. **新格式（推荐）**：使用 `tree` 字段
+   ```json
+   {
+     "name": "my-workflow",
+     "description": "工作流描述",
+     "tree": {
+       "nodes": [...],
+       "edges": [...]
+     }
+   }
+   ```
+
+2. **旧格式（兼容）**：使用 `definition` 字段
+   ```json
+   {
+     "name": "my-workflow", 
+     "description": "工作流描述",
+     "definition": {
+       "nodes": [...],
+       "edges": [...]
+     }
+   }
+   ```
+
+当客户端使用旧的 `definition` 字段时，服务器会自动将其映射到内部的 `Tree` 字段，确保现有客户端无需修改即可正常工作。
 
 **章节来源**
-- [workflow_handlers.go:14-347](file://pkg/server/workflow_handlers.go#L14-L347)
+- [workflow_handlers.go:28-71](file://pkg/server/workflow_handlers.go#L28-L71)
+- [workflow_handlers.go:73-122](file://pkg/server/workflow_handlers.go#L73-L122)
+- [workflow_handlers.go:124-238](file://pkg/server/workflow_handlers.go#L124-L238)
+- [workflow_handlers.go:240-357](file://pkg/server/workflow_handlers.go#L240-L357)
 - [router.go:28-35](file://pkg/server/router.go#L28-L35)
 
 ### 模型路由
@@ -307,6 +351,7 @@ Note over S,RT : 非流式模式则聚合内容后返回JSON
 - 处理器到运行时：Agent/工作流执行通过 RuntimeClient 转发至 Python 运行时，采用流式事件。
 - 健康检查：/healthz 直接返回 UP；/readyz 聚合组件健康状态。
 - 认证中间件：对请求进行鉴权并注入用户上下文，默认跳过健康相关路径。
+- **向后兼容性**：工作流处理器在创建时自动处理字段映射。
 
 ```mermaid
 graph LR
@@ -320,13 +365,14 @@ WH --> RegW["WorkflowRegistry"]
 WH --> RT["RuntimeClient"]
 AH --> RT
 MH --> GW["Gateway Endpoints"]
+WH --> Compat["字段兼容性映射"]
 ```
 
 **图示来源**
 - [router.go:6-136](file://pkg/server/router.go#L6-L136)
 - [agent_handlers.go:14-273](file://pkg/server/agent_handlers.go#L14-L273)
 - [skill_handlers.go:11-79](file://pkg/server/skill_handlers.go#L11-L79)
-- [workflow_handlers.go:14-347](file://pkg/server/workflow_handlers.go#L14-L347)
+- [workflow_handlers.go:28-71](file://pkg/server/workflow_handlers.go#L28-L71)
 - [model_handlers.go:4-35](file://pkg/server/model_handlers.go#L4-L35)
 
 **章节来源**
@@ -364,6 +410,7 @@ Done --> End(["结束"])
   - 501 Not Implemented：功能尚未实现
 - 错误响应格式: 统一 JSON 包含 error 字段
 - 错误映射：Python 运行时错误码会映射为内部错误类型，便于统一处理
+- **兼容性提示**：如果使用旧的 `definition` 字段，服务器会自动映射到 `Tree` 字段，但建议迁移到新格式以获得更好的性能
 - 示例路径: [response.go:8-16](file://pkg/server/response.go#L8-L16), [error_mapping.go:7-32](file://pkg/server/error_mapping.go#L7-L32)
 
 **章节来源**
@@ -371,7 +418,7 @@ Done --> End(["结束"])
 - [error_mapping.go:7-32](file://pkg/server/error_mapping.go#L7-L32)
 
 ## 结论
-ResolveAgent 的 REST API 提供了完整的 Agent、技能、工作流与模型管理能力，并通过健康检查与认证中间件保障服务的可观测性与安全性。执行类端点支持流式响应以提升用户体验。建议在生产环境启用认证并合理配置超时与限流策略。
+ResolveAgent 的 REST API 提供了完整的 Agent、技能、工作流与模型管理能力，并通过健康检查与认证中间件保障服务的可观测性与安全性。执行类端点支持流式响应以提升用户体验。**新增的向后兼容性功能**确保了从旧版 API 格式的平滑迁移，使现有客户端无需修改即可继续使用。建议在生产环境启用认证并合理配置超时与限流策略。
 
 ## 附录
 - OpenAPI 规范位置: [resolveagent.yaml](file://api/openapi/v1/resolveagent.yaml)
@@ -379,3 +426,5 @@ ResolveAgent 的 REST API 提供了完整的 Agent、技能、工作流与模型
 - 健康检查实现: [health.go](file://pkg/health/health.go)
 - 认证中间件: [auth.go](file://pkg/server/middleware/auth.go)
 - 响应与错误封装: [response.go](file://pkg/server/response.go), [error_mapping.go](file://pkg/server/error_mapping.go)
+- 工作流定义结构: [workflow.go](file://pkg/registry/workflow.go)
+- 工作流处理器（含兼容性逻辑）: [workflow_handlers.go](file://pkg/server/workflow_handlers.go)

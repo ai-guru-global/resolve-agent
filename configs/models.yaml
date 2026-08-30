@@ -1,4 +1,8 @@
 # ResolveAgent LLM Model Registry
+#
+# NOTE: declarative metadata only. Direct LLM access (RESOLVEAGENT_LLM_DIRECT=true)
+# is driven by .env (LLM_BASE_URL / LLM_DEFAULT_MODEL / *_API_KEY); ModelRegistry
+# consumption is not wired up yet.
 
 models:
   - id: qwen-turbo

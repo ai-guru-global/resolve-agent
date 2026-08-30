@@ -21,7 +21,7 @@ export default function AgentCreate() {
   const [prefilling, setPrefilling] = useState(false);
   const [name, setName] = useState('');
   const [type, setType] = useState('mega');
-  const [model, setModel] = useState('qwen-turbo');
+  const [model, setModel] = useState('mimo-v2.5-pro');
   const [prompt, setPrompt] = useState('');
 
   // Pre-fill from cloned agent
@@ -31,7 +31,7 @@ export default function AgentCreate() {
     api.getAgent(fromId).then((agent) => {
       setName(`${agent.name} (副本)`);
       setType(agent.type);
-      setModel(String(agent.config.model ?? 'qwen-turbo'));
+      setModel(String(agent.config.model ?? 'mimo-v2.5-pro'));
       setPrompt(agent.harness.system_prompt ?? '');
     }).catch(() => {
       toast.error('加载源 Agent 信息失败');
@@ -113,6 +113,8 @@ export default function AgentCreate() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="mimo-v2.5-pro">MiMo v2.5 Pro</SelectItem>
+                  <SelectItem value="mimo-v2.5">MiMo v2.5</SelectItem>
                   <SelectItem value="qwen-turbo">通义千问 Turbo</SelectItem>
                   <SelectItem value="qwen-plus">通义千问 Plus</SelectItem>
                   <SelectItem value="qwen-max">通义千问 Max</SelectItem>

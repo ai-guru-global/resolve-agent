@@ -279,6 +279,68 @@ export interface AlertItem {
   acknowledged: boolean;
 }
 
+export interface TraceCorpusMatch {
+  name: string;
+  score: number;
+}
+
+export interface TraceRecord {
+  id: string;
+  input: string;
+  strategy: SelectorStrategy;
+  intent_type: string;
+  intent_confidence: number;
+  route_type: RouteType;
+  route_target: string;
+  status: 'success' | 'failed' | 'timeout';
+  latency_ms: number;
+  timestamp: string;
+  enriched_skills: string[];
+  corpus_matches: TraceCorpusMatch[];
+  reasoning: string;
+}
+
+export interface SystemMetric {
+  key: 'cpu' | 'memory' | 'agent_pool' | 'api_latency' | 'selector_fallback' | 'network';
+  name: string;
+  value: number;
+  unit: string;
+  threshold: number;
+  status: 'normal' | 'warning' | 'critical';
+}
+
+export interface FeedbackSignal {
+  source: string;
+  event: string;
+  count: number;
+  rate_per_min: number;
+  severity: 'info' | 'warn' | 'error' | 'critical';
+  last_seen: string;
+}
+
+export interface CircuitBreakerStatus {
+  name: string;
+  state: 'closed' | 'open' | 'half_open';
+  failures: number;
+  threshold: number;
+  last_state_change: string;
+}
+
+export interface AdaptiveWeight {
+  route_type: string;
+  weight: number;
+  trend: 'up' | 'down' | 'stable';
+}
+
+export interface MonitoringOverview {
+  alerts: AlertItem[];
+  total: number;
+  system_metrics: SystemMetric[];
+  feedback_signals: FeedbackSignal[];
+  circuit_breakers: CircuitBreakerStatus[];
+  adaptive_weights: AdaptiveWeight[];
+}
+
 // Extended Skill types
 export interface SkillDetailInfo {
   name: string;

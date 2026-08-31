@@ -37,6 +37,8 @@ import type {
   CallGraphInfo,
   TrafficCaptureInfo,
   TrafficGraphInfo,
+  TraceRecord,
+  MonitoringOverview,
 } from '../types';
 import {
   DEV_CODE_ANALYSIS_MOCKS_ENABLED,
@@ -159,6 +161,10 @@ const realApi = {
     request<ExecutionStats>('/dashboard/execution-stats'),
   getAlerts: () =>
     request<{ alerts: AlertItem[]; total: number }>('/dashboard/alerts'),
+
+  // Traces & Monitoring
+  getTraces: () => request<{ traces: TraceRecord[]; total: number }>('/traces'),
+  getMonitoringOverview: () => request<MonitoringOverview>('/monitoring/overview'),
 
   // Solution endpoints
   listSolutions: (params?: { domain?: string; severity?: string; status?: string; limit?: number; offset?: number }) => {

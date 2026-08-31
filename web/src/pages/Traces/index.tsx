@@ -18,23 +18,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { RouteType, SelectorStrategy, StatusVariant } from '@/types';
-
-interface TraceRecord {
-  id: string;
-  input: string;
-  strategy: SelectorStrategy;
-  intent_type: string;
-  intent_confidence: number;
-  route_type: RouteType;
-  route_target: string;
-  status: 'success' | 'failed' | 'timeout';
-  latency_ms: number;
-  timestamp: string;
-  enriched_skills: string[];
-  corpus_matches: { name: string; score: number }[];
-  reasoning: string;
-}
+import { useTraces } from '@/hooks/useMonitoring';
+import type { StatusVariant } from '@/types';
 
 const ROUTE_LABELS: Record<string, string> = {
   fta: 'FTA 工作流',
@@ -51,110 +36,16 @@ const STATUS_MAP: Record<string, { label: string; variant: StatusVariant }> = {
   timeout: { label: '超时', variant: 'degraded' },
 };
 
-// Mock trace data
-const mockTraces: TraceRecord[] = [
-  {
-    id: 'tr-001',
-    input: 'Kubernetes Pod CrashLoopBackOff 如何排查？',
-    strategy: 'hybrid',
-    intent_type: 'workflow',
-    intent_confidence: 0.92,
-    route_type: 'fta',
-    route_target: 'k8s-crash-diagnosis',
-    status: 'success',
-    latency_ms: 18,
-    timestamp: '2026-04-15T10:32:15Z',
-    enriched_skills: ['k8s-diagnostics', 'log-analysis'],
-    corpus_matches: [{ name: 'K8s 运维手册', score: 0.89 }],
-    reasoning: '检测到 K8s 故障排查意图，匹配 FTA 工作流进行结构化诊断',
-  },
-  {
-    id: 'tr-002',
-    input: '查询最近24小时的错误日志统计',
-    strategy: 'hybrid',
-    intent_type: 'skill',
-    intent_confidence: 0.87,
-    route_type: 'skill',
-    route_target: 'log-analysis',
-    status: 'success',
-    latency_ms: 12,
-    timestamp: '2026-04-15T10:28:42Z',
-    enriched_skills: ['log-analysis', 'metrics-query'],
-    corpus_matches: [],
-    reasoning: '明确的日志查询需求，路由至 log-analysis 技能',
-  },
-  {
-    id: 'tr-003',
-    input: 'Nginx 反向代理配置最佳实践是什么？',
-    strategy: 'hybrid',
-    intent_type: 'rag',
-    intent_confidence: 0.95,
-    route_type: 'rag',
-    route_target: 'ops-knowledge-base',
-    status: 'success',
-    latency_ms: 8,
-    timestamp: '2026-04-15T10:15:30Z',
-    enriched_skills: [],
-    corpus_matches: [
-      { name: 'Nginx 配置指南', score: 0.94 },
-      { name: '运维最佳实践', score: 0.78 },
-    ],
-    reasoning: '知识检索类问题，RAG 语料库高置信度匹配',
-  },
-  {
-    id: 'tr-004',
-    input: '帮我分析这段 Python 代码的性能瓶颈\n```python\nfor i in range(len(data)):\n  result.append(process(data[i]))\n```',
-    strategy: 'hybrid',
-    intent_type: 'code_analysis',
-    intent_confidence: 0.91,
-    route_type: 'code_analysis',
-    route_target: 'code-review',
-    status: 'success',
-    latency_ms: 15,
-    timestamp: '2026-04-15T09:58:10Z',
-    enriched_skills: ['code-review', 'performance-profiler'],
-    corpus_matches: [],
-    reasoning: '检测到代码块，触发代码分析路由',
-  },
-  {
-    id: 'tr-005',
-    input: 'MySQL 连接池耗尽导致服务不可用',
-    strategy: 'hybrid',
-    intent_type: 'workflow',
-    intent_confidence: 0.88,
-    route_type: 'fta',
-    route_target: 'db-connection-diagnosis',
-    status: 'failed',
-    latency_ms: 245,
-    timestamp: '2026-04-15T09:45:00Z',
-    enriched_skills: ['db-diagnostics', 'metrics-query'],
-    corpus_matches: [{ name: 'MySQL 运维手册', score: 0.85 }],
-    reasoning: '数据库故障场景，路由至 FTA 进行诊断，但工作流执行超时',
-  },
-  {
-    id: 'tr-006',
-    input: '你好，介绍一下 Resolve Agent 系统',
-    strategy: 'rule',
-    intent_type: 'direct',
-    intent_confidence: 0.99,
-    route_type: 'direct',
-    route_target: 'llm-direct',
-    status: 'success',
-    latency_ms: 3,
-    timestamp: '2026-04-15T09:30:22Z',
-    enriched_skills: [],
-    corpus_matches: [],
-    reasoning: '简单问候/介绍类问题，规则匹配直接回复',
-  },
-];
-
+// ─── Data ───
 export default function TraceAnalysis() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterRoute, setFilterRoute] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const { data } = useTraces();
+  const traces = data?.traces ?? [];
 
-  const filteredTraces = mockTraces.filter((t) => {
+  const filteredTraces = traces.filter((t) => {
     if (filterStatus !== 'all' && t.status !== filterStatus) return false;
     if (filterRoute !== 'all' && t.route_type !== filterRoute) return false;
     if (searchQuery && !t.input.toLowerCase().includes(searchQuery.toLowerCase())) return false;
@@ -162,10 +53,12 @@ export default function TraceAnalysis() {
   });
 
   const stats = {
-    total: mockTraces.length,
-    success: mockTraces.filter((t) => t.status === 'success').length,
-    failed: mockTraces.filter((t) => t.status !== 'success').length,
-    avgLatency: Math.round(mockTraces.reduce((sum, t) => sum + t.latency_ms, 0) / mockTraces.length),
+    total: traces.length,
+    success: traces.filter((t) => t.status === 'success').length,
+    failed: traces.filter((t) => t.status !== 'success').length,
+    avgLatency: traces.length
+      ? Math.round(traces.reduce((sum, t) => sum + t.latency_ms, 0) / traces.length)
+      : 0,
   };
 
   return (
@@ -215,6 +108,7 @@ export default function TraceAnalysis() {
             <SelectItem value="skill">技能调用</SelectItem>
             <SelectItem value="rag">知识检索</SelectItem>
             <SelectItem value="code_analysis">代码分析</SelectItem>
+            <SelectItem value="multi">多路由链</SelectItem>
             <SelectItem value="direct">直接回复</SelectItem>
           </SelectContent>
         </Select>

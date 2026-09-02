@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 # Data models
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class RouteAttempt:
     """Record of a single routing attempt."""
@@ -91,9 +92,7 @@ class ResilientConfig:
 
     max_retries: int = 3
     total_timeout_seconds: float = 30.0
-    route_priority: list[str] = field(
-        default_factory=lambda: ["skill", "rag", "fta", "code_analysis"]
-    )
+    route_priority: list[str] = field(default_factory=lambda: ["skill", "rag", "fta", "code_analysis"])
     enable_cache_bypass_on_retry: bool = True
     enable_circuit_breaker: bool = True
     fallback_to_code_analysis: bool = True
@@ -102,6 +101,7 @@ class ResilientConfig:
 # ---------------------------------------------------------------------------
 # Re-enrichment strategy
 # ---------------------------------------------------------------------------
+
 
 class ReEnricher:
     """Incremental context re-enrichment after routing failures.
@@ -146,9 +146,7 @@ class ReEnricher:
         ctx["attempt_count"] = len(all_attempts)
 
         # Generate routing preference adjustments
-        ctx["route_preferences"] = self._compute_preferences(
-            all_attempts, ctx.get("route_preferences", {})
-        )
+        ctx["route_preferences"] = self._compute_preferences(all_attempts, ctx.get("route_preferences", {}))
 
         # Lower enrichment confidence after failures.
         # 修复: 此前直接读取上一轮已衰减的 enrichment_confidence 再减去
@@ -225,9 +223,7 @@ class ReEnricher:
             elif "skill" in failed_routes:
                 prefs["prefer_knowledge"] = True
 
-        if (
-            error_types.get("timeout", 0) > 0 or error_types.get("connection", 0) > 0
-        ) and "code_analysis" not in failed_routes:
+        if (error_types.get("timeout", 0) > 0 or error_types.get("connection", 0) > 0) and "code_analysis" not in failed_routes:
             # Network/timeout issues → try local analysis (Code Analysis)
             prefs["prefer_analysis"] = True
 
@@ -239,16 +235,12 @@ class ReEnricher:
             # Permission issues → try knowledge-based (may have workaround docs)
             prefs["prefer_knowledge"] = True
 
-        if (
-            error_types.get("capacity", 0) > 0 or error_types.get("rate_limit", 0) > 0
-        ) and "skill" not in failed_routes:
+        if (error_types.get("capacity", 0) > 0 or error_types.get("rate_limit", 0) > 0) and "skill" not in failed_routes:
             # Resource exhausted → fall back to lighter-weight routes
             prefs["prefer_knowledge"] = True
 
         # Per-route-specific heuristics (last-attempt granular analysis)
-        last_failed = next(
-            (a for a in reversed(attempts) if not a.success), None
-        )
+        last_failed = next((a for a in reversed(attempts) if not a.success), None)
         if last_failed:
             last_error_type = self._classify_error(last_failed.error)
             if last_failed.route_type == "rag" and last_error_type == "resource_missing":
@@ -275,6 +267,7 @@ class ReEnricher:
 # ---------------------------------------------------------------------------
 # Resilient Selector
 # ---------------------------------------------------------------------------
+
 
 class ResilientSelector:
     """Feedback-driven adaptive router with graceful degradation.
@@ -354,10 +347,7 @@ class ResilientSelector:
 
         clarification_rounds = 0
         max_clarifications = 2
-        while (
-            not session.success
-            and clarification_rounds < max_clarifications
-        ):
+        while not session.success and clarification_rounds < max_clarifications:
             question = self._build_clarification_question(session)
             clarification = await ask_user_callback(question)
 
@@ -394,6 +384,7 @@ class ResilientSelector:
     def _extract_suggested_rephrase(self, error: str) -> str | None:
         """Extract a suggested rephrase hint from an error message."""
         import re
+
         patterns = [
             r"suggested_rephrase[:：]\s*(.+?)(?:\n|$)",
             r"请尝试[:：]\s*(.+?)(?:\n|$)",
@@ -436,9 +427,7 @@ class ResilientSelector:
                 break
 
             # Route decision
-            bypass_cache = (
-                self._config.enable_cache_bypass_on_retry and attempt_num > 0
-            )
+            bypass_cache = self._config.enable_cache_bypass_on_retry and attempt_num > 0
             decision = await self._selector.route(
                 input_text=input_text,
                 agent_id=agent_id,
@@ -448,15 +437,11 @@ class ResilientSelector:
 
             # Skip already-tried routes (force different route)
             if decision.route_type in tried_routes and attempt_num > 0:
-                decision = self._force_alternative_route(
-                    decision, tried_routes, ctx
-                )
+                decision = self._force_alternative_route(decision, tried_routes, ctx)
 
             # Execute
             attempt_start = time.monotonic()
-            attempt_record = await self._execute_route(
-                decision, executor, attempt_num + 1
-            )
+            attempt_record = await self._execute_route(decision, executor, attempt_num + 1)
             attempt_record.latency_ms = (time.monotonic() - attempt_start) * 1000
 
             session.attempts.append(attempt_record)
@@ -481,16 +466,10 @@ class ResilientSelector:
 
             # Failure → re-enrich for next attempt
             if attempt_num < self._config.max_retries:
-                ctx = self._re_enricher.re_enrich(
-                    ctx, attempt_record, session.attempts
-                )
+                ctx = self._re_enricher.re_enrich(ctx, attempt_record, session.attempts)
 
         # Final fallback: Code Analysis (if not already tried)
-        if (
-            not session.success
-            and self._config.fallback_to_code_analysis
-            and "code_analysis" not in tried_routes
-        ):
+        if not session.success and self._config.fallback_to_code_analysis and "code_analysis" not in tried_routes:
             fallback_decision = RouteDecision(
                 route_type="code_analysis",
                 route_target="static-analysis",
@@ -499,9 +478,7 @@ class ResilientSelector:
                 parameters={"fallback": True, "session_id": session.session_id},
             )
             attempt_start = time.monotonic()
-            fallback_record = await self._execute_route(
-                fallback_decision, executor, len(session.attempts) + 1
-            )
+            fallback_record = await self._execute_route(fallback_decision, executor, len(session.attempts) + 1)
             fallback_record.latency_ms = (time.monotonic() - attempt_start) * 1000
             session.attempts.append(fallback_record)
 
@@ -657,9 +634,7 @@ class ResilientSelector:
 
         Follows the route priority order and picks the next untried route.
         """
-        available = [
-            r for r in self._config.route_priority if r not in tried
-        ]
+        available = [r for r in self._config.route_priority if r not in tried]
 
         if not available:
             # All routes tried — return original (will trigger fallback)
@@ -712,6 +687,7 @@ class ResilientSelector:
 # ---------------------------------------------------------------------------
 # Loop Engineering: Adaptive Weight Adjuster
 # ---------------------------------------------------------------------------
+
 
 class AdaptiveWeightAdjuster:
     """

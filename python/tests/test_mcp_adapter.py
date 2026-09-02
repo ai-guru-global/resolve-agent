@@ -2,19 +2,15 @@
 
 from __future__ import annotations
 
-import asyncio
-import json
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from resolveagent.mcp.adapter import MCPAdapter
-from resolveagent.mcp.client import HTTPMCPClient, MCPClient, StdioMCPClient
-from resolveagent.mcp.config import MCPConfig, MCPServerConfig, load_mcp_config, load_mcp_config_from_dict
+from resolveagent.mcp.client import HTTPMCPClient, StdioMCPClient
+from resolveagent.mcp.config import MCPConfig, MCPServerConfig, load_mcp_config_from_dict
 from resolveagent.mcp.registry import MCPRegistry
 from resolveagent.mcp.types import JSONRPCRequest, JSONRPCResponse, MCPTool, MCPToolResult
-
 
 # ==================== Config Tests ====================
 
@@ -228,9 +224,8 @@ class TestHTTPMCPClient:
         config = MCPServerConfig(name="test", transport="http", url="http://localhost")
         client = HTTPMCPClient(config)
 
-        with patch.dict("sys.modules", {"aiohttp": None}):
-            with pytest.raises(ImportError, match="aiohttp"):
-                await client.connect()
+        with patch.dict("sys.modules", {"aiohttp": None}), pytest.raises(ImportError, match="aiohttp"):
+            await client.connect()
 
 
 # ==================== Registry Tests ====================

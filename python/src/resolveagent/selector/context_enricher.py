@@ -258,9 +258,7 @@ class ContextEnricher:
             "route_preferences",
             "attempt_count",
         )
-        enriched.resilient_feedback = {
-            k: v for k, v in context.items() if k in _RESILIENT_KEYS
-        }
+        enriched.resilient_feedback = {k: v for k, v in context.items() if k in _RESILIENT_KEYS}
 
         # Calculate enrichment confidence — respect ReEnricher's decrement if in a retry loop
         if "attempt_count" in context and "enrichment_confidence" in context:

@@ -89,9 +89,7 @@ class FTAAnalyzerTool:
             f"## FTA Analysis Result\n\n"
             f"**Incident:** {incident[:200]}...\n\n"
             f"**Top Event Triggered:** {result}\n\n"
-            f"**Identified Root Causes:**\n"
-            + "\n".join(f"- {c}" for c in causes)
-            + f"\n\n**Evaluation Mode:** {mode}\n"
+            f"**Identified Root Causes:**\n" + "\n".join(f"- {c}" for c in causes) + f"\n\n**Evaluation Mode:** {mode}\n"
         )
 
     def _analyze_remote(self, incident: str, context: str, mode: str) -> str:

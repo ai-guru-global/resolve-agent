@@ -183,7 +183,7 @@ class HybridPlanner:
             data = self._extract_json(response.content)
             steps = [
                 PlanStep(
-                    id=f"{plan_id}-step-{i+1}",
+                    id=f"{plan_id}-step-{i + 1}",
                     description=s["description"],
                     action=s.get("action", "execute"),
                     parameters=s.get("parameters", {}),
@@ -431,11 +431,13 @@ class HybridPlanner:
         new_plan_id = f"plan-{self._step_counter}"
 
         plan.status = "replanning"
-        plan.execution_history.append({
-            "failed_step": failed_step.id,
-            "error": error,
-            "timestamp": time.time(),
-        })
+        plan.execution_history.append(
+            {
+                "failed_step": failed_step.id,
+                "error": error,
+                "timestamp": time.time(),
+            }
+        )
 
         # 构建新的计划: 跳过失败步骤或插入修复步骤
         new_steps: list[PlanStep] = []
@@ -455,7 +457,7 @@ class HybridPlanner:
 
         # 添加后续步骤 (如果失败步骤不是最后一步)
         if failed_idx >= 0 and failed_idx < len(plan.steps) - 1:
-            for step in plan.steps[failed_idx + 1:]:
+            for step in plan.steps[failed_idx + 1 :]:
                 new_step = PlanStep(
                     id=f"{new_plan_id}-step-{len(new_steps) + 1}",
                     description=step.description,
@@ -586,12 +588,14 @@ class ReActExecutor:
             # Execute action (placeholder)
             observation = await self._execute_action(action, action_input)
 
-            history.append({
-                "thought": thought,
-                "action": action,
-                "action_input": action_input,
-                "observation": observation,
-            })
+            history.append(
+                {
+                    "thought": thought,
+                    "action": action,
+                    "action_input": action_input,
+                    "observation": observation,
+                }
+            )
 
         return {
             "success": False,
@@ -613,10 +617,7 @@ class ReActExecutor:
         # 使用 LLM 进行推理
         from resolveagent.llm.provider import ChatMessage
 
-        history_text = "\n".join(
-            f"- Thought: {h['thought']}, Action: {h['action']}, Obs: {h['observation']}"
-            for h in history[-3:]
-        )
+        history_text = "\n".join(f"- Thought: {h['thought']}, Action: {h['action']}, Obs: {h['observation']}" for h in history[-3:])
 
         prompt = f"""Goal: {goal}
 Previous observations: {observation}

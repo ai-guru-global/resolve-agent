@@ -244,10 +244,7 @@ class HTTPMCPClient(MCPClient):
         try:
             import aiohttp
         except ImportError as err:
-            raise ImportError(
-                "aiohttp is required for HTTP MCP transport. "
-                "Install with: uv add aiohttp"
-            ) from err
+            raise ImportError("aiohttp is required for HTTP MCP transport. Install with: uv add aiohttp") from err
 
         url = self.config.resolve_url()
         if url is None:

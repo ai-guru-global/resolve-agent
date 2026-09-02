@@ -259,17 +259,11 @@ class ParallelFTAEvaluator(NodeEvaluator):
 
         # Evaluate basic events in parallel
         if basic_event_ids:
-            await asyncio.gather(*[
-                self._evaluate_basic_event_async(tree, eid, context)
-                for eid in basic_event_ids
-            ])
+            await asyncio.gather(*[self._evaluate_basic_event_async(tree, eid, context) for eid in basic_event_ids])
 
         # Evaluate gates in parallel (their inputs should now be ready)
         if gate_ids:
-            await asyncio.gather(*[
-                self._evaluate_gate_async(tree, gid)
-                for gid in gate_ids
-            ])
+            await asyncio.gather(*[self._evaluate_gate_async(tree, gid) for gid in gate_ids])
 
     async def _evaluate_basic_event_async(
         self,

@@ -44,14 +44,8 @@ class Embedder:
             base_url: Base URL. Defaults to EMBEDDING_BASE_URL env var.
         """
         self.model = model or os.getenv("EMBEDDING_MODEL", "text-embedding-v2")
-        self.api_key = (
-            api_key
-            or os.getenv("EMBEDDING_API_KEY", "")
-            or os.getenv("DASHSCOPE_API_KEY", "")
-        )
-        self.base_url = base_url or os.getenv(
-            "EMBEDDING_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"
-        )
+        self.api_key = api_key or os.getenv("EMBEDDING_API_KEY", "") or os.getenv("DASHSCOPE_API_KEY", "")
+        self.base_url = base_url or os.getenv("EMBEDDING_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
         self.dimension = self.MODEL_DIMENSIONS.get(self.model, 1024)
 
     async def embed(self, texts: list[str]) -> list[list[float]]:

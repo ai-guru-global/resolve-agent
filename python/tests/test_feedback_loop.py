@@ -1,14 +1,11 @@
 """Tests for the Loop Engineering feedback loop and regression validator."""
 
-import pytest
 from resolveagent.fta.feedback_loop import (
     FeedbackLoop,
     WorkflowExecutionMetrics,
-    ImprovementSuggestion,
 )
 from resolveagent.fta.regression_validator import (
     RegressionValidator,
-    ValidationResult,
 )
 
 

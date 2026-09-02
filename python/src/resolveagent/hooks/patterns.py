@@ -84,9 +84,7 @@ class HookChain:
             result = hook(context)
             duration = (time.time() - start) * 1000
             if not result.success:
-                logger.warning(
-                    "Pre-hook failed after %.1fms: %s", duration, result.error
-                )
+                logger.warning("Pre-hook failed after %.1fms: %s", duration, result.error)
                 context.errors.append(f"pre-hook: {result.error}")
                 return HookResult(success=False, error=result.error)
             context.results["pre_hook"] = result.data
@@ -117,9 +115,7 @@ class HookChain:
             result = hook(context, exec_result)
             duration = (time.time() - start) * 1000
             if not result.success:
-                logger.warning(
-                    "Post-hook failed after %.1fms: %s", duration, result.error
-                )
+                logger.warning("Post-hook failed after %.1fms: %s", duration, result.error)
                 # Post-hook failures are non-fatal but logged
 
         # Phase 4: Feedback loop closure

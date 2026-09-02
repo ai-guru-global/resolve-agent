@@ -76,10 +76,7 @@ class RegressionValidator:
         history_count = self._feedback_loop.get_history_count()
 
         if history_count < self.MIN_HISTORY_SIZE:
-            warnings.append(
-                f"Insufficient history ({history_count}/{self.MIN_HISTORY_SIZE}) "
-                f"for reliable regression detection"
-            )
+            warnings.append(f"Insufficient history ({history_count}/{self.MIN_HISTORY_SIZE}) for reliable regression detection")
             return ValidationResult(
                 passed=True,
                 checks_run=0,
@@ -114,10 +111,7 @@ class RegressionValidator:
             current_rate = 1.0 if test_metrics.success else 0.0
             baseline_delta["success_rate"] = current_rate - baseline_rate
             if not test_metrics.success and baseline_rate > 0.5:
-                errors.append(
-                    f"Success rate regression: current={current_rate:.0%} "
-                    f"vs baseline {baseline_rate:.0%}"
-                )
+                errors.append(f"Success rate regression: current={current_rate:.0%} vs baseline {baseline_rate:.0%}")
             else:
                 checks_passed += 1
         else:
@@ -129,10 +123,7 @@ class RegressionValidator:
             coverage = test_metrics.steps_executed / test_metrics.steps_total
             baseline_delta["step_coverage"] = coverage
             if coverage < 0.5:
-                warnings.append(
-                    f"Low step coverage: {coverage:.0%} "
-                    f"({test_metrics.steps_executed}/{test_metrics.steps_total})"
-                )
+                warnings.append(f"Low step coverage: {coverage:.0%} ({test_metrics.steps_executed}/{test_metrics.steps_total})")
             checks_passed += 1
         else:
             checks_passed += 1
@@ -145,13 +136,9 @@ class RegressionValidator:
             known_patterns = set()
             if context and "known_error_patterns" in context:
                 known_patterns = set(context["known_error_patterns"])
-            new_errors = [
-                e for e in test_metrics.errors if e not in known_patterns
-            ]
+            new_errors = [e for e in test_metrics.errors if e not in known_patterns]
             if new_errors:
-                warnings.append(
-                    f"{len(new_errors)} new error pattern(s) detected"
-                )
+                warnings.append(f"{len(new_errors)} new error pattern(s) detected")
             checks_passed += 1
         else:
             checks_passed += 1

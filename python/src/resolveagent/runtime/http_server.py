@@ -8,12 +8,13 @@ import os
 import time
 from collections import defaultdict
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
+from pydantic import BaseModel, ConfigDict, Field
 
 from resolveagent.runtime.engine import ExecutionEngine
 from resolveagent.runtime.lifecycle import AgentLifecycleManager
@@ -54,6 +55,30 @@ def _build_error_event(exc: Exception, trace_id: str = "") -> dict[str, str]:
     }
 
 
+class SelectorRouteRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    input_text: str = Field(default="", alias="input")
+    agent_id: str = ""
+    context: dict[str, Any] = {}
+    strategy: Literal["rule", "llm", "hybrid"] = "hybrid"
+    enrich_context: bool = False
+    bypass_cache: bool = False
+
+
+class SelectorRouteResponse(BaseModel):
+    route_type: str
+    route_target: str
+    confidence: float
+    reasoning: str = ""
+    parameters: dict[str, Any] = {}
+    chain: list[Any] = []
+    strategy: str = "rule"
+    degraded: bool = False
+    fallback_reason: str = ""
+    latency_ms: float = 0.0
+
+
 class RateLimitMiddleware:
     """Simple in-memory rate limiting middleware using a sliding window."""
 
@@ -63,13 +88,13 @@ class RateLimitMiddleware:
         self.requests: dict[str, list[float]] = defaultdict(list)
 
     async def __call__(self, scope, receive, send):
-        if scope['type'] == 'http':
-            client = scope.get('client', ('unknown', 0))[0]
+        if scope["type"] == "http":
+            client = scope.get("client", ("unknown", 0))[0]
             now = time.time()
             # Clean old entries
             self.requests[client] = [t for t in self.requests[client] if now - t < 60]
             if len(self.requests[client]) >= self.rpm:
-                response = JSONResponse({'detail': 'Rate limit exceeded'}, status_code=429)
+                response = JSONResponse({"detail": "Rate limit exceeded"}, status_code=429)
                 await response(scope, receive, send)
                 return
             self.requests[client].append(now)
@@ -96,9 +121,17 @@ class RuntimeHTTPServer:
         self.host = host
         self.port = port
         self.platform_address = platform_address or _get_platform_address()
-        self.engine = ExecutionEngine()
+        if os.environ.get("RESOLVEAGENT_HOOKS_ENABLED", "").lower() in ("1", "true", "yes"):
+            from resolveagent.hooks.memory_client import InMemoryHookClient
+            from resolveagent.hooks.runner import HookRunner
+
+            self.engine = ExecutionEngine(hook_runner=HookRunner(InMemoryHookClient()))  # type: ignore[arg-type]
+        else:
+            self.engine = ExecutionEngine()
         self.lifecycle = AgentLifecycleManager()
         self._skill_client: SkillStoreClient | None = None
+        self._rule_strategy: Any = None
+        self._selectors: dict[str, Any] = {}
         self.app = self._create_app()
 
     def _create_app(self) -> FastAPI:
@@ -133,33 +166,33 @@ class RuntimeHTTPServer:
         # ------------------------------------------------------------------
         # CORS middleware
         # ------------------------------------------------------------------
-        cors_origins_env = os.environ.get('RESOLVEAGENT_CORS_ORIGINS', '')
-        cors_origins = [o.strip() for o in cors_origins_env.split(',') if o.strip()] if cors_origins_env else ['http://localhost:5173']
-        cors_allow_credentials = '*' not in cors_origins
+        cors_origins_env = os.environ.get("RESOLVEAGENT_CORS_ORIGINS", "")
+        cors_origins = [o.strip() for o in cors_origins_env.split(",") if o.strip()] if cors_origins_env else ["http://localhost:5173"]
+        cors_allow_credentials = "*" not in cors_origins
         app.add_middleware(
             CORSMiddleware,
             allow_origins=cors_origins,
             allow_credentials=cors_allow_credentials,
-            allow_methods=['*'],
-            allow_headers=['*'],
+            allow_methods=["*"],
+            allow_headers=["*"],
         )
 
         # ------------------------------------------------------------------
         # Rate limiting middleware
         # ------------------------------------------------------------------
-        rpm = int(os.environ.get('RESOLVEAGENT_RATE_LIMIT_RPM', '60'))
+        rpm = int(os.environ.get("RESOLVEAGENT_RATE_LIMIT_RPM", "60"))
         app.add_middleware(RateLimitMiddleware, requests_per_minute=rpm)
 
         # ------------------------------------------------------------------
         # Security headers middleware
         # ------------------------------------------------------------------
-        @app.middleware('http')
+        @app.middleware("http")
         async def add_security_headers(request: Request, call_next):
             response = await call_next(request)
-            response.headers['X-Content-Type-Options'] = 'nosniff'
-            response.headers['X-Frame-Options'] = 'DENY'
-            response.headers['X-XSS-Protection'] = '1; mode=block'
-            response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            response.headers["X-Frame-Options"] = "DENY"
+            response.headers["X-XSS-Protection"] = "1; mode=block"
+            response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
             return response
 
         # Health check
@@ -204,6 +237,67 @@ class RuntimeHTTPServer:
             except Exception as e:
                 logger.error(f"Failed to execute agent: {e}")
                 raise HTTPException(status_code=500, detail="Internal server error") from e
+
+        # Selector routing
+        @app.post("/v1/selector/route", response_model=SelectorRouteResponse)
+        async def selector_route(payload: SelectorRouteRequest) -> SelectorRouteResponse:
+            """Route a request through the Intelligent Selector pipeline."""
+            t0 = time.perf_counter()
+
+            input_text = payload.input_text
+            if not input_text:
+                raise HTTPException(status_code=400, detail="input is required")
+
+            decision: dict[str, Any] | None = None
+            used_strategy = payload.strategy
+            degraded = False
+            fallback_reason = ""
+
+            if payload.strategy == "rule":
+                from resolveagent.selector.strategies.rule_strategy import RuleStrategy
+
+                if server_self._rule_strategy is None:
+                    server_self._rule_strategy = RuleStrategy()
+                rd = await server_self._rule_strategy.decide(input_text, payload.agent_id, payload.context)
+                decision = rd.__dict__
+
+            else:
+                try:
+                    from resolveagent.selector.selector import IntelligentSelector
+
+                    cache_key = payload.strategy
+                    if cache_key not in server_self._selectors:
+                        server_self._selectors[cache_key] = IntelligentSelector(strategy=payload.strategy)
+                    selector = server_self._selectors[cache_key]
+                    rd = await selector.route(input_text, payload.agent_id, payload.context)
+                    decision = rd.__dict__
+                except Exception as exc:
+                    logger.warning("Selector %s failed, degrading to rule: %s", payload.strategy, exc)
+                    degraded = True
+                    fallback_reason = str(exc)[:200]
+                    used_strategy = "rule"
+
+                    from resolveagent.selector.strategies.rule_strategy import RuleStrategy
+
+                    if server_self._rule_strategy is None:
+                        server_self._rule_strategy = RuleStrategy()
+                    rd = await server_self._rule_strategy.decide(input_text, payload.agent_id, payload.context)
+                    decision = rd.__dict__
+
+            latency_ms = (time.perf_counter() - t0) * 1000
+
+            return SelectorRouteResponse(
+                route_type=decision.get("route_type", "direct"),
+                route_target=decision.get("route_target", ""),
+                confidence=decision.get("confidence", 0.0),
+                reasoning=decision.get("reasoning", ""),
+                parameters=decision.get("parameters", {}),
+                chain=decision.get("chain", []),
+                strategy=used_strategy,
+                degraded=degraded,
+                fallback_reason=fallback_reason,
+                latency_ms=round(latency_ms, 2),
+            )
 
         # Workflow execution
         @app.post("/v1/workflows/{workflow_id}/execute")

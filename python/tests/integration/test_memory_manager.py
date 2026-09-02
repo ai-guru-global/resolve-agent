@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from resolveagent.agent.memory import MemoryEntry, MemoryManager
+from resolveagent.agent.memory import MemoryManager
 
 
 class TestMemoryManager:

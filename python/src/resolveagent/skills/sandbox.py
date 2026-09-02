@@ -175,7 +175,7 @@ class SandboxExecutor:
                         stderr=stderr.decode("utf-8", errors="replace"),
                         return_code=proc.returncode,
                         execution_time_ms=execution_time,
-                        memory_usage_mb=_get_memory_usage_mb()
+                        memory_usage_mb=_get_memory_usage_mb(),
                     )
 
                 except TimeoutError:

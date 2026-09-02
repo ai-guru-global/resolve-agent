@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 
-from resolveagent.selector.audit import AuditRecord, DecisionAuditLogger
+from resolveagent.selector.audit import DecisionAuditLogger
 
 
 def _make_decision(**overrides) -> dict:

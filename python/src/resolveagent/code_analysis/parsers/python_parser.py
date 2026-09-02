@@ -65,10 +65,7 @@ class PythonParser(BaseParser):
         func_names = {f.name for f in parsed.functions}
 
         for func in parsed.functions:
-            callees = [
-                call.callee for call in parsed.calls
-                if call.caller == func.name and call.callee in func_names
-            ]
+            callees = [call.callee for call in parsed.calls if call.caller == func.name and call.callee in func_names]
             if callees:
                 graph[func.name] = callees
 
@@ -108,9 +105,7 @@ class _Extractor(ast.NodeVisitor):
             params.append(node.args.kwarg.arg)
 
         docstring = ast.get_docstring(node) or ""
-        decorators = [
-            self._node_name(d) for d in node.decorator_list
-        ]
+        decorators = [self._node_name(d) for d in node.decorator_list]
 
         self.functions.append(
             FunctionNode(

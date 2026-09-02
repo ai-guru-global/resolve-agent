@@ -71,9 +71,7 @@ class CapabilityMap:
     """
 
     def __init__(self) -> None:
-        self._capability_index: dict[ToolCapability, list[str]] = {
-            cap: [] for cap in ToolCapability
-        }
+        self._capability_index: dict[ToolCapability, list[str]] = {cap: [] for cap in ToolCapability}
         self._tool_capabilities: dict[str, list[ToolCapability]] = {}
 
     def register_tool(
@@ -411,9 +409,7 @@ class DiscoveryService:
                 name=name,
                 version=tool.get("version", "1.0.0"),
                 description=tool.get("description", ""),
-                capabilities=[
-                    self._str_to_capability(c) for c in tool.get("capabilities", [])
-                ],
+                capabilities=[self._str_to_capability(c) for c in tool.get("capabilities", [])],
                 parameters=tool.get("parameters", {}),
                 returns=tool.get("returns", {}),
             )

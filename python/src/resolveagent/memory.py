@@ -108,10 +108,7 @@ class WorkingMemory:
             [{role, content}, ...]
         """
         entries = self.get_recent(limit)
-        return [
-            {"role": e.role, "content": e.content, "timestamp": e.timestamp}
-            for e in entries
-        ]
+        return [{"role": e.role, "content": e.content, "timestamp": e.timestamp} for e in entries]
 
     def clear(self) -> None:
         """清空所有记忆."""
@@ -222,7 +219,7 @@ class EpisodicMemoryClient:
                     "timestamp": e.timestamp,
                     "importance": e.importance,
                 }
-                for e in entries[-self._max_session_entries:]
+                for e in entries[-self._max_session_entries :]
             ]
             await self._client.hset(
                 key,

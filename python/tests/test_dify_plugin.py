@@ -11,11 +11,13 @@ class TestFTAAnalyzerTool:
     def test_invoke_with_description(self):
         """Test FTA analysis with incident description."""
         tool = FTAAnalyzerTool()
-        result = tool.invoke({
-            "incident_description": "Database connection timeout error",
-            "system_context": "MySQL backend",
-            "evaluation_mode": "parallel",
-        })
+        result = tool.invoke(
+            {
+                "incident_description": "Database connection timeout error",
+                "system_context": "MySQL backend",
+                "evaluation_mode": "parallel",
+            }
+        )
 
         assert "FTA Analysis Result" in result
         assert "timeout" in result.lower()
@@ -35,11 +37,13 @@ class TestCodeDiagnosisTool:
         """Test code diagnosis with valid input."""
         tool = CodeDiagnosisTool()
         code = "def hello():\n    print('hello')\n"
-        result = tool.invoke({
-            "code_snippet": code,
-            "language": "python",
-            "diagnosis_type": "general",
-        })
+        result = tool.invoke(
+            {
+                "code_snippet": code,
+                "language": "python",
+                "diagnosis_type": "general",
+            }
+        )
 
         assert "Code Diagnosis Result" in result
         assert "python" in result.lower()
@@ -55,11 +59,13 @@ class TestCodeDiagnosisTool:
         """Test security issue detection."""
         tool = CodeDiagnosisTool()
         code = "password = 'secret123'\n"
-        result = tool.invoke({
-            "code_snippet": code,
-            "language": "python",
-            "diagnosis_type": "security",
-        })
+        result = tool.invoke(
+            {
+                "code_snippet": code,
+                "language": "python",
+                "diagnosis_type": "security",
+            }
+        )
 
         assert "Security" in result or "No obvious" in result
 
@@ -67,10 +73,12 @@ class TestCodeDiagnosisTool:
         """Test performance issue detection."""
         tool = CodeDiagnosisTool()
         code = "for i in range(10):\n    for j in range(10):\n        for k in range(10):\n            pass\n"
-        result = tool.invoke({
-            "code_snippet": code,
-            "language": "python",
-            "diagnosis_type": "performance",
-        })
+        result = tool.invoke(
+            {
+                "code_snippet": code,
+                "language": "python",
+                "diagnosis_type": "performance",
+            }
+        )
 
         assert "Performance" in result or "No obvious" in result

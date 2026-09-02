@@ -87,15 +87,13 @@ class FeedbackLoop:
         """
         self._history.append(metrics)
         if len(self._history) > self._history_window:
-            self._history = self._history[-self._history_window:]
+            self._history = self._history[-self._history_window :]
 
         suggestions = self._analyze(metrics)
         self._update_baselines()
         return suggestions
 
-    def _analyze(
-        self, metrics: WorkflowExecutionMetrics
-    ) -> list[ImprovementSuggestion]:
+    def _analyze(self, metrics: WorkflowExecutionMetrics) -> list[ImprovementSuggestion]:
         """Analyze metrics against baselines and generate suggestions."""
         suggestions: list[ImprovementSuggestion] = []
 
@@ -131,10 +129,7 @@ class FeedbackLoop:
                     ImprovementSuggestion(
                         target="selector",
                         priority="medium",
-                        description=(
-                            f"Skill '{skill}' is associated with errors. "
-                            f"Consider lowering its selection weight."
-                        ),
+                        description=(f"Skill '{skill}' is associated with errors. Consider lowering its selection weight."),
                         confidence=0.6,
                         metadata={"skill": skill, "errors": metrics.errors},
                     )
@@ -142,18 +137,13 @@ class FeedbackLoop:
 
         # Check for low success rate
         if not metrics.success and len(self._history) >= 5:
-            recent_failures = sum(
-                1 for m in self._history[-5:] if not m.success
-            )
+            recent_failures = sum(1 for m in self._history[-5:] if not m.success)
             if recent_failures >= 3:
                 suggestions.append(
                     ImprovementSuggestion(
                         target="rag",
                         priority="high",
-                        description=(
-                            f"{recent_failures}/5 recent executions failed. "
-                            f"Enriching RAG knowledge base with error patterns."
-                        ),
+                        description=(f"{recent_failures}/5 recent executions failed. Enriching RAG knowledge base with error patterns."),
                         confidence=0.9,
                         metadata={"failure_rate": recent_failures / 5},
                     )
@@ -161,9 +151,7 @@ class FeedbackLoop:
 
         return suggestions
 
-    def _compare_with_baselines(
-        self, metrics: WorkflowExecutionMetrics
-    ) -> list[BaselineComparison]:
+    def _compare_with_baselines(self, metrics: WorkflowExecutionMetrics) -> list[BaselineComparison]:
         """Compare current metrics against stored baselines."""
         comparisons: list[BaselineComparison] = []
 

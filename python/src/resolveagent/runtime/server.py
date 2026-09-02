@@ -41,9 +41,7 @@ class AgentExecutionServer:
 
             # Create and register the servicer
             servicer = AgentExecutionServicer(self._engine)
-            agent_pb2_grpc.add_AgentExecutionServiceServicer_to_server(
-                servicer, self._server
-            )
+            agent_pb2_grpc.add_AgentExecutionServiceServicer_to_server(servicer, self._server)
 
             listen_addr = f"{self.host}:{self.port}"
             self._server.add_insecure_port(listen_addr)
@@ -82,10 +80,12 @@ class AgentExecutionServer:
                     if chunk.get("type") in ("content", "content_chunk"):
                         response_chunks.append(chunk.get("content", ""))
 
-                return web.json_response({
-                    "content": "".join(response_chunks),
-                    "agent_id": agent_id,
-                })
+                return web.json_response(
+                    {
+                        "content": "".join(response_chunks),
+                        "agent_id": agent_id,
+                    }
+                )
 
             except Exception as e:
                 logger.error("HTTP fallback execution failed: %s", e)
@@ -130,9 +130,7 @@ class AgentExecutionServer:
         Yields:
             ExecuteAgentResponse chunks.
         """
-        async for response in self._engine.execute(
-            agent_id, input_text, conversation_id, context
-        ):
+        async for response in self._engine.execute(agent_id, input_text, conversation_id, context):
             yield response
 
 

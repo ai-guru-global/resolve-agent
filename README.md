@@ -9,24 +9,137 @@
 </p>
 
 <p align="center">
+  <strong>Production-grade AIOps Mega-Agent Platform for Troubleshooting & Resolution</strong>
+</p>
+
+<p align="center">
   <code>🧠 Intelligent Selector</code> · <code>🌳 Hybrid Planner</code> · <code>💾 Hierarchical Memory</code> · <code>🔍 FTA Engine</code> · <code>🔧 ToolHub</code> · <code>🔄 Loop Engineering</code>
+</p>
+
+<p align="center">
+  🗺️ <a href="https://gjbs6uhxeute.meoo.fun"><strong>GTM 策略中枢 · 在线演示（GTM Strategy Hub）</strong></a>
 </p>
 
 <p align="center">
   <a href="https://github.com/ai-guru-global/resolve-agent/releases"><img src="https://img.shields.io/github/v/release/ai-guru-global/resolve-agent?style=flat-square" alt="Release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square" alt="License"></a>
   <a href="https://github.com/ai-guru-global/resolve-agent/actions"><img src="https://img.shields.io/github/actions/workflow/status/ai-guru-global/resolve-agent/ci.yaml?branch=main&style=flat-square" alt="CI Status"></a>
+  <a href="https://github.com/ai-guru-global/resolve-agent/issues"><img src="https://img.shields.io/github/issues/ai-guru-global/resolve-agent?style=flat-square" alt="Issues"></a>
+  <a href="https://github.com/ai-guru-global/resolve-agent/pulls"><img src="https://img.shields.io/github/issues-pr/ai-guru-global/resolve-agent?style=flat-square" alt="Pull Requests"></a>
+  <a href="https://github.com/ai-guru-global/resolve-agent/stargazers"><img src="https://img.shields.io/github/stars/ai-guru-global/resolve-agent?style=flat-square" alt="Stars"></a>
+  <a href="https://github.com/ai-guru-global/resolve-agent/graphs/contributors"><img src="https://img.shields.io/github/contributors/ai-guru-global/resolve-agent?style=flat-square" alt="Contributors"></a>
   <a href="https://goreportcard.com/report/github.com/ai-guru-global/resolve-agent"><img src="https://img.shields.io/badge/Go-1.25-00ADD8.svg?style=flat-square&logo=go" alt="Go"></a>
-  <a href="https://img.shields.io/badge/Python-3.11%2B-3776AB.svg?style=flat-square&logo=python"><img src="https://img.shields.io/badge/Python-3.11%2B-3776AB.svg?style=flat-square" alt="Python"></a>
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/Python-3.11%2B-3776AB.svg?style=flat-square&logo=python" alt="Python"></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-20%2B-339933.svg?style=flat-square&logo=nodedotjs" alt="Node.js"></a>
 </p>
 
 ---
 
-## 🌟 Overview | 概述
+## 📋 Table of Contents
 
-**ResolveAgent** 是基于 **2026 Agent Engineering** 最佳实践构建的生产级 AIOps 智能体平台，面向**故障解决（Troubleshooting & Resolution）**场景：从工单接入、意图路由、知识检索、故障树分析（FTA）到修复执行与反馈闭环，全链路自动化。
+- [What is ResolveAgent?](#what-is-resolveagent)
+- [Why ResolveAgent?](#why-resolveagent)
+- [Use Cases](#use-cases)
+- [GTM Strategy Hub](#gtm-strategy-hub)
+- [Quick Start in 60 Seconds](#quick-start-in-60-seconds)
+- [Architecture Overview](#architecture-overview)
+- [Twelve Architecture Highlights](#twelve-architecture-highlights)
+- [Architecture Deep Dive](#architecture-deep-dive)
+- [Quick Start (Detailed)](#quick-start-detailed)
+- [Troubleshooting](#troubleshooting)
+- [Feature Status](#feature-status)
+- [Project Structure](#project-structure)
+- [Configuration](#configuration)
+- [Documentation](#documentation)
+- [Testing](#testing)
+- [Metrics](#metrics)
+- [WebUI](#webui)
+- [Deployment](#deployment)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [Security](#security)
+- [Community & Support](#community--support)
+- [Citation](#citation)
+- [Acknowledgments](#acknowledgments)
+- [License](#license)
 
-### 核心架构 | Core Architecture
+---
+
+## What is ResolveAgent?
+
+**ResolveAgent** is a production-grade **AIOps Mega-Agent platform** built on **2026 Agent Engineering** best practices. It automates the entire troubleshooting and resolution lifecycle: from ticket ingestion and intent routing, through knowledge retrieval and fault-tree analysis (FTA), to remediation execution and feedback closure.
+
+ResolveAgent is designed for teams running complex distributed systems who need to compress the time from **alert → root cause → fix** from hours to minutes, while continuously capturing tribal knowledge into reusable skills and RAG corpora.
+
+> 📖 Full methodology and competitive assessment: [COMPREHENSIVE_ASSESSMENT_AND_METHODOLOGY.md](documentation/COMPREHENSIVE_ASSESSMENT_AND_METHODOLOGY.md)
+
+---
+
+## Why ResolveAgent?
+
+Traditional AI chatbots give a single answer path. ResolveAgent introduces **multi-path intelligent routing** combined with a **self-reinforcing knowledge loop**:
+
+| Differentiator | What it means for you |
+|----------------|----------------------|
+| **Multi-path routing** | Every request is analyzed and routed to the best engine: FTA, skill execution, RAG, code analysis, or direct LLM reasoning. |
+| **Resilient routing** | Failures are not dead ends; the selector learns from them, retries with enriched context, and adapts route weights over time. |
+| **Formal fault-tree reasoning** | FTA engine with six gate types, minimal cut sets, and Monte-Carlo simulation for rigorous root-cause analysis. |
+| **Knowledge self-reinforcement** | Every resolution enriches skills, RAG documents, and memory, so the platform gets smarter with use. |
+| **Production-grade resilience** | Circuit breakers, fallback cascades, structured observability, and OpenTelemetry tracing out of the box. |
+| **Polyglot runtime** | Go platform services for scale, Python runtime for AI/ML, and React WebUI for operators. |
+
+---
+
+## Use Cases
+
+ResolveAgent is built for SREs, platform engineers, and operations teams who need reliable, evidence-based incident resolution:
+
+- **Kubernetes incident response** — Pod crashes, OOMKilled, CrashLoopBackOff, network partitions.
+- **API / service degradation** — 5xx spikes, latency regressions, dependency failures.
+- **Root-cause analysis (RCA)** — Fault-tree modeling with minimal cut sets and probabilistic simulation.
+- **Knowledge-base Q&A** — RAG over runbooks, post-mortems, codebases, and call-chain corpora.
+- **Code-level diagnosis** — Static analysis, call-graph traversal, and solution document generation.
+- **Ticket triage and summarization** — Automatic classification, routing, and structured summarization.
+
+---
+
+## GTM Strategy Hub
+
+**ResolveAgent GTM 策略中枢** 已上线：<https://gjbs6uhxeute.meoo.fun>
+
+面向决策者与售前场景的企业级策略展示页，以「调度枢纽 / 终点站是根因」为叙事主线。单文件静态实现、零依赖，也可直接离线打开 [GTM/index.html](GTM/index.html)：
+
+- **路由发车板（Route Departures）** — 翻牌式信息板实时呈现告警事件的智能路由分发
+- **调度总图（Metro Map）** — 告警入口枢纽分岔四条分析线路：FTA 故障树推理 / RAG 检索增强 / Skill 技能编排 / 代码分析，直达「根因」终点站，附可交互的意图调度模拟器
+- **可审计会话（Auditable Session）** — 意图分类、路径分发、证据求解、语料写回全部以终端留痕，可回放、可复盘
+- **事件回放与语料飞轮** — 一次告警四路并行回放；排查结果沉淀语料，用得越多排查越准
+- **GTM 战略线路规划图** — 目标客户画像（ICP）与里程碑的线路化呈现
+
+页面设计契约（企业级视觉纪律：无 glow、无装饰性动效、仪器语法）见 [GTM/DESIGN.md](GTM/DESIGN.md)。
+
+---
+
+## Quick Start in 60 Seconds
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/ai-guru-global/resolve-agent.git
+cd resolve-agent
+
+# 2. Start the entire stack with one command
+./scripts/start-local.sh all
+
+# 3. Check service health
+./scripts/start-local.sh status
+```
+
+After startup, open the WebUI at **http://localhost:5174** and the Platform API at **http://localhost:8080/api/v1/health**.
+
+> ⚠️ First run of `./scripts/start-local.sh runtime` automatically creates `python/.venv` and installs dependencies (`.[rag]`); this may take a few minutes.
+
+---
+
+## Architecture Overview
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
@@ -61,7 +174,9 @@
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 十二大架构特性 | 12 Architecture Highlights
+---
+
+## Twelve Architecture Highlights
 
 | # | 特性 | 模块 | 说明 |
 |---|------|------|------|
@@ -82,7 +197,7 @@
 
 ---
 
-## 🏗️ Architecture Deep Dive | 架构深度解析
+## Architecture Deep Dive
 
 > 以下代码路径均相对 `python/src/resolveagent/` 目录。
 
@@ -423,9 +538,9 @@ weights = adjuster.get_weights()
 
 ---
 
-## 🚀 Quick Start | 快速开始
+## Quick Start (Detailed)
 
-### 环境要求
+### Environment Requirements
 
 | Dependency | Version | 说明 |
 |------------|---------|------|
@@ -436,7 +551,7 @@ weights = adjuster.get_weights()
 | Make | latest | 构建工具链 |
 | uv | 推荐 | Python 依赖管理（无则回退 pip） |
 
-### 一键启动（推荐）
+### One-Command Startup (Recommended)
 
 ```bash
 # 1. 克隆仓库
@@ -450,7 +565,7 @@ cd resolve-agent
 ./scripts/start-local.sh status
 ```
 
-启动完成后访问:
+Startup endpoints:
 
 | 服务 | 地址 | 说明 |
 |------|------|------|
@@ -463,7 +578,7 @@ cd resolve-agent
 | NATS | localhost:4222 | 消息总线 |
 | Milvus | localhost:19530 | RAG 向量存储 |
 
-### 分步启动
+### Step-by-Step Startup
 
 ```bash
 # 仅启动依赖容器 (PostgreSQL / Redis / NATS / Milvus / etcd)
@@ -487,7 +602,7 @@ cd resolve-agent
 
 > ⚠️ 首次启动 `start-local.sh runtime` 会自动创建 `python/.venv` 并安装依赖（`.[rag]`），耗时数分钟属正常现象。
 
-### 替代启动方式（Makefile）
+### Alternative Startup (Makefile)
 
 ```bash
 make setup-dev      # 初始化开发环境（依赖 + Git Hooks）
@@ -496,7 +611,7 @@ make build          # 构建 Go / Python / WebUI
 make compose-up     # Docker Compose 全栈启动
 ```
 
-### Python Agent 示例
+### Python Agent Example
 
 ```python
 from resolveagent.selector.selector import IntelligentSelector
@@ -529,7 +644,7 @@ recent = memory.get_recent(limit=10)
 
 ---
 
-## 🔧 Troubleshooting | 常见问题排查
+## Troubleshooting
 
 > 以下为本仓库实战验证过的本地启动问题与修复方案。
 
@@ -578,7 +693,7 @@ UV_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple uv pip install --python .v
 
 ---
 
-## 📊 Feature Status | 功能状态
+## Feature Status
 
 > **v0.3.0** | 核心组件经全面修复与测试加固（Python 测试 432+ 用例全绿）
 
@@ -604,14 +719,14 @@ UV_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple uv pip install --python .v
 |------|------|------|
 | Go Platform | 🟢 Ready | Registry / Auth / Route / Store / Feedback |
 | Python Runtime | 🟢 Ready | HTTP + SSE 流式服务（`python -m resolveagent.runtime`） |
-| WebUI | 🟢 Ready | 22 个功能页面（React + Vite + Tailwind） |
+| WebUI | 🟢 Ready | 23 个功能页面（React + Vite + Tailwind） |
 | Mobile Web | 🟢 Ready | `mobile/` 移动端适配 |
 | CI/CD | 🟢 Ready | `ci.yaml` / `e2e.yaml` / `release.yaml` / `docker-publish.yaml` |
 | 部署 | 🟢 Ready | Docker Compose + Helm + K8s manifests |
 
 ---
 
-## 🗂️ Project Structure | 项目结构
+## Project Structure
 
 ```
 resolve-agent/
@@ -657,6 +772,7 @@ resolve-agent/
 ├── docs/                        # 文档 (架构/ADR/API/中文文档)
 │   └── zh/                      # 25 篇中文技术文档
 ├── documentation/               # 综合评估与工程报告
+├── GTM/                         # 🗺️ GTM 策略中枢静态页（在线: https://gjbs6uhxeute.meoo.fun）
 ├── configs/                     # 运行配置
 │   ├── resolveagent.yaml        # 平台配置
 │   ├── runtime.yaml             # 运行时配置
@@ -678,9 +794,9 @@ resolve-agent/
 
 ---
 
-## 🔧 Configuration | 配置
+## Configuration
 
-### 环境变量（.env）
+### Environment Variables (.env)
 
 平台与运行时配置统一使用 `RESOLVEAGENT_*` 前缀（参考 `.env.example`）:
 
@@ -715,7 +831,7 @@ RESOLVEAGENT_TELEMETRY_OTLP_ENDPOINT=http://localhost:4318
 
 > ⚠️ Kimi K2.5 等模型调用需在 `configs/models.yaml` / provider 配置中**禁用 thinking 模式**，详见 [Kimi K2.5 集成规范](docs/zh/agentscope-higress-integration.md) 与 [configuration.md](docs/zh/configuration.md)。
 
-### 配置文件
+### Configuration Files
 
 | 文件 | 说明 |
 |------|------|
@@ -726,9 +842,9 @@ RESOLVEAGENT_TELEMETRY_OTLP_ENDPOINT=http://localhost:4318
 
 ---
 
-## 📚 Documentation | 文档
+## Documentation
 
-### 中文文档 (docs/zh/)
+### Chinese Documentation (docs/zh/)
 
 | 文档 | 说明 |
 |------|------|
@@ -747,13 +863,13 @@ RESOLVEAGENT_TELEMETRY_OTLP_ENDPOINT=http://localhost:4318
 | [最佳实践](docs/zh/best-practices.md) | 生产最佳实践 |
 | [部署指南](docs/zh/deployment.md) | Docker/Helm/K8s 部署 |
 
-### 文档站点
+### Documentation Site
 
-在线文档站点（Docusaurus）：[`docs-site/`](docs-site/) —— 涵盖架构（architecture）、API、ADR、运维（ops）、开发指南（dev-guide）与用户指南（user-guide）。
+Online documentation site (Docusaurus): [`docs-site/`](docs-site/) —— 涵盖架构（architecture）、API、ADR、运维（ops）、开发指南（dev-guide）与用户指南（user-guide）。
 
 ---
 
-## 🧪 Testing | 测试
+## Testing
 
 ```bash
 # 全量测试（Go + Python + WebUI 并行）
@@ -780,7 +896,7 @@ hack/quality-gate.sh
 
 ---
 
-## 📈 Metrics | 指标
+## Metrics
 
 | 指标 | 说明 |
 |------|------|
@@ -799,31 +915,32 @@ hack/quality-gate.sh
 
 ---
 
-## 🌐 WebUI | Web 界面
+## WebUI
 
-访问 **http://localhost:5174** 查看可视化控制台，包含 22 个功能页面：
+访问 **http://localhost:5174** 查看可视化控制台，包含 23 个功能页面：
 
 - **Home / Dashboard** — 平台总览与执行模式
+- **Architecture** — 四层架构叙事
 - **Playground** — 与 Agent 多轮对话（Kimi K2.5 等模型）
-- **Selector** — 智能路由决策可视化 + 自适应权重
-- **FTA Engine** — 故障树编辑器与仿真
+- **Selector / SelectorAdapters** — 智能路由决策可视化 + 自适应权重 + 适配器
+- **FTAEngine** — 故障树编辑器与仿真
 - **Workflows** — 工作流编排
 - **Agents** — Agent 管理与配置
 - **Skills** — 技能系统管理
 - **RAG** — 知识库与向量检索
-- **Memory** — 三层记忆状态
-- **Monitoring / Traces** — 监控指标与链路追踪
 - **CodeAnalysis** — 代码分析
 - **TicketSummary** — 工单总结业务场景
-- **AgentScopeHigress** — 网关集成演示
+- **Solutions** — 解决方案
+- **Monitoring / Traces** — 监控指标与链路追踪
 - **Database / DatabaseSchema** — 数据管理与 Schema
+- **AgentScopeHigress** — 网关集成演示
 - **Demo / Evaluation** — 演示与评估
 - **Settings** — 系统设置
 - **Mobile** — 移动端预览
 
 ---
 
-## 📦 Deployment | 部署
+## Deployment
 
 ```bash
 # 构建镜像 (platform / runtime / webui)
@@ -844,13 +961,75 @@ make seed
 
 ---
 
-## 📝 License
+## Roadmap
 
-Apache 2.0 License — 见 [LICENSE](LICENSE)
+Our public roadmap is tracked in [ROADMAP.md](ROADMAP.md) and on [GitHub Issues](https://github.com/ai-guru-global/resolve-agent/issues).
+
+| Version | Theme | Highlights |
+|---------|-------|------------|
+| v0.1.0 | Foundation | Go platform (gRPC + REST), Python runtime, FTA engine, Intelligent Selector, RAG, WebUI, CLI, Docker Compose, Helm. |
+| v0.2.0 | Hardening | DB migrations, unified error handling, OpenTelemetry logging, health checks, integration tests, retry with backoff. |
+| v0.3.0 | WebUI & DevEx | Mock-data auto-detection, project cleanup, deployment unification, examples & scaffolding. |
+| v0.4.0 | Ecosystem | Skill marketplace, plugin SDK, multi-tenancy, RBAC, audit dashboard. |
+| v0.5.0 | Scale | Horizontal agent runtime, distributed workflows, NATS JetStream, advanced RAG. |
+
+Long-term vision: multi-cloud and edge deployment, visual workflow designer, AI-powered observability and self-healing.
 
 ---
 
-## 🙏 Acknowledgments
+## Contributing
+
+We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
+
+- Development environment setup (`make setup-dev`)
+- Branch naming conventions (`feat/`, `fix/`, `docs/`, etc.)
+- Conventional Commits format
+- Pre-commit hooks and linting (`make lint`, `make fmt`)
+- Pull request process and code review requirements
+- Coding standards for Go, Python, and TypeScript/React
+
+By contributing, you agree that your contributions will be licensed under the [Apache License 2.0](LICENSE).
+
+---
+
+## Security
+
+If you discover a security vulnerability, please **do not** open a public issue. Instead, report it privately via [GitHub Security Advisories](https://github.com/ai-guru-global/resolve-agent/security/advisories) or contact the maintainers listed in [MAINTAINERS.md](MAINTAINERS.md).
+
+For general security practices, see:
+- [LICENSE](LICENSE) — Apache 2.0
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — Community standards
+
+---
+
+## Community & Support
+
+- 💬 [GitHub Discussions](https://github.com/ai-guru-global/resolve-agent/discussions) — Ask questions, share ideas, and connect with other users.
+- 🐛 [GitHub Issues](https://github.com/ai-guru-global/resolve-agent/issues) — Report bugs or request features.
+- 📧 Maintainers — See [MAINTAINERS.md](MAINTAINERS.md) for contact information.
+- ⭐ Star us on GitHub — If ResolveAgent is helpful, please consider starring the repository to help others discover it.
+
+---
+
+## Citation
+
+If you use ResolveAgent in your research or production work, please consider citing it:
+
+```bibtex
+@software{resolveagent,
+  title = {ResolveAgent: A Production-Grade AIOps Mega-Agent Platform},
+  author = {The ResolveAgent Contributors},
+  url = {https://github.com/ai-guru-global/resolve-agent},
+  year = {2026},
+  license = {Apache-2.0}
+}
+```
+
+---
+
+## Acknowledgments
+
+ResolveAgent builds on the shoulders of excellent open-source projects and communities:
 
 - [AgentScope](https://github.com/modelscope/agentscope) — Agent 编排
 - [Higress](https://github.com/alibaba/higress) — AI 网关
@@ -858,3 +1037,12 @@ Apache 2.0 License — 见 [LICENSE](LICENSE)
 - [MCP](https://modelcontextprotocol.io) — Model Context Protocol
 - [Milvus](https://milvus.io) / [Qdrant](https://qdrant.tech) — 向量数据库
 - [Vite](https://vitejs.dev) / [React](https://react.dev) / [Tailwind CSS](https://tailwindcss.com) — WebUI 技术栈
+- [Go](https://go.dev) / [Python](https://www.python.org) / [Node.js](https://nodejs.org) — 核心运行时
+
+A special thanks to all [contributors](https://github.com/ai-guru-global/resolve-agent/graphs/contributors) who have helped shape ResolveAgent.
+
+---
+
+## License
+
+Apache 2.0 License — see [LICENSE](LICENSE)

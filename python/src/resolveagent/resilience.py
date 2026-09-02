@@ -146,11 +146,7 @@ class CircuitBreaker:
             "failure_count": self._failure_count,
             "failure_threshold": self.failure_threshold,
             "reset_timeout": self.reset_timeout,
-            "seconds_since_last_failure": (
-                round(time.monotonic() - self._last_failure_time, 2)
-                if self._last_failure_time > 0
-                else None
-            ),
+            "seconds_since_last_failure": (round(time.monotonic() - self._last_failure_time, 2) if self._last_failure_time > 0 else None),
         }
 
 

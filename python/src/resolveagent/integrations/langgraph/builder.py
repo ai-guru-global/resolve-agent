@@ -118,9 +118,7 @@ class DiagnosisWorkflowBuilder:
         edges: list[tuple[str, str]] = []
 
         if llm_agent is not None:
-            nodes["interpret"] = ResolveAgentNode(
-                llm_agent, node_name="interpret", output_key="interpretation"
-            )
+            nodes["interpret"] = ResolveAgentNode(llm_agent, node_name="interpret", output_key="interpretation")
             edges = [("fta_analysis", "interpret")]
 
         return DiagnosisGraph(nodes=nodes, edges=edges, entry_point="fta_analysis")

@@ -190,6 +190,7 @@ class TestParallelFTAEvaluator:
     def test_lru_cache(self):
         """Test LRU cache behavior."""
         from resolveagent.fta.parallel_evaluator import _LRUCache
+
         cache = _LRUCache(maxsize=2)
 
         cache.set("a", 1)

@@ -151,7 +151,7 @@ class MegaAgent(BaseAgent):
             # Skill execution
             return await self._execute_skill(content, decision)
 
-        elif route_type == "workflow":
+        elif route_type in ("workflow", "fta"):
             # FTA workflow execution
             return await self._execute_workflow(content, decision)
 
@@ -300,13 +300,13 @@ class MegaAgent(BaseAgent):
 
         # Load and execute skill
         loader = SkillLoader()
-        skill = await loader.load(skill_name)
+        skill = loader.load(skill_name)
 
         # Prepare inputs from decision parameters
         inputs = decision.parameters.get("inputs", {})
         if not inputs:
-            # Use the content as input if no explicit inputs
-            inputs = {"query": content}
+            first_key = skill.manifest.inputs[0].name if skill.manifest.inputs else "input"
+            inputs = {first_key: content}
 
         result = await self._skill_executor.execute(skill, inputs)
 
@@ -426,14 +426,13 @@ class MegaAgent(BaseAgent):
                 skill_name = node.get("config", {}).get("skill_name")
                 if skill_name:
                     from resolveagent.skills.executor import SkillExecutor
+                    from resolveagent.skills.loader import SkillLoader
 
+                    _loader = SkillLoader()
+                    _loaded = _loader.load(skill_name)
                     executor = SkillExecutor()
-                    skill_result = await executor.execute(
-                        skill_name=skill_name,
-                        parameters={"input": current_data},
-                        context={},
-                    )
-                    current_data = str(skill_result.output) if skill_result.success else str(skill_result.error)
+                    skill_result = await executor.execute(skill=_loaded, inputs={"input": current_data})
+                    current_data = str(skill_result.outputs.get("result", "")) if skill_result.success else str(skill_result.error)
                     results.append({"node": node_id, "skill": skill_name, "result": current_data})
 
         return {

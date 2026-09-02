@@ -69,9 +69,7 @@ class RouteDecider:
         if intent_type in ("workflow", "fta") and confidence >= HIGH_CONFIDENCE_THRESHOLD:
             route_type = "fta"
             workflows = context.get("active_workflows", [])
-            route_target = (
-                workflows[0].get("id", "incident-diagnosis") if workflows else "incident-diagnosis"
-            )
+            route_target = workflows[0].get("id", "incident-diagnosis") if workflows else "incident-diagnosis"
 
         return RouteDecision(
             route_type=route_type,

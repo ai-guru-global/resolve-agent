@@ -64,6 +64,31 @@ class SkillLoader:
         """List names of all loaded skills."""
         return list(self._loaded.keys())
 
+    def _default_search_paths(self) -> list[Path]:
+        import os
+
+        env = os.environ.get("RESOLVEAGENT_SKILL_PATHS", "")
+        if env:
+            return [Path(p) for p in env.split(":") if p]
+        return [Path(__file__).resolve().parents[3] / "skills"]
+
+    def load(self, name: str) -> LoadedSkill:
+        """Load a skill by name, searching default skill paths.
+
+        Args:
+            name: Skill name (must match the directory name under a skill root).
+
+        Returns:
+            LoadedSkill instance (cached after first load).
+        """
+        if name in self._loaded:
+            return self._loaded[name]
+        for root in self._default_search_paths():
+            manifest_path = root / name / "manifest.yaml"
+            if manifest_path.exists():
+                return self.load_from_directory(str(root / name))
+        raise FileNotFoundError(f"Skill not found: {name}")
+
 
 class LoadedSkill:
     """A skill that has been loaded and is ready for execution."""

@@ -58,10 +58,7 @@ class TestCreatePlan:
 
     @pytest.mark.asyncio
     async def test_deliberative_with_llm_plain_json(self) -> None:
-        llm = FakeLLM(
-            '{"steps": [{"description": "检查 Pod 状态", "action": "inspect"},'
-            ' {"description": "重启 Pod", "action": "restart"}]}'
-        )
+        llm = FakeLLM('{"steps": [{"description": "检查 Pod 状态", "action": "inspect"}, {"description": "重启 Pod", "action": "restart"}]}')
         planner = HybridPlanner(llm_provider=llm)
         plan = await planner.create_plan("修复 Pod", mode=PlanningMode.DELIBERATIVE)
 
@@ -73,11 +70,7 @@ class TestCreatePlan:
     async def test_deliberative_with_llm_markdown_fenced_json(self) -> None:
         """Regression: fenced ```json responses previously broke json.loads
         and silently degraded to keyword decomposition."""
-        llm = FakeLLM(
-            '好的，以下是分解结果：\n```json\n'
-            '{"steps": [{"description": "收集日志", "action": "gather_logs"}]}\n'
-            "```\n希望对你有帮助。"
-        )
+        llm = FakeLLM('好的，以下是分解结果：\n```json\n{"steps": [{"description": "收集日志", "action": "gather_logs"}]}\n```\n希望对你有帮助。')
         planner = HybridPlanner(llm_provider=llm)
         plan = await planner.create_plan("排查报错", mode=PlanningMode.DELIBERATIVE)
 

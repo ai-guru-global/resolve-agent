@@ -69,6 +69,7 @@
 ## 已替换 / 已对接
 
 - 死链：预约演示 → GitHub Issues（参数化标题 `ResolveAgent 演示预约`）；GitHub 仓库 / 产品文档 → `https://github.com/ai-guru-global/resolve-agent[/tree/main/docs]`（外链带 `target="_blank" rel="noopener noreferrer"`）
+- 姊妹产品互跳：导航「FDE Scope ↗」与页脚「FDE Scope ↗」→ `https://npwgp04gxyp1.meoo.fun`（外链带 `target="_blank" rel="noopener noreferrer"`）；对侧 FDE Scope GTM 页导航/页脚同步回链本页。navlinks ≤960px 隐藏，同屏 `.navtag` 副标题一并隐藏、头部 CTA `white-space:nowrap`（390px 实测单行），移动端互跳由页脚承接；页脚由纯文本升级为含 GitHub / 产品文档 / FDE Scope 三链接（`.foot a` 下划线细描边，hover 转 `--ink`）
 - 里程碑：相对季度 → 具体 2026 Q3 / 2026 Q4 / 2027 Q1
 - 北极星：保留"目标示意"定位，副行加入基线（47min→28min / 0.87→≥0.90 / 45/周→120/周 / 86/周→300/周）
 - 置信度去重：终端 0.94（实例基于 Probe 评估）、回放 0.89（四路竞争假设）、模拟器按告警类型分发 0.94/0.89/0.91/0.96 四套叙述

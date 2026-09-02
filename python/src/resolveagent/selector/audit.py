@@ -134,13 +134,17 @@ class DecisionAuditLogger:
             context_dict = {}
 
         # Extract decision fields
-        decision_dict = decision if isinstance(decision, dict) else {
-            "route_type": getattr(decision, "route_type", "unknown"),
-            "confidence": getattr(decision, "confidence", 0.0),
-            "reasoning": getattr(decision, "reasoning", ""),
-            "route_target": getattr(decision, "route_target", ""),
-            "parameters": getattr(decision, "parameters", {}),
-        }
+        decision_dict = (
+            decision
+            if isinstance(decision, dict)
+            else {
+                "route_type": getattr(decision, "route_type", "unknown"),
+                "confidence": getattr(decision, "confidence", 0.0),
+                "reasoning": getattr(decision, "reasoning", ""),
+                "route_target": getattr(decision, "route_target", ""),
+                "parameters": getattr(decision, "parameters", {}),
+            }
+        )
 
         # Build audit record
         record = AuditRecord(

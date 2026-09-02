@@ -38,12 +38,16 @@ class TestMegaAgentReplyPipeline:
         decision = _make_decision("direct")
         agent._selector_instance = _make_mock_selector(decision)
 
-        mock_response = MagicMock(content="Hello!", model="qwen-plus", usage={"total_tokens": 10})
-        with patch.object(agent, "_execute_direct", new_callable=AsyncMock, return_value={
-            "role": "assistant",
-            "content": "Hello!",
-            "metadata": {"route_type": "direct"},
-        }):
+        with patch.object(
+            agent,
+            "_execute_direct",
+            new_callable=AsyncMock,
+            return_value={
+                "role": "assistant",
+                "content": "Hello!",
+                "metadata": {"route_type": "direct"},
+            },
+        ):
             result = await agent.reply({"content": "你好"})
             assert result["role"] == "assistant"
             assert result["content"] == "Hello!"
@@ -54,11 +58,16 @@ class TestMegaAgentReplyPipeline:
         decision = _make_decision("rag", "product-docs", collection="product-docs")
         agent._selector_instance = _make_mock_selector(decision)
 
-        with patch.object(agent, "_execute_rag", new_callable=AsyncMock, return_value={
-            "role": "assistant",
-            "content": "RAG answer",
-            "metadata": {"route_type": "rag", "retrieved_docs": 3},
-        }):
+        with patch.object(
+            agent,
+            "_execute_rag",
+            new_callable=AsyncMock,
+            return_value={
+                "role": "assistant",
+                "content": "RAG answer",
+                "metadata": {"route_type": "rag", "retrieved_docs": 3},
+            },
+        ):
             result = await agent.reply({"content": "502 怎么处理？"})
             assert result["metadata"]["route_type"] == "rag"
             assert result["metadata"]["retrieved_docs"] == 3
@@ -68,11 +77,16 @@ class TestMegaAgentReplyPipeline:
         decision = _make_decision("skill", "web-search")
         agent._selector_instance = _make_mock_selector(decision)
 
-        with patch.object(agent, "_execute_skill", new_callable=AsyncMock, return_value={
-            "role": "assistant",
-            "content": "技能执行结果:\nsearch result",
-            "metadata": {"route_type": "skill", "success": True},
-        }):
+        with patch.object(
+            agent,
+            "_execute_skill",
+            new_callable=AsyncMock,
+            return_value={
+                "role": "assistant",
+                "content": "技能执行结果:\nsearch result",
+                "metadata": {"route_type": "skill", "success": True},
+            },
+        ):
             result = await agent.reply({"content": "搜索 Kubernetes"})
             assert result["metadata"]["route_type"] == "skill"
 
@@ -81,11 +95,16 @@ class TestMegaAgentReplyPipeline:
         decision = _make_decision("workflow", "incident-diagnosis")
         agent._selector_instance = _make_mock_selector(decision)
 
-        with patch.object(agent, "_execute_workflow", new_callable=AsyncMock, return_value={
-            "role": "assistant",
-            "content": "工作流已启动",
-            "metadata": {"route_type": "workflow"},
-        }):
+        with patch.object(
+            agent,
+            "_execute_workflow",
+            new_callable=AsyncMock,
+            return_value={
+                "role": "assistant",
+                "content": "工作流已启动",
+                "metadata": {"route_type": "workflow"},
+            },
+        ):
             result = await agent.reply({"content": "诊断线上故障"})
             assert result["metadata"]["route_type"] == "workflow"
 
@@ -94,11 +113,16 @@ class TestMegaAgentReplyPipeline:
         decision = _make_decision("code_analysis", "static-analysis")
         agent._selector_instance = _make_mock_selector(decision)
 
-        with patch.object(agent, "_execute_code_analysis", new_callable=AsyncMock, return_value={
-            "role": "assistant",
-            "content": "## 静态分析结果",
-            "metadata": {"route_type": "code_analysis", "analyzer": "static-analysis"},
-        }):
+        with patch.object(
+            agent,
+            "_execute_code_analysis",
+            new_callable=AsyncMock,
+            return_value={
+                "role": "assistant",
+                "content": "## 静态分析结果",
+                "metadata": {"route_type": "code_analysis", "analyzer": "static-analysis"},
+            },
+        ):
             result = await agent.reply({"content": "分析这段代码"})
             assert result["metadata"]["route_type"] == "code_analysis"
 
@@ -107,11 +131,16 @@ class TestMegaAgentReplyPipeline:
         decision = _make_decision("unknown_route_type")
         agent._selector_instance = _make_mock_selector(decision)
 
-        with patch.object(agent, "_execute_direct", new_callable=AsyncMock, return_value={
-            "role": "assistant",
-            "content": "fallback response",
-            "metadata": {"route_type": "unknown_route_type"},
-        }):
+        with patch.object(
+            agent,
+            "_execute_direct",
+            new_callable=AsyncMock,
+            return_value={
+                "role": "assistant",
+                "content": "fallback response",
+                "metadata": {"route_type": "unknown_route_type"},
+            },
+        ):
             result = await agent.reply({"content": "some input"})
             assert result["content"] == "fallback response"
 

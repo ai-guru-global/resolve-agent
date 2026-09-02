@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import time
 import uuid
 from typing import TYPE_CHECKING, Any
@@ -46,7 +47,8 @@ class ExecutionEngine:
         mcp_adapter: Any | None = None,
     ) -> None:
         self._agent_pool: dict[str, MegaAgent] = {}
-        self._selector = IntelligentSelector(strategy="hybrid", registry_client=registry_client)
+        _selector_strategy = os.environ.get("RESOLVEAGENT_SELECTOR_STRATEGY", "hybrid")
+        self._selector = IntelligentSelector(strategy=_selector_strategy, registry_client=registry_client)
         self._conversations: dict[str, list[dict]] = {}
         self._execution_count = 0
         self._registry_client = registry_client

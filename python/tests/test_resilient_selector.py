@@ -7,7 +7,7 @@ ResilientSelector route_and_execute, _force_alternative_route, and ResilientConf
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -20,10 +20,10 @@ from resolveagent.selector.resilient_selector import (
 )
 from resolveagent.selector.selector import RouteDecision
 
-
 # ---------------------------------------------------------------------------
 # Helper factories
 # ---------------------------------------------------------------------------
+
 
 def make_decision(route_type: str = "skill", target: str = "test-target") -> RouteDecision:
     return RouteDecision(
@@ -38,6 +38,7 @@ def make_decision(route_type: str = "skill", target: str = "test-target") -> Rou
 def make_success_executor():
     async def executor(decision):
         return type("Result", (), {"success": True, "output": "ok", "error": None})()
+
     return executor
 
 
@@ -57,6 +58,7 @@ def make_fail_then_succeed(fail_count: int):
 def make_always_fail():
     async def executor(decision):
         raise Exception("Always fails")
+
     return executor
 
 
@@ -70,6 +72,7 @@ def make_selector_mock(route_type: str = "skill") -> MagicMock:
 # ---------------------------------------------------------------------------
 # 1. Data models
 # ---------------------------------------------------------------------------
+
 
 class TestRouteAttempt:
     def test_route_attempt_creation(self):
@@ -135,9 +138,7 @@ class TestRoutingSession:
 
     def test_routing_session_to_dict_truncates_long_input(self):
         long_input = "x" * 500
-        session = RoutingSession(
-            session_id="s3", original_input=long_input, agent_id="a"
-        )
+        session = RoutingSession(session_id="s3", original_input=long_input, agent_id="a")
         d = session.to_dict()
         assert len(d["original_input"]) == 200
 
@@ -145,6 +146,7 @@ class TestRoutingSession:
 # ---------------------------------------------------------------------------
 # 2. ReEnricher
 # ---------------------------------------------------------------------------
+
 
 class TestReEnricher:
     def _make_attempt(self, route_type="skill", error="boom", success=False):
@@ -229,6 +231,7 @@ class TestReEnricher:
 # 3. ResilientSelector.route_and_execute
 # ---------------------------------------------------------------------------
 
+
 class TestRouteAndExecute:
     @pytest.mark.asyncio
     async def test_success_on_first_try(self):
@@ -310,15 +313,14 @@ class TestRouteAndExecute:
         config = ResilientConfig(max_retries=1, fallback_to_code_analysis=True)
         selector = ResilientSelector(selector=mock_sel, config=config)
 
-        session = await selector.route_and_execute(
-            input_text="test", agent_id="a1", executor=executor
-        )
+        session = await selector.route_and_execute(input_text="test", agent_id="a1", executor=executor)
         assert session.success is True
         assert session.final_route == "code_analysis"
 
     @pytest.mark.asyncio
     async def test_timeout_respected(self):
         """Slow executor should cause session to terminate within timeout."""
+
         async def slow_executor(decision):
             await asyncio.sleep(0.5)
             raise Exception("slow fail")
@@ -327,9 +329,7 @@ class TestRouteAndExecute:
         config = ResilientConfig(max_retries=100, total_timeout_seconds=0.3)
         selector = ResilientSelector(selector=mock_sel, config=config)
 
-        session = await selector.route_and_execute(
-            input_text="test", agent_id="a1", executor=slow_executor
-        )
+        session = await selector.route_and_execute(input_text="test", agent_id="a1", executor=slow_executor)
         # Should have timed out before exhausting all retries
         assert session.attempt_count < 101
         assert session.total_latency_ms / 1000.0 < 5.0  # sanity bound
@@ -379,6 +379,7 @@ class TestRouteAndExecute:
 # ---------------------------------------------------------------------------
 # 4. _force_alternative_route
 # ---------------------------------------------------------------------------
+
 
 class TestForceAlternativeRoute:
     def _make_selector(self, **config_overrides):
@@ -439,6 +440,7 @@ class TestForceAlternativeRoute:
 # 5. ResilientConfig
 # ---------------------------------------------------------------------------
 
+
 class TestResilientConfig:
     def test_default_config(self):
         config = ResilientConfig()
@@ -470,32 +472,31 @@ class TestResilientConfig:
 # 6. Integration-style / edge cases
 # ---------------------------------------------------------------------------
 
+
 class TestEdgeCases:
     @pytest.mark.asyncio
     async def test_executor_returns_dict_result(self):
         """Executor returning a dict with success key should work."""
+
         async def dict_executor(decision):
             return {"success": True, "output": "dict result", "error": None}
 
         mock_sel = make_selector_mock("skill")
         selector = ResilientSelector(selector=mock_sel)
-        session = await selector.route_and_execute(
-            input_text="test", agent_id="a1", executor=dict_executor
-        )
+        session = await selector.route_and_execute(input_text="test", agent_id="a1", executor=dict_executor)
         assert session.success is True
 
     @pytest.mark.asyncio
     async def test_executor_returns_none(self):
         """Executor returning None should be treated as failure."""
+
         async def none_executor(decision):
             return None
 
         mock_sel = make_selector_mock("skill")
         config = ResilientConfig(max_retries=0, fallback_to_code_analysis=False)
         selector = ResilientSelector(selector=mock_sel, config=config)
-        session = await selector.route_and_execute(
-            input_text="test", agent_id="a1", executor=none_executor
-        )
+        session = await selector.route_and_execute(input_text="test", agent_id="a1", executor=none_executor)
         # None is falsy → success=False
         assert session.attempt_count == 1
         assert session.attempts[0].success is False
@@ -504,9 +505,7 @@ class TestEdgeCases:
     async def test_get_session_stats(self):
         mock_sel = make_selector_mock("skill")
         selector = ResilientSelector(selector=mock_sel, config=ResilientConfig())
-        await selector.route_and_execute(
-            input_text="test", agent_id="a1", executor=make_success_executor()
-        )
+        await selector.route_and_execute(input_text="test", agent_id="a1", executor=make_success_executor())
         stats = selector.get_session_stats()
         assert stats["total_sessions"] == 1
         assert stats["config"]["max_retries"] == 3

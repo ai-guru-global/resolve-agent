@@ -74,9 +74,7 @@ class RouteDecision(BaseModel):
         if self.route_type != "skill":
             return False
         code_targets = {"static-analysis", "code-exec", "security-scan", "linter"}
-        return self.route_target in code_targets or any(
-            t in self.route_target.lower() for t in ("code", "lint", "security", "analysis")
-        )
+        return self.route_target in code_targets or any(t in self.route_target.lower() for t in ("code", "lint", "security", "analysis"))
 
     def is_high_confidence(self, threshold: float = 0.7) -> bool:
         """Check if decision has high confidence."""

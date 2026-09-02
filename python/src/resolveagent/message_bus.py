@@ -223,9 +223,7 @@ class AgentMessageBus:
             channel: 频道名称
         """
         if channel in self._subscriptions:
-            self._subscriptions[channel] = [
-                s for s in self._subscriptions[channel] if s.agent_id != agent_id
-            ]
+            self._subscriptions[channel] = [s for s in self._subscriptions[channel] if s.agent_id != agent_id]
 
     async def publish(self, message: AgentMessage) -> None:
         """发布消息.

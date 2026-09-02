@@ -164,7 +164,7 @@ class SkillExecutor:
         manifest = skill.manifest
 
         # Check required parameters
-        for param in manifest.parameters:
+        for param in manifest.parameters or manifest.inputs or []:
             if param.required and param.name not in inputs:
                 errors.append(f"Missing required parameter: {param.name}")
                 continue
@@ -191,7 +191,7 @@ class SkillExecutor:
                     errors.append(f"Parameter {param.name} must be one of: {', '.join(map(str, param.enum))}")
 
         # Check for unknown parameters
-        known_params = {p.name for p in manifest.parameters}
+        known_params = {p.name for p in (manifest.parameters or manifest.inputs or [])}
         for key in inputs:
             if key not in known_params:
                 logger.warning(
@@ -356,14 +356,24 @@ class SkillExecutor:
         # Parse outputs from stdout
         outputs = {}
         if sandbox_result.success:
-            try:
-                # Try to parse JSON output from stdout
-                stdout = sandbox_result.stdout.strip()
-                if stdout:
-                    outputs = json.loads(stdout)
-            except json.JSONDecodeError:
-                # If not JSON, use raw stdout as result
-                outputs = {"result": sandbox_result.stdout}
+            stdout = sandbox_result.stdout.strip()
+            if stdout:
+                try:
+                    parsed = json.loads(stdout)
+                    outputs = parsed if isinstance(parsed, dict) else {"result": parsed}
+                except json.JSONDecodeError:
+                    # Scan lines in reverse for the last parseable JSON object
+                    for line in reversed(stdout.splitlines()):
+                        line = line.strip()
+                        if line.startswith("{"):
+                            try:
+                                parsed = json.loads(line)
+                                outputs = parsed if isinstance(parsed, dict) else {"result": parsed}
+                                break
+                            except json.JSONDecodeError:
+                                continue
+                    else:
+                        outputs = {"result": sandbox_result.stdout}
 
         return SkillResult(
             outputs=outputs,

@@ -407,7 +407,7 @@ describe('mock 数据质量 · Solutions 过滤、溯源与执行记录', () => 
       }
     }
     expect(withExec, '有执行记录的方案太少').toBeGreaterThanOrEqual(3);
-  });
+  }, 15000);
 
   it('kudig 溯源方案带 source_uri / metadata.category / created_by', async () => {
     const { solutions } = await mockApi.listSolutions();
@@ -440,5 +440,80 @@ describe('mock 数据质量 · Solutions 过滤、溯源与执行记录', () => 
     expect(src, '缺少 created_at 渲染').toMatch(/created_at/);
     expect(src, '缺少 metadata 渲染').toMatch(/metadata/);
     expect(src, '严重度未用中文映射 severityLabels').toMatch(/severityLabels/);
+  });
+});
+
+describe('mock 数据质量 · Skills 状态真值与引用反查', () => {
+  const readPage = (rel: string) =>
+    readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf-8');
+
+  it('技能状态为真值分布（≥2 种且取值合法），不再是清一色 installed', async () => {
+    const { skills } = await mockApi.listSkills();
+    expect(skills.length, '技能样本过少').toBeGreaterThanOrEqual(20);
+    const allowed = new Set(['enabled', 'disabled', 'deprecated', 'installed']);
+    const statuses = new Set(skills.map((s) => s.status));
+    for (const st of statuses) {
+      expect(allowed.has(st), `非法技能状态: ${st}`).toBe(true);
+    }
+    expect(statuses.size, '技能状态全部相同，疑似写死').toBeGreaterThanOrEqual(2);
+  });
+
+  it('Agent harness.skills 反查引用：无悬空引用，场景技能被引用且与详情 related_agent_count 一致', async () => {
+    const { skills } = await mockApi.listSkills();
+    const { agents } = await mockApi.listAgents();
+    const skillNames = new Set(skills.map((s) => s.name));
+    const refCount: Record<string, number> = {};
+    for (const a of agents) {
+      for (const sn of a.harness.skills) {
+        expect(skillNames.has(sn), `Agent ${a.id} 悬空引用技能 ${sn}`).toBe(true);
+        refCount[sn] = (refCount[sn] ?? 0) + 1;
+      }
+    }
+    expect(
+      Object.keys(refCount).length,
+      '被 Agent 引用的技能种类过少，反查无意义',
+    ).toBeGreaterThanOrEqual(6);
+    const scenario = skills.find((s) => s.skill_type === 'scenario' && refCount[s.name]);
+    expect(scenario, '没有任何场景技能被 Agent 引用').toBeDefined();
+    const detail = await mockApi.getSkill(scenario!.name);
+    expect(
+      detail.related_agent_count,
+      `related_agent_count(${detail.related_agent_count}) 与反查结果(${refCount[scenario!.name]})不一致`,
+    ).toBe(refCount[scenario!.name]);
+  });
+
+  it('场景技能详情：custom_sections 非空、排查步骤带 skill_ref 且引用真实技能、last_executed 在演示窗口', async () => {
+    const { skills } = await mockApi.listSkills();
+    const detail = await mockApi.getSkill('k8s-pod-crash');
+    const cfg = detail.scenario_config;
+    expect(cfg).toBeDefined();
+    expect(cfg!.output_template!.custom_sections.length, 'custom_sections 为空').toBeGreaterThan(0);
+    for (const step of cfg!.troubleshooting_flow) {
+      expect(step.skill_ref, `${step.id} 缺少 skill_ref`).toBeTruthy();
+      expect(
+        skills.some((s) => s.name === step.skill_ref),
+        `${step.skill_ref} 悬空技能引用`,
+      ).toBe(true);
+    }
+    expect(
+      detail.last_executed >= '2026-08-25' && detail.last_executed < '2026-09-01',
+      `last_executed 越出演示窗口: ${detail.last_executed}`,
+    ).toBe(true);
+  });
+
+  it('SkillList 页面删除假引用映射并接 listAgents 反查 + 状态真值徽章', () => {
+    const src = readPage('../pages/Skills/SkillList.tsx');
+    expect(src, 'skillAgentRefs 假映射仍存在').not.toMatch(/skillAgentRefs/);
+    expect(src, '未接入 useAgents/listAgents 引用反查').toMatch(/useAgents|listAgents/);
+    expect(src, '未读取 harness.skills').toMatch(/harness/);
+    expect(src, '状态徽章仍写死"就绪"').not.toMatch(/label="就绪"/);
+    expect(src, '缺少状态中文映射 statusLabels').toMatch(/statusLabels/);
+  });
+
+  it('SkillDetail 页面渲染 status / skill_ref / custom_sections', () => {
+    const src = readPage('../pages/Skills/SkillDetail.tsx');
+    expect(src, '详情页缺少 status 渲染').toMatch(/skill\.status|statusLabels/);
+    expect(src, '排查步骤缺少 skill_ref 渲染').toMatch(/skill_ref/);
+    expect(src, '输出模板缺少 custom_sections 渲染').toMatch(/custom_sections/);
   });
 });

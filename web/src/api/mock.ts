@@ -84,7 +84,7 @@ let mockAgents: Agent[] = [
     harness: {
       system_prompt: '你是一个专注于阿里云 ACK 容器服务的运维助手。负责集群健康巡检、Pod 异常诊断、节点扩缩容决策。',
       tools: ['kubectl', 'prometheus-query', 'helm'],
-      skills: ['log-analyzer', 'metric-alerter', 'consulting-qa'],
+      skills: ['log-analyzer', 'metric-alerter', 'consulting-qa', 'k8s-pod-crash', 'SKILL-POD-001', 'SKILL-NODE-001'],
       memory_enabled: true,
       hooks: [
         { name: '执行日志', type: 'post_execution', action: 'log_trace', enabled: true },
@@ -110,7 +110,7 @@ let mockAgents: Agent[] = [
     harness: {
       system_prompt: '你是一个故障树分析引擎，基于 FTA 方法论进行系统性根因定位。',
       tools: ['fault-tree-engine', 'log-query', 'metric-query'],
-      skills: ['log-analyzer', 'metric-alerter'],
+      skills: ['log-analyzer', 'metric-alerter', 'k8s-pod-crash', 'SKILL-NODE-001'],
       memory_enabled: true,
       hooks: [
         { name: '执行日志', type: 'post_execution', action: 'log_trace', enabled: true },
@@ -161,7 +161,7 @@ let mockAgents: Agent[] = [
     harness: {
       system_prompt: '你是工单自动处理引擎，并行调用所有绑定技能处理运维工单。',
       tools: ['ticket-api', 'notification-api'],
-      skills: ['ticket-handler', 'consulting-qa'],
+      skills: ['ticket-handler', 'consulting-qa', 'rds-replication-lag'],
       memory_enabled: false,
       hooks: [
         { name: '执行日志', type: 'post_execution', action: 'log_trace', enabled: true },
@@ -185,7 +185,7 @@ let mockAgents: Agent[] = [
     harness: {
       system_prompt: '分析 SLB 实例的流量模式，识别异常流量峰值，给出弹性伸缩建议。',
       tools: ['prometheus-query', 'slb-api'],
-      skills: ['metric-alerter'],
+      skills: ['metric-alerter', 'SKILL-NET-003'],
       memory_enabled: false,
       hooks: [
         { name: '执行日志', type: 'post_execution', action: 'log_trace', enabled: true },
@@ -233,7 +233,7 @@ let mockAgents: Agent[] = [
     harness: {
       system_prompt: '专注于 RDS MySQL 主从同步延迟的故障树分析诊断。',
       tools: ['fault-tree-engine', 'rds-api', 'metric-query'],
-      skills: ['log-analyzer'],
+      skills: ['log-analyzer', 'rds-replication-lag', 'SKILL-NET-002'],
       memory_enabled: true,
       hooks: [
         { name: '执行日志', type: 'post_execution', action: 'log_trace', enabled: true },
@@ -252,33 +252,33 @@ let mockAgents: Agent[] = [
 
 // ─── Skills ───
 const mockSkills: Skill[] = [
-  { name: 'ticket-handler', version: '1.2.0', description: '自动分析运维工单，提取关键信息，评估优先级，生成处理建议', status: 'installed', skill_type: 'general' },
-  { name: 'consulting-qa', version: '1.1.0', description: '基于阿里云产品文档和最佳实践的智能问答，覆盖 ECS/ACK/RDS/OSS 等', status: 'installed', skill_type: 'general' },
-  { name: 'log-analyzer', version: '2.0.1', description: '多源日志聚合分析，支持 SLS、Kafka、文件日志的模式识别和异常检测', status: 'installed', skill_type: 'general' },
-  { name: 'metric-alerter', version: '1.0.3', description: '基于 Prometheus 指标的智能告警，支持动态阈值和趋势预测', status: 'installed', skill_type: 'general' },
-  { name: 'change-reviewer', version: '0.9.0', description: '变更单自动审核，检查回滚方案完整性和变更窗口合规性', status: 'installed', skill_type: 'general' },
-  { name: 'hello-world', version: '0.1.0', description: '技能框架验证用的基础测试技能', status: 'installed', skill_type: 'general' },
-  { name: 'k8s-pod-crash', version: '1.0.0', description: 'Kubernetes Pod CrashLoopBackOff 场景化排查，自动采集事件/日志/资源状态并输出结构化排查方案', status: 'installed', skill_type: 'scenario', domain: 'kubernetes', tags: ['k8s', 'pod', 'crash', 'oom'] },
-  { name: 'rds-replication-lag', version: '0.8.0', description: 'RDS MySQL 主从复制延迟诊断，检测复制线程状态、慢查询阻塞及网络延迟', status: 'installed', skill_type: 'scenario', domain: 'database', tags: ['rds', 'mysql', 'replication', 'lag'] },
+  { name: 'ticket-handler', version: '1.2.0', description: '自动分析运维工单，提取关键信息，评估优先级，生成处理建议', status: 'enabled', skill_type: 'general' },
+  { name: 'consulting-qa', version: '1.1.0', description: '基于阿里云产品文档和最佳实践的智能问答，覆盖 ECS/ACK/RDS/OSS 等', status: 'enabled', skill_type: 'general' },
+  { name: 'log-analyzer', version: '2.0.1', description: '多源日志聚合分析，支持 SLS、Kafka、文件日志的模式识别和异常检测', status: 'enabled', skill_type: 'general' },
+  { name: 'metric-alerter', version: '1.0.3', description: '基于 Prometheus 指标的智能告警，支持动态阈值和趋势预测', status: 'enabled', skill_type: 'general' },
+  { name: 'change-reviewer', version: '0.9.0', description: '变更单自动审核，检查回滚方案完整性和变更窗口合规性', status: 'enabled', skill_type: 'general' },
+  { name: 'hello-world', version: '0.1.0', description: '技能框架验证用的基础测试技能', status: 'deprecated', skill_type: 'general' },
+  { name: 'k8s-pod-crash', version: '1.0.0', description: 'Kubernetes Pod CrashLoopBackOff 场景化排查，自动采集事件/日志/资源状态并输出结构化排查方案', status: 'enabled', skill_type: 'scenario', domain: 'kubernetes', tags: ['k8s', 'pod', 'crash', 'oom'] },
+  { name: 'rds-replication-lag', version: '0.8.0', description: 'RDS MySQL 主从复制延迟诊断，检测复制线程状态、慢查询阻塞及网络延迟', status: 'enabled', skill_type: 'scenario', domain: 'database', tags: ['rds', 'mysql', 'replication', 'lag'] },
   // Kudig topic-skills (scenario-type, imported from kudig-database)
-  { name: 'SKILL-NODE-001', version: '1.0', description: 'Node NotReady 是 Kubernetes 集群中爆炸半径最大的故障类型之一。当节点进入 NotReady 状态时，Kubernetes 控制平面将在 pod-eviction-timeout 后开始驱逐该节点上的所有非 DaemonSet Pod', status: 'installed', skill_type: 'scenario', domain: 'node', tags: ['NotReady', 'NodeNotReady', '节点不可用', 'kubelet'] },
-  { name: 'SKILL-POD-001', version: '1.0', description: 'CrashLoopBackOff 和 OOMKilled 是生产环境中最常见的 Pod 级别故障。CrashLoopBackOff: 容器反复退出，kubelet 以指数退避策略不断尝试重启容器。OOMKilled: Linux 内核的 OOM Killer 终止了容器进程', status: 'installed', skill_type: 'scenario', domain: 'pod', tags: ['CrashLoopBackOff', 'OOMKilled', '容器崩溃', 'exit code 137'] },
-  { name: 'SKILL-POD-002', version: '1.0', description: 'Pod Pending 状态表示容器无法被调度到节点，可能由于资源不足、节点选择器不匹配、污点等原因导致', status: 'installed', skill_type: 'scenario', domain: 'pod', tags: ['Pending', 'Pod Pending', '调度失败', 'unschedulable'] },
-  { name: 'SKILL-NET-001', version: '1.0', description: 'DNS 解析失败是 Kubernetes 网络故障中最常见的问题之一。CoreDNS 是集群内服务发现的核心组件，DNS 解析异常会导致服务间无法通信', status: 'installed', skill_type: 'scenario', domain: 'network', tags: ['DNS', 'CoreDNS', 'resolved', '域名解析'] },
-  { name: 'SKILL-NET-002', version: '1.0', description: 'Service 连通性故障可能由 Endpoints 不健康、kube-proxy 异常、网络策略阻止或 CNI 故障引起', status: 'installed', skill_type: 'scenario', domain: 'network', tags: ['Service', '连同性', 'Endpoints', 'Connection refused'] },
-  { name: 'SKILL-SEC-001', version: '1.0', description: '证书过期是生产环境中导致服务不可用的常见原因。kubelet、apiserver、etcd 之间的 TLS 证书过期会导致组件无法通信', status: 'installed', skill_type: 'scenario', domain: 'security', tags: ['Certificate', 'TLS', '证书过期', 'expired'] },
-  { name: 'SKILL-STORE-001', version: '1.0', description: 'PVC 存储故障可能由 StorageClass 配置错误、CSI driver 异常、节点存储满或 PVC/PV 绑定问题引起', status: 'installed', skill_type: 'scenario', domain: 'storage', tags: ['PVC', 'Storage', 'PersistentVolume', '挂载失败'] },
-  { name: 'SKILL-WORK-001', version: '1.0', description: 'Deployment Rollout 失败可能由于镜像拉取错误、资源配额不足、探针配置错误或 Readiness 失败导致', status: 'installed', skill_type: 'scenario', domain: 'workload', tags: ['Deployment', 'Rollout', 'ImagePullBackOff', '探针'] },
-  { name: 'SKILL-SEC-002', version: '1.0', description: 'RBAC/Quota 故障包括 ServiceAccount 权限不足、RoleBinding 缺失、ResourceQuota 或 LimitRange 限制导致的工作负载无法创建', status: 'installed', skill_type: 'scenario', domain: 'security', tags: ['RBAC', 'Quota', '权限', 'Forbidden', 'ResourceQuota'] },
-  { name: 'SKILL-IMAGE-001', version: '1.0', description: '镜像拉取失败可能由于镜像不存在、registry 认证失败、网络不通或节点缺少镜像拉取权限导致', status: 'installed', skill_type: 'scenario', domain: 'image', tags: ['ImagePullBackOff', 'ErrImagePull', 'registry', '镜像拉取'] },
-  { name: 'SKILL-CP-001', version: '1.0', description: '控制平面故障包括 etcd 集群异常、kube-apiserver 不可用、kube-controller-manager 或 kube-scheduler 异常，可能导致集群范围的服务中断', status: 'installed', skill_type: 'scenario', domain: 'control-plane', tags: ['etcd', 'apiserver', 'control-plane', 'controlplane'] },
-  { name: 'SKILL-SCALE-001', version: '1.0', description: '自动扩缩容故障包括 HPA/VPA/CA 无法正常工作，可能由于指标采集失败、资源瓶颈或副本数达到上限导致', status: 'installed', skill_type: 'scenario', domain: 'scaling', tags: ['HPA', 'VPA', 'Autoscaling', '扩缩容', 'replicas'] },
-  { name: 'SKILL-NET-003', version: '1.0', description: 'Ingress/Gateway 故障可能由于 Ingress Controller 异常、域名解析问题、证书问题或后端服务不可达导致', status: 'installed', skill_type: 'scenario', domain: 'network', tags: ['Ingress', 'Gateway', 'nginx', '域名'] },
-  { name: 'SKILL-CONFIG-001', version: '1.0', description: 'ConfigMap/Secret 故障包括配置未同步、Secret 缺失、挂载路径错误或 ConfigMap 变更未触发 Pod 更新', status: 'installed', skill_type: 'scenario', domain: 'configuration', tags: ['ConfigMap', 'Secret', '配置', '挂载'] },
-  { name: 'SKILL-MONITOR-001', version: '1.0', description: '监控告警故障包括 Prometheus 采集失败、Alertmanager 通知异常、指标数据缺失或告警规则配置错误', status: 'installed', skill_type: 'scenario', domain: 'observability', tags: ['Prometheus', 'Alertmanager', '告警', 'metrics'] },
-  { name: 'SKILL-LOG-001', version: '1.0', description: '日志采集故障包括日志丢失、采集延迟、日志格式解析错误或日志后端存储异常', status: 'installed', skill_type: 'scenario', domain: 'observability', tags: ['Logging', '日志', 'FluentBit', 'SLS'] },
-  { name: 'SKILL-PERF-001', version: '1.0', description: '性能瓶颈诊断包括 CPU 节流、内存泄漏、IO 延迟高、网络带宽饱和或存储吞吐不足', status: 'installed', skill_type: 'scenario', domain: 'performance', tags: ['CPU', 'Memory', 'IO', 'Performance', '瓶颈', 'Throttling'] },
-  { name: 'SKILL-SEC-003', version: '1.0', description: '安全事件响应包括未授权访问检测、异常行为分析、漏洞利用排查和安全事件遏制', status: 'installed', skill_type: 'scenario', domain: 'security', tags: ['Security', 'Incident', 'Vulnerability', '安全事件'] },
+  { name: 'SKILL-NODE-001', version: '1.0', description: 'Node NotReady 是 Kubernetes 集群中爆炸半径最大的故障类型之一。当节点进入 NotReady 状态时，Kubernetes 控制平面将在 pod-eviction-timeout 后开始驱逐该节点上的所有非 DaemonSet Pod', status: 'enabled', skill_type: 'scenario', domain: 'node', tags: ['NotReady', 'NodeNotReady', '节点不可用', 'kubelet'] },
+  { name: 'SKILL-POD-001', version: '1.0', description: 'CrashLoopBackOff 和 OOMKilled 是生产环境中最常见的 Pod 级别故障。CrashLoopBackOff: 容器反复退出，kubelet 以指数退避策略不断尝试重启容器。OOMKilled: Linux 内核的 OOM Killer 终止了容器进程', status: 'enabled', skill_type: 'scenario', domain: 'pod', tags: ['CrashLoopBackOff', 'OOMKilled', '容器崩溃', 'exit code 137'] },
+  { name: 'SKILL-POD-002', version: '1.0', description: 'Pod Pending 状态表示容器无法被调度到节点，可能由于资源不足、节点选择器不匹配、污点等原因导致', status: 'enabled', skill_type: 'scenario', domain: 'pod', tags: ['Pending', 'Pod Pending', '调度失败', 'unschedulable'] },
+  { name: 'SKILL-NET-001', version: '1.0', description: 'DNS 解析失败是 Kubernetes 网络故障中最常见的问题之一。CoreDNS 是集群内服务发现的核心组件，DNS 解析异常会导致服务间无法通信', status: 'enabled', skill_type: 'scenario', domain: 'network', tags: ['DNS', 'CoreDNS', 'resolved', '域名解析'] },
+  { name: 'SKILL-NET-002', version: '1.0', description: 'Service 连通性故障可能由 Endpoints 不健康、kube-proxy 异常、网络策略阻止或 CNI 故障引起', status: 'enabled', skill_type: 'scenario', domain: 'network', tags: ['Service', '连同性', 'Endpoints', 'Connection refused'] },
+  { name: 'SKILL-SEC-001', version: '1.0', description: '证书过期是生产环境中导致服务不可用的常见原因。kubelet、apiserver、etcd 之间的 TLS 证书过期会导致组件无法通信', status: 'enabled', skill_type: 'scenario', domain: 'security', tags: ['Certificate', 'TLS', '证书过期', 'expired'] },
+  { name: 'SKILL-STORE-001', version: '1.0', description: 'PVC 存储故障可能由 StorageClass 配置错误、CSI driver 异常、节点存储满或 PVC/PV 绑定问题引起', status: 'enabled', skill_type: 'scenario', domain: 'storage', tags: ['PVC', 'Storage', 'PersistentVolume', '挂载失败'] },
+  { name: 'SKILL-WORK-001', version: '1.0', description: 'Deployment Rollout 失败可能由于镜像拉取错误、资源配额不足、探针配置错误或 Readiness 失败导致', status: 'enabled', skill_type: 'scenario', domain: 'workload', tags: ['Deployment', 'Rollout', 'ImagePullBackOff', '探针'] },
+  { name: 'SKILL-SEC-002', version: '1.0', description: 'RBAC/Quota 故障包括 ServiceAccount 权限不足、RoleBinding 缺失、ResourceQuota 或 LimitRange 限制导致的工作负载无法创建', status: 'enabled', skill_type: 'scenario', domain: 'security', tags: ['RBAC', 'Quota', '权限', 'Forbidden', 'ResourceQuota'] },
+  { name: 'SKILL-IMAGE-001', version: '1.0', description: '镜像拉取失败可能由于镜像不存在、registry 认证失败、网络不通或节点缺少镜像拉取权限导致', status: 'enabled', skill_type: 'scenario', domain: 'image', tags: ['ImagePullBackOff', 'ErrImagePull', 'registry', '镜像拉取'] },
+  { name: 'SKILL-CP-001', version: '1.0', description: '控制平面故障包括 etcd 集群异常、kube-apiserver 不可用、kube-controller-manager 或 kube-scheduler 异常，可能导致集群范围的服务中断', status: 'disabled', skill_type: 'scenario', domain: 'control-plane', tags: ['etcd', 'apiserver', 'control-plane', 'controlplane'] },
+  { name: 'SKILL-SCALE-001', version: '1.0', description: '自动扩缩容故障包括 HPA/VPA/CA 无法正常工作，可能由于指标采集失败、资源瓶颈或副本数达到上限导致', status: 'enabled', skill_type: 'scenario', domain: 'scaling', tags: ['HPA', 'VPA', 'Autoscaling', '扩缩容', 'replicas'] },
+  { name: 'SKILL-NET-003', version: '1.0', description: 'Ingress/Gateway 故障可能由于 Ingress Controller 异常、域名解析问题、证书问题或后端服务不可达导致', status: 'enabled', skill_type: 'scenario', domain: 'network', tags: ['Ingress', 'Gateway', 'nginx', '域名'] },
+  { name: 'SKILL-CONFIG-001', version: '1.0', description: 'ConfigMap/Secret 故障包括配置未同步、Secret 缺失、挂载路径错误或 ConfigMap 变更未触发 Pod 更新', status: 'enabled', skill_type: 'scenario', domain: 'configuration', tags: ['ConfigMap', 'Secret', '配置', '挂载'] },
+  { name: 'SKILL-MONITOR-001', version: '1.0', description: '监控告警故障包括 Prometheus 采集失败、Alertmanager 通知异常、指标数据缺失或告警规则配置错误', status: 'enabled', skill_type: 'scenario', domain: 'observability', tags: ['Prometheus', 'Alertmanager', '告警', 'metrics'] },
+  { name: 'SKILL-LOG-001', version: '1.0', description: '日志采集故障包括日志丢失、采集延迟、日志格式解析错误或日志后端存储异常', status: 'enabled', skill_type: 'scenario', domain: 'observability', tags: ['Logging', '日志', 'FluentBit', 'SLS'] },
+  { name: 'SKILL-PERF-001', version: '1.0', description: '性能瓶颈诊断包括 CPU 节流、内存泄漏、IO 延迟高、网络带宽饱和或存储吞吐不足', status: 'enabled', skill_type: 'scenario', domain: 'performance', tags: ['CPU', 'Memory', 'IO', 'Performance', '瓶颈', 'Throttling'] },
+  { name: 'SKILL-SEC-003', version: '1.0', description: '安全事件响应包括未授权访问检测、异常行为分析、漏洞利用排查和安全事件遏制', status: 'enabled', skill_type: 'scenario', domain: 'security', tags: ['Security', 'Incident', 'Vulnerability', '安全事件'] },
 ];
 
 const generatedSkillDisplayNames: Record<string, string> = {
@@ -357,7 +357,7 @@ function createScenarioFlow(skill: Skill): ScenarioConfig['troubleshooting_flow'
       description: `收集 ${domain} 场景的基础上下文、日志与事件信息`,
       step_type: 'collect',
       command: null,
-      skill_ref: null,
+      skill_ref: 'log-analyzer',
       expected_output: 'context_bundle',
       condition: null,
       timeout_seconds: 20,
@@ -369,7 +369,7 @@ function createScenarioFlow(skill: Skill): ScenarioConfig['troubleshooting_flow'
       description: `结合标签 ${tags.join(' / ') || 'default'} 分析关键异常信号`,
       step_type: 'diagnose',
       command: null,
-      skill_ref: null,
+      skill_ref: 'metric-alerter',
       expected_output: 'diagnosis_report',
       condition: null,
       timeout_seconds: 15,
@@ -381,7 +381,7 @@ function createScenarioFlow(skill: Skill): ScenarioConfig['troubleshooting_flow'
       description: '输出结构化修复建议、优先级和回归验证要点',
       step_type: 'action',
       command: null,
-      skill_ref: null,
+      skill_ref: 'ticket-handler',
       expected_output: 'resolution_plan',
       condition: null,
       timeout_seconds: 10,
@@ -415,7 +415,7 @@ function buildSkillDetailFromList(skill: Skill): SkillDetailInfo {
             include_evidence: true,
             include_steps: true,
             include_resolution: true,
-            custom_sections: [],
+            custom_sections: ['影响范围评估', '回归验证清单'],
           },
           severity_levels: ['low', 'medium', 'high', 'critical'],
         }
@@ -445,12 +445,11 @@ function buildSkillDetailFromList(skill: Skill): SkillDetailInfo {
       timeout_seconds: skill.skill_type === 'scenario' ? 90 : 30,
     },
     install_date: '2026-08-01T08:00:00Z',
-    last_executed: '2026-08-12T09:30:00Z',
+    last_executed: `2026-08-${25 + (skill.name.length % 7)}T09:30:00Z`,
     execution_count: executionCount,
     level,
     experience_points: experiencePoints,
     next_level_experience: experiencePoints + 500,
-    related_agent_count: 2,
   };
 }
 
@@ -461,7 +460,7 @@ const mockSkillDetails: Record<string, SkillDetailInfo> = {
     display_name: '工单处理',
     version: '1.2.0',
     description: '自动分析运维工单，提取关键信息，评估优先级，生成处理建议',
-    status: 'installed',
+    status: 'enabled',
     author: 'ResolveNet Team',
     icon: '🎫',
     entry_point: 'skills/ticket_handler/main.py',
@@ -483,7 +482,7 @@ const mockSkillDetails: Record<string, SkillDetailInfo> = {
       timeout_seconds: 30,
     },
     install_date: '2026-07-01T08:00:00Z',
-    last_executed: '2026-08-08T09:12:00Z',
+    last_executed: '2026-08-30T09:12:00Z',
     execution_count: 1247,
   },
   'consulting-qa': {
@@ -491,7 +490,7 @@ const mockSkillDetails: Record<string, SkillDetailInfo> = {
     display_name: '咨询问答',
     version: '1.1.0',
     description: '基于阿里云产品文档和最佳实践的智能问答，覆盖 ECS/ACK/RDS/OSS 等',
-    status: 'installed',
+    status: 'enabled',
     author: 'ResolveNet Team',
     icon: '💬',
     entry_point: 'skills/consulting_qa/main.py',
@@ -512,7 +511,7 @@ const mockSkillDetails: Record<string, SkillDetailInfo> = {
       timeout_seconds: 15,
     },
     install_date: '2026-07-02T10:00:00Z',
-    last_executed: '2026-08-08T08:45:00Z',
+    last_executed: '2026-08-30T08:45:00Z',
     execution_count: 892,
   },
   'log-analyzer': {
@@ -520,7 +519,7 @@ const mockSkillDetails: Record<string, SkillDetailInfo> = {
     display_name: '日志分析',
     version: '2.0.1',
     description: '多源日志聚合分析，支持 SLS、Kafka、文件日志的模式识别和异常检测',
-    status: 'installed',
+    status: 'enabled',
     author: 'ResolveNet Team',
     icon: '📊',
     entry_point: 'skills/log_analyzer/main.py',
@@ -542,7 +541,7 @@ const mockSkillDetails: Record<string, SkillDetailInfo> = {
       timeout_seconds: 60,
     },
     install_date: '2026-07-05T14:00:00Z',
-    last_executed: '2026-08-08T09:30:00Z',
+    last_executed: '2026-08-29T09:30:00Z',
     execution_count: 2156,
   },
   'metric-alerter': {
@@ -550,7 +549,7 @@ const mockSkillDetails: Record<string, SkillDetailInfo> = {
     display_name: '指标告警',
     version: '1.0.3',
     description: '基于 Prometheus 指标的智能告警，支持动态阈值和趋势预测',
-    status: 'installed',
+    status: 'enabled',
     author: 'ResolveNet Team',
     icon: '📈',
     entry_point: 'skills/metric_alerter/main.py',
@@ -572,7 +571,7 @@ const mockSkillDetails: Record<string, SkillDetailInfo> = {
       timeout_seconds: 45,
     },
     install_date: '2026-07-08T09:00:00Z',
-    last_executed: '2026-08-08T09:00:00Z',
+    last_executed: '2026-08-29T09:00:00Z',
     execution_count: 3421,
   },
   'change-reviewer': {
@@ -580,7 +579,7 @@ const mockSkillDetails: Record<string, SkillDetailInfo> = {
     display_name: '变更审核',
     version: '0.9.0',
     description: '变更单自动审核，检查回滚方案完整性和变更窗口合规性',
-    status: 'installed',
+    status: 'enabled',
     author: 'ResolveNet Team',
     icon: '🔍',
     entry_point: 'skills/change_reviewer/main.py',
@@ -602,7 +601,7 @@ const mockSkillDetails: Record<string, SkillDetailInfo> = {
       timeout_seconds: 30,
     },
     install_date: '2026-07-10T11:00:00Z',
-    last_executed: '2026-08-07T18:30:00Z',
+    last_executed: '2026-08-27T18:30:00Z',
     execution_count: 156,
   },
   'hello-world': {
@@ -610,7 +609,7 @@ const mockSkillDetails: Record<string, SkillDetailInfo> = {
     display_name: '测试技能',
     version: '0.1.0',
     description: '技能框架验证用的基础测试技能',
-    status: 'installed',
+    status: 'deprecated',
     author: 'ResolveNet Team',
     icon: '👋',
     entry_point: 'skills/hello_world/main.py',
@@ -628,7 +627,7 @@ const mockSkillDetails: Record<string, SkillDetailInfo> = {
       timeout_seconds: 10,
     },
     install_date: '2026-06-20T16:00:00Z',
-    last_executed: '2026-08-05T15:00:00Z',
+    last_executed: '2026-08-25T15:00:00Z',
     execution_count: 42,
   },
   'k8s-pod-crash': {
@@ -636,7 +635,7 @@ const mockSkillDetails: Record<string, SkillDetailInfo> = {
     display_name: 'K8s Pod 崩溃排查',
     version: '1.0.0',
     description: 'Kubernetes Pod CrashLoopBackOff 场景化排查，自动采集事件/日志/资源状态并输出结构化排查方案',
-    status: 'installed',
+    status: 'enabled',
     author: 'ResolveNet Team',
     icon: '🔥',
     entry_point: 'skills/k8s_pod_crash/skill.py',
@@ -645,16 +644,16 @@ const mockSkillDetails: Record<string, SkillDetailInfo> = {
       domain: 'kubernetes',
       tags: ['k8s', 'pod', 'crash', 'oom', 'crashloopbackoff'],
       troubleshooting_flow: [
-        { id: 'collect-pod-events', name: '采集 Pod 事件', description: '获取 Pod 相关的 Kubernetes Events', step_type: 'collect', command: 'kubectl get events --field-selector involvedObject.name={pod_name} -n {namespace}', skill_ref: null, expected_output: 'events_json', condition: null, timeout_seconds: 15, order: 1 },
-        { id: 'collect-container-status', name: '采集容器状态', description: '获取 Pod 中各容器的运行状态和重启次数', step_type: 'collect', command: 'kubectl get pod {pod_name} -n {namespace} -o json', skill_ref: null, expected_output: 'container_statuses', condition: null, timeout_seconds: 10, order: 2 },
-        { id: 'diagnose-exit-code', name: '诊断退出码', description: '分析容器退出码，判断 OOM / 应用错误 / 信号终止', step_type: 'diagnose', command: null, skill_ref: null, expected_output: 'exit_code_diagnosis', condition: null, timeout_seconds: 5, order: 3 },
-        { id: 'collect-resource-usage', name: '采集资源用量', description: '获取 Pod 实际 CPU / Memory 使用情况', step_type: 'collect', command: 'kubectl top pod {pod_name} -n {namespace}', skill_ref: null, expected_output: 'resource_metrics', condition: null, timeout_seconds: 15, order: 4 },
-        { id: 'collect-logs', name: '采集容器日志', description: '拉取最近重启周期的容器日志 (含 previous)', step_type: 'collect', command: 'kubectl logs {pod_name} -n {namespace} --previous --tail=200', skill_ref: null, expected_output: 'container_logs', condition: null, timeout_seconds: 20, order: 5 },
-        { id: 'diagnose-oom', name: '诊断 OOM', description: '判断是否因 memory limits 不足导致 OOMKilled', step_type: 'diagnose', command: null, skill_ref: null, expected_output: 'oom_diagnosis', condition: 'exit_code == 137', timeout_seconds: 5, order: 6 },
-        { id: 'verify-resource-limits', name: '校验资源配置', description: '比较实际用量与 requests/limits 配置是否合理', step_type: 'verify', command: null, skill_ref: null, expected_output: 'resource_verification', condition: null, timeout_seconds: 5, order: 7 },
-        { id: 'action-recommend', name: '生成修复建议', description: '综合所有诊断信息，生成结构化修复方案', step_type: 'action', command: null, skill_ref: null, expected_output: 'structured_solution', condition: null, timeout_seconds: 10, order: 8 },
+        { id: 'collect-pod-events', name: '采集 Pod 事件', description: '获取 Pod 相关的 Kubernetes Events', step_type: 'collect', command: 'kubectl get events --field-selector involvedObject.name={pod_name} -n {namespace}', skill_ref: 'log-analyzer', expected_output: 'events_json', condition: null, timeout_seconds: 15, order: 1 },
+        { id: 'collect-container-status', name: '采集容器状态', description: '获取 Pod 中各容器的运行状态和重启次数', step_type: 'collect', command: 'kubectl get pod {pod_name} -n {namespace} -o json', skill_ref: 'log-analyzer', expected_output: 'container_statuses', condition: null, timeout_seconds: 10, order: 2 },
+        { id: 'diagnose-exit-code', name: '诊断退出码', description: '分析容器退出码，判断 OOM / 应用错误 / 信号终止', step_type: 'diagnose', command: null, skill_ref: 'metric-alerter', expected_output: 'exit_code_diagnosis', condition: null, timeout_seconds: 5, order: 3 },
+        { id: 'collect-resource-usage', name: '采集资源用量', description: '获取 Pod 实际 CPU / Memory 使用情况', step_type: 'collect', command: 'kubectl top pod {pod_name} -n {namespace}', skill_ref: 'log-analyzer', expected_output: 'resource_metrics', condition: null, timeout_seconds: 15, order: 4 },
+        { id: 'collect-logs', name: '采集容器日志', description: '拉取最近重启周期的容器日志 (含 previous)', step_type: 'collect', command: 'kubectl logs {pod_name} -n {namespace} --previous --tail=200', skill_ref: 'log-analyzer', expected_output: 'container_logs', condition: null, timeout_seconds: 20, order: 5 },
+        { id: 'diagnose-oom', name: '诊断 OOM', description: '判断是否因 memory limits 不足导致 OOMKilled', step_type: 'diagnose', command: null, skill_ref: 'metric-alerter', expected_output: 'oom_diagnosis', condition: 'exit_code == 137', timeout_seconds: 5, order: 6 },
+        { id: 'verify-resource-limits', name: '校验资源配置', description: '比较实际用量与 requests/limits 配置是否合理', step_type: 'verify', command: null, skill_ref: 'metric-alerter', expected_output: 'resource_verification', condition: null, timeout_seconds: 5, order: 7 },
+        { id: 'action-recommend', name: '生成修复建议', description: '综合所有诊断信息，生成结构化修复方案', step_type: 'action', command: null, skill_ref: 'ticket-handler', expected_output: 'structured_solution', condition: null, timeout_seconds: 10, order: 8 },
       ],
-      output_template: { include_symptoms: true, include_evidence: true, include_steps: true, include_resolution: true, custom_sections: [] },
+      output_template: { include_symptoms: true, include_evidence: true, include_steps: true, include_resolution: true, custom_sections: ['影响范围评估', '容量与资源配置建议', '回归验证清单'] },
       severity_levels: ['low', 'medium', 'high', 'critical'],
     },
     inputs: [
@@ -674,7 +673,7 @@ const mockSkillDetails: Record<string, SkillDetailInfo> = {
       timeout_seconds: 120,
     },
     install_date: '2026-08-01T10:00:00Z',
-    last_executed: '2026-08-12T10:30:00Z',
+    last_executed: '2026-08-31T08:30:00Z',
     execution_count: 89,
   },
   'rds-replication-lag': {
@@ -682,7 +681,7 @@ const mockSkillDetails: Record<string, SkillDetailInfo> = {
     display_name: 'RDS 复制延迟诊断',
     version: '0.8.0',
     description: 'RDS MySQL 主从复制延迟诊断，检测复制线程状态、慢查询阻塞及网络延迟',
-    status: 'installed',
+    status: 'enabled',
     author: 'ResolveNet Team',
     icon: '🗄️',
     entry_point: 'skills/rds_replication_lag/skill.py',
@@ -691,13 +690,13 @@ const mockSkillDetails: Record<string, SkillDetailInfo> = {
       domain: 'database',
       tags: ['rds', 'mysql', 'replication', 'lag', 'slave'],
       troubleshooting_flow: [
-        { id: 'check-slave-status', name: '检查从库状态', description: '执行 SHOW SLAVE STATUS 获取复制线程状态', step_type: 'collect', command: 'SHOW SLAVE STATUS', skill_ref: null, expected_output: 'slave_status', condition: null, timeout_seconds: 10, order: 1 },
-        { id: 'check-slow-queries', name: '检查慢查询', description: '查询是否存在长事务或大批量 DML 阻塞复制', step_type: 'collect', command: 'SELECT * FROM information_schema.processlist WHERE time > 10', skill_ref: null, expected_output: 'slow_queries', condition: null, timeout_seconds: 10, order: 2 },
-        { id: 'diagnose-thread-state', name: '诊断线程状态', description: '分析 IO Thread 和 SQL Thread 是否正常运行', step_type: 'diagnose', command: null, skill_ref: null, expected_output: 'thread_diagnosis', condition: null, timeout_seconds: 5, order: 3 },
-        { id: 'check-network-latency', name: '检查网络延迟', description: '测试主从实例间的网络延迟', step_type: 'collect', command: null, skill_ref: null, expected_output: 'network_latency', condition: null, timeout_seconds: 15, order: 4 },
-        { id: 'action-recommend', name: '生成修复建议', description: '综合诊断结果，生成修复方案', step_type: 'action', command: null, skill_ref: null, expected_output: 'structured_solution', condition: null, timeout_seconds: 10, order: 5 },
+        { id: 'check-slave-status', name: '检查从库状态', description: '执行 SHOW SLAVE STATUS 获取复制线程状态', step_type: 'collect', command: 'SHOW SLAVE STATUS', skill_ref: 'log-analyzer', expected_output: 'slave_status', condition: null, timeout_seconds: 10, order: 1 },
+        { id: 'check-slow-queries', name: '检查慢查询', description: '查询是否存在长事务或大批量 DML 阻塞复制', step_type: 'collect', command: 'SELECT * FROM information_schema.processlist WHERE time > 10', skill_ref: 'log-analyzer', expected_output: 'slow_queries', condition: null, timeout_seconds: 10, order: 2 },
+        { id: 'diagnose-thread-state', name: '诊断线程状态', description: '分析 IO Thread 和 SQL Thread 是否正常运行', step_type: 'diagnose', command: null, skill_ref: 'metric-alerter', expected_output: 'thread_diagnosis', condition: null, timeout_seconds: 5, order: 3 },
+        { id: 'check-network-latency', name: '检查网络延迟', description: '测试主从实例间的网络延迟', step_type: 'collect', command: null, skill_ref: 'log-analyzer', expected_output: 'network_latency', condition: null, timeout_seconds: 15, order: 4 },
+        { id: 'action-recommend', name: '生成修复建议', description: '综合诊断结果，生成修复方案', step_type: 'action', command: null, skill_ref: 'ticket-handler', expected_output: 'structured_solution', condition: null, timeout_seconds: 10, order: 5 },
       ],
-      output_template: { include_symptoms: true, include_evidence: true, include_steps: true, include_resolution: true, custom_sections: [] },
+      output_template: { include_symptoms: true, include_evidence: true, include_steps: true, include_resolution: true, custom_sections: ['主从拓扑健康摘要', '回归验证清单'] },
       severity_levels: ['low', 'medium', 'high', 'critical'],
     },
     inputs: [
@@ -715,7 +714,7 @@ const mockSkillDetails: Record<string, SkillDetailInfo> = {
       timeout_seconds: 90,
     },
     install_date: '2026-08-05T14:00:00Z',
-    last_executed: '2026-08-11T16:20:00Z',
+    last_executed: '2026-08-28T16:20:00Z',
     execution_count: 34,
   },
 };
@@ -2714,7 +2713,8 @@ export const mockApi = {
     await randomDelay();
     const skill = mockSkillDetails[name];
     if (!skill) throw new Error('Skill not found');
-    return { ...skill };
+    const relatedAgentCount = mockAgents.filter((a) => a.harness.skills.includes(name)).length;
+    return { ...skill, related_agent_count: relatedAgentCount };
   },
 
   // ── Workflows ──

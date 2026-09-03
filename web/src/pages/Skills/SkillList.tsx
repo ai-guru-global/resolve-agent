@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Zap, Bot, Filter, Shield, Puzzle, Cpu, Cloud, Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useSkills } from '@/hooks/useSkills';
+import { useAgents } from '@/hooks/useAgents';
 
 type SkillFilter = 'all' | 'general' | 'scenario';
 
@@ -71,35 +72,18 @@ const skillDisplayNames: Record<string, string> = {
   'SKILL-SEC-003': '安全事件响应',
 };
 
-// Mock: which agents reference each skill
-const skillAgentRefs: Record<string, string[]> = {
-  'ticket-handler': ['mega-agent', 'resolve-coordinator'],
-  'consulting-qa': ['mega-agent', 'qa-specialist'],
-  'log-analyzer': ['mega-agent', 'log-expert', 'fta-diagnoser'],
-  'metric-alerter': ['mega-agent', 'monitor-agent'],
-  'change-reviewer': ['mega-agent', 'code-reviewer'],
-  'hello-world': ['test-agent'],
-  'k8s-pod-crash': ['mega-agent', 'fta-diagnoser'],
-  'rds-replication-lag': ['mega-agent', 'fta-diagnoser'],
-  // Kudig topic-skills (imported from corpus)
-  'SKILL-NODE-001': ['mega-agent', 'fta-diagnoser'],
-  'SKILL-POD-001': ['mega-agent', 'fta-diagnoser'],
-  'SKILL-POD-002': ['mega-agent', 'fta-diagnoser'],
-  'SKILL-NET-001': ['mega-agent', 'fta-diagnoser'],
-  'SKILL-NET-002': ['mega-agent', 'fta-diagnoser'],
-  'SKILL-SEC-001': ['mega-agent', 'fta-diagnoser'],
-  'SKILL-STORE-001': ['mega-agent', 'fta-diagnoser'],
-  'SKILL-WORK-001': ['mega-agent', 'fta-diagnoser'],
-  'SKILL-SEC-002': ['mega-agent', 'fta-diagnoser'],
-  'SKILL-IMAGE-001': ['mega-agent', 'fta-diagnoser'],
-  'SKILL-CP-001': ['mega-agent', 'fta-diagnoser'],
-  'SKILL-SCALE-001': ['mega-agent', 'fta-diagnoser'],
-  'SKILL-NET-003': ['mega-agent', 'fta-diagnoser'],
-  'SKILL-CONFIG-001': ['mega-agent', 'fta-diagnoser'],
-  'SKILL-MONITOR-001': ['mega-agent', 'fta-diagnoser'],
-  'SKILL-LOG-001': ['mega-agent', 'fta-diagnoser'],
-  'SKILL-PERF-001': ['mega-agent', 'fta-diagnoser'],
-  'SKILL-SEC-003': ['mega-agent', 'fta-diagnoser'],
+const statusLabels: Record<string, string> = {
+  enabled: '已启用',
+  disabled: '已禁用',
+  deprecated: '已废弃',
+  installed: '已安装',
+};
+
+const statusVariant: Record<string, 'healthy' | 'degraded' | 'unknown'> = {
+  enabled: 'healthy',
+  disabled: 'degraded',
+  deprecated: 'unknown',
+  installed: 'healthy',
 };
 
 const filterTabs: { key: SkillFilter; label: string }[] = [
@@ -110,22 +94,37 @@ const filterTabs: { key: SkillFilter; label: string }[] = [
 
 export default function SkillList() {
   const { data, isLoading } = useSkills();
+  const { data: agentsData } = useAgents();
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
   const [filter, setFilter] = useState<SkillFilter>('all');
 
   const skills = data?.skills ?? [];
+  const agents = agentsData?.agents ?? [];
+  const agentRefs = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const agent of agents) {
+      for (const skillName of agent.harness.skills) {
+        const bucket = map[skillName];
+        if (bucket) bucket.push(agent.name);
+        else map[skillName] = [agent.name];
+      }
+    }
+    return map;
+  }, [agents]);
+
   const filteredSkills = filter === 'all'
     ? skills
     : skills.filter((s) => (s.skill_type ?? 'general') === filter);
 
   const generalCount = skills.filter((s) => (s.skill_type ?? 'general') === 'general').length;
   const scenarioCount = skills.filter((s) => s.skill_type === 'scenario').length;
+  const enabledCount = skills.filter((s) => s.status === 'enabled').length;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Skills 技能"
-        description={isLoading ? '加载中...' : `Harness Tools/Skills 层 · 已安装 ${skills.length} 个技能 (${generalCount} 通用 / ${scenarioCount} 场景)`}
+        description={isLoading ? '加载中...' : `Harness Tools/Skills 层 · 已安装 ${skills.length} 个技能 (${generalCount} 通用 / ${scenarioCount} 场景) · 已启用 ${enabledCount}`}
       />
 
       {/* Skill system introduction */}
@@ -228,7 +227,7 @@ export default function SkillList() {
           {/* Skill list — left */}
           <div className="lg:col-span-2 space-y-1.5">
             {filteredSkills.map((skill) => {
-              const refs = skillAgentRefs[skill.name] ?? [];
+              const refs = agentRefs[skill.name] ?? [];
               const isScenario = skill.skill_type === 'scenario';
               return (
                 <button
@@ -252,7 +251,7 @@ export default function SkillList() {
                         ) : (
                           <Badge className="text-[10px] bg-blue-500/15 text-blue-400 border-blue-500/20 hover:bg-blue-500/25">通用</Badge>
                         )}
-                        <StatusBadge variant="healthy" label="就绪" />
+                        <StatusBadge variant={statusVariant[skill.status] ?? 'unknown'} label={statusLabels[skill.status] ?? skill.status} />
                       </div>
                       <p className="text-xs text-muted-foreground truncate">{skill.description}</p>
                       {isScenario && skill.domain && (
@@ -278,7 +277,7 @@ export default function SkillList() {
           <div className="lg:col-span-1">
             {selectedSkill ? (() => {
               const skill = skills.find((s) => s.name === selectedSkill);
-              const refs = skillAgentRefs[selectedSkill] ?? [];
+              const refs = agentRefs[selectedSkill] ?? [];
               if (!skill) return null;
               const isScenario = skill.skill_type === 'scenario';
               return (

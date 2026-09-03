@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { StatusBadge } from '@/components/StatusBadge';
 import { useSkillDetail } from '@/hooks/useSkills';
 
 const stepTypeLabels: Record<string, { label: string; color: string }> = {
@@ -16,6 +17,20 @@ const stepTypeLabels: Record<string, { label: string; color: string }> = {
   diagnose: { label: '诊断', color: 'bg-amber-500/15 text-amber-400 border-amber-500/20' },
   verify: { label: '校验', color: 'bg-green-500/15 text-green-400 border-green-500/20' },
   action: { label: '执行', color: 'bg-purple-500/15 text-purple-400 border-purple-500/20' },
+};
+
+const statusLabels: Record<string, string> = {
+  enabled: '已启用',
+  disabled: '已禁用',
+  deprecated: '已废弃',
+  installed: '已安装',
+};
+
+const statusVariant: Record<string, 'healthy' | 'degraded' | 'unknown'> = {
+  enabled: 'healthy',
+  disabled: 'degraded',
+  deprecated: 'unknown',
+  installed: 'healthy',
 };
 
 export default function SkillDetail() {
@@ -109,6 +124,10 @@ export default function SkillDetail() {
           <div className="flex items-center gap-2">
             {isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
             <Badge variant="secondary" className="font-mono">v{skill.version}</Badge>
+            <StatusBadge
+              variant={statusVariant[skill.status] ?? 'unknown'}
+              label={statusLabels[skill.status] ?? skill.status}
+            />
             {isScenario ? (
               <Badge className="bg-orange-500/15 text-orange-400 border-orange-500/20">场景技能</Badge>
             ) : (
@@ -140,6 +159,16 @@ export default function SkillDetail() {
               <InfoRow label="技能名称" value={<span className="text-sm font-mono">{skill.name}</span>} />
               <Separator />
               <InfoRow label="技能类型" value={<span className="text-sm">{isScenario ? '场景技能' : '通用技能'}</span>} />
+              <Separator />
+              <InfoRow
+                label="状态"
+                value={(
+                  <StatusBadge
+                    variant={statusVariant[skill.status] ?? 'unknown'}
+                    label={statusLabels[skill.status] ?? skill.status}
+                  />
+                )}
+              />
               <Separator />
               {isScenario && scenarioConfig && (
                 <>
@@ -215,6 +244,11 @@ export default function SkillDetail() {
                               <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <span className="text-sm font-medium">{step.name}</span>
                                 <Badge className={cn('text-[10px]', stepMeta.color)}>{stepMeta.label}</Badge>
+                                {step.skill_ref && (
+                                  <Badge variant="outline" className="text-[10px] font-mono text-cyan-400 border-cyan-500/20">
+                                    联动: {step.skill_ref}
+                                  </Badge>
+                                )}
                                 {step.condition && (
                                   <Badge variant="outline" className="text-[10px] font-mono">
                                     条件: {step.condition}
@@ -264,6 +298,16 @@ export default function SkillDetail() {
                       </div>
                     ))}
                   </div>
+                  {(scenarioConfig.output_template?.custom_sections?.length ?? 0) > 0 && (
+                    <div className="mt-3 pt-3 border-t border-border/30">
+                      <p className="text-xs text-muted-foreground mb-2">自定义章节</p>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {scenarioConfig.output_template?.custom_sections.map((section) => (
+                          <Badge key={section} variant="outline" className="text-[10px]">{section}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}

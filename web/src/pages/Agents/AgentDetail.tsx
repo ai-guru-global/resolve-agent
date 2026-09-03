@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Layers, Brain, Zap, Shield, MemoryStick, Box, FileText, Target, Cpu, GitBranch, Pencil, Copy, Stethoscope, Rocket, GitCompareArrows, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/PageHeader';
@@ -75,6 +75,7 @@ const hookTypeLabels: Record<string, string> = {
 
 export default function AgentDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { data: agent, isLoading: agentLoading } = useAgent(id ?? '');
   const { data: statusData, isLoading: statusLoading } = useAgentRuntimeStatus(id ?? '');
   const { data: executionsData, isLoading: executionsLoading } = useAgentExecutions(id ?? '');
@@ -510,6 +511,7 @@ export default function AgentDetail() {
                 data={executionsData?.executions ?? []}
                 loading={executionsLoading}
                 emptyMessage="暂无执行记录"
+                onRowClick={(row) => navigate(`/agents/${id}/executions/${row.id}`)}
               />
             </CardContent>
           </Card>

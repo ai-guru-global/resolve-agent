@@ -1,13 +1,15 @@
 import { useParams } from 'react-router-dom';
-import { Clock, FileText } from 'lucide-react';
+import { Clock, FileText, Rocket, Power, Plus, Minus } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/PageHeader';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAgent, useAgentDeployment, useAgentDeploymentVersions, useAgentLogs } from '@/hooks/useAgents';
+import { useAgent, useAgentDeployment, useAgentDeploymentVersions, useAgentLogs, useDeployAgent, useUndeployAgent, useScaleAgent, useUpdateDeploymentConfig } from '@/hooks/useAgents';
 import type { StatusVariant } from '@/types';
 
 const stateMap: Record<string, { label: string; variant: StatusVariant }> = {
@@ -39,8 +41,45 @@ export default function AgentDeployment() {
   const { data: deployment, isLoading: deplLoading } = useAgentDeployment(id ?? '');
   const { data: versionsData } = useAgentDeploymentVersions(id ?? '');
   const { data: logsData } = useAgentLogs(id ?? '');
+  const agentId = id ?? '';
+  const deployMutation = useDeployAgent(agentId);
+  const undeployMutation = useUndeployAgent(agentId);
+  const scaleMutation = useScaleAgent(agentId);
+  const configMutation = useUpdateDeploymentConfig(agentId);
 
   const stateInfo = deployment ? stateMap[deployment.state] : undefined;
+  const operating = deployMutation.isPending || undeployMutation.isPending || scaleMutation.isPending;
+
+  const handleDeploy = () => {
+    deployMutation.mutate(undefined, {
+      onSuccess: (info) => toast.success(`已部署，当前副本数 ${info.replicas}`),
+      onError: () => toast.error('部署失败，请重试'),
+    });
+  };
+
+  const handleUndeploy = () => {
+    undeployMutation.mutate(undefined, {
+      onSuccess: () => toast.success('Agent 已下线'),
+      onError: () => toast.error('下线失败，请重试'),
+    });
+  };
+
+  const handleScale = (replicas: number) => {
+    if (!deployment || replicas < 1 || replicas > 10 || replicas === deployment.replicas) return;
+    scaleMutation.mutate(replicas, {
+      onSuccess: (info) => toast.success(`已扩缩容至 ${info.replicas} 副本`),
+      onError: () => toast.error('扩缩容失败，请重试'),
+    });
+  };
+
+  const handleToggleAutoScale = () => {
+    if (!deployment) return;
+    const next = !deployment.auto_scale;
+    configMutation.mutate({ auto_scale: next }, {
+      onSuccess: (info) => toast.success(info.auto_scale ? '已开启自动扩缩容' : '已关闭自动扩缩容'),
+      onError: () => toast.error('配置更新失败，请重试'),
+    });
+  };
 
   if (deplLoading) {
     return (
@@ -92,6 +131,66 @@ export default function AgentDeployment() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Deployment Actions */}
+          <Card>
+            <CardContent className="p-4 flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">副本控制</span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={deployment.state === 'undeployed' || operating || deployment.replicas <= 1}
+                  onClick={() => handleScale(deployment.replicas - 1)}
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <span className="text-sm font-mono font-bold w-6 text-center">{deployment.replicas}</span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={deployment.state === 'undeployed' || operating || deployment.replicas >= 10}
+                  onClick={() => handleScale(deployment.replicas + 1)}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="h-6 w-px bg-border/40" />
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">自动扩缩容</span>
+                <Badge variant={deployment.auto_scale ? 'default' : 'secondary'} className="text-[10px]">
+                  {deployment.auto_scale ? '已开启' : '已关闭'}
+                </Badge>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  disabled={configMutation.isPending}
+                  onClick={handleToggleAutoScale}
+                >
+                  {deployment.auto_scale ? '关闭' : '开启'}
+                </Button>
+              </div>
+
+              <div className="flex-1" />
+
+              {deployment.state === 'undeployed' ? (
+                <Button size="sm" className="h-8" disabled={operating} onClick={handleDeploy}>
+                  <Rocket className="mr-1.5 h-3.5 w-3.5" />
+                  部署
+                </Button>
+              ) : (
+                <Button size="sm" variant="destructive" className="h-8" disabled={operating} onClick={handleUndeploy}>
+                  <Power className="mr-1.5 h-3.5 w-3.5" />
+                  下线
+                </Button>
+              )}
+            </CardContent>
+          </Card>
 
           <Tabs defaultValue="versions">
             <TabsList>

@@ -157,3 +157,55 @@ export function useAgentAuditLog(agentId: string) {
     enabled: !!agentId,
   });
 }
+
+export function useDeployAgent(agentId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.deployAgent(agentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agents', agentId, 'deployment'] });
+      queryClient.invalidateQueries({ queryKey: ['agents'] });
+    },
+  });
+}
+
+export function useUndeployAgent(agentId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.undeployAgent(agentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agents', agentId, 'deployment'] });
+      queryClient.invalidateQueries({ queryKey: ['agents'] });
+    },
+  });
+}
+
+export function useScaleAgent(agentId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (replicas: number) => api.scaleAgent(agentId, replicas),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agents', agentId, 'deployment'] });
+    },
+  });
+}
+
+export function useUpdateDeploymentConfig(agentId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (config: { auto_scale: boolean }) => api.updateAgentDeploymentConfig(agentId, config),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agents', agentId, 'deployment'] });
+    },
+  });
+}
+
+export function useDeleteLongTermMemory(agentId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (memoryId: string) => api.deleteLongTermMemory(memoryId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agents', agentId, 'long-term-memory'] });
+    },
+  });
+}

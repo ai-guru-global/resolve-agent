@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Bot, Plus, MoreHorizontal, Trash2, Eye, Loader2, Zap, Shield, MemoryStick, Layers, Brain, Pencil, Copy, GitCompareArrows } from 'lucide-react';
+import { Bot, Plus, MoreHorizontal, Trash2, Eye, Loader2, Zap, Shield, MemoryStick, Layers, Brain, Pencil, Copy, GitCompareArrows, Clock, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/PageHeader';
@@ -140,8 +140,15 @@ export default function AgentList() {
                       <span className="text-sm font-display font-bold truncate">{agent.name}</span>
                       <StatusBadge variant={agentStatusToVariant[status]} label={statusLabels[status] ?? status} />
                     </div>
-                    <p className="text-xs text-muted-foreground ml-6.5">
-                      {typeLabels[agent.type] ?? agent.type}
+                    <p className="text-xs text-muted-foreground ml-6.5 flex items-center gap-1.5">
+                      <span>{typeLabels[agent.type] ?? agent.type}</span>
+                      {agent.last_execution_at && (
+                        <>
+                          <span>·</span>
+                          <Clock className="h-3 w-3" />
+                          <span>最近执行 {new Date(agent.last_execution_at).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        </>
+                      )}
                     </p>
                   </div>
 
@@ -209,6 +216,12 @@ export default function AgentList() {
                         <Link to={`/agents/compare?a=${agent.id}`}>
                           <GitCompareArrows className="mr-2 h-4 w-4" />
                           对比
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to={`/agents/${agent.id}/access`}>
+                          <KeyRound className="mr-2 h-4 w-4" />
+                          访问控制
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />

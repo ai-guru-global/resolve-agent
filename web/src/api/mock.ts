@@ -1661,7 +1661,7 @@ const mockAgentStatuses: Record<string, AgentRuntimeStatus> = {
   'agent-fta-002': { uptime_seconds: 172800, total_executions: 523, success_rate: 0.91, avg_latency_ms: 15600, last_execution_at: '2026-08-31T08:15:00Z', error_count_24h: 5, memory_mb: 512 },
   'agent-rag-003': { uptime_seconds: 172800, total_executions: 2891, success_rate: 0.98, avg_latency_ms: 550, last_execution_at: '2026-08-31T09:00:00Z', error_count_24h: 1, memory_mb: 384 },
   'agent-skill-004': { uptime_seconds: 172800, total_executions: 1893, success_rate: 0.97, avg_latency_ms: 760, last_execution_at: '2026-08-31T09:12:00Z', error_count_24h: 2, memory_mb: 192 },
-  'agent-custom-005': { uptime_seconds: 0, total_executions: 89, success_rate: 0.85, avg_latency_ms: 2100, last_execution_at: '2026-08-22T14:20:00Z', error_count_24h: 0, memory_mb: 0 },
+  'agent-custom-005': { uptime_seconds: 0, total_executions: 89, success_rate: 0.85, avg_latency_ms: 2100, last_execution_at: '2026-08-29T14:20:00Z', error_count_24h: 0, memory_mb: 0 },
   'agent-mega-006': { uptime_seconds: 3600, total_executions: 342, success_rate: 0.42, avg_latency_ms: 8900, last_execution_at: '2026-08-31T06:00:00Z', error_count_24h: 37, memory_mb: 890 },
   'agent-fta-007': { uptime_seconds: 172800, total_executions: 267, success_rate: 0.94, avg_latency_ms: 20100, last_execution_at: '2026-08-30T16:20:00Z', error_count_24h: 1, memory_mb: 480 },
 };
@@ -1955,7 +1955,7 @@ const mockAgentOverviews: AgentOverview[] = [
   { id: 'agent-fta-002', name: '故障根因分析引擎', type: 'fta', status: 'active', success_rate: 0.91, total_executions: 523, avg_latency_ms: 15600, last_execution_at: '2026-08-31T10:28:00Z', error_count_24h: 5, uptime_seconds: 172800, memory_mb: 512 },
   { id: 'agent-rag-003', name: '运维知识问答', type: 'rag', status: 'active', success_rate: 0.98, total_executions: 2891, avg_latency_ms: 550, last_execution_at: '2026-08-31T10:10:00Z', error_count_24h: 1, uptime_seconds: 172800, memory_mb: 384 },
   { id: 'agent-skill-004', name: '工单自动处理', type: 'skill', status: 'active', success_rate: 0.97, total_executions: 1893, avg_latency_ms: 760, last_execution_at: '2026-08-31T10:23:00Z', error_count_24h: 2, uptime_seconds: 172800, memory_mb: 192 },
-  { id: 'agent-custom-005', name: 'SLB 流量分析', type: 'custom', status: 'inactive', success_rate: 0.85, total_executions: 89, avg_latency_ms: 2100, last_execution_at: '2026-08-22T14:20:00Z', error_count_24h: 0, uptime_seconds: 0, memory_mb: 0 },
+  { id: 'agent-custom-005', name: 'SLB 流量分析', type: 'custom', status: 'inactive', success_rate: 0.85, total_executions: 89, avg_latency_ms: 2100, last_execution_at: '2026-08-29T14:20:00Z', error_count_24h: 0, uptime_seconds: 0, memory_mb: 0 },
   { id: 'agent-mega-006', name: '变更风险评估', type: 'mega', status: 'error', success_rate: 0.42, total_executions: 342, avg_latency_ms: 8900, last_execution_at: '2026-08-31T10:18:00Z', error_count_24h: 37, uptime_seconds: 3600, memory_mb: 890 },
   { id: 'agent-fta-007', name: 'RDS 主从同步诊断', type: 'fta', status: 'active', success_rate: 0.94, total_executions: 267, avg_latency_ms: 20100, last_execution_at: '2026-08-30T16:20:00Z', error_count_24h: 1, uptime_seconds: 172800, memory_mb: 480 },
 ];
@@ -1970,7 +1970,7 @@ const mockActivityEvents: ActivityEvent[] = [
   { id: 'evt-006', agent_id: 'agent-fta-002', agent_name: '故障根因分析引擎', agent_type: 'fta', event_type: 'execution', description: 'K8s 节点 cn-hz-03 NotReady 诊断中', status: 'running', timestamp: '2026-08-31T10:28:00Z' },
   { id: 'evt-007', agent_id: 'agent-mega-006', agent_name: '变更风险评估', agent_type: 'mega', event_type: 'alert', description: 'Agent 错误率超过阈值 (42% > 10%)', status: 'warning', timestamp: '2026-08-31T08:05:00Z' },
   { id: 'evt-008', agent_id: 'agent-skill-004', agent_name: '工单自动处理', agent_type: 'skill', event_type: 'execution', description: 'INC-2026-0890 SLB 健康检查失败工单处理', status: 'completed', timestamp: '2026-08-31T09:52:00Z', duration_ms: 750, route_type: 'skill' },
-  { id: 'evt-009', agent_id: 'agent-custom-005', agent_name: 'SLB 流量分析', agent_type: 'custom', event_type: 'status_change', description: 'Agent 已停止，最后执行于 2026-08-22 14:20', status: 'info', timestamp: '2026-08-22T18:00:00Z' },
+  { id: 'evt-009', agent_id: 'agent-custom-005', agent_name: 'SLB 流量分析', agent_type: 'custom', event_type: 'status_change', description: 'Agent 已停止，最后执行于 2026-08-29 14:20', status: 'info', timestamp: '2026-08-29T18:00:00Z' },
   { id: 'evt-010', agent_id: 'agent-fta-007', agent_name: 'RDS 主从同步诊断', agent_type: 'fta', event_type: 'execution', description: 'RDS rm-2ze-001 同步延迟诊断完成', status: 'completed', timestamp: '2026-08-30T16:20:00Z', duration_ms: 25100, route_type: 'fta' },
   { id: 'evt-011', agent_id: 'agent-mega-001', agent_name: 'ACK 集群运维助手', agent_type: 'mega', event_type: 'execution', description: 'etcd 集群健康检查完成', status: 'completed', timestamp: '2026-08-31T08:40:00Z', duration_ms: 890, route_type: 'direct' },
   { id: 'evt-012', agent_id: 'agent-mega-006', agent_name: '变更风险评估', agent_type: 'mega', event_type: 'deployment', description: 'Agent 重启 (v0.9.2 → v0.9.3)', status: 'info', timestamp: '2026-08-31T07:30:00Z' },
@@ -2026,7 +2026,7 @@ const mockAlerts: AlertItem[] = [
   { id: 'alert-003', severity: 'high', agent_id: 'agent-fta-007', agent_name: 'RDS 主从同步诊断', title: '主从延迟诊断连续中断', description: '只读实例延迟指标采集连续 3 次超时（each 15s），故障树在证据收集节点中断。DTS 链路可能存在网络抖动，建议人工核查 binlog 位点。', created_at: '2026-08-30T22:41:00Z', acknowledged: false },
   { id: 'alert-004', severity: 'medium', agent_id: 'agent-rag-003', agent_name: '运维知识问答', title: 'RAG 检索延迟 P99 超阈值', description: 'ops-knowledge-base 集合 P99 检索延迟 317ms（阈值 200ms）。Embedding 服务 CPU 使用率 81%，已接近瓶颈，建议扩容 embedding 副本或开启查询缓存。', created_at: '2026-08-30T15:26:00Z', acknowledged: true },
   { id: 'alert-005', severity: 'medium', agent_id: 'agent-mega-006', agent_name: '变更风险评估', title: 'Agent 内存接近警戒线', description: '进程常驻内存 268MB（警戒线 300MB），近 7 天增长 12%。与大工单上下文未及时压缩有关，建议开启 harness 的 compaction 钩子。', created_at: '2026-08-29T10:03:00Z', acknowledged: true },
-  { id: 'alert-006', severity: 'low', agent_id: 'agent-custom-005', agent_name: 'SLB 流量分析', title: 'Agent 空闲超过 7 天', description: '最后执行时间 2026-08-22T14:20。SLB 周报任务已迁移至 agent-mega-001，建议评估下线本实例以释放 Agent 池配额。', created_at: '2026-08-29T08:30:00Z', acknowledged: true },
+  { id: 'alert-006', severity: 'low', agent_id: 'agent-custom-005', agent_name: 'SLB 流量分析', title: 'Agent 空闲超过 48 小时', description: '最后执行时间 2026-08-29T14:20。SLB 周报任务已迁移至 agent-mega-001，建议评估下线本实例以释放 Agent 池配额。', created_at: '2026-08-29T08:30:00Z', acknowledged: true },
 ];
 
 // ─── Monitoring: System Metrics ───
@@ -2630,6 +2630,39 @@ const mockSolutionExecutions: Record<string, SolutionExecution[]> = {
   ],
 };
 
+// ─── Deployment Runtime（模块级可变状态：部署/下线/扩缩容/配置真实持久化） ───
+const deploymentRuntime: Record<string, { state: DeploymentInfo['state']; replicas: number; auto_scale: boolean }> = {};
+
+function getDeploymentRuntime(agentId: string) {
+  const existing = deploymentRuntime[agentId];
+  if (existing) return existing;
+  const agent = mockAgents.find((a) => a.id === agentId);
+  const init = {
+    state: (agent?.status === 'inactive' ? 'undeployed' : 'deployed') as DeploymentInfo['state'],
+    replicas: agent?.status === 'inactive' ? 0 : 1,
+    auto_scale: agentId === 'agent-mega-001',
+  };
+  deploymentRuntime[agentId] = init;
+  return init;
+}
+
+function buildDeploymentInfo(agentId: string): DeploymentInfo {
+  const rt = getDeploymentRuntime(agentId);
+  return {
+    agent_id: agentId,
+    state: rt.state,
+    replicas: rt.state === 'undeployed' ? 0 : rt.replicas,
+    desired_replicas: rt.state === 'undeployed' ? 0 : rt.replicas,
+    cpu_limit: '500m',
+    memory_limit: '512Mi',
+    auto_scale: rt.auto_scale,
+    uptime_seconds: rt.state === 'undeployed' ? 0 : (mockAgentStatuses[agentId]?.uptime_seconds ?? 0),
+  };
+}
+
+// ─── 长期记忆删除状态（deleteLongTermMemory 真实生效） ───
+const deletedLtmIds = new Set<string>();
+
 // ─── Mock API 实现 ───
 export const mockApi = {
   health: async () => {
@@ -2640,7 +2673,7 @@ export const mockApi = {
   // ── Agents ──
   listAgents: async () => {
     await randomDelay();
-    return { agents: [...mockAgents], total: mockAgents.length };
+    return { agents: mockAgents.map((a) => ({ ...a, last_execution_at: mockAgentStatuses[a.id]?.last_execution_at })), total: mockAgents.length };
   },
 
   getAgent: async (id: string) => {
@@ -3062,17 +3095,19 @@ export const mockApi = {
 
   searchLongTermMemory: async (agentId: string) => {
     await randomDelay();
-    const memories: LongTermMemory[] = [
+    const all: LongTermMemory[] = [
       { id: 'ltm-001', agent_id: agentId, user_id: 'user-zhangming', memory_type: 'pattern', content: 'NetworkPolicy 变更是导致节点 NotReady 的常见原因，应优先检查最近的 calico 规则变更', importance: 0.92, access_count: 15, metadata: {}, created_at: '2026-07-15T10:00:00Z', updated_at: '2026-08-08T09:12:00Z', expires_at: null },
       { id: 'ltm-002', agent_id: agentId, user_id: 'user-liqiang', memory_type: 'fact', content: '集群 cn-hangzhou-prod 使用 Flannel VXLAN 网络模式，非 Calico', importance: 0.78, access_count: 8, metadata: {}, created_at: '2026-07-20T14:00:00Z', updated_at: '2026-08-05T11:00:00Z', expires_at: null },
       { id: 'ltm-003', agent_id: agentId, user_id: 'user-wangfang', memory_type: 'summary', content: '用户 wangfang 主要关注 RDS 相关问题，偏好简洁的排查步骤而非详细分析', importance: 0.65, access_count: 4, metadata: {}, created_at: '2026-08-01T09:00:00Z', updated_at: '2026-08-06T10:15:00Z', expires_at: '2026-07-01T00:00:00Z' },
       { id: 'ltm-004', agent_id: agentId, user_id: 'system', memory_type: 'skill_learned', content: '对于内存 OOM 问题，检查 /proc/meminfo 和 dmesg 日志比查看 Prometheus 指标更高效', importance: 0.85, access_count: 22, metadata: {}, created_at: '2026-07-10T08:00:00Z', updated_at: '2026-08-07T16:00:00Z', expires_at: null },
     ];
+    const memories = all.filter((m) => !deletedLtmIds.has(m.id));
     return { memories, total: memories.length };
   },
 
-  deleteLongTermMemory: async (_memoryId: string) => {
+  deleteLongTermMemory: async (memoryId: string) => {
     await delay(300);
+    deletedLtmIds.add(memoryId);
   },
 
   pruneMemories: async () => {
@@ -3279,18 +3314,7 @@ export const mockApi = {
   // ── Deployment ──
   getAgentDeployment: async (agentId: string) => {
     await randomDelay();
-    const agent = mockAgents.find((a) => a.id === agentId);
-    const info: DeploymentInfo = {
-      agent_id: agentId,
-      state: agent?.status === 'inactive' ? 'undeployed' : 'deployed',
-      replicas: agent?.status === 'inactive' ? 0 : 1,
-      desired_replicas: 1,
-      cpu_limit: '500m',
-      memory_limit: '512Mi',
-      auto_scale: false,
-      uptime_seconds: mockAgentStatuses[agentId]?.uptime_seconds ?? 0,
-    };
-    return info;
+    return buildDeploymentInfo(agentId);
   },
 
   getAgentDeploymentVersions: async (_agentId: string) => {
@@ -3320,16 +3344,32 @@ export const mockApi = {
 
   deployAgent: async (agentId: string) => {
     await delay(1000);
-    return { agent_id: agentId, state: 'deployed' as const, replicas: 1, desired_replicas: 1, cpu_limit: '500m', memory_limit: '512Mi', auto_scale: false, uptime_seconds: 0 };
+    const rt = getDeploymentRuntime(agentId);
+    rt.state = 'deployed';
+    if (rt.replicas === 0) rt.replicas = 1;
+    return buildDeploymentInfo(agentId);
   },
 
-  undeployAgent: async (_agentId: string) => {
+  undeployAgent: async (agentId: string) => {
     await delay(800);
+    const rt = getDeploymentRuntime(agentId);
+    rt.state = 'undeployed';
+    rt.replicas = 0;
   },
 
   scaleAgent: async (agentId: string, replicas: number) => {
     await delay(600);
-    return { agent_id: agentId, state: 'deployed' as const, replicas, desired_replicas: replicas, cpu_limit: '500m', memory_limit: '512Mi', auto_scale: false, uptime_seconds: 172800 };
+    const rt = getDeploymentRuntime(agentId);
+    rt.state = 'deployed';
+    rt.replicas = replicas;
+    return buildDeploymentInfo(agentId);
+  },
+
+  updateAgentDeploymentConfig: async (agentId: string, config: { auto_scale: boolean }) => {
+    await delay(400);
+    const rt = getDeploymentRuntime(agentId);
+    rt.auto_scale = config.auto_scale;
+    return buildDeploymentInfo(agentId);
   },
 
   // ── Collaboration ──

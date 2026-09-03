@@ -269,6 +269,8 @@ const realApi = {
     request<void>(`/agents/${agentId}/undeploy`, { method: 'POST' }),
   scaleAgent: (agentId: string, replicas: number) =>
     request<DeploymentInfo>(`/agents/${agentId}/scale`, { method: 'PUT', body: JSON.stringify({ replicas }) }),
+  updateAgentDeploymentConfig: (agentId: string, config: { auto_scale: boolean }) =>
+    request<DeploymentInfo>(`/agents/${agentId}/deployment`, { method: 'PUT', body: JSON.stringify(config) }),
 
   // Collaboration
   listCollaborationSessions: () =>
@@ -420,6 +422,7 @@ export interface Agent {
   mode: AgentMode;
   harness: HarnessConfig;
   config: Record<string, unknown>;
+  last_execution_at?: string;
 }
 
 export interface CreateAgentRequest {

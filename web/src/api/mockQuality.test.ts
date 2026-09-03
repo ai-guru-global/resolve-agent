@@ -5,6 +5,9 @@ import { mockApi } from './mock';
 
 const ALL_ROUTE_TYPES = ['fta', 'skill', 'rag', 'code_analysis', 'multi', 'direct'];
 
+const readPage = (rel: string) =>
+  readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf-8');
+
 describe('mock 数据质量 · Traces', () => {
   it('getTraces 返回 ≥12 条且覆盖全部 6 种路由类型与 3 种状态', async () => {
     const { traces } = await mockApi.getTraces();
@@ -129,9 +132,9 @@ describe('mock 数据质量 · Dashboard', () => {
       expect(a.last_execution_at.startsWith('2026-08'), `${a.id} 最后执行时间未统一: ${a.last_execution_at}`).toBe(true);
       expect(a.memory_mb).toBeGreaterThanOrEqual(0);
     }
-    // 与 alert-006「最后执行时间 2026-08-22T14:20」保持同一事实源
+    // alert-006 文案为相对口径「空闲超过 48 小时」，演示"现在"约 2026-08-31，与 2026-08-29T14:20 的最后执行时间一致
     const stopped = agents.find((a) => a.id === 'agent-custom-005');
-    expect(stopped?.last_execution_at).toBe('2026-08-22T14:20:00Z');
+    expect(stopped?.last_execution_at).toBe('2026-08-29T14:20:00Z');
   });
 
   it('活动事件时间戳收敛演示窗口（长期停用类事件除外）', async () => {
@@ -158,8 +161,6 @@ describe('mock 数据质量 · Dashboard', () => {
 });
 
 describe('页面源码去假化回归', () => {
-  const readPage = (rel: string) =>
-    readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf-8');
 
   it('Dashboard 页面不再写死 P99/版本号/commit/旧时间锚点', () => {
     const src = readPage('../pages/Dashboard/index.tsx');
@@ -247,8 +248,6 @@ describe('mock 数据质量 · Monitoring', () => {
 });
 
 describe('mock 数据质量 · ExecutionDetail 深度差异化', () => {
-  const readPage = (rel: string) =>
-    readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf-8');
 
   it('不同 route_type 的 pipeline_trace 差异化：intent_type 随路由变化、strategy 多样', async () => {
     const multi = await mockApi.getAgentExecutionDetail('agent-mega-001', 'aexec-001');
@@ -344,8 +343,6 @@ describe('mock 数据质量 · ExecutionDetail 深度差异化', () => {
 });
 
 describe('mock 数据质量 · Solutions 过滤、溯源与执行记录', () => {
-  const readPage = (rel: string) =>
-    readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf-8');
 
   it('方案库覆盖 4 档严重度与 3 种状态（active/draft/archived）', async () => {
     const { solutions } = await mockApi.listSolutions();
@@ -444,8 +441,6 @@ describe('mock 数据质量 · Solutions 过滤、溯源与执行记录', () => 
 });
 
 describe('mock 数据质量 · Skills 状态真值与引用反查', () => {
-  const readPage = (rel: string) =>
-    readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf-8');
 
   it('技能状态为真值分布（≥2 种且取值合法），不再是清一色 installed', async () => {
     const { skills } = await mockApi.listSkills();
@@ -515,5 +510,91 @@ describe('mock 数据质量 · Skills 状态真值与引用反查', () => {
     expect(src, '详情页缺少 status 渲染').toMatch(/skill\.status|statusLabels/);
     expect(src, '排查步骤缺少 skill_ref 渲染').toMatch(/skill_ref/);
     expect(src, '输出模板缺少 custom_sections 渲染').toMatch(/custom_sections/);
+  });
+});
+
+describe('mock 数据质量 · T6 Agents 域打通', () => {
+  it('listAgents 每个 Agent 携带 last_execution_at 且全部落在演示窗口', async () => {
+    const { agents } = await mockApi.listAgents();
+    expect(agents.length, 'Agent 列表为空').toBeGreaterThan(0);
+    for (const a of agents) {
+      expect(
+        a.last_execution_at,
+        `${a.id} 缺少 last_execution_at`,
+      ).toBeTruthy();
+      expect(
+        a.last_execution_at! >= '2026-08-25' && a.last_execution_at! < '2026-09-01',
+        `${a.id} last_execution_at 越出演示窗口: ${a.last_execution_at}`,
+      ).toBe(true);
+    }
+  }, 15000);
+
+  it('部署状态机可操作：scale 持久化、undeploy/deploy 状态真实流转', async () => {
+    const initial = await mockApi.getAgentDeployment('agent-skill-004');
+    expect(initial.state, 'agent-skill-004 初始应为 deployed').toBe('deployed');
+
+    const scaled = await mockApi.scaleAgent('agent-skill-004', 3);
+    expect(scaled.replicas, 'scaleAgent 返回副本数错误').toBe(3);
+    const afterScale = await mockApi.getAgentDeployment('agent-skill-004');
+    expect(afterScale.replicas, 'scale 结果未持久化').toBe(3);
+
+    await mockApi.undeployAgent('agent-mega-006');
+    const afterUndeploy = await mockApi.getAgentDeployment('agent-mega-006');
+    expect(afterUndeploy.state, 'undeploy 后状态未流转').toBe('undeployed');
+    expect(afterUndeploy.replicas, 'undeploy 后副本数应为 0').toBe(0);
+
+    const deployed = await mockApi.deployAgent('agent-custom-005');
+    expect(deployed.state, 'deploy 返回状态错误').toBe('deployed');
+    const afterDeploy = await mockApi.getAgentDeployment('agent-custom-005');
+    expect(afterDeploy.state, 'deploy 后状态未持久化').toBe('deployed');
+    expect(afterDeploy.replicas, 'deploy 后副本数应 ≥1').toBeGreaterThanOrEqual(1);
+  }, 15000);
+
+  it('auto_scale 配置可更新且持久化', async () => {
+    const updated = await mockApi.updateAgentDeploymentConfig('agent-rag-003', { auto_scale: true });
+    expect(updated.auto_scale, 'updateAgentDeploymentConfig 返回值未生效').toBe(true);
+    const reloaded = await mockApi.getAgentDeployment('agent-rag-003');
+    expect(reloaded.auto_scale, 'auto_scale 未持久化').toBe(true);
+  }, 15000);
+
+  it('LTM 删除真实生效：删除后列表不再包含且 total 递减', async () => {
+    const before = await mockApi.searchLongTermMemory('agent-mega-001');
+    expect(before.memories.length, 'LTM 初始为空').toBeGreaterThan(0);
+    const target = before.memories[0]!;
+    await mockApi.deleteLongTermMemory(target.id);
+    const after = await mockApi.searchLongTermMemory('agent-mega-001');
+    expect(
+      after.memories.some((m) => m.id === target.id),
+      `删除后 ${target.id} 仍出现在列表中`,
+    ).toBe(false);
+    expect(after.total, '删除后 total 未递减').toBe(before.total - 1);
+  }, 15000);
+
+  it('AgentDetail 执行记录行点击跳转 ExecutionDetail', () => {
+    const src = readPage('../pages/Agents/AgentDetail.tsx');
+    expect(src, '执行记录表未接 onRowClick').toMatch(/onRowClick/);
+    expect(src, '未跳转 /agents/:id/executions/:execId').toMatch(/executions\//);
+  });
+
+  it('AgentList 展示 last_execution_at 并提供 /access 入口', () => {
+    const src = readPage('../pages/Agents/AgentList.tsx');
+    expect(src, '列表未展示 last_execution_at').toMatch(/last_execution_at/);
+    expect(src, '缺少访问控制入口').toMatch(/agents\/\$\{agent\.id\}\/access/);
+  });
+
+  it('AgentDeployment 接 deploy/undeploy/scale 操作与 auto_scale', () => {
+    const src = readPage('../pages/Agents/AgentDeployment.tsx');
+    expect(src, '部署页未接 deployAgent/undeployAgent/scaleAgent').toMatch(/deployAgent|undeployAgent|scaleAgent/);
+    expect(src, '部署页未展示/操作 auto_scale').toMatch(/auto_scale/);
+  });
+
+  it('AgentMemory 长期记忆支持删除', () => {
+    const src = readPage('../pages/Agents/AgentMemory.tsx');
+    expect(src, '长期记忆卡片缺少删除操作').toMatch(/deleteLongTermMemory/);
+  });
+
+  it('AgentCollaboration 展示 completed_at', () => {
+    const src = readPage('../pages/Agents/AgentCollaboration.tsx');
+    expect(src, '协作会话缺少 completed_at 展示').toMatch(/completed_at/);
   });
 });

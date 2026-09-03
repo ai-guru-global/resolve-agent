@@ -9,7 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAgent, useAgentConversations, useConversationMessages, useAgentLongTermMemory } from '@/hooks/useAgents';
+import {
+  useAgent,
+  useAgentConversations,
+  useConversationMessages,
+  useAgentLongTermMemory,
+  useDeleteLongTermMemory,
+} from '@/hooks/useAgents';
 import { api } from '@/api/client';
 
 const memoryTypeLabels: Record<string, string> = {
@@ -32,8 +38,16 @@ export default function AgentMemory() {
   const { data: agent } = useAgent(id ?? '');
   const { data: convData, isLoading: convLoading } = useAgentConversations(id ?? '');
   const { data: ltmData, isLoading: ltmLoading } = useAgentLongTermMemory(id ?? '');
+  const deleteLongTermMemoryMutation = useDeleteLongTermMemory(id ?? '');
   const [selectedConv, setSelectedConv] = useState<string | null>(null);
   const { data: messagesData, isLoading: msgLoading } = useConversationMessages(selectedConv ?? '');
+
+  const handleDeleteMemory = (memoryId: string) => {
+    deleteLongTermMemoryMutation.mutate(memoryId, {
+      onSuccess: () => toast.success('记忆已删除'),
+      onError: () => toast.error('删除失败'),
+    });
+  };
 
   const handleDeleteConversation = async (convId: string) => {
     try {
@@ -218,12 +232,23 @@ export default function AgentMemory() {
                           创建: {new Date(mem.created_at).toLocaleDateString('zh-CN')} · 更新: {new Date(mem.updated_at).toLocaleDateString('zh-CN')}
                         </p>
                       </div>
-                      <div className="shrink-0 text-center">
-                        <p className="text-[10px] text-muted-foreground">重要性</p>
-                        <p className="text-sm font-mono font-bold">{(mem.importance * 100).toFixed(0)}%</p>
-                        <div className="mt-1 w-12 h-1.5 bg-muted rounded-full overflow-hidden">
-                          <div className="h-full bg-primary rounded-full" style={{ width: `${mem.importance * 100}%` }} />
+                      <div className="shrink-0 flex flex-col items-center gap-2">
+                        <div className="text-center">
+                          <p className="text-[10px] text-muted-foreground">重要性</p>
+                          <p className="text-sm font-mono font-bold">{(mem.importance * 100).toFixed(0)}%</p>
+                          <div className="mt-1 w-12 h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-primary rounded-full" style={{ width: `${mem.importance * 100}%` }} />
+                          </div>
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          disabled={deleteLongTermMemoryMutation.isPending}
+                          onClick={() => handleDeleteMemory(mem.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                     </div>
                   </CardContent>

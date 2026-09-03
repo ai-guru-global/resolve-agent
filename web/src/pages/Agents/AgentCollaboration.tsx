@@ -64,7 +64,12 @@ export default function AgentCollaboration() {
                           {session.duration_ms > 60000 ? `${(session.duration_ms / 60000).toFixed(1)} 分钟` : `${(session.duration_ms / 1000).toFixed(1)} 秒`}
                         </span>
                         <span className="text-[10px] text-muted-foreground">
-                          {new Date(session.started_at).toLocaleString('zh-CN')}
+                          {new Date(session.started_at).toLocaleString('zh-CN')} 开始
+                        </span>
+                        <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                          {session.completed_at
+                            ? <>结束 {new Date(session.completed_at).toLocaleString('zh-CN')}</>
+                            : <>进行中</>}
                         </span>
                       </div>
                       <div className="flex gap-1 mt-2">

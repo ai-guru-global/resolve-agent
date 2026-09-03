@@ -701,3 +701,32 @@ describe('mock 数据质量 · T8 TicketSummary 接真数据', () => {
     expect(src, '工单状态未使用 StatusBadge').toMatch(/StatusBadge/);
   });
 });
+
+describe('mock 数据质量 · T9 Selector/Evaluation 接数据', () => {
+  it('traces 提供充足路由决策样本（≥14 条、6 种路由类型、3 种策略、时间落窗）', async () => {
+    const { traces } = await mockApi.getTraces();
+    expect(traces.length).toBeGreaterThanOrEqual(14);
+    const typeSet = new Set(traces.map((t) => t.route_type));
+    expect(typeSet.size, '路由类型覆盖不足').toBeGreaterThanOrEqual(6);
+    const strategySet = new Set(traces.map((t) => t.strategy));
+    expect(strategySet.size, '策略覆盖不足').toBeGreaterThanOrEqual(3);
+    for (const t of traces) {
+      expect(t.timestamp, `trace ${t.id} 时间越界: ${t.timestamp}`).toMatch(/2026-08-(2[5-9]|3[01])/);
+      expect(t.corpus_matches.length >= 0 && t.enriched_skills.length >= 0).toBe(true);
+    }
+  }, 15000);
+
+  it('Selector 页接入 useTraces 实时路由决策流', () => {
+    const src = readPage('../pages/Selector/index.tsx');
+    expect(src, 'Selector 未接入 useTraces').toMatch(/useTraces/);
+    expect(src, 'Selector 未渲染决策数据表').toMatch(/DataTable/);
+    expect(src, '路由类型表未接实际分布列').toMatch(/实际分布|count/);
+  });
+
+  it('Evaluation 页接入 useTraces 实测对照区', () => {
+    const src = readPage('../pages/Evaluation/index.tsx');
+    expect(src, 'Evaluation 未接入 useTraces').toMatch(/useTraces/);
+    expect(src, '实测对照缺少置信度指标').toMatch(/confidence/);
+    expect(src, '实测对照缺少延迟指标').toMatch(/latency/);
+  });
+});

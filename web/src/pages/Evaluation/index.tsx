@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   BarChart3,
   Target,
@@ -16,6 +16,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { useTraces } from '@/hooks/useMonitoring';
 import CorpusRadarSection from './CorpusRadarSection';
 
 interface BenchmarkDataset {
@@ -138,6 +139,17 @@ const RQ_STATUS_MAP: Record<string, { label: string; className: string }> = {
 
 export default function EvaluationBenchmark() {
   const [selectedDataset, setSelectedDataset] = useState(0);
+  const { data: traceData } = useTraces();
+  const traces = traceData?.traces ?? [];
+
+  const runtime = useMemo(() => {
+    const total = traces.length;
+    const avgConfidence = total > 0 ? (traces.reduce((s, t) => s + t.intent_confidence, 0) / total) * 100 : 0;
+    const avgLatency = total > 0 ? traces.reduce((s, t) => s + t.latency_ms, 0) / total : 0;
+    const successRate = total > 0 ? (traces.filter((t) => t.status === 'success').length / total) * 100 : 0;
+    const typeCount = new Set(traces.map((t) => t.route_type)).size;
+    return { total, avgConfidence, avgLatency, successRate, typeCount };
+  }, [traces]);
 
   return (
     <div className="space-y-6 animate-slide-up">
@@ -153,6 +165,25 @@ export default function EvaluationBenchmark() {
         <MetricCard icon={Clock} value="12ms" label="路由延迟 P50" />
         <MetricCard icon={TrendingUp} value="34.8%" label="MTTR 改善" trend={{ value: 34.8, direction: 'up' }} />
       </div>
+
+      {/* Runtime measured vs benchmark */}
+      <Card className="border-border/30">
+        <CardContent className="p-5 space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <Radar className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold">运行时实测对照</h3>
+            <span className="text-xs text-muted-foreground">
+              演示窗口内 {runtime.total} 条真实路由决策 · 与 IncidentBench 基准数字对照
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <MetricCard icon={Target} value={`${runtime.avgConfidence.toFixed(1)}%`} label="实测平均置信度" sub={`基准: 94.2%`} />
+            <MetricCard icon={CheckCircle2} value={`${runtime.successRate.toFixed(1)}%`} label="实测决策成功率" sub={`基准: 93.4%`} />
+            <MetricCard icon={Clock} value={`${runtime.avgLatency >= 1000 ? `${(runtime.avgLatency / 1000).toFixed(2)}s` : `${runtime.avgLatency.toFixed(0)}ms`}`} label="实测平均路由延迟" sub={`基准: 12ms`} />
+            <MetricCard icon={Database} value={`${runtime.typeCount}/6`} label="实测路由类型覆盖" sub={`基准数据集: 6 类`} />
+          </div>
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="datasets">
         <TabsList className="h-9">

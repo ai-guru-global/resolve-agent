@@ -1,10 +1,72 @@
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, ArrowLeft, GitBranch, Cpu, Route } from 'lucide-react';
+import { Zap, ArrowLeft, GitBranch, Cpu, Route, Activity, CheckCircle2 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
+import { MetricCard } from '@/components/MetricCard';
+import { DataTable, type DataTableColumn } from '@/components/DataTable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useTraces } from '@/hooks/useMonitoring';
+import type { TraceRecord } from '@/types';
+
+const strategyLabels: Record<string, string> = {
+  hybrid: '混合',
+  llm: 'LLM',
+  rule: '规则',
+};
+
+const routeTypeLabels: Record<string, string> = {
+  fta: 'FTA 工作流',
+  skill: '技能',
+  rag: 'RAG 检索',
+  code_analysis: '代码分析',
+  multi: '链式路由',
+  direct: '直接响应',
+};
+
+const decisionColumns: DataTableColumn<TraceRecord>[] = [
+  { key: 'id', label: 'ID', mono: true },
+  {
+    key: 'input',
+    label: '输入请求',
+    render: (val) => <span className="line-clamp-1 max-w-[260px]">{String(val)}</span>,
+  },
+  {
+    key: 'strategy',
+    label: '策略',
+    render: (val) => <Badge variant="secondary" className="text-[10px]">{strategyLabels[String(val)] ?? String(val)}</Badge>,
+  },
+  {
+    key: 'route_type',
+    label: '路由类型',
+    render: (val) => <span className="font-mono text-xs text-primary">{routeTypeLabels[String(val)] ?? String(val)}</span>,
+  },
+  {
+    key: 'route_target',
+    label: '路由目标',
+    render: (val) => <span className="font-mono text-xs">{String(val)}</span>,
+  },
+  {
+    key: 'intent_confidence',
+    label: '置信度',
+    render: (val) => <span className="font-mono">{(Number(val) * 100).toFixed(0)}%</span>,
+  },
+  {
+    key: 'latency_ms',
+    label: '管线延迟',
+    render: (val) => {
+      const ms = Number(val);
+      return <span className="font-mono text-xs">{ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`}</span>;
+    },
+  },
+  {
+    key: 'timestamp',
+    label: '时间',
+    render: (val) => <span className="text-xs">{new Date(String(val)).toLocaleString('zh-CN')}</span>,
+  },
+];
 
 const strategies = [
   {
@@ -73,6 +135,23 @@ const pipelineStages = [
 ];
 
 export default function SelectorPage() {
+  const { data, isLoading } = useTraces();
+  const traces = data?.traces ?? [];
+
+  const stats = useMemo(() => {
+    const total = traces.length;
+    const avgConfidence = total > 0 ? (traces.reduce((s, t) => s + t.intent_confidence, 0) / total) * 100 : 0;
+    const avgLatency = total > 0 ? traces.reduce((s, t) => s + t.latency_ms, 0) / total : 0;
+    const successRate = total > 0 ? (traces.filter((t) => t.status === 'success').length / total) * 100 : 0;
+    return { total, avgConfidence, avgLatency, successRate };
+  }, [traces]);
+
+  const routeCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const t of traces) counts[t.route_type] = (counts[t.route_type] ?? 0) + 1;
+    return counts;
+  }, [traces]);
+
   return (
     <div className="space-y-6 animate-slide-up">
       <div className="flex items-center gap-4">
@@ -88,6 +167,25 @@ export default function SelectorPage() {
         title="智能选择器"
         description="LLM 驱动的元路由引擎 — 分析用户意图、评估可用能力、选择最优执行路径"
       />
+
+      {/* Realtime routing decisions */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Activity className="h-4 w-4 text-primary" />
+            实时路由决策流
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+            <MetricCard icon={Route} value={String(stats.total)} label="决策总量" accentColor="border-l-primary" />
+            <MetricCard icon={Zap} value={`${stats.avgConfidence.toFixed(1)}%`} label="平均置信度" accentColor="border-l-status-healthy" />
+            <MetricCard icon={Cpu} value={`${stats.avgLatency >= 1000 ? `${(stats.avgLatency / 1000).toFixed(1)}s` : `${stats.avgLatency.toFixed(0)}ms`}`} label="平均管线延迟" accentColor="border-l-status-degraded" />
+            <MetricCard icon={CheckCircle2} value={`${stats.successRate.toFixed(0)}%`} label="决策成功率" accentColor="border-l-status-progressing" />
+          </div>
+          <DataTable columns={decisionColumns} data={traces} loading={isLoading} emptyMessage="暂无路由决策" />
+        </CardContent>
+      </Card>
 
       {/* Three-stage Pipeline */}
       <Card>
@@ -183,17 +281,27 @@ export default function SelectorPage() {
                   <th className="text-left py-2 px-3 font-medium text-muted-foreground">图标</th>
                   <th className="text-left py-2 px-3 font-medium text-muted-foreground">目标</th>
                   <th className="text-left py-2 px-3 font-medium text-muted-foreground">说明</th>
+                  <th className="text-right py-2 px-3 font-medium text-muted-foreground">实际分布</th>
                 </tr>
               </thead>
               <tbody>
-                {routeTypes.map((r) => (
-                  <tr key={r.type} className="border-b border-border/30">
-                    <td className="py-2 px-3 font-mono text-primary">{r.type}</td>
-                    <td className="py-2 px-3">{r.icon}</td>
-                    <td className="py-2 px-3">{r.target}</td>
-                    <td className="py-2 px-3 text-muted-foreground">{r.desc}</td>
-                  </tr>
-                ))}
+                {routeTypes.map((r) => {
+                  // routeTypes.type 为意图类型（workflow），对应路由类型 fta
+                  const routeKey = r.type === 'workflow' ? 'fta' : r.type;
+                  const count = routeCounts[routeKey] ?? 0;
+                  const pct = traces.length > 0 ? ((count / traces.length) * 100).toFixed(0) : '0';
+                  return (
+                    <tr key={r.type} className="border-b border-border/30">
+                      <td className="py-2 px-3 font-mono text-primary">{r.type}</td>
+                      <td className="py-2 px-3">{r.icon}</td>
+                      <td className="py-2 px-3">{r.target}</td>
+                      <td className="py-2 px-3 text-muted-foreground">{r.desc}</td>
+                      <td className="py-2 px-3 text-right font-mono tabular-nums">
+                        {count} 次 · {pct}%
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

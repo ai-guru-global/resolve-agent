@@ -182,6 +182,24 @@ h2 .huen{display:block;font-family:var(--cond);font-weight:600;font-size:13px;le
 .metric .v{font-family:var(--mono);font-weight:700;font-size:clamp(22px,2.4vw,32px);color:var(--mc);font-variant-numeric:tabular-nums}
 .metric .l{font-size:12.5px;color:var(--ink2);margin-top:6px}
 .metric .s{font-size:11px;color:var(--ink3);margin-top:2px}
+/* ops data overview */
+.ops6{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:44px}
+.opsgrid{display:grid;grid-template-columns:5fr 7fr;gap:44px;margin-top:20px;align-items:start}
+.opspanel{border:1px solid var(--line);border-radius:10px;background:var(--panel2);padding:22px 24px}
+.opsh{font-family:var(--cond);letter-spacing:.2em;font-size:12px;color:var(--ink3);margin-bottom:16px}
+.bar{display:grid;grid-template-columns:88px 1fr 84px;gap:12px;align-items:center;font-size:12.5px;margin-bottom:12px}
+.bar:last-child{margin-bottom:0}
+.bar .bn{font-family:var(--cond);font-weight:600;letter-spacing:.08em;color:var(--ink2)}
+.bar .bt{height:14px;border-radius:4px;background:var(--flapbg);overflow:hidden}
+.bar .bt i{display:block;height:100%;border-radius:4px;background:var(--bc)}
+.bar .bv{font-family:var(--mono);font-size:11.5px;color:var(--ink2);text-align:right;white-space:nowrap}
+.logtable{width:100%;border-collapse:collapse;font-size:12px}
+.logtable th{font-family:var(--cond);letter-spacing:.14em;font-size:10.5px;font-weight:600;color:var(--ink3);text-align:left;padding:6px 10px;border-bottom:1px solid var(--line2)}
+.logtable td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.logtable tr:last-child td{border-bottom:none}
+.logtable .ellip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px}
+.ltr{font-family:var(--mono);font-size:11px;color:var(--ink2)}
+.logtable .rt{font-family:var(--cond);font-weight:700;letter-spacing:.08em;white-space:nowrap}
 /* close */
 .close{padding:110px 0;text-align:left}
 .close h2{font-size:clamp(30px,4.4vw,56px);max-width:16em}
@@ -192,8 +210,9 @@ footer{border-top:1px solid var(--line);padding:26px 0}
 .foot a:hover{color:var(--ink);border-bottom-color:var(--ink2)}
 .footlinks{display:inline-flex;gap:18px;align-items:center}
 @media (max-width:960px){
-  .replay,.fly,.stratgrid{grid-template-columns:1fr}
+  .replay,.fly,.stratgrid,.opsgrid{grid-template-columns:1fr}
   .metrics{grid-template-columns:repeat(2,1fr)}
+  .ops6{grid-template-columns:repeat(2,1fr)}
   .navlinks{display:none}
   .navtag{display:none}
   .navin{gap:16px}
@@ -228,7 +247,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
     </a>
     <span class="navtag">市场进入策略（GTM）中枢 · 实时调度</span>
     <div class="navlinks">
-      <a href="#board">调度总图</a><a href="#session">审计会话</a><a href="#replay">事件回放</a><a href="#flywheel">语料飞轮</a><a href="#strategy">GTM 战略</a><a href="https://vxxzrdpyfrl6.meoo.fun" target="_blank" rel="noopener noreferrer">产品页</a>
+      <a href="#board">调度总图</a><a href="#opsdata">运行数据</a><a href="#session">审计会话</a><a href="#replay">事件回放</a><a href="#flywheel">语料飞轮</a><a href="#strategy">GTM 战略</a><a href="https://vxxzrdpyfrl6.meoo.fun" target="_blank" rel="noopener noreferrer">产品页</a>
     </div>
     <a class="btn btn-primary btn-sm" href="#close">预约演示</a>
   </div>
@@ -351,6 +370,48 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
         <span class="datanote">调用计数为示意数据</span>
       </div>
 
+    </div>
+  </div>
+</section>
+
+<!-- ================= OPS DATA OVERVIEW ================= -->
+<section id="opsdata">
+  <div class="wrap">
+    <h2 class="reveal">运行数据总览。<span class="huen">演示窗口 2026-08-25 — 08-31 · 与产品控制台同源</span></h2>
+    <p class="lede reveal">以下数字不是装饰：全部取自产品控制台同一套演示数据源——工作流执行、路由决策、工单闭环、语料规模，一一对得上。</p>
+    <div class="ops6 reveal">
+      <div class="metric" style="--mc:#d94f16"><div class="v">48</div><div class="l">工作流执行</div><div class="s">完成 45 · 失败 2 · 运行中 1</div></div>
+      <div class="metric" style="--mc:#0b8a76"><div class="v">95.7%</div><div class="l">闭环成功率</div><div class="s">45 / 47 已终态执行</div></div>
+      <div class="metric" style="--mc:#a06f08"><div class="v">14</div><div class="l">路由决策留痕</div><div class="s">6 类线路全覆盖 · 3 种策略</div></div>
+      <div class="metric" style="--mc:#5b48e0"><div class="v">30</div><div class="l">运维工单</div><div class="s">17 单已闭环（10 完成 + 7 批准）</div></div>
+      <div class="metric" style="--mc:#d94f16"><div class="v">45 / 102</div><div class="l">知识集合 / 文档</div><div class="s">向量 62,470 条</div></div>
+      <div class="metric" style="--mc:#0b8a76"><div class="v">7 × 26 × 42</div><div class="l">Agent × 技能 × 工作流</div><div class="s">可编排能力底座</div></div>
+    </div>
+    <div class="opsgrid reveal">
+      <div class="opspanel">
+        <p class="opsh">四线分发占比 · 14 条决策</p>
+        <div class="bar" style="--bc:#e0521c"><span class="bn">FTA</span><span class="bt"><i style="width:100%"></i></span><span class="bv">3 次 · 21%</span></div>
+        <div class="bar" style="--bc:#6a58f0"><span class="bn">技能</span><span class="bt"><i style="width:100%"></i></span><span class="bv">3 次 · 21%</span></div>
+        <div class="bar" style="--bc:#0b9e88"><span class="bn">RAG</span><span class="bt"><i style="width:100%"></i></span><span class="bv">3 次 · 21%</span></div>
+        <div class="bar" style="--bc:#45536e"><span class="bn">链式</span><span class="bt"><i style="width:67%"></i></span><span class="bv">2 次 · 14%</span></div>
+        <div class="bar" style="--bc:#a06f08"><span class="bn">代码</span><span class="bt"><i style="width:67%"></i></span><span class="bv">2 次 · 14%</span></div>
+        <div class="bar" style="--bc:#7d8da6"><span class="bn">直达</span><span class="bt"><i style="width:33%"></i></span><span class="bv">1 次 · 7%</span></div>
+      </div>
+      <div class="opspanel">
+        <p class="opsh">最近路由决策留痕 · 真实记录</p>
+        <table class="logtable">
+          <thead>
+            <tr><th>决策 ID</th><th>线路</th><th>输入摘要</th><th style="text-align:right">延迟</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="ltr">tr-4821</td><td class="rt" style="color:#e0521c">FTA</td><td class="ellip" title="Kubernetes Pod CrashLoopBackOff 如何排查？">Kubernetes Pod CrashLoopBackOff 如何排查？</td><td class="ltr" style="text-align:right">16.8s</td></tr>
+            <tr><td class="ltr">tr-4790</td><td class="rt" style="color:#6a58f0">技能</td><td class="ellip" title="查询 production 命名空间最近 24 小时的错误日志统计">查询 production 命名空间最近 24 小时的错误日志统计</td><td class="ltr" style="text-align:right">3.1s</td></tr>
+            <tr><td class="ltr">tr-4764</td><td class="rt" style="color:#0b9e88">RAG</td><td class="ellip" title="Nginx 反向代理配置中 proxy_read_timeout 应该怎么设置？">Nginx 反向代理配置中 proxy_read_timeout 应该怎么设置？</td><td class="ltr" style="text-align:right">2.3s</td></tr>
+            <tr><td class="ltr">tr-4731</td><td class="rt" style="color:#45536e">链式</td><td class="ellip" title="ACK 集群 cn-hangzhou-prod 节点池扩容评估：当前负载 78%，建议方案与风险评估">ACK 集群 cn-hangzhou-prod 节点池扩容评估：当前负载 78%，建议方案与风险评估</td><td class="ltr" style="text-align:right">12.5s</td></tr>
+            <tr><td class="ltr">tr-4698</td><td class="rt" style="color:#a06f08">代码</td><td class="ellip" title="帮我分析这段 Python 代码的性能瓶颈并给出优化建议">帮我分析这段 Python 代码的性能瓶颈并给出优化建议</td><td class="ltr" style="text-align:right">5.8s</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </section>

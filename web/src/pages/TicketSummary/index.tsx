@@ -1,10 +1,57 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Shield, AlertTriangle, Search, Zap, Target, RefreshCw, Eye, Lightbulb } from 'lucide-react';
+import { ArrowLeft, BookOpen, Shield, AlertTriangle, Search, Zap, Target, RefreshCw, Eye, Lightbulb, Ticket, Clock, CheckCircle2 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
+import { StatusBadge } from '@/components/StatusBadge';
+import { MetricCard } from '@/components/MetricCard';
+import { DataTable, type DataTableColumn } from '@/components/DataTable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useTickets } from '@/hooks/useDashboard';
+import { ticketStatusToVariant } from '@/types';
+import type { OpsTicket, StatusVariant } from '@/types';
+
+const ticketStatusLabels: Record<OpsTicket['status'], string> = {
+  pending: '待处理',
+  processing: '处理中',
+  completed: '已完成',
+  approved: '已批准',
+};
+
+const priorityLabels: Record<OpsTicket['priority'], { label: string; color: 'destructive' | 'default' | 'secondary' | 'outline' }> = {
+  critical: { label: 'P0 危急', color: 'destructive' },
+  high: { label: 'P1 高', color: 'default' },
+  medium: { label: 'P2 中', color: 'secondary' },
+  low: { label: 'P3 低', color: 'outline' },
+};
+
+const ticketColumns: DataTableColumn<OpsTicket>[] = [
+  { key: 'id', label: '工单号', mono: true },
+  { key: 'title', label: '标题', render: (val) => <span className="font-medium">{String(val)}</span> },
+  {
+    key: 'status',
+    label: '状态',
+    render: (val) => {
+      const variant: StatusVariant | undefined = ticketStatusToVariant[String(val) as OpsTicket['status']];
+      return variant ? <StatusBadge variant={variant} label={ticketStatusLabels[String(val) as OpsTicket['status']] ?? String(val)} /> : <span>{String(val)}</span>;
+    },
+  },
+  {
+    key: 'priority',
+    label: '优先级',
+    render: (val) => {
+      const p = priorityLabels[String(val) as OpsTicket['priority']];
+      return p ? <Badge variant={p.color}>{p.label}</Badge> : <span>{String(val)}</span>;
+    },
+  },
+  { key: 'assignee', label: '负责人' },
+  {
+    key: 'created_at',
+    label: '创建时间',
+    render: (val) => <span className="text-xs">{new Date(String(val)).toLocaleString('zh-CN')}</span>,
+  },
+];
 
 const principles = [
   {
@@ -100,6 +147,12 @@ const gapTypes = [
 ];
 
 export default function TicketSummaryPage() {
+  const { data, isLoading } = useTickets();
+  const tickets = data?.tickets ?? [];
+  const processingCount = tickets.filter((t) => t.status === 'processing').length;
+  const pendingCount = tickets.filter((t) => t.status === 'pending').length;
+  const closedCount = tickets.filter((t) => t.status === 'completed' || t.status === 'approved').length;
+
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-4">
@@ -115,6 +168,25 @@ export default function TicketSummaryPage() {
         title="工单总结 Agent — 设计哲学"
         description="从「解决一张工单」升级为「为组织新增一项能力」— 一个知识生产引擎，将每个个案转化为可复用的组织能力"
       />
+
+      {/* 实时工单数据流 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Ticket className="h-5 w-5 text-primary" />
+            实时工单流 · 知识生产引擎的输入
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+            <MetricCard icon={Ticket} value={String(tickets.length)} label="工单总量" accentColor="border-l-primary" />
+            <MetricCard icon={RefreshCw} value={String(processingCount)} label="处理中" accentColor="border-l-status-progressing" />
+            <MetricCard icon={Clock} value={String(pendingCount)} label="待处理" accentColor="border-l-status-degraded" />
+            <MetricCard icon={CheckCircle2} value={String(closedCount)} label="已闭环" accentColor="border-l-status-healthy" />
+          </div>
+          <DataTable columns={ticketColumns} data={tickets} loading={isLoading} emptyMessage="暂无工单" />
+        </CardContent>
+      </Card>
 
       {/* 核心论点 */}
       <Card className="border-slate-700 bg-slate-800/50">

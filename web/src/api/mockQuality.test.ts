@@ -604,7 +604,7 @@ describe('mock 数据质量 · T7 Workflow/RAG 时间字段与详情展开', () 
     const { executions } = await mockApi.listWorkflowExecutions();
     expect(executions.length).toBeGreaterThanOrEqual(30);
     for (const e of executions) {
-      expect(e.started_at, `执行 ${e.id} 开始时间越界: ${e.started_at}`).toMatch(/2026-08-2[5-9]|2026-08-31/);
+      expect(e.started_at, `执行 ${e.id} 开始时间越界: ${e.started_at}`).toMatch(/2026-08-(2[5-9]|3[01])/);
       if (e.status === 'completed' || e.status === 'failed') {
         expect(e.completed_at, `执行 ${e.id}（${e.status}）缺少结束时间`).not.toBeNull();
         if (e.completed_at) {
@@ -621,7 +621,7 @@ describe('mock 数据质量 · T7 Workflow/RAG 时间字段与详情展开', () 
       // archived 工作流的 last_executed 保留归档前旧时间是合理存量语义
       if (w.last_executed && w.status !== 'archived') {
         expect(w.last_executed, `工作流 ${w.id} 最后执行时间越界: ${w.last_executed}`).toMatch(
-          /2026-08-2[5-9]|2026-08-31/,
+          /2026-08-(2[5-9]|3[01])/,
         );
       }
       expect(new Date(w.updated_at).getTime()).toBeGreaterThanOrEqual(new Date(w.created_at).getTime());
@@ -665,5 +665,39 @@ describe('mock 数据质量 · T7 Workflow/RAG 时间字段与详情展开', () 
   it('RAG Collections 卡片展示创建时间', () => {
     const src = readPage('../pages/RAG/Collections.tsx');
     expect(src, '集合卡片缺少创建时间').toMatch(/created_at/);
+  });
+});
+
+describe('mock 数据质量 · T8 TicketSummary 接真数据', () => {
+  it('mockTickets 扩充至 ≥24 条，created_at 为绝对时间戳且落在演示窗口', async () => {
+    const { tickets } = await mockApi.listTickets();
+    expect(tickets.length).toBeGreaterThanOrEqual(24);
+    for (const t of tickets) {
+      expect(t.created_at, `工单 ${t.id} created_at 不是 ISO 绝对时间戳: ${t.created_at}`).toMatch(
+        /^2026-\d{2}-\d{2}T/,
+      );
+      expect(t.created_at, `工单 ${t.id} created_at 越界: ${t.created_at}`).toMatch(/2026-08-(2[5-9]|3[01])/);
+    }
+    const idSet = new Set(tickets.map((t) => t.id));
+    expect(idSet.size, '工单 ID 存在重复').toBe(tickets.length);
+  }, 15000);
+
+  it('工单状态与优先级分布差异化（≥3 种状态、取值合法、负责人非空）', async () => {
+    const { tickets } = await mockApi.listTickets();
+    const statusSet = new Set(tickets.map((t) => t.status));
+    expect(statusSet.size, '工单状态缺乏差异化').toBeGreaterThanOrEqual(3);
+    for (const t of tickets) {
+      expect(['pending', 'processing', 'completed', 'approved'], `工单 ${t.id} 状态非法`).toContain(t.status);
+      expect(['low', 'medium', 'high', 'critical'], `工单 ${t.id} 优先级非法`).toContain(t.priority);
+      expect(t.assignee.length, `工单 ${t.id} 缺少负责人`).toBeGreaterThan(0);
+    }
+  }, 15000);
+
+  it('TicketSummary 页面接入 useTickets 并渲染工单数据表', () => {
+    const src = readPage('../pages/TicketSummary/index.tsx');
+    expect(src, 'TicketSummary 未接入 useTickets').toMatch(/useTickets/);
+    expect(src, 'TicketSummary 未渲染工单数据表').toMatch(/DataTable/);
+    expect(src, '工单优先级未展示').toMatch(/priority/);
+    expect(src, '工单状态未使用 StatusBadge').toMatch(/StatusBadge/);
   });
 });

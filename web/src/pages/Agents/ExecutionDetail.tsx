@@ -1,8 +1,9 @@
 import { useParams } from 'react-router-dom';
-import { Target, Cpu, Brain, Shield, Clock, AlertTriangle } from 'lucide-react';
+import { Target, Cpu, Brain, Shield, Clock, AlertTriangle, Database, FileCode2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/PageHeader';
 import { StatusBadge } from '@/components/StatusBadge';
+import { formatTimeAgo } from '@/lib/demoTime';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -21,6 +22,28 @@ const hookStatusColors: Record<string, string> = {
   success: 'text-status-healthy',
   failed: 'text-status-failed',
   skipped: 'text-muted-foreground',
+};
+
+const INTENT_LABELS: Record<string, string> = {
+  workflow: '工作流',
+  skill: '技能',
+  rag: '知识检索',
+  code_analysis: '代码分析',
+  direct: '直接推理',
+  multi: '多智能体',
+};
+
+const STRATEGY_LABELS: Record<string, string> = {
+  hybrid: '混合策略',
+  llm: 'LLM 判别',
+  rule: '规则匹配',
+};
+
+const HOOK_TYPE_LABELS: Record<string, string> = {
+  pre_execution: '前置',
+  post_execution: '后置',
+  on_error: '错误处理',
+  on_exit: '退出',
 };
 
 export default function ExecutionDetail() {
@@ -65,6 +88,9 @@ export default function ExecutionDetail() {
             <span className="text-xs text-muted-foreground">
               {detail.duration_ms > 1000 ? `${(detail.duration_ms / 1000).toFixed(1)}s` : `${detail.duration_ms}ms`}
             </span>
+            <span className="text-xs text-muted-foreground/70 hidden sm:inline">
+              {new Date(detail.created_at).toLocaleString('zh-CN')}（{formatTimeAgo(detail.created_at)}）
+            </span>
           </div>
         }
       />
@@ -107,9 +133,74 @@ export default function ExecutionDetail() {
                 </div>
               ))}
             </div>
-            <p className="text-[10px] text-muted-foreground mt-2">
-              管线策略: {detail.pipeline_trace.strategy} · 管线延迟: {detail.pipeline_trace.pipeline_latency_ms}ms · 理由: {detail.pipeline_trace.decision.reasoning}
+            <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
+              {detail.pipeline_trace.intent.entities.map((e) => (
+                <Badge key={e} variant="outline" className="text-[9px] font-mono px-1.5 py-0">{e}</Badge>
+              ))}
+              {detail.pipeline_trace.intent.sub_intents.length > 0 && (
+                <span className="text-[10px] text-muted-foreground ml-1">
+                  子意图: {detail.pipeline_trace.intent.sub_intents.map((s) => INTENT_LABELS[s] ?? s).join(' + ')}
+                </span>
+              )}
+              <span className="text-[10px] text-muted-foreground/60 ml-auto">意图类型: {INTENT_LABELS[detail.pipeline_trace.intent.intent_type] ?? detail.pipeline_trace.intent.intent_type}</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+              <span className="text-[10px] font-mono rounded bg-primary/10 text-primary px-1.5 py-0.5">目标: {detail.pipeline_trace.decision.route_target}</span>
+              {Object.entries(detail.pipeline_trace.decision.parameters).map(([k, v]) => (
+                <span key={k} className="text-[10px] font-mono rounded bg-muted/40 px-1.5 py-0.5 text-muted-foreground">{k}={String(v)}</span>
+              ))}
+            </div>
+            {detail.pipeline_trace.enriched_context.rag_collections.length > 0 && (
+              <div className="mt-2.5 space-y-1.5">
+                {detail.pipeline_trace.enriched_context.rag_collections.map((c) => (
+                  <div key={c.collection_id} className="flex flex-wrap items-center gap-2 rounded border border-border/20 bg-muted/10 px-2.5 py-1.5 text-[10px]">
+                    <FileCode2 className="h-3 w-3 text-primary shrink-0" />
+                    <span className="font-mono text-primary">{c.collection_name}</span>
+                    <span className="text-muted-foreground/70">{c.matched_keywords.join(' / ')}</span>
+                    <span className="ml-auto font-mono text-muted-foreground">{c.document_count} 篇 · 相关度 {(c.relevance_score * 100).toFixed(0)}%</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {detail.pipeline_trace.enriched_context.code_context && (
+              <div className="mt-2.5 flex flex-wrap items-center gap-2 rounded border border-border/20 bg-muted/10 px-2.5 py-1.5 text-[10px]">
+                <FileCode2 className="h-3 w-3 text-primary shrink-0" />
+                <span className="font-mono text-primary">代码上下文: {detail.pipeline_trace.enriched_context.code_context.language}</span>
+                <span className="text-muted-foreground/70">{detail.pipeline_trace.enriched_context.code_context.detected_patterns.join(' · ')}</span>
+              </div>
+            )}
+            <p className="text-[10px] text-muted-foreground mt-2.5">
+              管线策略: {STRATEGY_LABELS[detail.pipeline_trace.strategy] ?? detail.pipeline_trace.strategy} · 管线延迟: {detail.pipeline_trace.pipeline_latency_ms}ms · 理由: {detail.pipeline_trace.decision.reasoning}
             </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Chain Sub-Decisions */}
+      {detail.pipeline_trace?.decision.chain && detail.pipeline_trace.decision.chain.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Brain className="h-4 w-4 text-primary" />
+              子决策链 (Chain)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {detail.pipeline_trace.decision.chain.map((step, i) => (
+                <div key={i} className="flex items-start gap-3 rounded-md border border-border/20 bg-muted/10 px-4 py-2.5">
+                  <span className="text-[10px] font-mono text-muted-foreground/50 shrink-0 mt-0.5">#{i + 1}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="secondary" className="text-[9px] font-mono">{step.route_type}</Badge>
+                      <span className="text-xs font-mono">{step.route_target}</span>
+                      <span className="text-[10px] text-muted-foreground">置信度 {(step.confidence * 100).toFixed(0)}%</span>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">{step.reasoning}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -167,10 +258,12 @@ export default function ExecutionDetail() {
               {detail.hook_logs.map((log, i) => (
                 <div key={i} className="flex items-center gap-3 rounded-md border border-border/20 bg-muted/10 px-4 py-2.5">
                   <span className={cn('h-2 w-2 rounded-full shrink-0', log.status === 'success' ? 'bg-status-healthy' : log.status === 'failed' ? 'bg-status-failed' : 'bg-muted-foreground/30')} />
+                  <Badge variant="outline" className="text-[9px] shrink-0 px-1.5 py-0">{HOOK_TYPE_LABELS[log.hook_type] ?? log.hook_type}</Badge>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium">{log.hook_name}</p>
                     <p className="text-[10px] text-muted-foreground">{log.input_preview} → {log.output_preview}</p>
                   </div>
+                  <span className="text-[10px] font-mono text-muted-foreground/60 shrink-0 hidden sm:inline">{new Date(log.timestamp).toLocaleTimeString('zh-CN')}</span>
                   <span className={cn('text-xs', hookStatusColors[log.status])}>{log.status}</span>
                   <span className="text-xs font-mono text-muted-foreground">{log.duration_ms}ms</span>
                 </div>
@@ -179,6 +272,32 @@ export default function ExecutionDetail() {
           )}
         </CardContent>
       </Card>
+
+      {/* Memory Context */}
+      {detail.memory_context.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Database className="h-4 w-4 text-primary" />
+              记忆上下文
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {detail.memory_context.map((m) => (
+                <div key={m.id} className="flex items-start gap-3 rounded-md border border-border/20 bg-muted/10 px-4 py-2.5">
+                  <Badge variant="outline" className="text-[9px] shrink-0 uppercase">{m.role}</Badge>
+                  <p className="flex-1 min-w-0 text-xs leading-relaxed">{m.content}</p>
+                  <div className="text-right shrink-0">
+                    <p className="text-[10px] font-mono text-muted-foreground">{m.token_count} tokens</p>
+                    <p className="text-[10px] text-muted-foreground/50">{new Date(m.created_at).toLocaleTimeString('zh-CN')}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Error Detail */}
       {detail.error_detail && (

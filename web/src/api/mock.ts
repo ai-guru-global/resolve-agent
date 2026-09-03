@@ -48,6 +48,12 @@ import type {
   CircuitBreakerStatus,
   AdaptiveWeight,
   MonitoringOverview,
+  SelectorPipelineTrace,
+  SelectorStrategy,
+  RouteDecision,
+  CorpusMatch,
+  HookExecutionLog,
+  TimingBreakdown,
 } from '../types';
 
 // ─── 延迟模拟，让体验更真实 ───
@@ -1624,41 +1630,189 @@ const mockPlatformStatus: PlatformStatus = {
 // ─── Agent Execution History ───
 const mockAgentExecutions: Record<string, AgentExecution[]> = {
   'agent-mega-001': [
-    { id: 'aexec-001', agent_id: 'agent-mega-001', input_preview: 'ACK 集群 cn-hangzhou-prod 节点池扩容评估...', output_preview: '当前集群负载率 78%，建议扩容 2 个节点...', status: 'completed', route_type: 'multi', confidence: 0.91, duration_ms: 1230, created_at: '2026-08-08T09:12:00Z' },
-    { id: 'aexec-002', agent_id: 'agent-mega-001', input_preview: 'production 命名空间 Pod 异常诊断...', output_preview: '发现 3 个 CrashLoopBackOff 的 Pod，原因是镜像拉取失败...', status: 'completed', route_type: 'multi', confidence: 0.88, duration_ms: 1540, created_at: '2026-08-08T08:30:00Z' },
-    { id: 'aexec-003', agent_id: 'agent-mega-001', input_preview: 'etcd 集群健康检查...', output_preview: '3/3 members healthy，DB size 2.1GB，建议定期 compact...', status: 'completed', route_type: 'direct', confidence: 0.95, duration_ms: 890, created_at: '2026-08-07T16:00:00Z' },
-    { id: 'aexec-004', agent_id: 'agent-mega-001', input_preview: 'HPA 配置审查...', output_preview: '当前 HPA min=2 max=10，建议调整 target CPU 到 70%...', status: 'completed', route_type: 'direct', confidence: 0.82, duration_ms: 1100, created_at: '2026-08-07T14:20:00Z' },
+    { id: 'aexec-001', agent_id: 'agent-mega-001', input_preview: 'ACK 集群 cn-hangzhou-prod 节点池扩容评估...', output_preview: '当前集群负载率 78%，建议扩容 2 个节点...', status: 'completed', route_type: 'multi', confidence: 0.91, duration_ms: 1230, created_at: '2026-08-31T09:12:00Z' },
+    { id: 'aexec-002', agent_id: 'agent-mega-001', input_preview: 'production 命名空间 Pod 异常诊断...', output_preview: '发现 3 个 CrashLoopBackOff 的 Pod，原因是镜像拉取失败...', status: 'completed', route_type: 'multi', confidence: 0.88, duration_ms: 1540, created_at: '2026-08-31T08:30:00Z' },
+    { id: 'aexec-003', agent_id: 'agent-mega-001', input_preview: 'etcd 集群健康检查...', output_preview: '3/3 members healthy，DB size 2.1GB，建议定期 compact...', status: 'completed', route_type: 'direct', confidence: 0.95, duration_ms: 890, created_at: '2026-08-30T16:00:00Z' },
+    { id: 'aexec-004', agent_id: 'agent-mega-001', input_preview: 'HPA 配置审查...', output_preview: '当前 HPA min=2 max=10，建议调整 target CPU 到 70%...', status: 'completed', route_type: 'direct', confidence: 0.82, duration_ms: 1100, created_at: '2026-08-30T14:20:00Z' },
   ],
   'agent-fta-002': [
-    { id: 'aexec-005', agent_id: 'agent-fta-002', input_preview: 'K8s 节点 cn-hz-03 NotReady...', output_preview: '根因定位：NetworkPolicy 误配置导致 kubelet 心跳被 Drop...', status: 'completed', route_type: 'fta', confidence: 0.87, duration_ms: 12340, created_at: '2026-08-08T08:15:00Z' },
-    { id: 'aexec-006', agent_id: 'agent-fta-002', input_preview: '节点 cn-hz-07 进入 NotReady...', output_preview: '根因定位：节点内存 OOM，kubelet 进程被 Kill...', status: 'completed', route_type: 'fta', confidence: 0.92, duration_ms: 18200, created_at: '2026-08-07T14:30:00Z' },
-    { id: 'aexec-007', agent_id: 'agent-fta-002', input_preview: '多节点同时 NotReady 告警...', output_preview: '分析失败：无法连接到目标集群 API Server...', status: 'failed', route_type: 'fta', confidence: 0.45, duration_ms: 30000, created_at: '2026-08-06T22:00:00Z' },
+    { id: 'aexec-005', agent_id: 'agent-fta-002', input_preview: 'K8s 节点 cn-hz-03 NotReady...', output_preview: '根因定位：NetworkPolicy 误配置导致 kubelet 心跳被 Drop...', status: 'completed', route_type: 'fta', confidence: 0.87, duration_ms: 12340, created_at: '2026-08-31T08:15:00Z' },
+    { id: 'aexec-006', agent_id: 'agent-fta-002', input_preview: '节点 cn-hz-07 进入 NotReady...', output_preview: '根因定位：节点内存 OOM，kubelet 进程被 Kill...', status: 'completed', route_type: 'fta', confidence: 0.92, duration_ms: 18200, created_at: '2026-08-30T14:30:00Z' },
+    { id: 'aexec-007', agent_id: 'agent-fta-002', input_preview: '多节点同时 NotReady 告警...', output_preview: '分析失败：无法连接到目标集群 API Server...', status: 'failed', route_type: 'fta', confidence: 0.45, duration_ms: 30000, created_at: '2026-08-29T22:00:00Z' },
   ],
   'agent-rag-003': [
-    { id: 'aexec-008', agent_id: 'agent-rag-003', input_preview: 'RDS MySQL 主从同步延迟怎么排查?', output_preview: '常见原因包括大事务阻塞、从库规格不足、binlog 传输延迟...', status: 'completed', route_type: 'rag', confidence: 0.84, duration_ms: 650, created_at: '2026-08-08T09:00:00Z' },
-    { id: 'aexec-009', agent_id: 'agent-rag-003', input_preview: 'ACK Ingress 如何配置 HTTPS?', output_preview: '通过 annotations 配置 SLB 证书，支持自动续期...', status: 'completed', route_type: 'rag', confidence: 0.91, duration_ms: 480, created_at: '2026-08-08T08:00:00Z' },
-    { id: 'aexec-010', agent_id: 'agent-rag-003', input_preview: 'ECS 磁盘在线扩容步骤是什么?', output_preview: '1. 控制台扩容云盘 2. SSH 登录执行 growpart 3. resize2fs...', status: 'completed', route_type: 'rag', confidence: 0.89, duration_ms: 520, created_at: '2026-08-07T15:30:00Z' },
+    { id: 'aexec-008', agent_id: 'agent-rag-003', input_preview: 'RDS MySQL 主从同步延迟怎么排查?', output_preview: '常见原因包括大事务阻塞、从库规格不足、binlog 传输延迟...', status: 'completed', route_type: 'rag', confidence: 0.84, duration_ms: 650, created_at: '2026-08-31T09:00:00Z' },
+    { id: 'aexec-009', agent_id: 'agent-rag-003', input_preview: 'ACK Ingress 如何配置 HTTPS?', output_preview: '通过 annotations 配置 SLB 证书，支持自动续期...', status: 'completed', route_type: 'rag', confidence: 0.91, duration_ms: 480, created_at: '2026-08-31T08:00:00Z' },
+    { id: 'aexec-010', agent_id: 'agent-rag-003', input_preview: 'ECS 磁盘在线扩容步骤是什么?', output_preview: '1. 控制台扩容云盘 2. SSH 登录执行 growpart 3. resize2fs...', status: 'completed', route_type: 'rag', confidence: 0.89, duration_ms: 520, created_at: '2026-08-30T15:30:00Z' },
   ],
   'agent-skill-004': [
-    { id: 'aexec-011', agent_id: 'agent-skill-004', input_preview: 'INC-2026-0891 ECS CPU 高负载工单...', output_preview: '优先级 P1，影响范围：生产环境 cn-hangzhou，建议立即响应...', status: 'completed', route_type: 'skill', confidence: 0.93, duration_ms: 820, created_at: '2026-08-08T09:12:00Z' },
-    { id: 'aexec-012', agent_id: 'agent-skill-004', input_preview: 'INC-2026-0890 SLB 健康检查失败...', output_preview: '优先级 P0，涉及组件 SLB + ECS，已自动指派给 SRE 值班...', status: 'completed', route_type: 'skill', confidence: 0.96, duration_ms: 750, created_at: '2026-08-08T08:45:00Z' },
-    { id: 'aexec-013', agent_id: 'agent-skill-004', input_preview: 'INC-2026-0885 安全组规则变更审核...', output_preview: '优先级 P3，常规变更，建议在变更窗口内执行...', status: 'completed', route_type: 'skill', confidence: 0.88, duration_ms: 680, created_at: '2026-08-07T10:00:00Z' },
+    { id: 'aexec-011', agent_id: 'agent-skill-004', input_preview: 'INC-2026-0891 ECS CPU 高负载工单...', output_preview: '优先级 P1，影响范围：生产环境 cn-hangzhou，建议立即响应...', status: 'completed', route_type: 'skill', confidence: 0.93, duration_ms: 820, created_at: '2026-08-31T09:12:00Z' },
+    { id: 'aexec-012', agent_id: 'agent-skill-004', input_preview: 'INC-2026-0890 SLB 健康检查失败...', output_preview: '优先级 P0，涉及组件 SLB + ECS，已自动指派给 SRE 值班...', status: 'completed', route_type: 'skill', confidence: 0.96, duration_ms: 750, created_at: '2026-08-31T08:45:00Z' },
+    { id: 'aexec-013', agent_id: 'agent-skill-004', input_preview: 'INC-2026-0885 安全组规则变更审核...', output_preview: '优先级 P3，常规变更，建议在变更窗口内执行...', status: 'completed', route_type: 'skill', confidence: 0.88, duration_ms: 680, created_at: '2026-08-30T10:00:00Z' },
   ],
   'agent-fta-007': [
-    { id: 'aexec-014', agent_id: 'agent-fta-007', input_preview: 'RDS rm-2ze-001 同步延迟 15s...', output_preview: '根因：批量 UPDATE 影响 52 万行导致 SQL 线程阻塞...', status: 'completed', route_type: 'fta', confidence: 0.89, duration_ms: 25100, created_at: '2026-08-07T16:20:00Z' },
-    { id: 'aexec-015', agent_id: 'agent-fta-007', input_preview: 'RDS rm-2ze-003 同步延迟 8s...', output_preview: '根因：从库 CPU 使用率 98%，建议升级从库规格...', status: 'completed', route_type: 'fta', confidence: 0.85, duration_ms: 15200, created_at: '2026-08-06T11:00:00Z' },
+    { id: 'aexec-014', agent_id: 'agent-fta-007', input_preview: 'RDS rm-2ze-001 同步延迟 15s...', output_preview: '根因：批量 UPDATE 影响 52 万行导致 SQL 线程阻塞...', status: 'completed', route_type: 'fta', confidence: 0.89, duration_ms: 25100, created_at: '2026-08-30T16:20:00Z' },
+    { id: 'aexec-015', agent_id: 'agent-fta-007', input_preview: 'RDS rm-2ze-003 同步延迟 8s...', output_preview: '根因：从库 CPU 使用率 98%，建议升级从库规格...', status: 'completed', route_type: 'fta', confidence: 0.85, duration_ms: 15200, created_at: '2026-08-29T11:00:00Z' },
   ],
 };
 
 // ─── Agent Runtime Status ───
 const mockAgentStatuses: Record<string, AgentRuntimeStatus> = {
-  'agent-mega-001': { uptime_seconds: 172800, total_executions: 1247, success_rate: 0.96, avg_latency_ms: 1180, last_execution_at: '2026-08-08T09:12:00Z', error_count_24h: 3, memory_mb: 256 },
-  'agent-fta-002': { uptime_seconds: 172800, total_executions: 523, success_rate: 0.91, avg_latency_ms: 15600, last_execution_at: '2026-08-08T08:15:00Z', error_count_24h: 5, memory_mb: 512 },
-  'agent-rag-003': { uptime_seconds: 172800, total_executions: 2891, success_rate: 0.98, avg_latency_ms: 550, last_execution_at: '2026-08-08T09:00:00Z', error_count_24h: 1, memory_mb: 384 },
-  'agent-skill-004': { uptime_seconds: 172800, total_executions: 1893, success_rate: 0.97, avg_latency_ms: 760, last_execution_at: '2026-08-08T09:12:00Z', error_count_24h: 2, memory_mb: 192 },
-  'agent-custom-005': { uptime_seconds: 0, total_executions: 89, success_rate: 0.85, avg_latency_ms: 2100, last_execution_at: '2026-07-28T18:00:00Z', error_count_24h: 0, memory_mb: 0 },
-  'agent-mega-006': { uptime_seconds: 3600, total_executions: 342, success_rate: 0.42, avg_latency_ms: 8900, last_execution_at: '2026-08-08T06:00:00Z', error_count_24h: 37, memory_mb: 890 },
-  'agent-fta-007': { uptime_seconds: 172800, total_executions: 267, success_rate: 0.94, avg_latency_ms: 20100, last_execution_at: '2026-08-07T16:20:00Z', error_count_24h: 1, memory_mb: 480 },
+  'agent-mega-001': { uptime_seconds: 172800, total_executions: 1247, success_rate: 0.96, avg_latency_ms: 1180, last_execution_at: '2026-08-31T09:12:00Z', error_count_24h: 3, memory_mb: 256 },
+  'agent-fta-002': { uptime_seconds: 172800, total_executions: 523, success_rate: 0.91, avg_latency_ms: 15600, last_execution_at: '2026-08-31T08:15:00Z', error_count_24h: 5, memory_mb: 512 },
+  'agent-rag-003': { uptime_seconds: 172800, total_executions: 2891, success_rate: 0.98, avg_latency_ms: 550, last_execution_at: '2026-08-31T09:00:00Z', error_count_24h: 1, memory_mb: 384 },
+  'agent-skill-004': { uptime_seconds: 172800, total_executions: 1893, success_rate: 0.97, avg_latency_ms: 760, last_execution_at: '2026-08-31T09:12:00Z', error_count_24h: 2, memory_mb: 192 },
+  'agent-custom-005': { uptime_seconds: 0, total_executions: 89, success_rate: 0.85, avg_latency_ms: 2100, last_execution_at: '2026-08-22T14:20:00Z', error_count_24h: 0, memory_mb: 0 },
+  'agent-mega-006': { uptime_seconds: 3600, total_executions: 342, success_rate: 0.42, avg_latency_ms: 8900, last_execution_at: '2026-08-31T06:00:00Z', error_count_24h: 37, memory_mb: 890 },
+  'agent-fta-007': { uptime_seconds: 172800, total_executions: 267, success_rate: 0.94, avg_latency_ms: 20100, last_execution_at: '2026-08-30T16:20:00Z', error_count_24h: 1, memory_mb: 480 },
+};
+
+// ─── Execution Detail 构建器：按 route_type 差异化生成管线 trace / hook / 记忆 ───
+const EXEC_KEYWORDS = ['ACK', 'RDS', 'ECS', 'SLB', 'etcd', 'HPA', 'NotReady', 'OOM', 'CrashLoopBackOff', 'NetworkPolicy', 'Ingress', 'HTTPS', '扩容', '同步延迟', '磁盘', '安全组', 'CPU'];
+
+const extractExecEntities = (input: string): string[] => {
+  const hits = EXEC_KEYWORDS.filter((k) => input.includes(k));
+  const ticket = input.match(/INC-\d{4}-\d{4}/);
+  if (ticket) hits.unshift(ticket[0]);
+  return hits.slice(0, 6);
+};
+
+const execAt = (base: string, offsetSeconds: number) =>
+  new Date(Date.parse(base) + offsetSeconds * 1000).toISOString().replace(/\.\d{3}Z$/, 'Z');
+
+const RAG_CORPORA = {
+  k8s: { collection_id: 'corpus-ops-k8s', collection_name: 'K8s 运维知识库', relevance_score: 0.92, matched_keywords: ['节点', 'NotReady', '调度'], document_count: 218 },
+  rds: { collection_id: 'corpus-ops-rds', collection_name: 'RDS 运维手册', relevance_score: 0.94, matched_keywords: ['主从同步', 'binlog', '延迟'], document_count: 156 },
+  ack: { collection_id: 'corpus-ops-ack', collection_name: 'ACK 最佳实践', relevance_score: 0.9, matched_keywords: ['Ingress', 'HTTPS', 'SLB'], document_count: 173 },
+  ecs: { collection_id: 'corpus-ops-ecs', collection_name: 'ECS 运维手册', relevance_score: 0.88, matched_keywords: ['磁盘', '扩容', 'growpart'], document_count: 132 },
+  fta: { collection_id: 'corpus-fta-trees', collection_name: 'FTA 故障树语料', relevance_score: 0.81, matched_keywords: ['根因', '故障树'], document_count: 47 },
+} satisfies Record<string, CorpusMatch>;
+
+const pickRagCorpora = (input: string): CorpusMatch[] => {
+  if (/RDS|主从|同步延迟|MySQL/.test(input)) return [RAG_CORPORA.rds, RAG_CORPORA.fta];
+  if (/Ingress|HTTPS|证书/.test(input)) return [RAG_CORPORA.ack, RAG_CORPORA.k8s];
+  if (/ECS|磁盘|扩容/.test(input)) return [RAG_CORPORA.ecs, RAG_CORPORA.k8s];
+  return [RAG_CORPORA.k8s, RAG_CORPORA.fta];
+};
+
+const FTA_TREE_TARGET: Record<string, string> = {
+  'agent-fta-002': 'ft-k8s-node-notready',
+  'agent-fta-007': 'ft-rds-replication-delay',
+};
+
+const buildCodeContext = (input: string) => {
+  if (input.includes('HPA')) return { language: 'yaml', has_code_blocks: true, detected_patterns: ['HorizontalPodAutoscaler', 'targetCPUUtilizationPercentage'] };
+  if (input.includes('etcd')) return { language: 'shell', has_code_blocks: true, detected_patterns: ['etcdctl endpoint health', 'compact + defrag'] };
+  return null;
+};
+
+const buildPipelineTrace = (base: AgentExecution): SelectorPipelineTrace => {
+  const input = base.input_preview;
+  const entities = extractExecEntities(input);
+  const strategy: SelectorStrategy =
+    base.route_type === 'skill' ? 'llm'
+    : base.route_type === 'fta' ? 'rule'
+    : base.route_type === 'rag' || base.route_type === 'multi' ? 'hybrid'
+    : 'rule';
+  const pipeline_latency_ms = strategy === 'rule' ? 14 : strategy === 'llm' ? 96 : 46;
+  const ftaTarget = FTA_TREE_TARGET[base.agent_id] ?? 'ft-k8s-node-notready';
+  const ticket = entities.find((e) => e.startsWith('INC-')) ?? 'INC-2026-0891';
+
+  const chain: RouteDecision[] | undefined =
+    base.route_type === 'multi'
+      ? [
+          { route_type: 'rag', route_target: 'kb-ops-corpus', confidence: 0.86, parameters: { top_k: 5 }, reasoning: '先检索相似案例与 runbook 知识' },
+          { route_type: 'fta', route_target: 'ft-k8s-node-notready', confidence: 0.89, parameters: { tree_id: 'ft-k8s-node-notready', max_depth: 8 }, reasoning: '并行发起 FTA 故障定位与容量评估分支' },
+          { route_type: 'skill', route_target: 'skill-ticket-triage', confidence: 0.9, parameters: { skill: 'ticket-triage' }, reasoning: '汇总结果并生成工单处置建议' },
+        ]
+      : undefined;
+
+  const intent =
+    base.route_type === 'multi'
+      ? { intent_type: 'multi' as const, confidence: base.confidence, entities, metadata: { model: 'kimi-k2.5', selector_version: 'v2.3' }, sub_intents: ['rag', 'workflow', 'skill'] as ('rag' | 'workflow' | 'skill')[], suggested_target: 'wf-composite-diagnosis' }
+      : base.route_type === 'fta'
+        ? { intent_type: 'workflow' as const, confidence: base.confidence, entities, metadata: { model: 'kimi-k2.5', selector_version: 'v2.3' }, sub_intents: [], suggested_target: ftaTarget }
+        : base.route_type === 'rag'
+          ? { intent_type: 'rag' as const, confidence: base.confidence, entities, metadata: { model: 'kimi-k2.5', selector_version: 'v2.3' }, sub_intents: [], suggested_target: 'kb-ops-corpus' }
+          : base.route_type === 'skill'
+            ? { intent_type: 'skill' as const, confidence: base.confidence, entities, metadata: { model: 'kimi-k2.5', selector_version: 'v2.3' }, sub_intents: [], suggested_target: 'skill-ticket-triage' }
+            : { intent_type: 'direct' as const, confidence: base.confidence, entities, metadata: { model: 'kimi-k2.5', selector_version: 'v2.3' }, sub_intents: [], suggested_target: 'llm-direct-infer' };
+
+  const parameters: Record<string, unknown> =
+    base.route_type === 'multi'
+      ? { parallel_branches: 3, branch_timeout_ms: 30000, merge_strategy: 'weighted_vote' }
+      : base.route_type === 'fta'
+        ? { tree_id: ftaTarget, max_depth: 8, min_probability: 0.05 }
+        : base.route_type === 'rag'
+          ? { top_k: 5, rerank: true, score_threshold: 0.6 }
+          : base.route_type === 'skill'
+            ? { skill: 'ticket-triage', ticket_id: ticket, priority_source: 'sla_matrix' }
+            : { temperature: 0.3, max_tokens: 2048 };
+
+  const reasoning =
+    base.route_type === 'multi'
+      ? '命中多智能体编排规则：诊断请求涉及知识检索、故障定位与工单处置三个子任务，拆分为并行分支'
+      : base.route_type === 'fta'
+        ? '匹配 FTA 故障树分析场景，输入包含节点/实例级故障特征'
+        : base.route_type === 'rag'
+          ? '命中知识检索意图，输入为运维问答类查询'
+          : base.route_type === 'skill'
+            ? '识别工单 ID 与处置意图，路由至技能执行'
+            : '简单问答/审查类请求，无需工具编排，直接推理';
+
+  const ragCollections =
+    base.route_type === 'rag' ? pickRagCorpora(input)
+    : base.route_type === 'multi' ? [RAG_CORPORA.k8s, RAG_CORPORA.fta]
+    : [];
+
+  return {
+    input,
+    strategy,
+    intent,
+    enriched_context: {
+      available_skills: base.route_type === 'skill' || base.route_type === 'multi' ? ['ticket-triage', 'log-analyzer', 'metric-alerter'] : ['log-analyzer', 'metric-alerter'],
+      active_workflows: base.route_type === 'multi' || base.route_type === 'fta' ? ['wf-composite-diagnosis', 'wf-001'] : ['wf-001'],
+      rag_collections: ragCollections,
+      code_context: buildCodeContext(input),
+    },
+    decision: { route_type: base.route_type, route_target: intent.suggested_target, confidence: base.confidence, parameters, reasoning, chain },
+    pipeline_latency_ms,
+  };
+};
+
+const buildHookLogs = (base: AgentExecution): HookExecutionLog[] => {
+  const logs: HookExecutionLog[] = [
+    { hook_name: '上下文压缩', hook_type: 'pre_execution', status: 'success', duration_ms: 12, input_preview: '历史上下文 8 条消息', output_preview: '压缩为 3 条核心消息', timestamp: execAt(base.created_at, 0) },
+    { hook_name: '权限与配额校验', hook_type: 'pre_execution', status: 'success', duration_ms: 8, input_preview: base.agent_id, output_preview: 'RBAC 通过 · 配额余量充足', timestamp: execAt(base.created_at, 1) },
+  ];
+  if (base.route_type === 'rag' || base.route_type === 'multi') {
+    logs.push({ hook_name: '知识库预取', hook_type: 'pre_execution', status: 'success', duration_ms: 15, input_preview: '检索 top-5 语料', output_preview: '预取 2 个 collection', timestamp: execAt(base.created_at, 2) });
+  }
+  if (base.status === 'failed') {
+    logs.push({ hook_name: '错误上报', hook_type: 'on_error', status: 'failed', duration_ms: 120, input_preview: base.input_preview, output_preview: '已上报 trace 并触发告警', timestamp: execAt(base.created_at, Math.round(base.duration_ms / 1000)) });
+  } else {
+    logs.push({ hook_name: '执行日志落盘', hook_type: 'post_execution', status: 'success', duration_ms: 6, input_preview: '执行结果', output_preview: `已记录到 trace-${base.id}`, timestamp: execAt(base.created_at, Math.round(base.duration_ms / 1000)) });
+  }
+  logs.push({ hook_name: '记忆写入', hook_type: 'post_execution', status: 'success', duration_ms: 9, input_preview: '本轮对话摘要', output_preview: '已写入长期记忆', timestamp: execAt(base.created_at, Math.round(base.duration_ms / 1000) + 1) });
+  return logs;
+};
+
+const buildMemoryContext = (base: AgentExecution): ConversationMessage[] => [
+  { id: `ctx-${base.id}-0`, conversation_id: `conv-${base.id}`, role: 'system', content: '你是阿里云 ACK/RDS 运维助手，回答需给出可执行步骤与风险提示', token_count: 42, sequence: 0, created_at: execAt(base.created_at, -300) },
+  { id: `ctx-${base.id}-1`, conversation_id: `conv-${base.id}`, role: 'user', content: base.input_preview, token_count: 36, sequence: 1, created_at: base.created_at },
+  { id: `ctx-${base.id}-2`, conversation_id: `conv-${base.id}`, role: 'assistant', content: base.output_preview, token_count: 88, sequence: 2, created_at: execAt(base.created_at, Math.round(base.duration_ms / 1000)) },
+];
+
+const buildTiming = (base: AgentExecution, trace: SelectorPipelineTrace, hooks: HookExecutionLog[]): TimingBreakdown => {
+  const pre = hooks.filter((h) => h.hook_type === 'pre_execution').reduce((s, h) => s + h.duration_ms, 0);
+  const post = hooks.filter((h) => h.hook_type !== 'pre_execution').reduce((s, h) => s + h.duration_ms, 0);
+  return {
+    selector_ms: trace.pipeline_latency_ms,
+    pre_hook_ms: pre,
+    post_hook_ms: post,
+    llm_inference_ms: Math.max(50, base.duration_ms - trace.pipeline_latency_ms - pre - post),
+    total_ms: base.duration_ms,
+  };
 };
 
 // ─── Settings ───
@@ -2786,28 +2940,19 @@ export const mockApi = {
     await randomDelay();
     const base = Object.values(mockAgentExecutions).flat().find((e) => e.id === execId);
     if (!base) throw new Error('Execution not found');
+    const trace = buildPipelineTrace(base);
+    const hooks = buildHookLogs(base);
     const detail: AgentExecutionDetail = {
       ...base,
       input_full: base.input_preview.replace('...', '。请提供详细的分析报告，包括可能的根因和修复建议。'),
-      output_full: base.output_preview.replace('...', '。\n\n**详细分析**\n\n经过多维度排查，确认问题根因如下...'),
-      pipeline_trace: {
-        input: base.input_preview,
-        strategy: 'hybrid',
-        intent: { intent_type: 'workflow', confidence: 0.87, entities: ['node', 'NotReady'], metadata: {}, sub_intents: [], suggested_target: 'ft-k8s-node-notready' },
-        enriched_context: { available_skills: ['log-analyzer', 'metric-alerter'], active_workflows: ['wf-001'], rag_collections: [], code_context: null },
-        decision: { route_type: base.route_type, route_target: 'ft-k8s-node-notready', confidence: base.confidence, parameters: {}, reasoning: '匹配 FTA 故障树分析场景' },
-        pipeline_latency_ms: 45,
-      },
-      hook_logs: [
-        { hook_name: '上下文压缩', hook_type: 'pre_execution', status: 'success', duration_ms: 12, input_preview: '历史上下文 8 条消息', output_preview: '压缩为 3 条核心消息', timestamp: '2026-08-08T09:12:00Z' },
-        { hook_name: '执行日志', hook_type: 'post_execution', status: 'success', duration_ms: 5, input_preview: '执行结果', output_preview: '已记录到 trace-001', timestamp: '2026-08-08T09:12:01Z' },
-      ],
-      memory_context: [
-        { id: 'ctx-001', conversation_id: 'conv-001', role: 'system', content: '你是 ACK 运维助手', token_count: 20, sequence: 0, created_at: '2026-08-08T09:00:00Z' },
-        { id: 'ctx-002', conversation_id: 'conv-001', role: 'user', content: base.input_preview, token_count: 32, sequence: 1, created_at: '2026-08-08T09:12:00Z' },
-      ],
-      error_detail: base.status === 'failed' ? '连接超时：无法连接到目标集群 API Server (10.0.1.100:6443)，超过 30s 重试上限' : null,
-      timing_breakdown: { selector_ms: 45, pre_hook_ms: 12, llm_inference_ms: base.duration_ms - 70, post_hook_ms: 5, total_ms: base.duration_ms },
+      output_full: base.output_preview.replace('...', '。\n\n**详细分析**\n\n经过多维度排查，已确认问题根因，处置建议与风险提示见上。'),
+      pipeline_trace: trace,
+      hook_logs: hooks,
+      memory_context: buildMemoryContext(base),
+      error_detail: base.status === 'failed'
+        ? `${base.output_preview.replace('分析失败：', '')}\n\n目标集群 API Server (10.0.1.100:6443) 连接超时，指数退避重试 3 次（2s/4s/8s）均失败。\n排查建议：检查 kubeconfig 凭证有效期、安全组 6443 端口放行策略与专线隧道状态。`
+        : null,
+      timing_breakdown: buildTiming(base, trace, hooks),
     };
     return detail;
   },

@@ -245,3 +245,100 @@ describe('mock 数据质量 · Monitoring', () => {
     }
   });
 });
+
+describe('mock 数据质量 · ExecutionDetail 深度差异化', () => {
+  const readPage = (rel: string) =>
+    readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf-8');
+
+  it('不同 route_type 的 pipeline_trace 差异化：intent_type 随路由变化、strategy 多样', async () => {
+    const multi = await mockApi.getAgentExecutionDetail('agent-mega-001', 'aexec-001');
+    const fta = await mockApi.getAgentExecutionDetail('agent-fta-002', 'aexec-005');
+    const rag = await mockApi.getAgentExecutionDetail('agent-rag-003', 'aexec-008');
+    const skill = await mockApi.getAgentExecutionDetail('agent-skill-004', 'aexec-011');
+    expect(multi.pipeline_trace?.intent.intent_type).toBe('multi');
+    expect(fta.pipeline_trace?.intent.intent_type).toBe('workflow');
+    expect(rag.pipeline_trace?.intent.intent_type).toBe('rag');
+    expect(skill.pipeline_trace?.intent.intent_type).toBe('skill');
+    const strategies = new Set([multi, fta, rag, skill].map((d) => d.pipeline_trace?.strategy));
+    expect(strategies.size, 'strategy 应至少出现两种').toBeGreaterThanOrEqual(2);
+  });
+
+  it('multi 带 chain 子决策，rag 带语料命中，direct 代码审查带 code_context', async () => {
+    const multi = await mockApi.getAgentExecutionDetail('agent-mega-001', 'aexec-001');
+    expect(multi.pipeline_trace?.decision.chain?.length, 'multi 缺少 chain 子决策').toBeGreaterThanOrEqual(2);
+    const rag = await mockApi.getAgentExecutionDetail('agent-rag-003', 'aexec-008');
+    const corpora = rag.pipeline_trace?.enriched_context.rag_collections ?? [];
+    expect(corpora.length, 'rag 路由缺少语料命中').toBeGreaterThan(0);
+    for (const c of corpora) {
+      expect(c.matched_keywords.length, `语料 ${c.collection_id} 缺少匹配关键词`).toBeGreaterThan(0);
+      expect(c.relevance_score, `语料 ${c.collection_id} 缺少相关度`).toBeGreaterThan(0);
+    }
+    const direct = await mockApi.getAgentExecutionDetail('agent-mega-001', 'aexec-004');
+    expect(direct.pipeline_trace?.enriched_context.code_context?.has_code_blocks, 'HPA 审查应识别代码上下文').toBe(true);
+  });
+
+  it('意图实体从输入提取、子意图与决策参数填实', async () => {
+    const multi = await mockApi.getAgentExecutionDetail('agent-mega-001', 'aexec-001');
+    expect(multi.pipeline_trace?.intent.entities.length, '缺少意图实体').toBeGreaterThan(0);
+    expect(multi.pipeline_trace?.intent.sub_intents.length, 'multi 缺少子意图').toBeGreaterThan(0);
+    expect(Object.keys(multi.pipeline_trace?.decision.parameters ?? {}).length, '缺少决策参数').toBeGreaterThan(0);
+    const skill = await mockApi.getAgentExecutionDetail('agent-skill-004', 'aexec-011');
+    expect(skill.pipeline_trace?.intent.entities.some((e) => e.startsWith('INC-')), '工单实体未提取').toBe(true);
+  });
+
+  it('hook_logs ≥4 条、覆盖 pre/post 钩子、时间戳晚于执行开始且落在演示窗口', async () => {
+    const d = await mockApi.getAgentExecutionDetail('agent-fta-002', 'aexec-005');
+    expect(d.hook_logs.length).toBeGreaterThanOrEqual(4);
+    const types = new Set(d.hook_logs.map((h) => h.hook_type));
+    expect(types.has('pre_execution'), '缺少 pre_execution 钩子').toBe(true);
+    expect(types.has('post_execution'), '缺少 post_execution 钩子').toBe(true);
+    for (const h of d.hook_logs) {
+      expect(h.timestamp >= '2026-08-25' && h.timestamp < '2026-09-01', `hook 时间越界: ${h.timestamp}`).toBe(true);
+      expect(h.timestamp >= d.created_at, `hook 早于执行开始: ${h.timestamp}`).toBe(true);
+    }
+  });
+
+  it('失败执行的 on_error 钩子可见，成功执行无 on_error', async () => {
+    const failed = await mockApi.getAgentExecutionDetail('agent-fta-002', 'aexec-007');
+    expect(failed.hook_logs.some((h) => h.hook_type === 'on_error'), '失败执行缺少 on_error 钩子').toBe(true);
+    const ok = await mockApi.getAgentExecutionDetail('agent-rag-003', 'aexec-009');
+    expect(ok.hook_logs.some((h) => h.hook_type === 'on_error'), '成功执行不应有 on_error').toBe(false);
+  });
+
+  it('全部执行与运行状态时间统一到演示窗口 2026-08-25~31', async () => {
+    for (const agentId of ['agent-mega-001', 'agent-fta-002', 'agent-rag-003', 'agent-skill-004', 'agent-fta-007']) {
+      const { executions } = await mockApi.getAgentExecutions(agentId);
+      expect(executions.length, `${agentId} 无执行记录`).toBeGreaterThan(0);
+      for (const e of executions) {
+        expect(e.created_at >= '2026-08-25' && e.created_at < '2026-09-01', `${e.id} 执行时间越界: ${e.created_at}`).toBe(true);
+      }
+      const status = await mockApi.getAgentStatus(agentId);
+      const latest = executions.map((e) => e.created_at).sort().slice(-1)[0];
+      expect(status.last_execution_at, `${agentId} last_execution_at 与执行列表不一致`).toBe(latest);
+    }
+  });
+
+  it('耗时分解与管线延迟自洽：selector_ms 等于管线延迟且各阶段之和不超过 total', async () => {
+    const d = await mockApi.getAgentExecutionDetail('agent-mega-001', 'aexec-001');
+    const t = d.timing_breakdown;
+    expect(t.selector_ms, 'selector_ms 应等于管线延迟').toBe(d.pipeline_trace?.pipeline_latency_ms);
+    expect(t.selector_ms + t.pre_hook_ms + t.llm_inference_ms + t.post_hook_ms).toBeLessThanOrEqual(t.total_ms + 5);
+  });
+
+  it('memory_context 时间与执行时间一致（非旧硬编码）', async () => {
+    const d = await mockApi.getAgentExecutionDetail('agent-fta-002', 'aexec-005');
+    expect(d.memory_context.length).toBeGreaterThan(0);
+    for (const m of d.memory_context) {
+      expect(m.created_at >= '2026-08-25', `记忆上下文时间越界: ${m.created_at}`).toBe(true);
+    }
+  });
+
+  it('ExecutionDetail 页面渲染记忆上下文/chain/语料命中/代码上下文/相对时间', () => {
+    const src = readPage('../pages/Agents/ExecutionDetail.tsx');
+    expect(src, '缺少 memory_context 渲染').toMatch(/memory_context/);
+    expect(src, '缺少 chain 子决策渲染').toMatch(/chain/);
+    expect(src, '缺少 rag_collections 渲染').toMatch(/rag_collections/);
+    expect(src, '缺少 code_context 渲染').toMatch(/code_context/);
+    expect(src, '缺少相对时间 formatTimeAgo').toMatch(/formatTimeAgo/);
+  });
+});

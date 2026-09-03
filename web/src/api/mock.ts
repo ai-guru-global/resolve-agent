@@ -1902,7 +1902,7 @@ const mockCircuitBreakers: CircuitBreakerStatus[] = [
   { name: 'llm-provider-mimo', state: 'closed', failures: 1, threshold: 5, last_state_change: '2026-08-31T09:30:00Z' },
   { name: 'milvus-vector-db', state: 'closed', failures: 0, threshold: 5, last_state_change: '2026-08-31T08:00:00Z' },
   { name: 'redis-cache', state: 'half_open', failures: 3, threshold: 5, last_state_change: '2026-08-31T10:15:00Z' },
-  { name: 'external-webhook', state: 'open', failures: 7, threshold: 5, last_state_change: '2026-08-31T09:45:00Z' },
+  { name: 'external-webhook', state: 'open', failures: 5, threshold: 5, last_state_change: '2026-08-31T09:45:00Z' },
 ];
 
 const mockAdaptiveWeights: AdaptiveWeight[] = [

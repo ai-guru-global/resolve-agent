@@ -168,6 +168,16 @@ describe('页面源码去假化回归', () => {
     expect(src, 'commit 写死').not.toMatch(/a3f7c2e/);
     expect(src, '旧时间锚点写死').not.toMatch(/2026-04-08/);
   });
+
+  it('Monitoring 页面不再写死可用性/拦截率，且具备确认交互与 Agent 跳转', () => {
+    const src = readPage('../pages/Monitoring/index.tsx');
+    expect(src, '系统可用性写死').not.toMatch(/99\.2%/);
+    expect(src, '安全拦截率写死').not.toContain('value="100%"');
+    expect(src, '缺少相对时间 formatTimeAgo').toMatch(/formatTimeAgo/);
+    expect(src, '缺少 Agent 跳转 useNavigate').toMatch(/useNavigate/);
+    expect(src, '缺少本地确认状态 ackedIds').toMatch(/ackedIds/);
+    expect(src, '确认按钮未绑定 onClick').toMatch(/onClick=\{.*确认|确认.*onClick/s);
+  });
 });
 
 describe('mock 数据质量 · 全站时间线统一', () => {
@@ -196,6 +206,42 @@ describe('mock 数据质量 · 全站时间线统一', () => {
       if (t.id.startsWith('INC-')) {
         expect(t.id.startsWith('INC-2026'), `工单 ${t.id} 年份未统一`).toBe(true);
       }
+    }
+  });
+});
+
+describe('mock 数据质量 · Monitoring', () => {
+  it('系统指标状态有 normal 也有非 normal（健康率可计算）', async () => {
+    const { system_metrics } = await mockApi.getMonitoringOverview();
+    expect(system_metrics.length).toBeGreaterThanOrEqual(4);
+    const statuses = new Set(system_metrics.map((m) => m.status));
+    expect(statuses.has('normal'), '缺少正常指标').toBe(true);
+    expect(statuses.size).toBeGreaterThan(1);
+  });
+
+  it('熔断器既有 closed 也有非 closed 状态，failures ≤ threshold', async () => {
+    const { circuit_breakers } = await mockApi.getMonitoringOverview();
+    expect(circuit_breakers.length).toBeGreaterThanOrEqual(3);
+    const states = new Set(circuit_breakers.map((c) => c.state));
+    expect(states.has('closed'), '缺少 closed 熔断器').toBe(true);
+    expect(states.size).toBeGreaterThan(1);
+    for (const c of circuit_breakers) {
+      expect(c.failures).toBeLessThanOrEqual(c.threshold);
+    }
+  });
+
+  it('告警列表 acknowledged 有 true 也有 false（确认交互可演示）', async () => {
+    const { alerts } = await mockApi.getMonitoringOverview();
+    expect(alerts.length).toBeGreaterThanOrEqual(4);
+    expect(alerts.some((a) => a.acknowledged), '缺少已确认告警').toBe(true);
+    expect(alerts.some((a) => !a.acknowledged), '缺少未确认告警').toBe(true);
+  });
+
+  it('MonitoringOverview.total 与 alerts 数量一致，反馈信号落在演示窗口', async () => {
+    const overview = await mockApi.getMonitoringOverview();
+    expect(overview.total).toBe(overview.alerts.length);
+    for (const f of overview.feedback_signals) {
+      expect(f.last_seen.startsWith('2026-08-31'), `反馈信号时间越界: ${f.last_seen}`).toBe(true);
     }
   });
 });

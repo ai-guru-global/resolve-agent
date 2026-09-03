@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Bell,
   AlertTriangle,
@@ -26,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useMonitoringOverview } from '@/hooks/useMonitoring';
 import type { AlertItem, SystemMetric, FeedbackSignal, CircuitBreakerStatus, AdaptiveWeight, StatusVariant } from '@/types';
+import { formatTimeAgo } from '@/lib/demoTime';
 
 // ─── Local icon map for SystemMetric.key ───
 const METRIC_ICONS: Record<SystemMetric['key'], typeof Cpu> = {
@@ -71,6 +73,8 @@ const METRIC_BAR_COLORS: Record<string, string> = {
 
 export default function MonitorAlerts() {
   const [showAcknowledged, setShowAcknowledged] = useState(true);
+  const [ackedIds, setAckedIds] = useState<Set<string>>(new Set());
+  const navigate = useNavigate();
   const { data } = useMonitoringOverview();
   const alerts: AlertItem[] = data?.alerts ?? [];
   const systemMetrics: SystemMetric[] = data?.system_metrics ?? [];
@@ -78,10 +82,14 @@ export default function MonitorAlerts() {
   const circuitBreakers: CircuitBreakerStatus[] = data?.circuit_breakers ?? [];
   const adaptiveWeights: AdaptiveWeight[] = data?.adaptive_weights ?? [];
 
-  const activeAlerts = alerts.filter((a) => !a.acknowledged).length;
-  const criticalAlerts = alerts.filter((a) => a.severity === 'critical' && !a.acknowledged).length;
+  const isAcked = (a: AlertItem) => a.acknowledged || ackedIds.has(a.id);
+  const activeAlerts = alerts.filter((a) => !isAcked(a)).length;
+  const criticalAlerts = alerts.filter((a) => a.severity === 'critical' && !isAcked(a)).length;
 
-  const filteredAlerts = showAcknowledged ? alerts : alerts.filter((a) => !a.acknowledged);
+  const filteredAlerts = showAcknowledged ? alerts : alerts.filter((a) => !isAcked(a));
+
+  const healthyMetrics = systemMetrics.filter((m) => m.status === 'normal').length;
+  const closedBreakers = circuitBreakers.filter((c) => c.state === 'closed').length;
 
   return (
     <div className="space-y-6 animate-slide-up">
@@ -94,8 +102,18 @@ export default function MonitorAlerts() {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <MetricCard icon={Bell} value={String(activeAlerts)} label="活跃告警" />
         <MetricCard icon={AlertTriangle} value={String(criticalAlerts)} label="严重告警" />
-        <MetricCard icon={CheckCircle2} value="99.2%" label="系统可用性" trend={{ value: 0.1, direction: 'up' }} />
-        <MetricCard icon={Shield} value="100%" label="安全拦截率" />
+        <MetricCard
+          icon={CheckCircle2}
+          value={`${systemMetrics.length ? Math.round((healthyMetrics / systemMetrics.length) * 100) : 0}%`}
+          label="指标健康率"
+          sub={`${healthyMetrics}/${systemMetrics.length} 项正常`}
+        />
+        <MetricCard
+          icon={Shield}
+          value={`${circuitBreakers.length ? Math.round((closedBreakers / circuitBreakers.length) * 100) : 0}%`}
+          label="熔断器闭合率"
+          sub={`${closedBreakers}/${circuitBreakers.length} 闭合`}
+        />
       </div>
 
       <Tabs defaultValue="alerts">
@@ -121,7 +139,7 @@ export default function MonitorAlerts() {
         <TabsContent value="alerts" className="mt-4 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              共 {filteredAlerts.length} 条告警
+              共 {filteredAlerts.length} / {data?.total ?? alerts.length} 条告警
             </p>
             <Button
               variant="ghost"
@@ -144,18 +162,30 @@ export default function MonitorAlerts() {
                       <div className="flex items-center gap-2 mb-1">
                         <p className="text-sm font-medium">{alert.title}</p>
                         <StatusBadge variant={severityInfo.variant} label={severityInfo.label} />
-                        {alert.acknowledged && (
+                        {isAcked(alert) && (
                           <span className="text-[10px] text-muted-foreground/50 bg-muted/30 rounded px-1.5 py-0.5">已确认</span>
                         )}
                       </div>
                       <p className="text-[12px] text-muted-foreground leading-relaxed mb-2">{alert.description}</p>
                       <div className="flex items-center gap-3 text-[10px] text-muted-foreground/60">
-                        <span>Agent: {alert.agent_name}</span>
+                        <button
+                          type="button"
+                          className="hover:text-foreground hover:underline underline-offset-2 transition-colors"
+                          onClick={() => navigate(`/agents/${alert.agent_id}`)}
+                        >
+                          Agent: {alert.agent_name}
+                        </button>
                         <span>{new Date(alert.created_at).toLocaleString('zh-CN')}</span>
+                        <span>{formatTimeAgo(alert.created_at)}</span>
                       </div>
                     </div>
-                    {!alert.acknowledged && (
-                      <Button variant="outline" size="sm" className="text-[11px] shrink-0">
+                    {!isAcked(alert) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-[11px] shrink-0"
+                        onClick={() => setAckedIds((prev) => new Set(prev).add(alert.id))}
+                      >
                         确认
                       </Button>
                     )}
@@ -195,7 +225,9 @@ export default function MonitorAlerts() {
                       </div>
                       <div className="flex items-center justify-between text-[10px] text-muted-foreground/50">
                         <span>0</span>
-                        <span>阈值: {metric.threshold}{metric.unit}</span>
+                        <span>
+                          余量 {Math.max(0, +(metric.threshold - metric.value).toFixed(1))}{metric.unit} · 阈值: {metric.threshold}{metric.unit}
+                        </span>
                       </div>
                     </div>
                   </CardContent>
@@ -274,6 +306,7 @@ export default function MonitorAlerts() {
                         </td>
                         <td className="py-1.5 px-2 text-right text-muted-foreground/60">
                           {new Date(sig.last_seen).toLocaleTimeString('zh-CN')}
+                          <span className="ml-1">({formatTimeAgo(sig.last_seen)})</span>
                         </td>
                       </tr>
                     ))}
@@ -313,7 +346,10 @@ export default function MonitorAlerts() {
                       </div>
                       <div className="flex items-center justify-between text-[10px] text-muted-foreground/60">
                         <span>Failures: {cb.failures}/{cb.threshold}</span>
-                        <span>{new Date(cb.last_state_change).toLocaleTimeString('zh-CN')}</span>
+                        <span>
+                          {new Date(cb.last_state_change).toLocaleTimeString('zh-CN')}
+                          <span className="ml-1">({formatTimeAgo(cb.last_state_change)})</span>
+                        </span>
                       </div>
                     </div>
                   );
@@ -341,6 +377,8 @@ export default function MonitorAlerts() {
                     </p>
                     <p className="text-[10px] text-muted-foreground/60 mt-1">
                       {w.trend === 'up' ? '↑ 上升' : w.trend === 'down' ? '↓ 下降' : '→ 稳定'}
+                      {' · '}
+                      {(w.weight - 1 >= 0 ? '+' : '') + (w.weight - 1).toFixed(2)}
                     </p>
                   </div>
                 ))}

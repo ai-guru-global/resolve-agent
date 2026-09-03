@@ -1,6 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Clock, Tag, Layers, Activity, Loader2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Clock,
+  Tag,
+  Layers,
+  Activity,
+  Loader2,
+  ExternalLink,
+  Database,
+  User,
+  Search,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/PageHeader';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -8,13 +19,43 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { api } from '@/api/client';
-import type { TroubleshootingSolution, SolutionExecution, SolutionSeverity } from '@/types';
+import type {
+  TroubleshootingSolution,
+  SolutionExecution,
+  SolutionSeverity,
+  SolutionStatus,
+} from '@/types';
+
+const severityLabels: Record<SolutionSeverity, string> = {
+  critical: '严重',
+  high: '高',
+  medium: '中',
+  low: '低',
+};
 
 const severityVariant: Record<SolutionSeverity, 'failed' | 'degraded' | 'progressing' | 'unknown'> = {
   critical: 'failed',
   high: 'degraded',
   medium: 'progressing',
   low: 'unknown',
+};
+
+const statusLabels: Record<SolutionStatus, string> = {
+  active: '启用',
+  draft: '草稿',
+  archived: '已归档',
+};
+
+const statusVariant: Record<SolutionStatus, 'healthy' | 'progressing' | 'unknown'> = {
+  active: 'healthy',
+  draft: 'progressing',
+  archived: 'unknown',
+};
+
+const execStatusVariant: Record<string, 'healthy' | 'degraded' | 'failed'> = {
+  success: 'healthy',
+  partial: 'degraded',
+  failed: 'failed',
 };
 
 function SolutionSection({ title, content }: { title: string; content: string }) {
@@ -91,14 +132,18 @@ export default function SolutionDetail() {
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold">{solution.title}</h1>
             <StatusBadge
-              label={solution.severity}
+              label={severityLabels[solution.severity]}
               variant={severityVariant[solution.severity]}
+            />
+            <StatusBadge
+              label={statusLabels[solution.status]}
+              variant={statusVariant[solution.status]}
             />
             <Badge variant="outline" className="text-xs">
               v{solution.version}
             </Badge>
           </div>
-          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
             {solution.domain && (
               <span className="flex items-center gap-1">
                 <Layers className="h-3 w-3" />
@@ -112,8 +157,16 @@ export default function SolutionDetail() {
               </span>
             )}
             <span className="flex items-center gap-1">
+              <User className="h-3 w-3" />
+              创建人 {solution.created_by}
+            </span>
+            <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              {new Date(solution.updated_at).toLocaleString('zh-CN')}
+              创建于 {new Date(solution.created_at).toLocaleDateString('zh-CN')}
+            </span>
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              更新于 {new Date(solution.updated_at).toLocaleString('zh-CN')}
             </span>
           </div>
         </div>
@@ -137,6 +190,65 @@ export default function SolutionDetail() {
         <SolutionSection title="排查步骤" content={solution.troubleshooting_steps} />
         <SolutionSection title="解决方案" content={solution.resolution_steps} />
       </div>
+
+      {/* Provenance */}
+      {(solution.source_uri ||
+        solution.rag_collection_id ||
+        solution.rag_document_id ||
+        solution.search_keywords ||
+        Object.keys(solution.metadata).length > 0) && (
+        <>
+          <Separator />
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold">溯源信息</h3>
+            <div className="rounded-md border border-border p-3 text-xs space-y-2">
+              {solution.source_uri && (
+                <div className="flex items-center gap-2">
+                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <a
+                    href={solution.source_uri}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary hover:underline break-all"
+                  >
+                    {solution.source_uri}
+                  </a>
+                </div>
+              )}
+              {(solution.rag_collection_id || solution.rag_document_id) && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Database className="h-3.5 w-3.5 text-muted-foreground" />
+                  {solution.rag_collection_id && (
+                    <Badge variant="outline" className="text-[10px] font-mono">
+                      collection: {solution.rag_collection_id}
+                    </Badge>
+                  )}
+                  {solution.rag_document_id && (
+                    <Badge variant="outline" className="text-[10px] font-mono">
+                      document: {solution.rag_document_id}
+                    </Badge>
+                  )}
+                </div>
+              )}
+              {solution.search_keywords && (
+                <div className="flex items-center gap-2">
+                  <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <span className="text-muted-foreground">{solution.search_keywords}</span>
+                </div>
+              )}
+              {Object.entries(solution.metadata).length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  {Object.entries(solution.metadata).map(([k, v]) => (
+                    <Badge key={k} variant="secondary" className="text-[10px]">
+                      {k}: {String(v)}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Related resources */}
       {(solution.related_skill_names.length > 0 || solution.related_workflow_ids.length > 0) && (
@@ -181,16 +293,27 @@ export default function SolutionDetail() {
                     </span>
                     <StatusBadge
                       label={exec.status}
-                      variant={exec.status === 'success' ? 'healthy' : 'failed'}
+                      variant={execStatusVariant[exec.status] ?? 'failed'}
                     />
                   </div>
                   {exec.outcome_notes && (
                     <p className="text-muted-foreground">{exec.outcome_notes}</p>
                   )}
+                  {Object.keys(exec.trigger_context).length > 0 && (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-muted-foreground shrink-0">触发上下文:</span>
+                      {Object.entries(exec.trigger_context).map(([k, v]) => (
+                        <Badge key={k} variant="outline" className="text-[10px] font-mono">
+                          {k}: {String(v)}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                   <div className="flex items-center gap-3 text-muted-foreground">
                     <span>耗时: {exec.duration_ms}ms</span>
                     <span>有效性: {(exec.effectiveness_score * 100).toFixed(0)}%</span>
-                    <span>{new Date(exec.created_at).toLocaleString('zh-CN')}</span>
+                    <span>开始: {new Date(exec.started_at).toLocaleString('zh-CN')}</span>
+                    <span>完成: {new Date(exec.completed_at).toLocaleString('zh-CN')}</span>
                   </div>
                 </div>
               ))}

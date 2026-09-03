@@ -342,3 +342,103 @@ describe('mock 数据质量 · ExecutionDetail 深度差异化', () => {
     expect(src, '缺少相对时间 formatTimeAgo').toMatch(/formatTimeAgo/);
   });
 });
+
+describe('mock 数据质量 · Solutions 过滤、溯源与执行记录', () => {
+  const readPage = (rel: string) =>
+    readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf-8');
+
+  it('方案库覆盖 4 档严重度与 3 种状态（active/draft/archived）', async () => {
+    const { solutions } = await mockApi.listSolutions();
+    expect(solutions.length, '方案样本过少').toBeGreaterThanOrEqual(10);
+    const severities = new Set(solutions.map((s) => s.severity));
+    expect([...severities].sort()).toEqual(['critical', 'high', 'low', 'medium']);
+    const statuses = new Set(solutions.map((s) => s.status));
+    expect(statuses.has('active'), '缺少 active 方案').toBe(true);
+    expect(statuses.has('draft'), '缺少 draft 方案').toBe(true);
+    expect(statuses.has('archived'), '缺少 archived 方案').toBe(true);
+  });
+
+  it('listSolutions 支持 domain/severity/status 过滤', async () => {
+    const k8s = await mockApi.listSolutions({ domain: 'kubernetes' });
+    expect(k8s.solutions.length).toBeGreaterThan(0);
+    for (const s of k8s.solutions) {
+      expect(s.domain, `domain 过滤失效: ${s.id}`).toBe('kubernetes');
+    }
+    const high = await mockApi.listSolutions({ severity: 'high' });
+    expect(high.solutions.length).toBeGreaterThan(0);
+    for (const s of high.solutions) {
+      expect(s.severity, `severity 过滤失效: ${s.id}`).toBe('high');
+    }
+    const archived = await mockApi.listSolutions({ status: 'archived' });
+    expect(archived.solutions.length, '缺少 archived 方案可过滤').toBeGreaterThan(0);
+    for (const s of archived.solutions) {
+      expect(s.status, `status 过滤失效: ${s.id}`).toBe('archived');
+    }
+  });
+
+  it('searchSolutions 支持关键词 / status / tags 过滤', async () => {
+    const kw = await mockApi.searchSolutions({ keyword: 'crashloop' });
+    expect(kw.solutions.length, '关键词 crashloop 应命中 ≥2 条').toBeGreaterThanOrEqual(2);
+    const archived = await mockApi.searchSolutions({ status: 'archived' });
+    expect(archived.solutions.length).toBeGreaterThan(0);
+    for (const s of archived.solutions) expect(s.status).toBe('archived');
+    const oom = await mockApi.searchSolutions({ tags: ['oom'] });
+    expect(oom.solutions.length, 'tags 过滤无结果').toBeGreaterThan(0);
+  });
+
+  it('至少 3 个方案有执行记录，字段全量且时间落在演示窗口', async () => {
+    const { solutions } = await mockApi.listSolutions();
+    let withExec = 0;
+    for (const sol of solutions) {
+      const { executions } = await mockApi.listSolutionExecutions(sol.id);
+      if (executions.length === 0) continue;
+      withExec += 1;
+      for (const e of executions) {
+        expect(e.solution_id).toBe(sol.id);
+        expect(Object.keys(e.trigger_context).length, `${e.id} 缺少 trigger_context`).toBeGreaterThan(0);
+        expect(e.effectiveness_score, `${e.id} effectiveness 越界`).toBeGreaterThan(0);
+        expect(e.effectiveness_score).toBeLessThanOrEqual(1);
+        expect(e.duration_ms, `${e.id} duration 异常`).toBeGreaterThan(0);
+        expect(e.outcome_notes.length, `${e.id} 缺少 outcome_notes`).toBeGreaterThan(0);
+        expect(
+          e.created_at >= '2026-08-25' && e.created_at < '2026-09-01',
+          `${e.id} 执行时间越界: ${e.created_at}`,
+        ).toBe(true);
+      }
+    }
+    expect(withExec, '有执行记录的方案太少').toBeGreaterThanOrEqual(3);
+  });
+
+  it('kudig 溯源方案带 source_uri / metadata.category / created_by', async () => {
+    const { solutions } = await mockApi.listSolutions();
+    const kudig = solutions.filter((s) => s.metadata.source === 'kudig');
+    expect(kudig.length).toBeGreaterThanOrEqual(5);
+    for (const s of kudig) {
+      expect(s.source_uri.startsWith('https://'), `${s.id} 缺少 source_uri`).toBe(true);
+      expect(s.rag_collection_id.length, `${s.id} 缺少 rag_collection_id`).toBeGreaterThan(0);
+      expect(String(s.metadata.category ?? '').length, `${s.id} 缺少 metadata.category`).toBeGreaterThan(0);
+      expect(s.created_by.length, `${s.id} 缺少 created_by`).toBeGreaterThan(0);
+    }
+  });
+
+  it('SolutionList 页面渲染过滤器与新建/编辑表单', () => {
+    const src = readPage('../pages/Solutions/SolutionList.tsx');
+    expect(src, '缺少 severity 过滤器').toMatch(/severity/);
+    expect(src, '缺少 domain 过滤器').toMatch(/domain/);
+    expect(src, '缺少 status 过滤器').toMatch(/status/);
+    expect(src, '缺少新建方案调用 createSolution').toMatch(/createSolution/);
+    expect(src, '缺少编辑方案调用 updateSolution').toMatch(/updateSolution/);
+  });
+
+  it('SolutionDetail 页面渲染溯源字段全量', () => {
+    const src = readPage('../pages/Solutions/SolutionDetail.tsx');
+    expect(src, '缺少状态徽标').toMatch(/solution\.status/);
+    expect(src, '缺少来源链接 source_uri').toMatch(/source_uri/);
+    expect(src, '缺少 RAG 溯源').toMatch(/rag_collection_id/);
+    expect(src, '缺少 search_keywords').toMatch(/search_keywords/);
+    expect(src, '缺少 created_by').toMatch(/created_by/);
+    expect(src, '缺少 created_at 渲染').toMatch(/created_at/);
+    expect(src, '缺少 metadata 渲染').toMatch(/metadata/);
+    expect(src, '严重度未用中文映射 severityLabels').toMatch(/severityLabels/);
+  });
+});

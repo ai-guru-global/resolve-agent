@@ -2481,6 +2481,78 @@ const mockSolutions: TroubleshootingSolution[] = [
     created_at: '2026-08-10T08:00:00Z',
     updated_at: '2026-08-10T08:00:00Z',
   },
+  {
+    id: 'sol-004',
+    title: 'Redis 缓存击穿排查方案',
+    problem_symptoms: '热点 Key 过期瞬间大量请求穿透到数据库，RDS QPS 突刺至平时 10 倍以上，应用响应延迟显著上升',
+    key_information: '1. Redis 慢日志与 Key 过期监控\n2. RDS QPS 与连接数突刺曲线\n3. 应用访问日志中的慢请求分布\n4. 热点 Key 统计（redis-cli --hotkeys）',
+    troubleshooting_steps: '1. 对比 Key 过期时间与 RDS 流量突刺时间点\n2. 确认是否存在单点热点 Key\n3. 检查应用是否使用互斥锁或逻辑过期策略\n4. 评估缓存 TTL 设置合理性',
+    resolution_steps: '1. 为热点 Key 添加互斥锁重建缓存\n2. 使用逻辑过期避免集中失效\n3. 对高频 Key 设置随机化 TTL\n4. 引入本地缓存二级兜底',
+    domain: 'database',
+    component: 'redis',
+    severity: 'critical',
+    tags: ['redis', 'cache', 'hotspot', 'rds'],
+    search_keywords: 'cache breakdown hotkey 穿透 击穿 ttl redis qps spike',
+    version: 1,
+    status: 'active',
+    source_uri: '',
+    rag_collection_id: 'solutions',
+    rag_document_id: 'sol-004',
+    related_skill_names: [],
+    related_workflow_ids: [],
+    metadata: {},
+    created_by: 'system',
+    created_at: '2026-08-04T09:30:00Z',
+    updated_at: '2026-08-20T14:10:00Z',
+  },
+  {
+    id: 'sol-005',
+    title: 'Nginx 502 网关错误排查方案',
+    problem_symptoms: 'Nginx 反向代理返回 502 Bad Gateway，upstream 日志出现 connect() failed 或 no live upstreams',
+    key_information: '1. Nginx error_log 中 upstream 错误详情\n2. 后端服务进程与端口监听状态\n3. 后端响应时间与连接队列\n4. upstream keepalive 与超时配置',
+    troubleshooting_steps: '1. 查看 error_log 定位 upstream 失败原因\n2. 检查后端服务是否存活并可连通\n3. 验证 proxy_connect_timeout / proxy_read_timeout 配置\n4. 检查后端连接数是否打满',
+    resolution_steps: '1. 后端宕机: 重启服务并补充健康检查\n2. 超时: 调整 proxy 超时参数\n3. 连接打满: 扩容 upstream 或开启 keepalive',
+    domain: 'network',
+    component: 'nginx',
+    severity: 'medium',
+    tags: ['nginx', '502', 'gateway', 'upstream'],
+    search_keywords: 'nginx 502 bad gateway upstream connect failed timeout',
+    version: 1,
+    status: 'draft',
+    source_uri: '',
+    rag_collection_id: 'solutions',
+    rag_document_id: 'sol-005',
+    related_skill_names: [],
+    related_workflow_ids: [],
+    metadata: {},
+    created_by: 'user',
+    created_at: '2026-08-28T11:00:00Z',
+    updated_at: '2026-08-28T11:00:00Z',
+  },
+  {
+    id: 'sol-006',
+    title: 'K8s 1.22 升级前检查清单',
+    problem_symptoms: '集群从 1.22 升级前需确认 deprecated API 使用情况、节点版本偏差与addon 兼容性，避免升级后负载不可用',
+    key_information: '1. kubent / pluto 扫描的 deprecated API 清单\n2. kubelet 版本偏差（不超过 minor ±1）\n3. CNI / CSI 版本兼容矩阵\n4. PodDisruptionBudget 与升级并发配置',
+    troubleshooting_steps: '1. 扫描集群内资源引用的废弃 API\n2. 核对节点版本偏差\n3. 评估 CNI/CSI/Ingress 组件兼容性\n4. 制定升级批次与回滚预案',
+    resolution_steps: '1. 废弃 API: 迁移 workload 至新版本 API 组\n2. 节点偏差: 先升级 kubelet 再升级控制面\n3. 组件不兼容: 升级 addon 至兼容版本',
+    domain: 'kubernetes',
+    component: 'upgrade',
+    severity: 'low',
+    tags: ['k8s', 'upgrade', 'deprecated-api', 'checklist'],
+    search_keywords: 'k8s upgrade deprecated api kubelet skew addon compatibility',
+    version: 2,
+    status: 'archived',
+    source_uri: '',
+    rag_collection_id: 'solutions',
+    rag_document_id: 'sol-006',
+    related_skill_names: [],
+    related_workflow_ids: [],
+    metadata: {},
+    created_by: 'system',
+    created_at: '2026-06-15T10:00:00Z',
+    updated_at: '2026-08-18T09:00:00Z',
+  },
 ];
 
 const mockSolutionExecutions: Record<string, SolutionExecution[]> = {
@@ -2489,14 +2561,72 @@ const mockSolutionExecutions: Record<string, SolutionExecution[]> = {
       id: 'exec-001',
       solution_id: 'sol-001',
       executor: 'agent-mega-001',
-      trigger_context: { ticket_id: 'TK-2026041201' },
+      trigger_context: { ticket_id: 'INC-2026-0888', route: 'fta' },
       status: 'success',
       outcome_notes: 'OOM 问题确认，调整 memory limits 后恢复',
       effectiveness_score: 0.92,
       duration_ms: 45000,
-      started_at: '2026-08-12T10:30:00Z',
-      completed_at: '2026-08-12T10:30:45Z',
-      created_at: '2026-08-12T10:30:45Z',
+      started_at: '2026-08-26T10:30:00Z',
+      completed_at: '2026-08-26T10:30:45Z',
+      created_at: '2026-08-26T10:30:45Z',
+    },
+  ],
+  'sol-002': [
+    {
+      id: 'exec-201',
+      solution_id: 'sol-002',
+      executor: 'agent-rag-003',
+      trigger_context: { ticket_id: 'INC-2026-0889', alert_id: 'alert-db-001' },
+      status: 'success',
+      outcome_notes: '定位到夜间批量归档大事务，拆分批次后延迟回落至 3s 内',
+      effectiveness_score: 0.87,
+      duration_ms: 120000,
+      started_at: '2026-08-27T02:15:00Z',
+      completed_at: '2026-08-27T02:17:00Z',
+      created_at: '2026-08-27T02:17:00Z',
+    },
+    {
+      id: 'exec-202',
+      solution_id: 'sol-002',
+      executor: 'agent-mega-001',
+      trigger_context: { incident_id: 'INC-2026-0892', source: 'escalation' },
+      status: 'partial',
+      outcome_notes: '延迟暂时缓解，建议开启并行复制并升级从库规格',
+      effectiveness_score: 0.64,
+      duration_ms: 210000,
+      started_at: '2026-08-29T08:40:00Z',
+      completed_at: '2026-08-29T08:43:30Z',
+      created_at: '2026-08-29T08:43:30Z',
+    },
+  ],
+  'sol-003': [
+    {
+      id: 'exec-301',
+      solution_id: 'sol-003',
+      executor: 'agent-fta-002',
+      trigger_context: { ticket_id: 'INC-2026-0890', route: 'fta' },
+      status: 'failed',
+      outcome_notes: '确认 ECS 安全组未放行 SLB 健康检查网段，待网络组变更窗口处理',
+      effectiveness_score: 0.22,
+      duration_ms: 60000,
+      started_at: '2026-08-28T16:20:00Z',
+      completed_at: '2026-08-28T16:21:00Z',
+      created_at: '2026-08-28T16:21:00Z',
+    },
+  ],
+  'sol-004': [
+    {
+      id: 'exec-401',
+      solution_id: 'sol-004',
+      executor: 'agent-skill-004',
+      trigger_context: { session_id: 'conv-003', keyword: 'redis 击穿' },
+      status: 'success',
+      outcome_notes: '热点 Key 命中，建议互斥锁重建并随机化 TTL',
+      effectiveness_score: 0.78,
+      duration_ms: 30000,
+      started_at: '2026-08-30T11:05:00Z',
+      completed_at: '2026-08-30T11:05:30Z',
+      created_at: '2026-08-30T11:05:30Z',
     },
   ],
 };
@@ -2731,9 +2861,16 @@ export const mockApi = {
   },
 
   // ── Solutions ──
-  listSolutions: async () => {
+  listSolutions: async (params?: { domain?: string; severity?: string; status?: string; limit?: number; offset?: number }) => {
     await randomDelay();
-    return { solutions: [...mockSolutions], total: mockSolutions.length };
+    let results = [...mockSolutions];
+    if (params?.domain) results = results.filter((s) => s.domain === params.domain);
+    if (params?.severity) results = results.filter((s) => s.severity === params.severity);
+    if (params?.status) results = results.filter((s) => s.status === params.status);
+    const offset = params?.offset ?? 0;
+    const limit = params?.limit ?? results.length;
+    const page = results.slice(offset, offset + limit);
+    return { solutions: page, total: results.length };
   },
 
   getSolution: async (id: string) => {
@@ -2792,7 +2929,12 @@ export const mockApi = {
     await randomDelay();
     let results = [...mockSolutions];
     if (opts.domain) results = results.filter((s) => s.domain === opts.domain);
+    if (opts.component) results = results.filter((s) => s.component === opts.component);
     if (opts.severity) results = results.filter((s) => s.severity === opts.severity);
+    if (opts.status) results = results.filter((s) => s.status === opts.status);
+    if (opts.tags && opts.tags.length > 0) {
+      results = results.filter((s) => opts.tags!.every((t) => s.tags.includes(t)));
+    }
     if (opts.keyword) {
       const kw = opts.keyword.toLowerCase();
       results = results.filter(
@@ -2802,7 +2944,10 @@ export const mockApi = {
           s.search_keywords.toLowerCase().includes(kw),
       );
     }
-    return { solutions: results, total: results.length };
+    const offset = opts.offset ?? 0;
+    const limit = opts.limit ?? results.length;
+    const page = results.slice(offset, offset + limit);
+    return { solutions: page, total: results.length };
   },
 
   bulkCreateSolutions: async (solutions: Partial<TroubleshootingSolution>[]) => {

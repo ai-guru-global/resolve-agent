@@ -8,6 +8,7 @@ import {
   Zap,
   BrainCircuit,
   FileText,
+  Clock,
 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { EmptyState } from '@/components/EmptyState';
@@ -164,7 +165,7 @@ export default function Collections() {
                     <CardDescription>{(col as { description: string }).description}</CardDescription>
                   )}
                 </CardHeader>
-                <CardContent className="flex items-center gap-4 text-sm text-muted-foreground">
+                <CardContent className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Database className="h-3 w-3" />
                     {col.vector_count.toLocaleString()} 向量
@@ -172,6 +173,10 @@ export default function Collections() {
                   {'embedding_model' in col && (
                     <span className="font-mono text-xs">{(col as { embedding_model: string }).embedding_model}</span>
                   )}
+                  <span className="flex items-center gap-1 text-xs">
+                    <Clock className="h-3 w-3" />
+                    {new Date(col.created_at).toLocaleDateString('zh-CN')} 创建
+                  </span>
                 </CardContent>
               </Card>
             </Link>

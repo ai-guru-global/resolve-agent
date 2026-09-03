@@ -74,6 +74,11 @@ export default function Documents() {
       label: '上传时间',
       render: (val) => <span className="text-xs">{new Date(String(val)).toLocaleString('zh-CN')}</span>,
     },
+    {
+      key: 'updated_at',
+      label: '更新时间',
+      render: (val) => <span className="text-xs">{new Date(String(val)).toLocaleString('zh-CN')}</span>,
+    },
   ];
 
   // Add collection column when not filtered

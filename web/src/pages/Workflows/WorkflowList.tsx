@@ -50,6 +50,16 @@ const columns: DataTableColumn<WorkflowDetail>[] = [
         <span className="text-muted-foreground">—</span>
       ),
   },
+  {
+    key: 'created_at',
+    label: '创建时间',
+    render: (val) => <span className="text-xs text-muted-foreground">{new Date(String(val)).toLocaleDateString('zh-CN')}</span>,
+  },
+  {
+    key: 'updated_at',
+    label: '更新时间',
+    render: (val) => <span className="text-xs text-muted-foreground">{new Date(String(val)).toLocaleDateString('zh-CN')}</span>,
+  },
 ];
 
 export default function WorkflowList() {

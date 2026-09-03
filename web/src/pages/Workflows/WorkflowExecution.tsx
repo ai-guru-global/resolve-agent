@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Activity, GitBranch } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
@@ -8,6 +8,7 @@ import { MetricCard } from '@/components/MetricCard';
 import { DataTable, type DataTableColumn } from '@/components/DataTable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import FTATreeEditor from '@/components/TreeEditor/FTATreeEditor';
 import { useWorkflowExecutions, useWorkflowFaultTree, useSaveFaultTree } from '@/hooks/useWorkflows';
@@ -65,11 +66,23 @@ const columns: DataTableColumn<WorkflowExecutionRecord>[] = [
     label: '开始时间',
     render: (val) => <span className="text-xs">{new Date(String(val)).toLocaleString('zh-CN')}</span>,
   },
+  {
+    key: 'completed_at',
+    label: '结束时间',
+    render: (val) =>
+      val ? (
+        <span className="text-xs">{new Date(String(val)).toLocaleString('zh-CN')}</span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      ),
+  },
 ];
 
 export default function WorkflowExecution() {
   const { id } = useParams();
   const workflowId = id ?? 'wf-001';
+
+  const [selected, setSelected] = useState<WorkflowExecutionRecord | null>(null);
 
   // Execution data
   const { data, isLoading } = useWorkflowExecutions(workflowId);
@@ -158,12 +171,68 @@ export default function WorkflowExecution() {
                 <CardTitle>执行记录</CardTitle>
               </CardHeader>
               <CardContent className="px-0">
-                <DataTable columns={columns} data={executions} loading={isLoading} emptyMessage="暂无执行记录" />
+                <DataTable
+                  columns={columns}
+                  data={executions}
+                  loading={isLoading}
+                  emptyMessage="暂无执行记录"
+                  onRowClick={(row) => setSelected(row)}
+                />
               </CardContent>
             </Card>
           )}
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-mono">{selected?.id}</DialogTitle>
+            <DialogDescription>工作流「{selected?.workflow_name}」单次执行详情</DialogDescription>
+          </DialogHeader>
+          {selected && (
+            <dl className="space-y-2.5 text-sm">
+              <div className="flex items-center justify-between gap-4">
+                <dt className="text-muted-foreground">状态</dt>
+                <dd>
+                  {(() => {
+                    const s = executionStatusMap[selected.status];
+                    return s ? <StatusBadge variant={s.variant} label={s.label} /> : selected.status;
+                  })()}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <dt className="text-muted-foreground">触发源</dt>
+                <dd className="font-mono text-xs">{selected.trigger}</dd>
+              </div>
+              <div className="flex items-start justify-between gap-4">
+                <dt className="shrink-0 text-muted-foreground">根因</dt>
+                <dd className="text-right leading-relaxed">{selected.root_cause ?? '—'}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <dt className="text-muted-foreground">评估节点</dt>
+                <dd className="font-mono">{selected.nodes_evaluated}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <dt className="text-muted-foreground">耗时</dt>
+                <dd className="font-mono">
+                  {selected.duration_ms > 1000
+                    ? `${(selected.duration_ms / 1000).toFixed(1)}s`
+                    : `${selected.duration_ms}ms`}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <dt className="text-muted-foreground">开始时间</dt>
+                <dd>{new Date(selected.started_at).toLocaleString('zh-CN')}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <dt className="text-muted-foreground">结束时间</dt>
+                <dd>{selected.completed_at ? new Date(selected.completed_at).toLocaleString('zh-CN') : '—'}</dd>
+              </div>
+            </dl>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

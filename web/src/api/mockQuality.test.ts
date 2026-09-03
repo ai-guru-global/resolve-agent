@@ -598,3 +598,72 @@ describe('mock 数据质量 · T6 Agents 域打通', () => {
     expect(src, '协作会话缺少 completed_at 展示').toMatch(/completed_at/);
   });
 });
+
+describe('mock 数据质量 · T7 Workflow/RAG 时间字段与详情展开', () => {
+  it('工作流执行记录统一落在演示窗口（2026-08-25~31）', async () => {
+    const { executions } = await mockApi.listWorkflowExecutions();
+    expect(executions.length).toBeGreaterThanOrEqual(30);
+    for (const e of executions) {
+      expect(e.started_at, `执行 ${e.id} 开始时间越界: ${e.started_at}`).toMatch(/2026-08-2[5-9]|2026-08-31/);
+      if (e.status === 'completed' || e.status === 'failed') {
+        expect(e.completed_at, `执行 ${e.id}（${e.status}）缺少结束时间`).not.toBeNull();
+        if (e.completed_at) {
+          expect(new Date(e.completed_at).getTime()).toBeGreaterThanOrEqual(new Date(e.started_at).getTime());
+        }
+      }
+    }
+  }, 15000);
+
+  it('工作流列表 last_executed 落窗，created_at 差异化不再全同', async () => {
+    const { workflows } = await mockApi.listWorkflowDetails();
+    expect(workflows.length).toBeGreaterThanOrEqual(30);
+    for (const w of workflows) {
+      // archived 工作流的 last_executed 保留归档前旧时间是合理存量语义
+      if (w.last_executed && w.status !== 'archived') {
+        expect(w.last_executed, `工作流 ${w.id} 最后执行时间越界: ${w.last_executed}`).toMatch(
+          /2026-08-2[5-9]|2026-08-31/,
+        );
+      }
+      expect(new Date(w.updated_at).getTime()).toBeGreaterThanOrEqual(new Date(w.created_at).getTime());
+    }
+    const createdAtSet = new Set(workflows.map((w) => w.created_at));
+    expect(createdAtSet.size, 'created_at 全部相同，缺乏差异化').toBeGreaterThan(5);
+  }, 15000);
+
+  it('集合详情与文档均携带完整时间字段', async () => {
+    const { collections } = await mockApi.listCollectionDetails();
+    expect(collections.length).toBeGreaterThanOrEqual(30);
+    const createdAtSet = new Set(collections.map((c) => c.created_at));
+    expect(createdAtSet.size, '集合 created_at 应存在且差异化').toBeGreaterThan(3);
+
+    const { documents } = await mockApi.listDocuments();
+    expect(documents.length).toBeGreaterThan(0);
+    for (const d of documents) {
+      expect(d.updated_at, `文档 ${d.id} 缺少更新时间`).toBeTruthy();
+      expect(new Date(d.updated_at).getTime()).toBeGreaterThanOrEqual(new Date(d.uploaded_at).getTime());
+    }
+  }, 15000);
+
+  it('WorkflowList 展示创建/更新时间列', () => {
+    const src = readPage('../pages/Workflows/WorkflowList.tsx');
+    expect(src, '工作流列表缺少创建时间列').toMatch(/created_at/);
+    expect(src, '工作流列表缺少更新时间列').toMatch(/updated_at/);
+  });
+
+  it('WorkflowExecution 展示结束时间列并支持行点击查看详情', () => {
+    const src = readPage('../pages/Workflows/WorkflowExecution.tsx');
+    expect(src, '执行记录缺少结束时间列').toMatch(/completed_at/);
+    expect(src, '执行记录不支持行点击详情').toMatch(/onRowClick/);
+    expect(src, '详情未使用 Dialog 渲染').toMatch(/<DialogContent/);
+  });
+
+  it('RAG Documents 展示更新时间列', () => {
+    const src = readPage('../pages/RAG/Documents.tsx');
+    expect(src, '文档列表缺少更新时间列').toMatch(/updated_at/);
+  });
+
+  it('RAG Collections 卡片展示创建时间', () => {
+    const src = readPage('../pages/RAG/Collections.tsx');
+    expect(src, '集合卡片缺少创建时间').toMatch(/created_at/);
+  });
+});

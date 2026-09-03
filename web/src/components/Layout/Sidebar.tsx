@@ -52,7 +52,7 @@ const navGroups: NavGroup[] = [
       { name: '首页', href: '/', icon: Home },
       { name: '全局看板', href: '/dashboard', icon: LayoutDashboard },
       { name: '架构说明', href: '/architecture', icon: Layers },
-      { name: 'Mobile App', href: '/mobile', icon: Smartphone },
+      { name: '移动端（Mobile App）', href: '/mobile', icon: Smartphone },
       { name: 'Demo 演示', href: '/demo', icon: Play },
     ],
   },
@@ -62,7 +62,7 @@ const navGroups: NavGroup[] = [
       { name: 'Memory 记忆', href: '/architecture/memory', icon: DatabaseZap },
       { name: 'Planner 规划', href: '/architecture/planner', icon: GitBranch },
       { name: 'ToolHub 工具', href: '/architecture/toolhub', icon: Zap },
-      { name: 'Loop Engineering', href: '/architecture/loop-engineering', icon: RefreshCw },
+      { name: '循环工程（Loop Engineering）', href: '/architecture/loop-engineering', icon: RefreshCw },
     ],
   },
   {
@@ -86,7 +86,7 @@ const navGroups: NavGroup[] = [
   {
     label: '分析 & 测试',
     items: [
-      { name: 'Playground', href: '/playground', icon: MessageSquare },
+      { name: '演练场（Playground）', href: '/playground', icon: MessageSquare },
       { name: '追踪分析', href: '/traces', icon: Activity },
       { name: '评估基准', href: '/evaluation', icon: BarChart3 },
       { name: '监控告警', href: '/monitoring', icon: Bell },

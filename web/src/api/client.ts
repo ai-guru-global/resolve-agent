@@ -41,6 +41,7 @@ import type {
   MonitoringOverview,
 } from '../types';
 import {
+  DEV_MOCKS_ENABLED,
   DEV_CODE_ANALYSIS_MOCKS_ENABLED,
 } from './mockRuntime';
 
@@ -58,9 +59,21 @@ async function checkBackend(): Promise<boolean> {
     method: 'GET',
     signal: AbortSignal.timeout(1500),
   })
-    .then((res) => {
-      backendAvailable = res.ok;
-      return res.ok;
+    .then(async (res) => {
+      if (!res.ok) {
+        backendAvailable = false;
+        return false;
+      }
+      // 静态托管域会把未知路径回退为 200 的 index.html（SPA fallback），
+      // 只有能解析出 JSON 对象的 /health 才算真实后端
+      try {
+        const data = await res.json();
+        backendAvailable = data !== null && typeof data === 'object';
+        return backendAvailable;
+      } catch {
+        backendAvailable = false;
+        return false;
+      }
     })
     .catch(() => {
       backendAvailable = false;
@@ -308,7 +321,7 @@ const CODE_ANALYSIS_MOCK_METHODS = new Set<ApiMethodName>([
   'deleteTrafficGraph',
 ]);
 
-const loadLegacyMockApi: () => Promise<Partial<ApiType> | null> = import.meta.env.DEV
+const loadLegacyMockApi: () => Promise<Partial<ApiType> | null> = DEV_MOCKS_ENABLED
   ? (() => {
       let legacyMockApiPromise: Promise<Partial<ApiType> | null> | null = null;
 
@@ -327,7 +340,7 @@ const loadLegacyMockApi: () => Promise<Partial<ApiType> | null> = import.meta.en
 
 const loadCodeAnalysisMockMethod: (
   methodName: ApiMethodName,
-) => Promise<ApiMethod | null> = import.meta.env.DEV
+) => Promise<ApiMethod | null> = DEV_MOCKS_ENABLED
   ? async (methodName) => {
       if (!DEV_CODE_ANALYSIS_MOCKS_ENABLED || !CODE_ANALYSIS_MOCK_METHODS.has(methodName)) {
         return null;

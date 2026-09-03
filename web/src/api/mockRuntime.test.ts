@@ -26,6 +26,23 @@ describe('mock runtime switches', () => {
     ).toBe(false);
   });
 
+  it('enables mocks in production builds only via the fallback flag', () => {
+    expect(
+      areDevMocksEnabled({
+        dev: false,
+        mockFallback: true,
+      }),
+    ).toBe(true);
+
+    expect(
+      areDevMocksEnabled({
+        dev: false,
+        mockFallback: true,
+        mockDisabled: true,
+      }),
+    ).toBe(false);
+  });
+
   it('keeps code analysis mocks off when real API is forced', () => {
     expect(
       shouldUseCodeAnalysisMocks({

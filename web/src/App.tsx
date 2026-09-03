@@ -43,6 +43,7 @@ const TicketSummaryPage = lazy(() => import('./pages/TicketSummary'));
 const MemoryArchitecture = lazy(() => import('./pages/Architecture/MemoryArchitecture'));
 const PlannerArchitecture = lazy(() => import('./pages/Architecture/PlannerArchitecture'));
 const ToolHubArchitecture = lazy(() => import('./pages/Architecture/ToolHubArchitecture'));
+const LoopEngineeringArchitecture = lazy(() => import('./pages/Architecture/LoopEngineeringArchitecture'));
 const Demo = lazy(() => import('./pages/Demo'));
 const Mobile = lazy(() => import('./pages/Mobile'));
 
@@ -99,6 +100,7 @@ export default function App() {
           <Route path="/architecture/memory" element={<MemoryArchitecture />} />
           <Route path="/architecture/planner" element={<PlannerArchitecture />} />
           <Route path="/architecture/toolhub" element={<ToolHubArchitecture />} />
+          <Route path="/architecture/loop-engineering" element={<LoopEngineeringArchitecture />} />
           <Route path="/mobile" element={<Mobile />} />
           <Route path="/architecture/:doc" element={<ArchitecturePage />} />
           <Route path="/settings" element={<Settings />} />

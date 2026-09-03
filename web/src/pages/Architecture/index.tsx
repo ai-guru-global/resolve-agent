@@ -173,7 +173,7 @@ const designPrinciples = [
 ];
 
 // Style 6: Claude Official colors
-const COLORS = {
+export const COLORS = {
   bg: '#f8f6f3',
   blue: '#a8c5e6',
   green: '#9dd4c7',
@@ -188,7 +188,7 @@ const COLORS = {
   teal: '#8fd4d4',
 };
 
-function SvgDefs() {
+export function SvgDefs() {
   return (
     <defs>
       <marker id="arrow-main" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
@@ -212,7 +212,7 @@ function LayerLabel({ x, y, children }: { x: number; y: number; children: React.
   );
 }
 
-function Arrow({ x1, y1, x2, y2, dashed = false, label }: {
+export function Arrow({ x1, y1, x2, y2, dashed = false, label }: {
   x1: number; y1: number; x2: number; y2: number;
   dashed?: boolean; label?: string;
 }) {
@@ -552,7 +552,7 @@ function HarnessDiagram() {
   );
 }
 
-function LoopEngineeringDiagram() {
+export function LoopEngineeringDiagram() {
   const W = 720;
   const H = 360;
 

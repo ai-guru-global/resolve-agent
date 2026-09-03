@@ -17,7 +17,7 @@ export default function ToolHubArchitecturePage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Wrench className="h-6 w-6" />
-          🔧 ToolHub
+          ToolHub
         </h1>
         <p className="text-muted-foreground">工具发现、Schema 注册、Capability 映射与安全策略</p>
       </div>

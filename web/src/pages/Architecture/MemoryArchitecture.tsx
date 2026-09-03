@@ -16,7 +16,7 @@ export default function MemoryArchitecturePage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Database className="h-6 w-6" />
-          💾 Hierarchical Memory
+          Hierarchical Memory
         </h1>
         <p className="text-muted-foreground">三层记忆架构 - Working / Episodic / Long-term</p>
       </div>

@@ -18,6 +18,8 @@ import {
   HardDrive,
   Timer,
   Server,
+  Ticket,
+  FileCheck,
 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { MetricCard } from '@/components/MetricCard';
@@ -37,6 +39,7 @@ import type {
   AlertItem,
   StatusVariant,
   RouteType,
+  RouteDistribution,
   HourlyExecution,
 } from '@/types';
 import {
@@ -46,7 +49,9 @@ import {
   useActivityEvents,
   useExecutionStats,
   useAlerts,
+  useSystemInfo,
 } from '@/hooks/useDashboard';
+import { formatTimeAgo } from '@/lib/demoTime';
 
 const connectionStatusMap: Record<string, { label: string; variant: StatusVariant }> = {
   connected: { label: '已连接', variant: 'healthy' },
@@ -116,19 +121,6 @@ function formatUptime(seconds: number): string {
   if (days > 0) return `${days}d ${hours}h`;
   const minutes = Math.floor(seconds / 60);
   return `${minutes}m`;
-}
-
-function formatTimeAgo(isoString: string): string {
-  const now = new Date('2026-04-08T10:00:00Z');
-  const then = new Date(isoString);
-  const diffMs = now.getTime() - then.getTime();
-  const minutes = Math.floor(diffMs / 60000);
-  if (minutes < 1) return '刚刚';
-  if (minutes < 60) return `${minutes} 分钟前`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} 小时前`;
-  const days = Math.floor(hours / 24);
-  return `${days} 天前`;
 }
 
 function formatDuration(ms: number): string {
@@ -208,8 +200,12 @@ function AgentCard({ agent, onClick }: { agent: AgentOverview; onClick: () => vo
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+      <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
         <span>运行 {formatUptime(agent.uptime_seconds)}</span>
+        <span>内存 {agent.memory_mb > 0 ? `${agent.memory_mb} MB` : '—'}</span>
+      </div>
+      <div className="flex items-center justify-between text-[10px]">
+        <span className="text-muted-foreground">最后执行 {formatTimeAgo(agent.last_execution_at)}</span>
         {agent.error_count_24h > 0 && (
           <span className="text-status-failed font-medium">{agent.error_count_24h} 错误/24h</span>
         )}
@@ -268,7 +264,7 @@ function ActivityTimeline({ events, onAgentClick }: { events: ActivityEvent[]; o
   );
 }
 
-function RouteDistributionChart({ stats }: { stats: { route_type: RouteType; count: number; percentage: number }[] }) {
+function RouteDistributionChart({ stats }: { stats: RouteDistribution[] }) {
   const maxCount = Math.max(...stats.map((s) => s.count), 1);
   return (
     <div className="space-y-2.5">
@@ -276,7 +272,7 @@ function RouteDistributionChart({ stats }: { stats: { route_type: RouteType; cou
         <div key={s.route_type} className="group">
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs text-muted-foreground">{routeTypeLabels[s.route_type]}</span>
-            <span className="text-xs font-medium tabular-nums">{s.count.toLocaleString()} <span className="text-muted-foreground">({s.percentage.toFixed(1)}%)</span></span>
+            <span className="text-xs font-medium tabular-nums">{s.count.toLocaleString()} <span className="text-muted-foreground">({s.percentage.toFixed(1)}% · 置信 {s.avg_confidence.toFixed(2)})</span></span>
           </div>
           <div className="h-2 w-full rounded-full bg-muted">
             <div
@@ -311,7 +307,7 @@ function HourlyChart({ data }: { data: HourlyExecution[] }) {
                 />
               )}
               <div className="hidden group-hover:block absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-popover border border-border rounded px-2 py-1 text-[10px] whitespace-nowrap z-10">
-                {d.hour}:00 — {d.count} 次执行
+                {d.hour}:00 — {d.count} 次（成功 {d.success_count} / 失败 {d.failed_count}）
               </div>
             </div>
           );
@@ -330,7 +326,7 @@ function HourlyChart({ data }: { data: HourlyExecution[] }) {
 
 const defaultSeverity = { label: '低', variant: 'unknown' as StatusVariant, icon: Info };
 
-function AlertCard({ alert }: { alert: AlertItem }) {
+function AlertCard({ alert, onAgentClick }: { alert: AlertItem; onAgentClick: (id: string) => void }) {
   const severity = alert.severity;
   const severityLevel = severityConfig[severity] ?? defaultSeverity;
   const Icon = severityLevel.icon;
@@ -348,7 +344,9 @@ function AlertCard({ alert }: { alert: AlertItem }) {
           </div>
           <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">{alert.description}</p>
           <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
-            <span>{alert.agent_name}</span>
+            <button onClick={() => onAgentClick(alert.agent_id)} className="text-primary hover:underline">
+              {alert.agent_name}
+            </button>
             <span>·</span>
             <span>{formatTimeAgo(alert.created_at)}</span>
             {alert.acknowledged && <span className="text-status-healthy">已确认</span>}
@@ -367,6 +365,7 @@ export default function Dashboard() {
   const { data: activityData, isLoading: activityLoading } = useActivityEvents();
   const { data: statsData, isLoading: statsLoading } = useExecutionStats();
   const { data: alertsData, isLoading: alertsLoading } = useAlerts();
+  const { data: systemInfo } = useSystemInfo();
 
   const connStatus = platformStatus
     ? connectionStatusMap[platformStatus.connection_status] ?? { label: '未知', variant: 'unknown' as StatusVariant }
@@ -379,8 +378,10 @@ export default function Dashboard() {
         { icon: Bot, value: String(metrics.total_agents), label: 'Agent 总数', sub: `${metrics.active_agents} 运行 / ${metrics.error_agents} 异常`, trend: undefined },
         { icon: Activity, value: String(metrics.today_executions), label: '今日执行', trend: metrics.execution_trend },
         { icon: CheckCircle2, value: `${(metrics.success_rate * 100).toFixed(1)}%`, label: '执行成功率', sub: `${(metrics.success_rate * 100) >= 95 ? '优秀' : '需关注'}` },
-        { icon: Timer, value: formatDuration(metrics.avg_latency_ms), label: '平均延迟', sub: 'P99: 25.1s' },
-        { icon: Zap, value: String(metrics.skill_executions), label: 'Skills 执行', trend: metrics.execution_trend },
+        { icon: Timer, value: formatDuration(metrics.avg_latency_ms), label: '平均延迟', sub: statsData ? `P99 ${formatDuration(statsData.p99_duration_ms)}` : undefined },
+        { icon: Zap, value: String(metrics.skill_executions), label: 'Skills 执行' },
+        { icon: Ticket, value: String(metrics.today_tickets), label: '今日工单', trend: metrics.ticket_trend },
+        { icon: FileCheck, value: String(metrics.change_approvals), label: '变更审批' },
         { icon: Database, value: metrics.knowledge_entries.toLocaleString(), label: '知识条目' },
       ]
     : [];
@@ -405,9 +406,9 @@ export default function Dashboard() {
       />
 
       {/* Row 1: Metric Cards */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
         {metricsLoading
-          ? Array.from({ length: 6 }).map((_, i) => (
+          ? Array.from({ length: 8 }).map((_, i) => (
               <Card key={i}>
                 <CardContent className="p-4">
                   <Skeleton className="h-4 w-16 mb-2" />
@@ -421,6 +422,7 @@ export default function Dashboard() {
                 icon={m.icon}
                 value={m.value}
                 label={m.label}
+                sub={m.sub}
                 trend={m.trend}
               />
             ))}
@@ -665,7 +667,7 @@ export default function Dashboard() {
                 <ScrollArea className="h-[240px]">
                   <div className="space-y-2 pr-2">
                     {alertsData.alerts.map((alert) => (
-                      <AlertCard key={alert.id} alert={alert} />
+                      <AlertCard key={alert.id} alert={alert} onAgentClick={(id) => navigate(`/agents/${id}`)} />
                     ))}
                   </div>
                 </ScrollArea>
@@ -717,11 +719,15 @@ export default function Dashboard() {
               <div className="space-y-2 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">版本</span>
-                  <span className="font-mono">v0.6.0</span>
+                  <span className="font-mono">{systemInfo ? `v${systemInfo.version}` : '—'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Commit</span>
-                  <span className="font-mono">a3f7c2e</span>
+                  <span className="font-mono">{systemInfo?.commit ?? '—'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">构建日期</span>
+                  <span className="font-mono">{systemInfo?.build_date?.slice(0, 10) ?? '—'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">区域</span>
@@ -730,6 +736,10 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">同步间隔</span>
                   <span className="font-mono">{platformStatus?.sync_interval_seconds ?? '—'}s</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">最近同步</span>
+                  <span className="font-mono">{platformStatus ? formatTimeAgo(platformStatus.last_sync_at) : '—'}</span>
                 </div>
               </div>
             </CardContent>

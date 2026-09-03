@@ -49,3 +49,10 @@ export function useAlerts() {
     queryFn: api.getAlerts,
   });
 }
+
+export function useSystemInfo() {
+  return useQuery({
+    queryKey: ['system', 'info'],
+    queryFn: api.systemInfo,
+  });
+}

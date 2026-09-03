@@ -1614,7 +1614,7 @@ const mockPlatformStatus: PlatformStatus = {
   sync_interval_seconds: 30,
   region: 'alibaba-cloud-east-01',
   latency_ms: 12,
-  last_sync_at: '2026-08-08T09:45:00Z',
+  last_sync_at: '2026-08-31T10:29:00Z',
   cpu_usage_percent: 34,
   memory_usage_percent: 62,
   goroutines: 128,
@@ -1798,29 +1798,29 @@ RDS MySQL 主从同步延迟超过阈值（通常 > 1s）的常见原因：
 
 // ─── Agent Overview ───
 const mockAgentOverviews: AgentOverview[] = [
-  { id: 'agent-mega-001', name: 'ACK 集群运维助手', type: 'mega', status: 'active', success_rate: 0.96, total_executions: 1247, avg_latency_ms: 1180, last_execution_at: '2026-08-08T09:12:00Z', error_count_24h: 3, uptime_seconds: 172800, memory_mb: 256 },
-  { id: 'agent-fta-002', name: '故障根因分析引擎', type: 'fta', status: 'active', success_rate: 0.91, total_executions: 523, avg_latency_ms: 15600, last_execution_at: '2026-08-08T08:15:00Z', error_count_24h: 5, uptime_seconds: 172800, memory_mb: 512 },
-  { id: 'agent-rag-003', name: '运维知识问答', type: 'rag', status: 'active', success_rate: 0.98, total_executions: 2891, avg_latency_ms: 550, last_execution_at: '2026-08-08T09:00:00Z', error_count_24h: 1, uptime_seconds: 172800, memory_mb: 384 },
-  { id: 'agent-skill-004', name: '工单自动处理', type: 'skill', status: 'active', success_rate: 0.97, total_executions: 1893, avg_latency_ms: 760, last_execution_at: '2026-08-08T09:12:00Z', error_count_24h: 2, uptime_seconds: 172800, memory_mb: 192 },
-  { id: 'agent-custom-005', name: 'SLB 流量分析', type: 'custom', status: 'inactive', success_rate: 0.85, total_executions: 89, avg_latency_ms: 2100, last_execution_at: '2026-07-28T18:00:00Z', error_count_24h: 0, uptime_seconds: 0, memory_mb: 0 },
-  { id: 'agent-mega-006', name: '变更风险评估', type: 'mega', status: 'error', success_rate: 0.42, total_executions: 342, avg_latency_ms: 8900, last_execution_at: '2026-08-08T06:00:00Z', error_count_24h: 37, uptime_seconds: 3600, memory_mb: 890 },
-  { id: 'agent-fta-007', name: 'RDS 主从同步诊断', type: 'fta', status: 'active', success_rate: 0.94, total_executions: 267, avg_latency_ms: 20100, last_execution_at: '2026-08-07T16:20:00Z', error_count_24h: 1, uptime_seconds: 172800, memory_mb: 480 },
+  { id: 'agent-mega-001', name: 'ACK 集群运维助手', type: 'mega', status: 'active', success_rate: 0.96, total_executions: 1247, avg_latency_ms: 1180, last_execution_at: '2026-08-31T10:24:00Z', error_count_24h: 3, uptime_seconds: 172800, memory_mb: 256 },
+  { id: 'agent-fta-002', name: '故障根因分析引擎', type: 'fta', status: 'active', success_rate: 0.91, total_executions: 523, avg_latency_ms: 15600, last_execution_at: '2026-08-31T10:28:00Z', error_count_24h: 5, uptime_seconds: 172800, memory_mb: 512 },
+  { id: 'agent-rag-003', name: '运维知识问答', type: 'rag', status: 'active', success_rate: 0.98, total_executions: 2891, avg_latency_ms: 550, last_execution_at: '2026-08-31T10:10:00Z', error_count_24h: 1, uptime_seconds: 172800, memory_mb: 384 },
+  { id: 'agent-skill-004', name: '工单自动处理', type: 'skill', status: 'active', success_rate: 0.97, total_executions: 1893, avg_latency_ms: 760, last_execution_at: '2026-08-31T10:23:00Z', error_count_24h: 2, uptime_seconds: 172800, memory_mb: 192 },
+  { id: 'agent-custom-005', name: 'SLB 流量分析', type: 'custom', status: 'inactive', success_rate: 0.85, total_executions: 89, avg_latency_ms: 2100, last_execution_at: '2026-08-22T14:20:00Z', error_count_24h: 0, uptime_seconds: 0, memory_mb: 0 },
+  { id: 'agent-mega-006', name: '变更风险评估', type: 'mega', status: 'error', success_rate: 0.42, total_executions: 342, avg_latency_ms: 8900, last_execution_at: '2026-08-31T10:18:00Z', error_count_24h: 37, uptime_seconds: 3600, memory_mb: 890 },
+  { id: 'agent-fta-007', name: 'RDS 主从同步诊断', type: 'fta', status: 'active', success_rate: 0.94, total_executions: 267, avg_latency_ms: 20100, last_execution_at: '2026-08-30T16:20:00Z', error_count_24h: 1, uptime_seconds: 172800, memory_mb: 480 },
 ];
 
 // ─── Activity Events ───
 const mockActivityEvents: ActivityEvent[] = [
-  { id: 'evt-001', agent_id: 'agent-mega-001', agent_name: 'ACK 集群运维助手', agent_type: 'mega', event_type: 'execution', description: 'ACK 集群 cn-hangzhou-prod 节点池扩容评估完成', status: 'completed', timestamp: '2026-08-08T09:12:00Z', duration_ms: 1230, route_type: 'multi' },
-  { id: 'evt-002', agent_id: 'agent-skill-004', agent_name: '工单自动处理', agent_type: 'skill', event_type: 'execution', description: 'INC-2026-0891 ECS CPU 高负载工单分析完成', status: 'completed', timestamp: '2026-08-08T09:12:00Z', duration_ms: 820, route_type: 'skill' },
-  { id: 'evt-003', agent_id: 'agent-mega-006', agent_name: '变更风险评估', agent_type: 'mega', event_type: 'error', description: '合规检查 API 超时，连续第 3 次失败', status: 'failed', timestamp: '2026-08-08T09:05:00Z', duration_ms: 30000 },
-  { id: 'evt-004', agent_id: 'agent-rag-003', agent_name: '运维知识问答', agent_type: 'rag', event_type: 'execution', description: 'RDS MySQL 主从同步延迟排查知识检索', status: 'completed', timestamp: '2026-08-08T09:00:00Z', duration_ms: 650, route_type: 'rag' },
-  { id: 'evt-005', agent_id: 'agent-fta-002', agent_name: '故障根因分析引擎', agent_type: 'fta', event_type: 'execution', description: 'K8s 节点 NotReady 故障树分析完成', status: 'completed', timestamp: '2026-08-08T08:15:00Z', duration_ms: 12340, route_type: 'fta' },
-  { id: 'evt-006', agent_id: 'agent-fta-002', agent_name: '故障根因分析引擎', agent_type: 'fta', event_type: 'execution', description: 'K8s 节点 cn-hz-03 NotReady 诊断中', status: 'running', timestamp: '2026-08-08T09:50:00Z' },
-  { id: 'evt-007', agent_id: 'agent-mega-006', agent_name: '变更风险评估', agent_type: 'mega', event_type: 'alert', description: 'Agent 错误率超过阈值 (42% > 10%)', status: 'warning', timestamp: '2026-08-08T06:00:00Z' },
-  { id: 'evt-008', agent_id: 'agent-skill-004', agent_name: '工单自动处理', agent_type: 'skill', event_type: 'execution', description: 'INC-2026-0890 SLB 健康检查失败工单处理', status: 'completed', timestamp: '2026-08-08T08:45:00Z', duration_ms: 750, route_type: 'skill' },
-  { id: 'evt-009', agent_id: 'agent-custom-005', agent_name: 'SLB 流量分析', agent_type: 'custom', event_type: 'status_change', description: 'Agent 已停止，最后执行于 2026-07-28', status: 'info', timestamp: '2026-07-28T18:00:00Z' },
-  { id: 'evt-010', agent_id: 'agent-fta-007', agent_name: 'RDS 主从同步诊断', agent_type: 'fta', event_type: 'execution', description: 'RDS rm-2ze-001 同步延迟诊断完成', status: 'completed', timestamp: '2026-08-07T16:20:00Z', duration_ms: 25100, route_type: 'fta' },
-  { id: 'evt-011', agent_id: 'agent-mega-001', agent_name: 'ACK 集群运维助手', agent_type: 'mega', event_type: 'execution', description: 'etcd 集群健康检查完成', status: 'completed', timestamp: '2026-08-07T16:00:00Z', duration_ms: 890, route_type: 'direct' },
-  { id: 'evt-012', agent_id: 'agent-mega-006', agent_name: '变更风险评估', agent_type: 'mega', event_type: 'deployment', description: 'Agent 重启 (v0.9.2 → v0.9.3)', status: 'info', timestamp: '2026-08-08T05:00:00Z' },
+  { id: 'evt-001', agent_id: 'agent-mega-001', agent_name: 'ACK 集群运维助手', agent_type: 'mega', event_type: 'execution', description: 'ACK 集群 cn-hangzhou-prod 节点池扩容评估完成', status: 'completed', timestamp: '2026-08-31T10:24:00Z', duration_ms: 1230, route_type: 'multi' },
+  { id: 'evt-002', agent_id: 'agent-skill-004', agent_name: '工单自动处理', agent_type: 'skill', event_type: 'execution', description: 'INC-2026-0891 ECS CPU 高负载工单分析完成', status: 'completed', timestamp: '2026-08-31T10:23:00Z', duration_ms: 820, route_type: 'skill' },
+  { id: 'evt-003', agent_id: 'agent-mega-006', agent_name: '变更风险评估', agent_type: 'mega', event_type: 'error', description: '合规检查 API 超时，连续第 3 次失败', status: 'failed', timestamp: '2026-08-31T10:18:00Z', duration_ms: 30000 },
+  { id: 'evt-004', agent_id: 'agent-rag-003', agent_name: '运维知识问答', agent_type: 'rag', event_type: 'execution', description: 'RDS MySQL 主从同步延迟排查知识检索', status: 'completed', timestamp: '2026-08-31T10:10:00Z', duration_ms: 650, route_type: 'rag' },
+  { id: 'evt-005', agent_id: 'agent-fta-002', agent_name: '故障根因分析引擎', agent_type: 'fta', event_type: 'execution', description: 'K8s 节点 NotReady 故障树分析完成', status: 'completed', timestamp: '2026-08-31T09:47:00Z', duration_ms: 12340, route_type: 'fta' },
+  { id: 'evt-006', agent_id: 'agent-fta-002', agent_name: '故障根因分析引擎', agent_type: 'fta', event_type: 'execution', description: 'K8s 节点 cn-hz-03 NotReady 诊断中', status: 'running', timestamp: '2026-08-31T10:28:00Z' },
+  { id: 'evt-007', agent_id: 'agent-mega-006', agent_name: '变更风险评估', agent_type: 'mega', event_type: 'alert', description: 'Agent 错误率超过阈值 (42% > 10%)', status: 'warning', timestamp: '2026-08-31T08:05:00Z' },
+  { id: 'evt-008', agent_id: 'agent-skill-004', agent_name: '工单自动处理', agent_type: 'skill', event_type: 'execution', description: 'INC-2026-0890 SLB 健康检查失败工单处理', status: 'completed', timestamp: '2026-08-31T09:52:00Z', duration_ms: 750, route_type: 'skill' },
+  { id: 'evt-009', agent_id: 'agent-custom-005', agent_name: 'SLB 流量分析', agent_type: 'custom', event_type: 'status_change', description: 'Agent 已停止，最后执行于 2026-08-22 14:20', status: 'info', timestamp: '2026-08-22T18:00:00Z' },
+  { id: 'evt-010', agent_id: 'agent-fta-007', agent_name: 'RDS 主从同步诊断', agent_type: 'fta', event_type: 'execution', description: 'RDS rm-2ze-001 同步延迟诊断完成', status: 'completed', timestamp: '2026-08-30T16:20:00Z', duration_ms: 25100, route_type: 'fta' },
+  { id: 'evt-011', agent_id: 'agent-mega-001', agent_name: 'ACK 集群运维助手', agent_type: 'mega', event_type: 'execution', description: 'etcd 集群健康检查完成', status: 'completed', timestamp: '2026-08-31T08:40:00Z', duration_ms: 890, route_type: 'direct' },
+  { id: 'evt-012', agent_id: 'agent-mega-006', agent_name: '变更风险评估', agent_type: 'mega', event_type: 'deployment', description: 'Agent 重启 (v0.9.2 → v0.9.3)', status: 'info', timestamp: '2026-08-31T07:30:00Z' },
 ];
 
 // ─── Execution Stats ───

@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { mockApi } from './mock';
 
 const ALL_ROUTE_TYPES = ['fta', 'skill', 'rag', 'code_analysis', 'multi', 'direct'];
@@ -107,6 +109,64 @@ describe('mock 数据质量 · Analytics 差异化', () => {
     expect(mega.execution_timeline).not.toEqual(fta.execution_timeline);
     expect(rag.latency_percentiles.p50).not.toBe(mega.latency_percentiles.p50);
     expect(mega.top_errors.map((e) => e.error_type)).not.toEqual(rag.top_errors.map((e) => e.error_type));
+  });
+});
+
+describe('mock 数据质量 · Dashboard', () => {
+  it('getDashboardMetrics 提供 today_tickets/change_approvals 且 24h 趋势完整', async () => {
+    const m = await mockApi.getDashboardMetrics();
+    expect(m.today_tickets).toBeGreaterThan(0);
+    expect(m.change_approvals).toBeGreaterThan(0);
+    expect(m.skill_executions).toBeGreaterThan(0);
+    expect(['up', 'down', 'flat']).toContain(m.ticket_trend.direction);
+    expect(m.execution_trend_24h).toHaveLength(24);
+  });
+
+  it('Agent 概览最后执行时间统一 2026-08 且与停用 Agent 告警口径一致', async () => {
+    const { agents } = await mockApi.getAgentOverviews();
+    expect(agents.length).toBeGreaterThanOrEqual(7);
+    for (const a of agents) {
+      expect(a.last_execution_at.startsWith('2026-08'), `${a.id} 最后执行时间未统一: ${a.last_execution_at}`).toBe(true);
+      expect(a.memory_mb).toBeGreaterThanOrEqual(0);
+    }
+    // 与 alert-006「最后执行时间 2026-08-22T14:20」保持同一事实源
+    const stopped = agents.find((a) => a.id === 'agent-custom-005');
+    expect(stopped?.last_execution_at).toBe('2026-08-22T14:20:00Z');
+  });
+
+  it('活动事件时间戳收敛演示窗口（长期停用类事件除外）', async () => {
+    const { events } = await mockApi.getActivityEvents();
+    for (const e of events) {
+      if (e.event_type === 'status_change') continue;
+      expect(e.timestamp >= '2026-08-25', `${e.id} 过早: ${e.timestamp}`).toBe(true);
+      expect(e.timestamp < '2026-09-01', `${e.id} 过晚: ${e.timestamp}`).toBe(true);
+    }
+  });
+
+  it('平台状态 last_sync_at 落在演示窗口内', async () => {
+    const s = await mockApi.getPlatformStatus();
+    expect(s.last_sync_at >= '2026-08-25').toBe(true);
+    expect(s.last_sync_at < '2026-09-01').toBe(true);
+  });
+
+  it('执行统计 P99/平均耗时与路由置信度字段可用于渲染', async () => {
+    const s = await mockApi.getExecutionStats();
+    expect(s.p99_duration_ms).toBeGreaterThan(s.avg_duration_ms);
+    expect(s.by_route_type.every((r) => r.avg_confidence > 0 && r.avg_confidence <= 1)).toBe(true);
+    expect(s.by_hour.every((h) => h.success_count + h.failed_count === h.count)).toBe(true);
+  });
+});
+
+describe('页面源码去假化回归', () => {
+  const readPage = (rel: string) =>
+    readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf-8');
+
+  it('Dashboard 页面不再写死 P99/版本号/commit/旧时间锚点', () => {
+    const src = readPage('../pages/Dashboard/index.tsx');
+    expect(src, 'P99 耗时写死').not.toMatch(/25\.1s/);
+    expect(src, '版本号写死').not.toMatch(/v0\.6\.0/);
+    expect(src, 'commit 写死').not.toMatch(/a3f7c2e/);
+    expect(src, '旧时间锚点写死').not.toMatch(/2026-04-08/);
   });
 });
 

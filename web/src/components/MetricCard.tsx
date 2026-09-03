@@ -6,19 +6,21 @@ export interface MetricCardProps {
   icon: LucideIcon;
   value: string;
   label: string;
+  sub?: string;
   trend?: { value: number; direction: 'up' | 'down' | 'flat' };
   accentColor?: string;
   className?: string;
 }
 
-export function MetricCard({ icon: Icon, value, label, trend, className }: MetricCardProps) {
+export function MetricCard({ icon: Icon, value, label, sub, trend, className }: MetricCardProps) {
   return (
     <Card className={cn('border-border/30', className)}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
-          <div className="space-y-1">
+          <div className="space-y-1 min-w-0">
             <p className="text-sm text-muted-foreground">{label}</p>
             <p className="text-2xl font-display font-bold tabular-nums">{value}</p>
+            {sub && <p className="text-[11px] text-muted-foreground truncate">{sub}</p>}
             {trend && (
               <p
                 className={cn(

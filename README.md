@@ -18,6 +18,7 @@
 
 <p align="center">
   🗺️ <a href="https://gjbs6uhxeute.meoo.fun"><strong>GTM 策略中枢 · 在线演示（GTM Strategy Hub）</strong></a>
+  ｜ 🖥️ <a href="https://vxxzrdpyfrl6.meoo.fun"><strong>产品页 · 在线演示（Product Demo）</strong></a>
 </p>
 
 <p align="center">
@@ -111,9 +112,12 @@ ResolveAgent is built for SREs, platform engineers, and operations teams who nee
 
 - **路由发车板（Route Departures）** — 翻牌式信息板实时呈现告警事件的智能路由分发
 - **调度总图（Metro Map）** — 告警入口枢纽分岔四条分析线路：FTA 故障树推理 / RAG 检索增强 / Skill 技能编排 / 代码分析，直达「根因」终点站，附可交互的意图调度模拟器
+- **运行数据总览（Ops Data Overview）** — 工作流执行、闭环成功率、路由决策、工单闭环、语料规模六项指标与四线分发占比，全部取自产品控制台同一套演示数据源，并附最近路由决策留痕表
 - **可审计会话（Auditable Session）** — 意图分类、路径分发、证据求解、语料写回全部以终端留痕，可回放、可复盘
 - **事件回放与语料飞轮** — 一次告警四路并行回放；排查结果沉淀语料，用得越多排查越准
 - **GTM 战略线路规划图** — 目标客户画像（ICP）与里程碑的线路化呈现
+
+页面以浅色「日间调度大厅」为默认视觉，终端窗与雷达屏保留深色作为控制室仪器的对比锚点。导航、首屏与页脚均可一键进入**产品页在线演示**：<https://vxxzrdpyfrl6.meoo.fun>（浏览器端 mock 数据驱动，无需本地后端）。
 
 页面设计契约（企业级视觉纪律：无 glow、无装饰性动效、仪器语法）见 [GTM/DESIGN.md](GTM/DESIGN.md)。
 
@@ -766,7 +770,7 @@ resolve-agent/
 │   ├── docsync/                 # 文档同步
 │   ├── agent/                   # Agent 定义
 │   └── runtime/                 # 运行时服务
-├── web/                         # 🌐 React WebUI (Vite + Tailwind + shadcn/ui)
+├── web/                         # 🌐 React WebUI (Vite + Tailwind + shadcn/ui)（在线: https://vxxzrdpyfrl6.meoo.fun）
 ├── mobile/                      # 📱 移动端 Web 应用
 ├── docs-site/                   # 📚 Docusaurus 文档站点
 ├── docs/                        # 文档 (架构/ADR/API/中文文档)

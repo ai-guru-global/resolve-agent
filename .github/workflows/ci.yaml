@@ -37,7 +37,9 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: latest
+          # Repo uses a v1-schema .golangci.yml (no `version: "2"` key); golangci-lint
+          # v2.x rejects it, so pin to the last v1 line instead of `latest`.
+          version: v1.64
 
   lint-python:
     name: Lint Python
@@ -146,6 +148,8 @@ jobs:
         working-directory: web
         run: pnpm test
 
+  # NOTE: test-mobile deliberately has no `needs` — it runs decoupled from the
+  # Go lint→test→build→e2e chain and is only consumed as a gate by docker-build.
   test-mobile:
     name: Test Mobile
     runs-on: ubuntu-latest
@@ -154,6 +158,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
       - name: Install dependencies
         working-directory: mobile
         run: npm ci
@@ -194,6 +200,10 @@ jobs:
     name: E2E
     runs-on: ubuntu-latest
     needs: [build]
+    env:
+      # Strict mode: helper_test.go must FAIL (not skip) when services are
+      # unreachable, so a dead server cannot yield a green job with zero tests.
+      E2E_STRICT: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -209,7 +219,8 @@ jobs:
       - name: Build Go server
         run: go build -o bin/resolveagent-server ./cmd/resolveagent-server
       # Task 2 已本地验证：e2e 全绿无需 LLM 凭证（LLM 401 时 runtime 仍以 200 流式返回 SSE）。
-      # 注意：必须带 -tags e2e，否则 feedback_loop_test.go（唯一带 //go:build e2e 的文件）被静默跳过。
+      # 注意：test/e2e 下全部 4 个测试文件均带 //go:build e2e 标签；不带 -tags e2e 时整个包为空，
+      # 所有 e2e 测试会被静默跳过——因此这里的标签是强制的，且 E2E_STRICT 用于防止服务进程已死造成的假绿。
       - name: Start Python runtime
         working-directory: python
         run: |
@@ -225,6 +236,8 @@ jobs:
             if curl -sf http://localhost:8080/healthz > /dev/null && curl -sf http://localhost:9091/health > /dev/null; then
               echo "services ready"; break
             fi
+            kill -0 "$(cat /tmp/server.pid)" 2>/dev/null || { echo "Go server process died:"; cat /tmp/server.log; exit 1; }
+            kill -0 "$(cat /tmp/runtime.pid)" 2>/dev/null || { echo "Python runtime process died:"; cat /tmp/runtime.log; exit 1; }
             sleep 2
           done
           curl -sf http://localhost:8080/healthz > /dev/null || { echo "Go server failed:"; cat /tmp/server.log; exit 1; }

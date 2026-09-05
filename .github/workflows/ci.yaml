@@ -37,9 +37,11 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          # Repo uses a v1-schema .golangci.yml (no `version: "2"` key); golangci-lint
-          # v2.x rejects it, so pin to the last v1 line instead of `latest`.
+          # v1.64 pinned: the repo config is v1-schema, which golangci-lint v2.x rejects.
+          # install-mode: goinstall so the binary is built by CI's Go 1.25 — the prebuilt
+          # v1.64 release binary is go1.24-built and refuses go.mod's go 1.25.0.
           version: v1.64
+          install-mode: goinstall
 
   lint-python:
     name: Lint Python

@@ -24,10 +24,10 @@ check() {
     echo -n "  [$name] "
     if "$@" > /dev/null 2>&1; then
         echo -e "${GREEN}PASS${NC}"
-        ((PASS++))
+        PASS=$((PASS+1))
     else
         echo -e "${RED}FAIL${NC}"
-        ((FAIL++))
+        FAIL=$((FAIL+1))
     fi
 }
 
@@ -37,10 +37,10 @@ warn() {
     echo -n "  [$name] "
     if "$@" > /dev/null 2>&1; then
         echo -e "${GREEN}PASS${NC}"
-        ((PASS++))
+        PASS=$((PASS+1))
     else
         echo -e "${YELLOW}WARN${NC}"
-        ((WARN++))
+        WARN=$((WARN+1))
     fi
 }
 
@@ -60,18 +60,18 @@ if command -v golangci-lint &> /dev/null; then
     check "go-lint" golangci-lint run ./...
 else
     echo -e "  [go-lint] ${YELLOW}SKIP${NC} (golangci-lint not installed)"
-    ((WARN++))
+    WARN=$((WARN+1))
 fi
 
 # Go test with coverage
 echo -n "  [go-test] "
 if go test -race -count=1 ./... > /tmp/gotest.out 2>&1; then
     echo -e "${GREEN}PASS${NC}"
-    ((PASS++))
+    PASS=$((PASS+1))
 else
     echo -e "${RED}FAIL${NC}"
     cat /tmp/gotest.out
-    ((FAIL++))
+    FAIL=$((FAIL+1))
 fi
 
 # Go coverage threshold (non-blocking, informational)
@@ -82,11 +82,11 @@ if go test -coverprofile=/tmp/gocover.out ./... > /dev/null 2>&1; then
         echo -e "${GREEN}${COVERAGE}%${NC}"
     else
         echo -e "${YELLOW}N/A${NC}"
-        ((WARN++))
+        WARN=$((WARN+1))
     fi
 else
     echo -e "${YELLOW}SKIP${NC}"
-    ((WARN++))
+    WARN=$((WARN+1))
 fi
 
 echo ""
@@ -101,7 +101,7 @@ if [ -d "$PYTHON_DIR" ]; then
         warn "py-test" bash -c "cd $PYTHON_DIR && uv run pytest tests/ -q --tb=short"
     else
         echo -e "  ${YELLOW}SKIP${NC} (uv not installed)"
-        ((WARN++))
+        WARN=$((WARN+1))
     fi
 else
     echo -e "  ${YELLOW}SKIP${NC} (python/ not found)"
@@ -117,7 +117,7 @@ if [ -d "$WEB_DIR" ] && [ -d "$WEB_DIR/node_modules" ]; then
     warn "web-test" bash -c "cd $WEB_DIR && pnpm test --passWithNoTests"
 else
     echo -e "  ${YELLOW}SKIP${NC} (web dependencies not installed)"
-    ((WARN++))
+    WARN=$((WARN+1))
 fi
 
 echo ""

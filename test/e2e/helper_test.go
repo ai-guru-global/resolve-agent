@@ -1,8 +1,11 @@
+//go:build e2e
+
 package e2e
 
 import (
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -12,7 +15,7 @@ import (
 // runs against a server bound to a non-default address.
 func serverBaseURL() string {
 	if u := os.Getenv("E2E_BASE_URL"); u != "" {
-		return u
+		return strings.TrimRight(u, "/")
 	}
 	return "http://localhost:8080"
 }

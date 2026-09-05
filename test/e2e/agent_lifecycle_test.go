@@ -18,7 +18,7 @@ func TestAgentLifecycle(t *testing.T) {
 		t.Skip("Skipping E2E test in short mode")
 	}
 
-	baseURL := "http://localhost:8080/api/v1"
+	baseURL := serverBaseURL() + "/api/v1"
 	client := &http.Client{Timeout: 30 * time.Second}
 
 	// Step 1: Create an agent

@@ -8,7 +8,7 @@
 # ---------------------
 # Stage 1: Build
 # ---------------------
-FROM golang:1.26-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 RUN apk add --no-cache git make ca-certificates tzdata
 
@@ -16,6 +16,9 @@ WORKDIR /build
 
 # Cache dependencies
 COPY go.mod go.sum ./
+# proxy.golang.org is unreachable from some networks; goproxy.cn mirrors it
+# (including the checksum database). Harmless where the default works.
+ENV GOPROXY=https://goproxy.cn,direct
 RUN go mod download && go mod verify
 
 # Build binary

@@ -161,7 +161,6 @@ func (b *NATSBus) Subscribe(ctx context.Context, eventType string, handler func(
 			b.logger.Error("Failed to ack message", "error", err)
 		}
 	}, nats.Durable(consumerName), nats.ManualAck())
-
 	if err != nil {
 		return fmt.Errorf("failed to subscribe: %w", err)
 	}

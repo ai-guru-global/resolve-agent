@@ -106,7 +106,7 @@ func (r *InMemoryRAGDocumentRegistry) ListDocuments(_ context.Context, collectio
 	}
 	offset := opts.Offset
 
-	var docs []*RAGDocument
+	docs := make([]*RAGDocument, 0, len(r.documents))
 	for _, d := range r.documents {
 		if d.CollectionID != collectionID {
 			continue

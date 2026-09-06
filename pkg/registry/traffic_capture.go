@@ -108,7 +108,7 @@ func (r *InMemoryTrafficCaptureRegistry) List(_ context.Context, opts ListOption
 	}
 	offset := opts.Offset
 
-	var captures []*TrafficCapture
+	captures := make([]*TrafficCapture, 0, len(r.captures))
 	for _, c := range r.captures {
 		if len(opts.Filter) > 0 {
 			match := true

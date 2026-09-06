@@ -11,6 +11,7 @@ import (
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 	"github.com/google/uuid"
 )
+
 func (s *Server) handleListWorkflows(w http.ResponseWriter, _ *http.Request) {
 	ctx := context.Background()
 	workflows, total, err := s.workflowRegistry.List(ctx, registry.ListOptions{})
@@ -145,7 +146,7 @@ func (s *Server) handleValidateWorkflow(w http.ResponseWriter, r *http.Request) 
 	if !ok {
 		definition = workflow.Tree // Use Tree directly if no nested definition
 	}
-	if definition == nil || len(definition) == 0 {
+	if len(definition) == 0 {
 		validationErrors = append(validationErrors, "workflow definition is required")
 		writeJSON(w, http.StatusOK, map[string]any{
 			"workflow_id": id,
@@ -357,4 +358,3 @@ func (s *Server) handleExecuteWorkflow(w http.ResponseWriter, r *http.Request) {
 }
 
 // RAG handlers
-

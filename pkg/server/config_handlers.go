@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 )
+
 func (s *Server) handleGetConfig(w http.ResponseWriter, _ *http.Request) {
 	// Return sanitized config (no secrets)
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -21,4 +22,3 @@ func (s *Server) handleUpdateConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 // Hook handlers
-

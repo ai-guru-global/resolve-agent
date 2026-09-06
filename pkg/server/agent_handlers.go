@@ -11,6 +11,7 @@ import (
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 	"github.com/google/uuid"
 )
+
 func (s *Server) handleListAgents(w http.ResponseWriter, _ *http.Request) {
 	ctx := context.Background()
 	agents, total, err := s.agentRegistry.List(ctx, registry.ListOptions{})
@@ -273,4 +274,3 @@ func (s *Server) handleExecuteAgent(w http.ResponseWriter, r *http.Request) {
 }
 
 // Skill handlers
-

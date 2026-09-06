@@ -189,7 +189,7 @@ func (r *InMemoryMemoryRegistry) SearchLongTermMemory(_ context.Context, agentID
 	}
 	offset := opts.Offset
 
-	var results []*LongTermMemory
+	results := make([]*LongTermMemory, 0, len(r.longTerm))
 	for _, m := range r.longTerm {
 		if m.AgentID != agentID {
 			continue

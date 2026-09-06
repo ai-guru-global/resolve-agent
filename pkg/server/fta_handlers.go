@@ -8,6 +8,7 @@ import (
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 )
+
 func (s *Server) handleListFTADocuments(w http.ResponseWriter, _ *http.Request) {
 	ctx := context.Background()
 	docs, total, err := s.ftaDocumentRegistry.ListDocuments(ctx, registry.ListOptions{})
@@ -136,4 +137,3 @@ func (s *Server) handleCreateFTAResult(w http.ResponseWriter, r *http.Request) {
 }
 
 // Code Analysis handlers
-

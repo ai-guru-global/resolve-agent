@@ -118,7 +118,7 @@ func (r *InMemoryCallGraphRegistry) List(_ context.Context, opts ListOptions) ([
 	}
 	offset := opts.Offset
 
-	var graphs []*CallGraph
+	graphs := make([]*CallGraph, 0, len(r.graphs))
 	for _, g := range r.graphs {
 		if len(opts.Filter) > 0 {
 			match := true

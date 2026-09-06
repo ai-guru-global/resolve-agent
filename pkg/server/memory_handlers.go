@@ -9,6 +9,7 @@ import (
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 )
+
 func (s *Server) handleListConversations(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	agentID := r.PathValue("agent_id")
@@ -190,4 +191,3 @@ func (s *Server) handlePruneMemories(w http.ResponseWriter, _ *http.Request) {
 }
 
 // Call Graph handlers
-

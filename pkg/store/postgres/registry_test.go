@@ -2,11 +2,11 @@ package postgres
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"testing"
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
-	"log/slog"
 )
 
 func mustOpenStore(t *testing.T) *Store {

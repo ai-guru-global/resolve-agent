@@ -8,6 +8,7 @@ import (
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 )
+
 func (s *Server) handleListHooks(w http.ResponseWriter, _ *http.Request) {
 	ctx := context.Background()
 	hooks, total, err := s.hookRegistry.List(ctx, registry.ListOptions{})
@@ -112,4 +113,3 @@ func (s *Server) handleListHookExecutions(w http.ResponseWriter, r *http.Request
 }
 
 // RAG Document handlers
-

@@ -2,12 +2,11 @@ package feedback
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"sync"
 	"time"
-
-	"crypto/rand"
-	"encoding/hex"
 )
 
 // Collector is the central feedback signal hub.

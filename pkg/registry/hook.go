@@ -168,7 +168,7 @@ func (r *InMemoryHookRegistry) ListByTriggerPoint(_ context.Context, triggerPoin
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	var result []*HookDefinition
+	result := make([]*HookDefinition, 0, len(r.hooks))
 	for _, h := range r.hooks {
 		if !h.Enabled {
 			continue

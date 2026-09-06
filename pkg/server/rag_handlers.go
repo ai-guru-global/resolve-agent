@@ -11,6 +11,7 @@ import (
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 )
+
 func (s *Server) handleListCollections(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
@@ -419,4 +420,3 @@ func (s *Server) handleListRAGIngestions(w http.ResponseWriter, r *http.Request)
 }
 
 // FTA Document handlers
-

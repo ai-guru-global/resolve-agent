@@ -92,12 +92,10 @@ func (r *InMemoryRAGRegistry) List(_ context.Context, opts ListOptions) ([]*RAGC
 				case "status":
 					if c.Status != value {
 						match = false
-						break
 					}
 				case "name":
 					if c.Name != value {
 						match = false
-						break
 					}
 				}
 			}

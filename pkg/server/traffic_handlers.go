@@ -11,6 +11,7 @@ import (
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 )
+
 func (s *Server) handleListTrafficCaptures(w http.ResponseWriter, _ *http.Request) {
 	ctx := context.Background()
 	captures, total, err := s.trafficCaptureRegistry.List(ctx, registry.ListOptions{Limit: 100})

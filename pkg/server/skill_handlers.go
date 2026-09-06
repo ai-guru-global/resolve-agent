@@ -8,6 +8,7 @@ import (
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 )
+
 func (s *Server) handleListSkills(w http.ResponseWriter, _ *http.Request) {
 	ctx := context.Background()
 	skills, total, err := s.skillRegistry.List(ctx, registry.ListOptions{})
@@ -79,4 +80,3 @@ func (s *Server) handleUnregisterSkill(w http.ResponseWriter, r *http.Request) {
 }
 
 // Workflow handlers
-

@@ -173,6 +173,9 @@ func (b *Breaker) afterRequest(err error) {
 	case StateHalfOpen:
 		// Any failure in half-open immediately reopens.
 		b.transitionTo(StateOpen)
+	case StateOpen:
+		// Failure while open: no transition; reopening is governed solely
+		// by the recovery timeout checked in beforeRequest.
 	}
 }
 

@@ -1,6 +1,7 @@
 package server
 
 import "net/http"
+
 func (s *Server) handleListModels(w http.ResponseWriter, _ *http.Request) {
 	// Return hardcoded model list for now
 	models := []map[string]any{
@@ -35,4 +36,3 @@ func (s *Server) handleAddModel(w http.ResponseWriter, r *http.Request) {
 }
 
 // Config handlers
-

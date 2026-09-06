@@ -30,7 +30,7 @@ func metricsHandler(next http.Handler) http.HandlerFunc {
 		next.ServeHTTP(wrapped, r)
 
 		duration := time.Since(start)
-		status := http.StatusText(wrapped.statusCode)
+		var status string
 		if wrapped.statusCode < 400 {
 			status = "success"
 		} else {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 )
+
 func (s *Server) handleListAnalyses(w http.ResponseWriter, _ *http.Request) {
 	ctx := context.Background()
 	analyses, total, err := s.codeAnalysisRegistry.List(ctx, registry.ListOptions{})
@@ -152,4 +153,3 @@ func (s *Server) handleAddFindings(w http.ResponseWriter, r *http.Request) {
 }
 
 // Memory handlers
-

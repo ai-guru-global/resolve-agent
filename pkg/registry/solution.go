@@ -197,7 +197,7 @@ func (r *InMemoryTroubleshootingSolutionRegistry) Search(_ context.Context, opts
 	}
 	offset := opts.Offset
 
-	var results []*TroubleshootingSolution
+	results := make([]*TroubleshootingSolution, 0, len(r.solutions))
 	keyword := strings.ToLower(opts.Keyword)
 
 	for _, s := range r.solutions {

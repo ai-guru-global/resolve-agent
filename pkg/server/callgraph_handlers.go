@@ -10,6 +10,7 @@ import (
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 )
+
 func (s *Server) handleListCallGraphs(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	opts := registry.ListOptions{Limit: 100}
@@ -104,4 +105,3 @@ func (s *Server) handleGetCallGraphSubgraph(w http.ResponseWriter, r *http.Reque
 }
 
 // Traffic Capture handlers
-

@@ -206,19 +206,16 @@ func collectRuntimeMetrics(logger *slog.Logger) {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
-	for {
-		select {
-		case <-ticker.C:
-			var m runtime.MemStats
-			runtime.ReadMemStats(&m)
+	for range ticker.C {
+		var m runtime.MemStats
+		runtime.ReadMemStats(&m)
 
-			logger.Debug("Runtime metrics",
-				"goroutines", runtime.NumGoroutine(),
-				"heap_alloc_mb", m.Alloc/1024/1024,
-				"heap_sys_mb", m.HeapSys/1024/1024,
-				"gc_cycles", m.NumGC,
-			)
-		}
+		logger.Debug("Runtime metrics",
+			"goroutines", runtime.NumGoroutine(),
+			"heap_alloc_mb", m.Alloc/1024/1024,
+			"heap_sys_mb", m.HeapSys/1024/1024,
+			"gc_cycles", m.NumGC,
+		)
 	}
 }
 
@@ -269,7 +266,7 @@ func MetricsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(wrapped, r)
 
 		duration := time.Since(start)
-		status := http.StatusText(wrapped.statusCode)
+		var status string
 		if wrapped.statusCode < 400 {
 			status = "success"
 		} else {

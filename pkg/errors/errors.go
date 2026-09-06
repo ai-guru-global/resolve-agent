@@ -116,6 +116,8 @@ func HTTPStatus(err error) int {
 			return http.StatusConflict
 		case CodeRateLimited:
 			return http.StatusTooManyRequests
+		case CodeInternal:
+			return http.StatusInternalServerError
 		}
 	}
 	return http.StatusInternalServerError

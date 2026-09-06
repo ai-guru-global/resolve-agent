@@ -85,7 +85,7 @@ func (r *InMemoryTrafficGraphRegistry) List(_ context.Context, opts ListOptions)
 	}
 	offset := opts.Offset
 
-	var graphs []*TrafficGraph
+	graphs := make([]*TrafficGraph, 0, len(r.graphs))
 	for _, g := range r.graphs {
 		if len(opts.Filter) > 0 {
 			match := true

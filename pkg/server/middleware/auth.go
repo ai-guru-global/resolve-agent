@@ -161,7 +161,6 @@ func (m *AuthMiddleware) authFromJWT(tokenStr string) (*AuthContext, error) {
 		}
 		return []byte(m.config.JWTSecret), nil
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("invalid JWT: %w", err)
 	}

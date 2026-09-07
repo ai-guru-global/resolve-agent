@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { mockApi } from './mock';
+import { DEMO_NOW } from '../lib/demoTime';
 
 const ALL_ROUTE_TYPES = ['fta', 'skill', 'rag', 'code_analysis', 'multi', 'direct'];
 
@@ -459,7 +460,7 @@ describe('mock 数据质量 · Skills 状态真值与引用反查', () => {
     const skillNames = new Set(skills.map((s) => s.name));
     const refCount: Record<string, number> = {};
     for (const a of agents) {
-      for (const sn of a.harness.skills) {
+      for (const sn of a.harness?.skills ?? []) {
         expect(skillNames.has(sn), `Agent ${a.id} 悬空引用技能 ${sn}`).toBe(true);
         refCount[sn] = (refCount[sn] ?? 0) + 1;
       }
@@ -750,5 +751,12 @@ describe('mock 数据质量 · T10 GTM 运行数据总览区', () => {
     expect(src, '缺少决策留痕区').toMatch(/最近路由决策留痕/);
     expect(src, '缺少真实 trace 引用').toMatch(/tr-4821/);
     expect(src, '缺少导航入口').toMatch(/href="#opsdata"/);
+  });
+});
+
+describe('演示窗口新鲜度守卫', () => {
+  it('DEMO_NOW 锚点距今天数 <= 90，过期说明演示窗口需有意识地整体更新', () => {
+    const anchorAgeDays = (Date.now() - new Date(DEMO_NOW).getTime()) / 86_400_000;
+    expect(anchorAgeDays).toBeLessThanOrEqual(90);
   });
 });

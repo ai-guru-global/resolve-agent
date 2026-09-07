@@ -2,10 +2,11 @@ package registry
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/ai-guru-global/resolve-agent/pkg/errors"
 )
 
 // TroubleshootingSolution represents a structured troubleshooting solution record.
@@ -95,7 +96,7 @@ func (r *InMemoryTroubleshootingSolutionRegistry) Create(_ context.Context, solu
 	defer r.mu.Unlock()
 
 	if _, exists := r.solutions[solution.ID]; exists {
-		return fmt.Errorf("solution %s already exists", solution.ID)
+		return errors.AlreadyExists("solution", solution.ID)
 	}
 
 	now := time.Now()
@@ -116,7 +117,7 @@ func (r *InMemoryTroubleshootingSolutionRegistry) Get(_ context.Context, id stri
 
 	solution, ok := r.solutions[id]
 	if !ok {
-		return nil, fmt.Errorf("solution %s not found", id)
+		return nil, errors.NotFound("solution", id)
 	}
 	return solution, nil
 }
@@ -177,7 +178,7 @@ func (r *InMemoryTroubleshootingSolutionRegistry) Update(_ context.Context, solu
 	defer r.mu.Unlock()
 
 	if _, exists := r.solutions[solution.ID]; !exists {
-		return fmt.Errorf("solution %s not found", solution.ID)
+		return errors.NotFound("solution", solution.ID)
 	}
 
 	solution.UpdatedAt = time.Now()

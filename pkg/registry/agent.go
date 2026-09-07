@@ -7,8 +7,9 @@ package registry
 
 import (
 	"context"
-	"fmt"
 	"sync"
+
+	"github.com/ai-guru-global/resolve-agent/pkg/errors"
 )
 
 // AgentDefinition represents a stored agent definition.
@@ -51,7 +52,7 @@ func (r *InMemoryAgentRegistry) Create(_ context.Context, agent *AgentDefinition
 	defer r.mu.Unlock()
 
 	if _, exists := r.agents[agent.ID]; exists {
-		return fmt.Errorf("agent %s already exists", agent.ID)
+		return errors.AlreadyExists("agent", agent.ID)
 	}
 
 	r.agents[agent.ID] = agent
@@ -65,7 +66,7 @@ func (r *InMemoryAgentRegistry) Get(_ context.Context, id string) (*AgentDefinit
 
 	agent, ok := r.agents[id]
 	if !ok {
-		return nil, fmt.Errorf("agent %s not found", id)
+		return nil, errors.NotFound("agent", id)
 	}
 	return agent, nil
 }
@@ -88,7 +89,7 @@ func (r *InMemoryAgentRegistry) Update(_ context.Context, agent *AgentDefinition
 	defer r.mu.Unlock()
 
 	if _, exists := r.agents[agent.ID]; !exists {
-		return fmt.Errorf("agent %s not found", agent.ID)
+		return errors.NotFound("agent", agent.ID)
 	}
 
 	r.agents[agent.ID] = agent

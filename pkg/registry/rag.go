@@ -2,9 +2,10 @@ package registry
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
+
+	"github.com/ai-guru-global/resolve-agent/pkg/errors"
 )
 
 // RAGCollection represents a stored RAG collection.
@@ -48,7 +49,7 @@ func (r *InMemoryRAGRegistry) Create(_ context.Context, collection *RAGCollectio
 	defer r.mu.Unlock()
 
 	if _, exists := r.collections[collection.ID]; exists {
-		return fmt.Errorf("collection %s already exists", collection.ID)
+		return errors.AlreadyExists("collection", collection.ID)
 	}
 
 	now := time.Now()
@@ -70,7 +71,7 @@ func (r *InMemoryRAGRegistry) Get(_ context.Context, id string) (*RAGCollection,
 
 	collection, ok := r.collections[id]
 	if !ok {
-		return nil, fmt.Errorf("collection %s not found", id)
+		return nil, errors.NotFound("collection", id)
 	}
 	return collection, nil
 }
@@ -132,7 +133,7 @@ func (r *InMemoryRAGRegistry) Update(_ context.Context, collection *RAGCollectio
 	defer r.mu.Unlock()
 
 	if _, exists := r.collections[collection.ID]; !exists {
-		return fmt.Errorf("collection %s not found", collection.ID)
+		return errors.NotFound("collection", collection.ID)
 	}
 
 	collection.UpdatedAt = time.Now()

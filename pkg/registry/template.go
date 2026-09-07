@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"sync"
+
+	"github.com/ai-guru-global/resolve-agent/pkg/errors"
 )
 
 // =============================================================================
@@ -71,7 +73,7 @@ func (r *GenericInMemoryRegistry[T]) Create(_ context.Context, entity *T) error 
 
 	key := r.keyer(entity)
 	if _, exists := r.entities[key]; exists {
-		return fmt.Errorf("entity %s already exists", key)
+		return errors.AlreadyExists("entity", key)
 	}
 
 	r.entities[key] = entity
@@ -85,7 +87,7 @@ func (r *GenericInMemoryRegistry[T]) Get(_ context.Context, id string) (*T, erro
 
 	entity, ok := r.entities[id]
 	if !ok {
-		return nil, fmt.Errorf("entity %s not found", id)
+		return nil, errors.NotFound("entity", id)
 	}
 	return entity, nil
 }
@@ -127,7 +129,7 @@ func (r *GenericInMemoryRegistry[T]) Update(_ context.Context, entity *T) error 
 
 	key := r.keyer(entity)
 	if _, exists := r.entities[key]; !exists {
-		return fmt.Errorf("entity %s not found", key)
+		return errors.NotFound("entity", key)
 	}
 
 	r.entities[key] = entity
@@ -141,7 +143,7 @@ func (r *GenericInMemoryRegistry[T]) Delete(_ context.Context, id string) error 
 	defer r.mu.Unlock()
 
 	if _, exists := r.entities[id]; !exists {
-		return fmt.Errorf("entity %s not found", id)
+		return errors.NotFound("entity", id)
 	}
 	delete(r.entities, id)
 	return nil

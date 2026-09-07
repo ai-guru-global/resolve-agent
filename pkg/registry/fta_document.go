@@ -2,9 +2,10 @@ package registry
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
+
+	"github.com/ai-guru-global/resolve-agent/pkg/errors"
 )
 
 // FTADocument represents an FTA analysis document.
@@ -74,7 +75,7 @@ func (r *InMemoryFTADocumentRegistry) CreateDocument(_ context.Context, doc *FTA
 	defer r.mu.Unlock()
 
 	if _, exists := r.documents[doc.ID]; exists {
-		return fmt.Errorf("FTA document %s already exists", doc.ID)
+		return errors.AlreadyExists("FTA document", doc.ID)
 	}
 
 	now := time.Now()
@@ -99,7 +100,7 @@ func (r *InMemoryFTADocumentRegistry) GetDocument(_ context.Context, id string) 
 
 	doc, ok := r.documents[id]
 	if !ok {
-		return nil, fmt.Errorf("FTA document %s not found", id)
+		return nil, errors.NotFound("FTA document", id)
 	}
 	return doc, nil
 }
@@ -157,7 +158,7 @@ func (r *InMemoryFTADocumentRegistry) UpdateDocument(_ context.Context, doc *FTA
 	defer r.mu.Unlock()
 
 	if _, exists := r.documents[doc.ID]; !exists {
-		return fmt.Errorf("FTA document %s not found", doc.ID)
+		return errors.NotFound("FTA document", doc.ID)
 	}
 
 	doc.UpdatedAt = time.Now()
@@ -202,7 +203,7 @@ func (r *InMemoryFTADocumentRegistry) CreateAnalysisResult(_ context.Context, re
 	defer r.mu.Unlock()
 
 	if _, exists := r.results[result.ID]; exists {
-		return fmt.Errorf("FTA analysis result %s already exists", result.ID)
+		return errors.AlreadyExists("FTA analysis result", result.ID)
 	}
 
 	result.CreatedAt = time.Now()
@@ -218,7 +219,7 @@ func (r *InMemoryFTADocumentRegistry) GetAnalysisResult(_ context.Context, id st
 
 	result, ok := r.results[id]
 	if !ok {
-		return nil, fmt.Errorf("FTA analysis result %s not found", id)
+		return nil, errors.NotFound("FTA analysis result", id)
 	}
 	return result, nil
 }

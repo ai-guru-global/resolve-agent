@@ -2,9 +2,10 @@ package registry
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
+
+	"github.com/ai-guru-global/resolve-agent/pkg/errors"
 )
 
 // TrafficCapture represents a traffic capture session.
@@ -76,7 +77,7 @@ func (r *InMemoryTrafficCaptureRegistry) Create(_ context.Context, capture *Traf
 	defer r.mu.Unlock()
 
 	if _, exists := r.captures[capture.ID]; exists {
-		return fmt.Errorf("traffic capture %s already exists", capture.ID)
+		return errors.AlreadyExists("traffic capture", capture.ID)
 	}
 
 	now := time.Now()
@@ -96,7 +97,7 @@ func (r *InMemoryTrafficCaptureRegistry) Get(_ context.Context, id string) (*Tra
 
 	capture, ok := r.captures[id]
 	if !ok {
-		return nil, fmt.Errorf("traffic capture %s not found", id)
+		return nil, errors.NotFound("traffic capture", id)
 	}
 	return capture, nil
 }
@@ -154,7 +155,7 @@ func (r *InMemoryTrafficCaptureRegistry) Update(_ context.Context, capture *Traf
 	defer r.mu.Unlock()
 
 	if _, exists := r.captures[capture.ID]; !exists {
-		return fmt.Errorf("traffic capture %s not found", capture.ID)
+		return errors.NotFound("traffic capture", capture.ID)
 	}
 	capture.UpdatedAt = time.Now()
 	r.captures[capture.ID] = capture

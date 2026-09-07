@@ -2,9 +2,10 @@ package registry
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
+
+	"github.com/ai-guru-global/resolve-agent/pkg/errors"
 )
 
 // TrafficGraph represents a service dependency graph built from traffic data.
@@ -53,7 +54,7 @@ func (r *InMemoryTrafficGraphRegistry) Create(_ context.Context, graph *TrafficG
 	defer r.mu.Unlock()
 
 	if _, exists := r.graphs[graph.ID]; exists {
-		return fmt.Errorf("traffic graph %s already exists", graph.ID)
+		return errors.AlreadyExists("traffic graph", graph.ID)
 	}
 
 	now := time.Now()
@@ -73,7 +74,7 @@ func (r *InMemoryTrafficGraphRegistry) Get(_ context.Context, id string) (*Traff
 
 	graph, ok := r.graphs[id]
 	if !ok {
-		return nil, fmt.Errorf("traffic graph %s not found", id)
+		return nil, errors.NotFound("traffic graph", id)
 	}
 	return graph, nil
 }
@@ -131,7 +132,7 @@ func (r *InMemoryTrafficGraphRegistry) Update(_ context.Context, graph *TrafficG
 	defer r.mu.Unlock()
 
 	if _, exists := r.graphs[graph.ID]; !exists {
-		return fmt.Errorf("traffic graph %s not found", graph.ID)
+		return errors.NotFound("traffic graph", graph.ID)
 	}
 	graph.UpdatedAt = time.Now()
 	r.graphs[graph.ID] = graph
@@ -169,7 +170,7 @@ func (r *InMemoryTrafficGraphRegistry) UpdateReport(_ context.Context, id, repor
 
 	graph, ok := r.graphs[id]
 	if !ok {
-		return fmt.Errorf("traffic graph %s not found", id)
+		return errors.NotFound("traffic graph", id)
 	}
 	graph.AnalysisReport = report
 	graph.Suggestions = suggestions

@@ -2,10 +2,11 @@ package registry
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/ai-guru-global/resolve-agent/pkg/errors"
 )
 
 // ShortTermMemory represents a single conversation message entry.
@@ -184,7 +185,7 @@ func (r *InMemoryMemoryRegistry) GetLongTermMemory(_ context.Context, id string)
 
 	mem, ok := r.longTerm[id]
 	if !ok {
-		return nil, fmt.Errorf("long-term memory %s not found", id)
+		return nil, errors.NotFound("long-term memory", id)
 	}
 	return mem, nil
 }
@@ -242,7 +243,7 @@ func (r *InMemoryMemoryRegistry) UpdateLongTermMemory(_ context.Context, mem *Lo
 	defer r.mu.Unlock()
 
 	if _, exists := r.longTerm[mem.ID]; !exists {
-		return fmt.Errorf("long-term memory %s not found", mem.ID)
+		return errors.NotFound("long-term memory", mem.ID)
 	}
 
 	mem.UpdatedAt = time.Now()
@@ -267,7 +268,7 @@ func (r *InMemoryMemoryRegistry) IncrementAccessCount(_ context.Context, id stri
 
 	mem, ok := r.longTerm[id]
 	if !ok {
-		return fmt.Errorf("long-term memory %s not found", id)
+		return errors.NotFound("long-term memory", id)
 	}
 
 	mem.AccessCount++

@@ -2,8 +2,9 @@ package registry
 
 import (
 	"context"
-	"fmt"
 	"sync"
+
+	"github.com/ai-guru-global/resolve-agent/pkg/errors"
 )
 
 // WorkflowDefinition represents a stored FTA workflow.
@@ -45,7 +46,7 @@ func (r *InMemoryWorkflowRegistry) Create(_ context.Context, workflow *WorkflowD
 	defer r.mu.Unlock()
 
 	if _, exists := r.workflows[workflow.ID]; exists {
-		return fmt.Errorf("workflow %s already exists", workflow.ID)
+		return errors.AlreadyExists("workflow", workflow.ID)
 	}
 
 	r.workflows[workflow.ID] = workflow
@@ -60,7 +61,7 @@ func (r *InMemoryWorkflowRegistry) Get(_ context.Context, id string) (*WorkflowD
 
 	wf, ok := r.workflows[id]
 	if !ok {
-		return nil, fmt.Errorf("workflow %s not found", id)
+		return nil, errors.NotFound("workflow", id)
 	}
 	return wf, nil
 }
@@ -84,7 +85,7 @@ func (r *InMemoryWorkflowRegistry) Update(_ context.Context, workflow *WorkflowD
 	defer r.mu.Unlock()
 
 	if _, exists := r.workflows[workflow.ID]; !exists {
-		return fmt.Errorf("workflow %s not found", workflow.ID)
+		return errors.NotFound("workflow", workflow.ID)
 	}
 
 	r.workflows[workflow.ID] = workflow

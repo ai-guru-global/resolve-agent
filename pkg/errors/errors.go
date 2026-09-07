@@ -83,15 +83,17 @@ func Wrapf(code Code, cause error, format string, args ...any) *Error {
 // Convenience constructors for common error types.
 
 // NotFound returns a structured error reporting that an entity of the given
-// type with the given ID was not found.
+// type with the given ID was not found. The returned error wraps ErrNotFound,
+// so errors.Is matches the sentinel.
 func NotFound(entity, id string) *Error {
-	return Newf(CodeNotFound, "%s %q not found", entity, id)
+	return &Error{Code: CodeNotFound, Message: fmt.Sprintf("%s %q not found", entity, id), Cause: ErrNotFound}
 }
 
 // AlreadyExists returns a structured error reporting that an entity of the
-// given type with the given ID already exists.
+// given type with the given ID already exists. The returned error wraps
+// ErrAlreadyExists, so errors.Is matches the sentinel.
 func AlreadyExists(entity, id string) *Error {
-	return Newf(CodeAlreadyExists, "%s %q already exists", entity, id)
+	return &Error{Code: CodeAlreadyExists, Message: fmt.Sprintf("%s %q already exists", entity, id), Cause: ErrAlreadyExists}
 }
 
 // InvalidArgument returns a structured error reporting that a field failed

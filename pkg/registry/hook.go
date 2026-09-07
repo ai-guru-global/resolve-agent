@@ -2,10 +2,11 @@ package registry
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/ai-guru-global/resolve-agent/pkg/errors"
 )
 
 // HookDefinition represents a lifecycle hook configuration.
@@ -75,7 +76,7 @@ func (r *InMemoryHookRegistry) Create(_ context.Context, hook *HookDefinition) e
 	defer r.mu.Unlock()
 
 	if _, exists := r.hooks[hook.ID]; exists {
-		return fmt.Errorf("hook %s already exists", hook.ID)
+		return errors.AlreadyExists("hook", hook.ID)
 	}
 
 	now := time.Now()
@@ -93,7 +94,7 @@ func (r *InMemoryHookRegistry) Get(_ context.Context, id string) (*HookDefinitio
 
 	hook, ok := r.hooks[id]
 	if !ok {
-		return nil, fmt.Errorf("hook %s not found", id)
+		return nil, errors.NotFound("hook", id)
 	}
 	return hook, nil
 }
@@ -155,7 +156,7 @@ func (r *InMemoryHookRegistry) Update(_ context.Context, hook *HookDefinition) e
 	defer r.mu.Unlock()
 
 	if _, exists := r.hooks[hook.ID]; !exists {
-		return fmt.Errorf("hook %s not found", hook.ID)
+		return errors.NotFound("hook", hook.ID)
 	}
 
 	hook.UpdatedAt = time.Now()

@@ -2,8 +2,9 @@ package registry
 
 import (
 	"context"
-	"fmt"
 	"sync"
+
+	"github.com/ai-guru-global/resolve-agent/pkg/errors"
 )
 
 // SkillDefinition represents a registered skill.
@@ -62,7 +63,7 @@ func (r *InMemorySkillRegistry) Get(_ context.Context, name string) (*SkillDefin
 
 	skill, ok := r.skills[name]
 	if !ok {
-		return nil, fmt.Errorf("skill %s not found", name)
+		return nil, errors.NotFound("skill", name)
 	}
 	return skill, nil
 }

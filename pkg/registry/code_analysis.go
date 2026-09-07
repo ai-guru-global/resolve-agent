@@ -2,9 +2,10 @@ package registry
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
+
+	"github.com/ai-guru-global/resolve-agent/pkg/errors"
 )
 
 // CodeAnalysis represents a code static analysis run.
@@ -82,7 +83,7 @@ func (r *InMemoryCodeAnalysisRegistry) Create(_ context.Context, analysis *CodeA
 	defer r.mu.Unlock()
 
 	if _, exists := r.analyses[analysis.ID]; exists {
-		return fmt.Errorf("analysis %s already exists", analysis.ID)
+		return errors.AlreadyExists("analysis", analysis.ID)
 	}
 
 	now := time.Now()
@@ -103,7 +104,7 @@ func (r *InMemoryCodeAnalysisRegistry) Get(_ context.Context, id string) (*CodeA
 
 	analysis, ok := r.analyses[id]
 	if !ok {
-		return nil, fmt.Errorf("analysis %s not found", id)
+		return nil, errors.NotFound("analysis", id)
 	}
 	return analysis, nil
 }
@@ -165,7 +166,7 @@ func (r *InMemoryCodeAnalysisRegistry) Update(_ context.Context, analysis *CodeA
 	defer r.mu.Unlock()
 
 	if _, exists := r.analyses[analysis.ID]; !exists {
-		return fmt.Errorf("analysis %s not found", analysis.ID)
+		return errors.NotFound("analysis", analysis.ID)
 	}
 
 	analysis.UpdatedAt = time.Now()

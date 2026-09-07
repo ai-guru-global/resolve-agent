@@ -2,9 +2,10 @@ package registry
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
+
+	"github.com/ai-guru-global/resolve-agent/pkg/errors"
 )
 
 // RAGDocument represents metadata for a document in a RAG collection.
@@ -73,7 +74,7 @@ func (r *InMemoryRAGDocumentRegistry) CreateDocument(_ context.Context, doc *RAG
 	defer r.mu.Unlock()
 
 	if _, exists := r.documents[doc.ID]; exists {
-		return fmt.Errorf("document %s already exists", doc.ID)
+		return errors.AlreadyExists("document", doc.ID)
 	}
 
 	now := time.Now()
@@ -94,7 +95,7 @@ func (r *InMemoryRAGDocumentRegistry) GetDocument(_ context.Context, id string) 
 
 	doc, ok := r.documents[id]
 	if !ok {
-		return nil, fmt.Errorf("document %s not found", id)
+		return nil, errors.NotFound("document", id)
 	}
 	return doc, nil
 }
@@ -142,7 +143,7 @@ func (r *InMemoryRAGDocumentRegistry) UpdateDocument(_ context.Context, doc *RAG
 	defer r.mu.Unlock()
 
 	if _, exists := r.documents[doc.ID]; !exists {
-		return fmt.Errorf("document %s not found", doc.ID)
+		return errors.NotFound("document", doc.ID)
 	}
 
 	doc.UpdatedAt = time.Now()
@@ -170,7 +171,8 @@ func (r *InMemoryRAGDocumentRegistry) GetDocumentByHash(_ context.Context, colle
 			return d, nil
 		}
 	}
-	return nil, fmt.Errorf("document with hash %s not found in collection %s", contentHash, collectionID)
+	return nil, errors.Wrapf(errors.CodeNotFound, errors.ErrNotFound,
+		"document with hash %s not found in collection %s", contentHash, collectionID)
 }
 
 // RecordIngestion stores an ingestion event, stamping its creation time.

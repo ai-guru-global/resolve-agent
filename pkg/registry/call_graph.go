@@ -2,9 +2,10 @@ package registry
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
+
+	"github.com/ai-guru-global/resolve-agent/pkg/errors"
 )
 
 // CallGraph represents a code call graph rooted at an entry point.
@@ -86,7 +87,7 @@ func (r *InMemoryCallGraphRegistry) Create(_ context.Context, graph *CallGraph) 
 	defer r.mu.Unlock()
 
 	if _, exists := r.graphs[graph.ID]; exists {
-		return fmt.Errorf("call graph %s already exists", graph.ID)
+		return errors.AlreadyExists("call graph", graph.ID)
 	}
 
 	now := time.Now()
@@ -106,7 +107,7 @@ func (r *InMemoryCallGraphRegistry) Get(_ context.Context, id string) (*CallGrap
 
 	graph, ok := r.graphs[id]
 	if !ok {
-		return nil, fmt.Errorf("call graph %s not found", id)
+		return nil, errors.NotFound("call graph", id)
 	}
 	return graph, nil
 }
@@ -168,7 +169,7 @@ func (r *InMemoryCallGraphRegistry) Update(_ context.Context, graph *CallGraph) 
 	defer r.mu.Unlock()
 
 	if _, exists := r.graphs[graph.ID]; !exists {
-		return fmt.Errorf("call graph %s not found", graph.ID)
+		return errors.NotFound("call graph", graph.ID)
 	}
 	graph.UpdatedAt = time.Now()
 	r.graphs[graph.ID] = graph

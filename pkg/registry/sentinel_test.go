@@ -53,6 +53,24 @@ func TestSkillErrorsAreSentinelWrapped(t *testing.T) {
 		}
 	})
 
+	t.Run("GetDocumentByHash missing document", func(t *testing.T) {
+		// The only site that wraps via Wrapf directly instead of the
+		// (entity, id) helpers — covered so a revert to fmt.Errorf fails here.
+		reg := NewInMemoryRAGDocumentRegistry()
+
+		_, err := reg.GetDocumentByHash(ctx, "coll-1", "hash-1")
+		if err == nil {
+			t.Fatal("GetDocumentByHash() on a missing document should fail")
+		}
+		if !errors.Is(err, errors.ErrNotFound) {
+			t.Errorf("GetDocumentByHash() error should wrap errors.ErrNotFound, got %v", err)
+		}
+		var e *errors.Error
+		if !errors.As(err, &e) || e.Code != errors.CodeNotFound {
+			t.Errorf("GetDocumentByHash() error should be *errors.Error with code %s, got %v", errors.CodeNotFound, err)
+		}
+	})
+
 	t.Run("duplicate Create", func(t *testing.T) {
 		reg := NewInMemoryAgentRegistry()
 		agent := &AgentDefinition{ID: "dup-agent", Name: "Dup", Type: "mega", Status: "active"}

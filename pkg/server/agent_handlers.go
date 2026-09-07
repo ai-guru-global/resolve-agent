@@ -18,7 +18,7 @@ func (s *Server) handleListAgents(w http.ResponseWriter, _ *http.Request) {
 	ctx := context.Background()
 	agents, total, err := s.agentRegistry.List(ctx, registry.ListOptions{})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "list agents")
 		return
 	}
 
@@ -59,7 +59,7 @@ func (s *Server) handleCreateAgent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.agentRegistry.Create(ctx, &agent); err != nil {
-		writeError(w, http.StatusConflict, err.Error())
+		writeRegistryError(w, err, s.logger, "create agent")
 		return
 	}
 
@@ -72,7 +72,7 @@ func (s *Server) handleGetAgent(w http.ResponseWriter, r *http.Request) {
 
 	agent, err := s.agentRegistry.Get(ctx, id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "get agent")
 		return
 	}
 
@@ -98,7 +98,7 @@ func (s *Server) handleUpdateAgent(w http.ResponseWriter, r *http.Request) {
 	agent.ID = id // ensure ID matches path
 
 	if err := s.agentRegistry.Update(ctx, &agent); err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "update agent")
 		return
 	}
 
@@ -110,7 +110,7 @@ func (s *Server) handleDeleteAgent(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
 	if err := s.agentRegistry.Delete(ctx, id); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "delete agent")
 		return
 	}
 

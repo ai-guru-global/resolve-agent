@@ -3,8 +3,8 @@ package postgres
 import (
 	"context"
 	"errors"
-	"fmt"
 
+	pkgerrors "github.com/ai-guru-global/resolve-agent/pkg/errors"
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 	"github.com/jackc/pgx/v5"
 )
@@ -48,7 +48,7 @@ func (r *FTADocumentRegistry) GetDocument(ctx context.Context, id string) (*regi
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("FTA document %s not found", id)
+			return nil, pkgerrors.NotFound("FTA document", id)
 		}
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func (r *FTADocumentRegistry) UpdateDocument(ctx context.Context, doc *registry.
 		return err
 	}
 	if tag.RowsAffected() == 0 {
-		return fmt.Errorf("FTA document %s not found", doc.ID)
+		return pkgerrors.NotFound("FTA document", doc.ID)
 	}
 	return nil
 }
@@ -201,7 +201,7 @@ func (r *FTADocumentRegistry) GetAnalysisResult(ctx context.Context, id string) 
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("FTA analysis result %s not found", id)
+			return nil, pkgerrors.NotFound("FTA analysis result", id)
 		}
 		return nil, err
 	}

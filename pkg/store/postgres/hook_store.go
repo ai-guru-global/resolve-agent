@@ -3,8 +3,8 @@ package postgres
 import (
 	"context"
 	"errors"
-	"fmt"
 
+	pkgerrors "github.com/ai-guru-global/resolve-agent/pkg/errors"
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 	"github.com/jackc/pgx/v5"
 )
@@ -49,7 +49,7 @@ func (r *HookRegistry) Get(ctx context.Context, id string) (*registry.HookDefini
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("hook %s not found", id)
+			return nil, pkgerrors.NotFound("hook", id)
 		}
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func (r *HookRegistry) Update(ctx context.Context, hook *registry.HookDefinition
 		return err
 	}
 	if tag.RowsAffected() == 0 {
-		return fmt.Errorf("hook %s not found", hook.ID)
+		return pkgerrors.NotFound("hook", hook.ID)
 	}
 	return nil
 }

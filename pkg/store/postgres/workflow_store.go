@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	pkgerrors "github.com/ai-guru-global/resolve-agent/pkg/errors"
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 	"github.com/jackc/pgx/v5"
 )
@@ -51,7 +52,7 @@ func (r *WorkflowRegistry) Get(ctx context.Context, id string) (*registry.Workfl
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("workflow %s not found", id)
+			return nil, pkgerrors.NotFound("workflow", id)
 		}
 		return nil, err
 	}
@@ -108,7 +109,7 @@ func (r *WorkflowRegistry) Update(ctx context.Context, workflow *registry.Workfl
 		return err
 	}
 	if tag.RowsAffected() == 0 {
-		return fmt.Errorf("workflow %s not found", workflow.ID)
+		return pkgerrors.NotFound("workflow", workflow.ID)
 	}
 	return nil
 }

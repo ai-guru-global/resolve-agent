@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	pkgerrors "github.com/ai-guru-global/resolve-agent/pkg/errors"
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 	"github.com/jackc/pgx/v5"
 )
@@ -49,7 +50,7 @@ func (r *CallGraphRegistry) Get(ctx context.Context, id string) (*registry.CallG
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("call graph %s not found", id)
+			return nil, pkgerrors.NotFound("call graph", id)
 		}
 		return nil, err
 	}
@@ -140,7 +141,7 @@ func (r *CallGraphRegistry) Update(ctx context.Context, graph *registry.CallGrap
 		return err
 	}
 	if tag.RowsAffected() == 0 {
-		return fmt.Errorf("call graph %s not found", graph.ID)
+		return pkgerrors.NotFound("call graph", graph.ID)
 	}
 	return nil
 }

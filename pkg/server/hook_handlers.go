@@ -13,7 +13,7 @@ func (s *Server) handleListHooks(w http.ResponseWriter, _ *http.Request) {
 	ctx := context.Background()
 	hooks, total, err := s.hookRegistry.List(ctx, registry.ListOptions{})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "list hooks")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"hooks": hooks, "total": total})
@@ -47,7 +47,7 @@ func (s *Server) handleCreateHook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.hookRegistry.Create(ctx, &hook); err != nil {
-		writeError(w, http.StatusConflict, err.Error())
+		writeRegistryError(w, err, s.logger, "create hook")
 		return
 	}
 	writeJSON(w, http.StatusCreated, hook)
@@ -59,7 +59,7 @@ func (s *Server) handleGetHook(w http.ResponseWriter, r *http.Request) {
 
 	hook, err := s.hookRegistry.Get(ctx, id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "get hook")
 		return
 	}
 	writeJSON(w, http.StatusOK, hook)
@@ -83,7 +83,7 @@ func (s *Server) handleUpdateHook(w http.ResponseWriter, r *http.Request) {
 	hook.ID = id
 
 	if err := s.hookRegistry.Update(ctx, &hook); err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "update hook")
 		return
 	}
 	writeJSON(w, http.StatusOK, hook)
@@ -94,7 +94,7 @@ func (s *Server) handleDeleteHook(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
 	if err := s.hookRegistry.Delete(ctx, id); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "delete hook")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"message": "hook deleted", "id": id})
@@ -106,7 +106,7 @@ func (s *Server) handleListHookExecutions(w http.ResponseWriter, r *http.Request
 
 	execs, total, err := s.hookRegistry.ListExecutions(ctx, id, registry.ListOptions{})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "list hook executions")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"executions": execs, "total": total})

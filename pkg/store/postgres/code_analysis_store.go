@@ -3,8 +3,8 @@ package postgres
 import (
 	"context"
 	"errors"
-	"fmt"
 
+	pkgerrors "github.com/ai-guru-global/resolve-agent/pkg/errors"
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 	"github.com/jackc/pgx/v5"
 )
@@ -52,7 +52,7 @@ func (r *CodeAnalysisRegistry) Get(ctx context.Context, id string) (*registry.Co
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("analysis %s not found", id)
+			return nil, pkgerrors.NotFound("analysis", id)
 		}
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func (r *CodeAnalysisRegistry) Update(ctx context.Context, analysis *registry.Co
 		return err
 	}
 	if tag.RowsAffected() == 0 {
-		return fmt.Errorf("analysis %s not found", analysis.ID)
+		return pkgerrors.NotFound("analysis", analysis.ID)
 	}
 	return nil
 }

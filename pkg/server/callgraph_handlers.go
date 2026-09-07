@@ -17,7 +17,7 @@ func (s *Server) handleListCallGraphs(w http.ResponseWriter, r *http.Request) {
 	}
 	graphs, total, err := s.callGraphRegistry.List(ctx, opts)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "list call graphs")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"call_graphs": graphs, "total": total})
@@ -34,7 +34,7 @@ func (s *Server) handleCreateCallGraph(w http.ResponseWriter, r *http.Request) {
 		graph.ID = generateID()
 	}
 	if err := s.callGraphRegistry.Create(ctx, &graph); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "create call graph")
 		return
 	}
 	writeJSON(w, http.StatusCreated, graph)
@@ -45,7 +45,7 @@ func (s *Server) handleGetCallGraph(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	graph, err := s.callGraphRegistry.Get(ctx, id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "get call graph")
 		return
 	}
 	writeJSON(w, http.StatusOK, graph)
@@ -55,7 +55,7 @@ func (s *Server) handleDeleteCallGraph(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	id := r.PathValue("id")
 	if err := s.callGraphRegistry.Delete(ctx, id); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "delete call graph")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"deleted": id})
@@ -66,7 +66,7 @@ func (s *Server) handleListCallGraphNodes(w http.ResponseWriter, r *http.Request
 	id := r.PathValue("id")
 	nodes, total, err := s.callGraphRegistry.ListNodes(ctx, id, registry.ListOptions{Limit: 500})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "list call graph nodes")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"nodes": nodes, "total": total})
@@ -77,7 +77,7 @@ func (s *Server) handleListCallGraphEdges(w http.ResponseWriter, r *http.Request
 	id := r.PathValue("id")
 	edges, total, err := s.callGraphRegistry.ListEdges(ctx, id, registry.ListOptions{Limit: 500})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "list call graph edges")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"edges": edges, "total": total})
@@ -96,7 +96,7 @@ func (s *Server) handleGetCallGraphSubgraph(w http.ResponseWriter, r *http.Reque
 	}
 	nodes, edges, err := s.callGraphRegistry.GetSubgraph(ctx, id, entryNodeID, depth)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "get call graph subgraph")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"nodes": nodes, "edges": edges})

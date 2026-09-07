@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 
+	pkgerrors "github.com/ai-guru-global/resolve-agent/pkg/errors"
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 	"github.com/jackc/pgx/v5"
 )
@@ -49,7 +50,7 @@ func (r *AgentRegistry) Get(ctx context.Context, id string) (*registry.AgentDefi
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("agent %s not found", id)
+			return nil, pkgerrors.NotFound("agent", id)
 		}
 		return nil, err
 	}
@@ -106,7 +107,7 @@ func (r *AgentRegistry) Update(ctx context.Context, agent *registry.AgentDefinit
 		return err
 	}
 	if tag.RowsAffected() == 0 {
-		return fmt.Errorf("agent %s not found", agent.ID)
+		return pkgerrors.NotFound("agent", agent.ID)
 	}
 	return nil
 }

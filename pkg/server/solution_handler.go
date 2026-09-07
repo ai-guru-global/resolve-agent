@@ -41,7 +41,7 @@ func (s *Server) handleListSolutions(w http.ResponseWriter, r *http.Request) {
 
 	solutions, total, err := s.solutionRegistry.List(ctx, opts)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "list solutions")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"solutions": solutions, "total": total})
@@ -81,7 +81,7 @@ func (s *Server) handleCreateSolution(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.solutionRegistry.Create(ctx, &solution); err != nil {
-		writeError(w, http.StatusConflict, err.Error())
+		writeRegistryError(w, err, s.logger, "create solution")
 		return
 	}
 	writeJSON(w, http.StatusCreated, solution)
@@ -93,7 +93,7 @@ func (s *Server) handleGetSolution(w http.ResponseWriter, r *http.Request) {
 
 	solution, err := s.solutionRegistry.Get(ctx, id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "get solution")
 		return
 	}
 	writeJSON(w, http.StatusOK, solution)
@@ -117,7 +117,7 @@ func (s *Server) handleUpdateSolution(w http.ResponseWriter, r *http.Request) {
 	solution.ID = id
 
 	if err := s.solutionRegistry.Update(ctx, &solution); err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "update solution")
 		return
 	}
 	writeJSON(w, http.StatusOK, solution)
@@ -128,7 +128,7 @@ func (s *Server) handleDeleteSolution(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
 	if err := s.solutionRegistry.Delete(ctx, id); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "delete solution")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"message": "solution deleted", "id": id})
@@ -153,7 +153,7 @@ func (s *Server) handleSearchSolutions(w http.ResponseWriter, r *http.Request) {
 
 	solutions, total, err := s.solutionRegistry.Search(ctx, &opts)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "search solutions")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"solutions": solutions, "total": total})
@@ -197,7 +197,7 @@ func (s *Server) handleBulkCreateSolutions(w http.ResponseWriter, r *http.Reques
 
 	created, err := s.solutionRegistry.BulkCreate(ctx, req.Solutions)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "bulk create solutions")
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"created": created})
@@ -227,7 +227,7 @@ func (s *Server) handleRecordSolutionExecution(w http.ResponseWriter, r *http.Re
 	exec.SolutionID = solutionID
 
 	if err := s.solutionRegistry.RecordExecution(ctx, &exec); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "record solution execution")
 		return
 	}
 	writeJSON(w, http.StatusCreated, exec)
@@ -239,7 +239,7 @@ func (s *Server) handleListSolutionExecutions(w http.ResponseWriter, r *http.Req
 
 	execs, total, err := s.solutionRegistry.ListExecutions(ctx, solutionID, registry.ListOptions{})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "list solution executions")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"executions": execs, "total": total})

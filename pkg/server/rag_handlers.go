@@ -106,7 +106,7 @@ func (s *Server) handleCreateCollection(w http.ResponseWriter, r *http.Request) 
 		}
 
 		if err := s.ragRegistry.Create(ctx, collection); err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeRegistryError(w, err, s.logger, "create collection")
 			return
 		}
 
@@ -143,13 +143,13 @@ func (s *Server) handleDeleteCollection(w http.ResponseWriter, r *http.Request) 
 		// Get collection info before deletion
 		collection, err := s.ragRegistry.Get(ctx, id)
 		if err != nil {
-			writeError(w, http.StatusNotFound, "collection not found")
+			writeRegistryError(w, err, s.logger, "get collection")
 			return
 		}
 
 		// Delete from registry
 		if err := s.ragRegistry.Delete(ctx, id); err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeRegistryError(w, err, s.logger, "delete collection")
 			return
 		}
 
@@ -180,7 +180,7 @@ func (s *Server) handleIngestDocuments(w http.ResponseWriter, r *http.Request) {
 	if s.ragRegistry != nil {
 		_, err := s.ragRegistry.Get(ctx, collectionID)
 		if err != nil {
-			writeError(w, http.StatusNotFound, "collection not found")
+			writeRegistryError(w, err, s.logger, "get collection")
 			return
 		}
 	}
@@ -323,7 +323,7 @@ func (s *Server) handleListRAGDocuments(w http.ResponseWriter, r *http.Request) 
 
 	docs, total, err := s.ragDocumentRegistry.ListDocuments(ctx, collectionID, registry.ListOptions{})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "list documents")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"documents": docs, "total": total})
@@ -355,7 +355,7 @@ func (s *Server) handleCreateRAGDocument(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := s.ragDocumentRegistry.CreateDocument(ctx, &doc); err != nil {
-		writeError(w, http.StatusConflict, err.Error())
+		writeRegistryError(w, err, s.logger, "create document")
 		return
 	}
 	writeJSON(w, http.StatusCreated, doc)
@@ -367,7 +367,7 @@ func (s *Server) handleGetRAGDocument(w http.ResponseWriter, r *http.Request) {
 
 	doc, err := s.ragDocumentRegistry.GetDocument(ctx, id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "get document")
 		return
 	}
 	writeJSON(w, http.StatusOK, doc)
@@ -391,7 +391,7 @@ func (s *Server) handleUpdateRAGDocument(w http.ResponseWriter, r *http.Request)
 	doc.ID = id
 
 	if err := s.ragDocumentRegistry.UpdateDocument(ctx, &doc); err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "update document")
 		return
 	}
 	writeJSON(w, http.StatusOK, doc)
@@ -402,7 +402,7 @@ func (s *Server) handleDeleteRAGDocument(w http.ResponseWriter, r *http.Request)
 	id := r.PathValue("id")
 
 	if err := s.ragDocumentRegistry.DeleteDocument(ctx, id); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "delete document")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"message": "document deleted", "id": id})
@@ -414,7 +414,7 @@ func (s *Server) handleListRAGIngestions(w http.ResponseWriter, r *http.Request)
 
 	records, total, err := s.ragDocumentRegistry.ListIngestionHistory(ctx, collectionID, registry.ListOptions{})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "list ingestions")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ingestions": records, "total": total})

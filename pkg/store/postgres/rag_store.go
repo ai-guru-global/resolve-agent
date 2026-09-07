@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	pkgerrors "github.com/ai-guru-global/resolve-agent/pkg/errors"
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 	"github.com/jackc/pgx/v5"
 )
@@ -58,7 +59,7 @@ func (r *RAGRegistry) Get(ctx context.Context, id string) (*registry.RAGCollecti
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("collection %s not found", id)
+			return nil, pkgerrors.NotFound("collection", id)
 		}
 		return nil, err
 	}
@@ -118,7 +119,7 @@ func (r *RAGRegistry) Update(ctx context.Context, collection *registry.RAGCollec
 		return err
 	}
 	if tag.RowsAffected() == 0 {
-		return fmt.Errorf("collection %s not found", collection.ID)
+		return pkgerrors.NotFound("collection", collection.ID)
 	}
 	return nil
 }

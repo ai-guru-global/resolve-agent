@@ -3,8 +3,8 @@ package postgres
 import (
 	"context"
 	"errors"
-	"fmt"
 
+	pkgerrors "github.com/ai-guru-global/resolve-agent/pkg/errors"
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 	"github.com/jackc/pgx/v5"
 )
@@ -54,7 +54,7 @@ func (r *SkillRegistry) Get(ctx context.Context, name string) (*registry.SkillDe
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("skill %s not found", name)
+			return nil, pkgerrors.NotFound("skill", name)
 		}
 		return nil, err
 	}

@@ -3,8 +3,8 @@ package postgres
 import (
 	"context"
 	"errors"
-	"fmt"
 
+	pkgerrors "github.com/ai-guru-global/resolve-agent/pkg/errors"
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 	"github.com/jackc/pgx/v5"
 )
@@ -47,7 +47,7 @@ func (r *TrafficGraphRegistry) Get(ctx context.Context, id string) (*registry.Tr
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("traffic graph %s not found", id)
+			return nil, pkgerrors.NotFound("traffic graph", id)
 		}
 		return nil, err
 	}
@@ -112,7 +112,7 @@ func (r *TrafficGraphRegistry) Update(ctx context.Context, graph *registry.Traff
 		return err
 	}
 	if tag.RowsAffected() == 0 {
-		return fmt.Errorf("traffic graph %s not found", graph.ID)
+		return pkgerrors.NotFound("traffic graph", graph.ID)
 	}
 	return nil
 }
@@ -165,7 +165,7 @@ func (r *TrafficGraphRegistry) UpdateReport(ctx context.Context, id, report stri
 		return err
 	}
 	if tag.RowsAffected() == 0 {
-		return fmt.Errorf("traffic graph %s not found", id)
+		return pkgerrors.NotFound("traffic graph", id)
 	}
 	return nil
 }

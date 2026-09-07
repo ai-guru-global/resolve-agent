@@ -16,7 +16,7 @@ func (s *Server) handleListWorkflows(w http.ResponseWriter, _ *http.Request) {
 	ctx := context.Background()
 	workflows, total, err := s.workflowRegistry.List(ctx, registry.ListOptions{})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "list workflows")
 		return
 	}
 
@@ -64,7 +64,7 @@ func (s *Server) handleCreateWorkflow(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.workflowRegistry.Create(ctx, &workflow); err != nil {
-		writeError(w, http.StatusConflict, err.Error())
+		writeRegistryError(w, err, s.logger, "create workflow")
 		return
 	}
 
@@ -77,7 +77,7 @@ func (s *Server) handleGetWorkflow(w http.ResponseWriter, r *http.Request) {
 
 	workflow, err := s.workflowRegistry.Get(ctx, id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "get workflow")
 		return
 	}
 
@@ -103,7 +103,7 @@ func (s *Server) handleUpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 	workflow.ID = id
 
 	if err := s.workflowRegistry.Update(ctx, &workflow); err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "update workflow")
 		return
 	}
 
@@ -115,7 +115,7 @@ func (s *Server) handleDeleteWorkflow(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
 	if err := s.workflowRegistry.Delete(ctx, id); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "delete workflow")
 		return
 	}
 
@@ -129,7 +129,7 @@ func (s *Server) handleValidateWorkflow(w http.ResponseWriter, r *http.Request) 
 	// Get workflow from registry
 	workflow, err := s.workflowRegistry.Get(ctx, id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, "workflow not found: "+err.Error())
+		writeRegistryError(w, err, s.logger, "get workflow")
 		return
 	}
 

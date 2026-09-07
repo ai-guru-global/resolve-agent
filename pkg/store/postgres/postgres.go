@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"time"
 
+	pkgerrors "github.com/ai-guru-global/resolve-agent/pkg/errors"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -605,7 +606,7 @@ func (s *Store) GetAgent(ctx context.Context, id string) (*AgentRecord, error) {
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("agent not found: %s", id)
+			return nil, pkgerrors.NotFound("agent", id)
 		}
 		return nil, err
 	}

@@ -3,8 +3,8 @@ package postgres
 import (
 	"context"
 	"errors"
-	"fmt"
 
+	pkgerrors "github.com/ai-guru-global/resolve-agent/pkg/errors"
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 	"github.com/jackc/pgx/v5"
 )
@@ -48,7 +48,7 @@ func (r *TrafficCaptureRegistry) Get(ctx context.Context, id string) (*registry.
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("traffic capture %s not found", id)
+			return nil, pkgerrors.NotFound("traffic capture", id)
 		}
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func (r *TrafficCaptureRegistry) Update(ctx context.Context, capture *registry.T
 		return err
 	}
 	if tag.RowsAffected() == 0 {
-		return fmt.Errorf("traffic capture %s not found", capture.ID)
+		return pkgerrors.NotFound("traffic capture", capture.ID)
 	}
 	return nil
 }

@@ -16,7 +16,7 @@ func (s *Server) handleListConversations(w http.ResponseWriter, r *http.Request)
 
 	convIDs, total, err := s.memoryRegistry.ListConversations(ctx, agentID, registry.ListOptions{})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "list conversations")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"conversations": convIDs, "total": total})
@@ -35,7 +35,7 @@ func (s *Server) handleGetConversation(w http.ResponseWriter, r *http.Request) {
 
 	msgs, err := s.memoryRegistry.GetConversation(ctx, convID, limit)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "get conversation")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"messages": msgs, "total": len(msgs)})
@@ -67,7 +67,7 @@ func (s *Server) handleAddMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.memoryRegistry.AddMessage(ctx, &msg); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "add message")
 		return
 	}
 	writeJSON(w, http.StatusCreated, msg)
@@ -78,7 +78,7 @@ func (s *Server) handleDeleteConversation(w http.ResponseWriter, r *http.Request
 	convID := r.PathValue("id")
 
 	if err := s.memoryRegistry.DeleteConversation(ctx, convID); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "delete conversation")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"message": "conversation deleted", "id": convID})
@@ -92,7 +92,7 @@ func (s *Server) handleSearchLongTermMemory(w http.ResponseWriter, r *http.Reque
 
 	memories, total, err := s.memoryRegistry.SearchLongTermMemory(ctx, agentID, userID, memoryType, registry.ListOptions{})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "search long-term memory")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"memories": memories, "total": total})
@@ -122,7 +122,7 @@ func (s *Server) handleStoreLongTermMemory(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err := s.memoryRegistry.StoreLongTermMemory(ctx, &mem); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "store long-term memory")
 		return
 	}
 	writeJSON(w, http.StatusCreated, mem)
@@ -134,7 +134,7 @@ func (s *Server) handleGetLongTermMemory(w http.ResponseWriter, r *http.Request)
 
 	mem, err := s.memoryRegistry.GetLongTermMemory(ctx, id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "get long-term memory")
 		return
 	}
 
@@ -162,7 +162,7 @@ func (s *Server) handleUpdateLongTermMemory(w http.ResponseWriter, r *http.Reque
 	mem.ID = id
 
 	if err := s.memoryRegistry.UpdateLongTermMemory(ctx, &mem); err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "update long-term memory")
 		return
 	}
 	writeJSON(w, http.StatusOK, mem)
@@ -173,7 +173,7 @@ func (s *Server) handleDeleteLongTermMemory(w http.ResponseWriter, r *http.Reque
 	id := r.PathValue("id")
 
 	if err := s.memoryRegistry.DeleteLongTermMemory(ctx, id); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "delete long-term memory")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"message": "memory deleted", "id": id})
@@ -184,7 +184,7 @@ func (s *Server) handlePruneMemories(w http.ResponseWriter, _ *http.Request) {
 
 	pruned, err := s.memoryRegistry.PruneExpiredMemories(ctx)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "prune memories")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"pruned": pruned})

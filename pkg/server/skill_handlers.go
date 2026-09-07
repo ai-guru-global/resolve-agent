@@ -13,7 +13,7 @@ func (s *Server) handleListSkills(w http.ResponseWriter, _ *http.Request) {
 	ctx := context.Background()
 	skills, total, err := s.skillRegistry.List(ctx, registry.ListOptions{})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "list skills")
 		return
 	}
 
@@ -47,7 +47,7 @@ func (s *Server) handleRegisterSkill(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.skillRegistry.Register(ctx, &skill); err != nil {
-		writeError(w, http.StatusConflict, err.Error())
+		writeRegistryError(w, err, s.logger, "register skill")
 		return
 	}
 
@@ -60,7 +60,7 @@ func (s *Server) handleGetSkill(w http.ResponseWriter, r *http.Request) {
 
 	skill, err := s.skillRegistry.Get(ctx, name)
 	if err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "get skill")
 		return
 	}
 
@@ -72,7 +72,7 @@ func (s *Server) handleUnregisterSkill(w http.ResponseWriter, r *http.Request) {
 	name := r.PathValue("name")
 
 	if err := s.skillRegistry.Unregister(ctx, name); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "unregister skill")
 		return
 	}
 

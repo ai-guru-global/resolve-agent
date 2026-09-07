@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	pkgerrors "github.com/ai-guru-global/resolve-agent/pkg/errors"
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 	"github.com/jackc/pgx/v5"
 )
@@ -160,7 +161,7 @@ func (r *MemoryRegistry) GetLongTermMemory(ctx context.Context, id string) (*reg
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("long-term memory %s not found", id)
+			return nil, pkgerrors.NotFound("long-term memory", id)
 		}
 		return nil, err
 	}
@@ -258,7 +259,7 @@ func (r *MemoryRegistry) UpdateLongTermMemory(ctx context.Context, mem *registry
 		return err
 	}
 	if tag.RowsAffected() == 0 {
-		return fmt.Errorf("long-term memory %s not found", mem.ID)
+		return pkgerrors.NotFound("long-term memory", mem.ID)
 	}
 	return nil
 }
@@ -280,7 +281,7 @@ func (r *MemoryRegistry) IncrementAccessCount(ctx context.Context, id string) er
 		return err
 	}
 	if tag.RowsAffected() == 0 {
-		return fmt.Errorf("long-term memory %s not found", id)
+		return pkgerrors.NotFound("long-term memory", id)
 	}
 	return nil
 }

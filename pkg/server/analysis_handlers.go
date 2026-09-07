@@ -13,7 +13,7 @@ func (s *Server) handleListAnalyses(w http.ResponseWriter, _ *http.Request) {
 	ctx := context.Background()
 	analyses, total, err := s.codeAnalysisRegistry.List(ctx, registry.ListOptions{})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "list analyses")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"analyses": analyses, "total": total})
@@ -43,7 +43,7 @@ func (s *Server) handleCreateAnalysis(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.codeAnalysisRegistry.Create(ctx, &analysis); err != nil {
-		writeError(w, http.StatusConflict, err.Error())
+		writeRegistryError(w, err, s.logger, "create analysis")
 		return
 	}
 	writeJSON(w, http.StatusCreated, analysis)
@@ -55,7 +55,7 @@ func (s *Server) handleGetAnalysis(w http.ResponseWriter, r *http.Request) {
 
 	analysis, err := s.codeAnalysisRegistry.Get(ctx, id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "get analysis")
 		return
 	}
 	writeJSON(w, http.StatusOK, analysis)
@@ -79,7 +79,7 @@ func (s *Server) handleUpdateAnalysis(w http.ResponseWriter, r *http.Request) {
 	analysis.ID = id
 
 	if err := s.codeAnalysisRegistry.Update(ctx, &analysis); err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "update analysis")
 		return
 	}
 	writeJSON(w, http.StatusOK, analysis)
@@ -90,7 +90,7 @@ func (s *Server) handleDeleteAnalysis(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
 	if err := s.codeAnalysisRegistry.Delete(ctx, id); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "delete analysis")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"message": "analysis deleted", "id": id})
@@ -105,7 +105,7 @@ func (s *Server) handleListFindings(w http.ResponseWriter, r *http.Request) {
 	if severity != "" {
 		findings, err := s.codeAnalysisRegistry.GetFindingsBySeverity(ctx, analysisID, severity)
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeRegistryError(w, err, s.logger, "get analysis findings")
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"findings": findings, "total": len(findings)})
@@ -114,7 +114,7 @@ func (s *Server) handleListFindings(w http.ResponseWriter, r *http.Request) {
 
 	findings, total, err := s.codeAnalysisRegistry.ListFindings(ctx, analysisID, registry.ListOptions{})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "list analysis findings")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"findings": findings, "total": total})
@@ -146,7 +146,7 @@ func (s *Server) handleAddFindings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.codeAnalysisRegistry.AddFindings(ctx, req.Findings); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "add analysis findings")
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"added": len(req.Findings)})

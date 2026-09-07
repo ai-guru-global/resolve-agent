@@ -3,8 +3,8 @@ package postgres
 import (
 	"context"
 	"errors"
-	"fmt"
 
+	pkgerrors "github.com/ai-guru-global/resolve-agent/pkg/errors"
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 	"github.com/jackc/pgx/v5"
 )
@@ -48,7 +48,7 @@ func (r *RAGDocumentRegistry) GetDocument(ctx context.Context, id string) (*regi
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("document %s not found", id)
+			return nil, pkgerrors.NotFound("document", id)
 		}
 		return nil, err
 	}
@@ -112,7 +112,7 @@ func (r *RAGDocumentRegistry) UpdateDocument(ctx context.Context, doc *registry.
 		return err
 	}
 	if tag.RowsAffected() == 0 {
-		return fmt.Errorf("document %s not found", doc.ID)
+		return pkgerrors.NotFound("document", doc.ID)
 	}
 	return nil
 }
@@ -138,7 +138,8 @@ func (r *RAGDocumentRegistry) GetDocumentByHash(ctx context.Context, collectionI
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("document with hash %s not found in collection %s", contentHash, collectionID)
+			return nil, pkgerrors.Wrapf(pkgerrors.CodeNotFound, pkgerrors.ErrNotFound,
+				"document with hash %s not found in collection %s", contentHash, collectionID)
 		}
 		return nil, err
 	}

@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/ai-guru-global/resolve-agent/pkg/errors"
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 )
 
@@ -279,5 +280,73 @@ func TestPostgresRAGRegistry(t *testing.T) {
 	_, err = r.Get(ctx, collection.ID)
 	if err == nil {
 		t.Error("Expected error after delete, got nil")
+	}
+}
+
+// TestPostgresRegistryNotFoundSentinels verifies that not-found errors from
+// the PostgreSQL-backed registries are structured *errors.Error values
+// wrapping ErrNotFound, so the unified HTTP outlet maps them to 404.
+func TestPostgresRegistryNotFoundSentinels(t *testing.T) {
+	store := mustOpenStore(t)
+	ctx := context.Background()
+
+	tests := []struct {
+		name  string
+		probe func() error
+	}{
+		{
+			name: "agent registry Get reports structured not found",
+			probe: func() error {
+				_, err := NewAgentRegistry(store).Get(ctx, "no-such-agent")
+				return err
+			},
+		},
+		{
+			name: "skill registry Get reports structured not found",
+			probe: func() error {
+				_, err := NewSkillRegistry(store).Get(ctx, "no-such-skill")
+				return err
+			},
+		},
+		{
+			name: "workflow registry Get reports structured not found",
+			probe: func() error {
+				_, err := NewWorkflowRegistry(store).Get(ctx, "no-such-workflow")
+				return err
+			},
+		},
+		{
+			name: "RAG registry Get reports structured not found",
+			probe: func() error {
+				_, err := NewRAGRegistry(store).Get(ctx, "no-such-collection")
+				return err
+			},
+		},
+		{
+			name: "RAG document registry GetDocumentByHash reports structured not found",
+			probe: func() error {
+				_, err := NewRAGDocumentRegistry(store).GetDocumentByHash(ctx, "no-such-collection", "no-such-hash")
+				return err
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.probe()
+			if err == nil {
+				t.Fatal("Expected not-found error, got nil")
+			}
+			if !errors.Is(err, errors.ErrNotFound) {
+				t.Errorf("errors.Is(err, ErrNotFound) = false, err = %v", err)
+			}
+			var e *errors.Error
+			if !errors.As(err, &e) {
+				t.Fatalf("errors.As(err, *errors.Error) = false, err = %v", err)
+			}
+			if e.Code != errors.CodeNotFound {
+				t.Errorf("code = %q, want %q", e.Code, errors.CodeNotFound)
+			}
+		})
 	}
 }

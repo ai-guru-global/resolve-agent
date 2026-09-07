@@ -13,7 +13,7 @@ func (s *Server) handleListFTADocuments(w http.ResponseWriter, _ *http.Request) 
 	ctx := context.Background()
 	docs, total, err := s.ftaDocumentRegistry.ListDocuments(ctx, registry.ListOptions{})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "list FTA documents")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"documents": docs, "total": total})
@@ -43,7 +43,7 @@ func (s *Server) handleCreateFTADocument(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := s.ftaDocumentRegistry.CreateDocument(ctx, &doc); err != nil {
-		writeError(w, http.StatusConflict, err.Error())
+		writeRegistryError(w, err, s.logger, "create FTA document")
 		return
 	}
 	writeJSON(w, http.StatusCreated, doc)
@@ -55,7 +55,7 @@ func (s *Server) handleGetFTADocument(w http.ResponseWriter, r *http.Request) {
 
 	doc, err := s.ftaDocumentRegistry.GetDocument(ctx, id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "get FTA document")
 		return
 	}
 	writeJSON(w, http.StatusOK, doc)
@@ -79,7 +79,7 @@ func (s *Server) handleUpdateFTADocument(w http.ResponseWriter, r *http.Request)
 	doc.ID = id
 
 	if err := s.ftaDocumentRegistry.UpdateDocument(ctx, &doc); err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "update FTA document")
 		return
 	}
 	writeJSON(w, http.StatusOK, doc)
@@ -90,7 +90,7 @@ func (s *Server) handleDeleteFTADocument(w http.ResponseWriter, r *http.Request)
 	id := r.PathValue("id")
 
 	if err := s.ftaDocumentRegistry.DeleteDocument(ctx, id); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "delete FTA document")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"message": "FTA document deleted", "id": id})
@@ -102,7 +102,7 @@ func (s *Server) handleListFTAResults(w http.ResponseWriter, r *http.Request) {
 
 	results, total, err := s.ftaDocumentRegistry.ListAnalysisResults(ctx, docID, registry.ListOptions{})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "list FTA analysis results")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"results": results, "total": total})
@@ -130,7 +130,7 @@ func (s *Server) handleCreateFTAResult(w http.ResponseWriter, r *http.Request) {
 	result.DocumentID = docID
 
 	if err := s.ftaDocumentRegistry.CreateAnalysisResult(ctx, &result); err != nil {
-		writeError(w, http.StatusConflict, err.Error())
+		writeRegistryError(w, err, s.logger, "create FTA analysis result")
 		return
 	}
 	writeJSON(w, http.StatusCreated, result)

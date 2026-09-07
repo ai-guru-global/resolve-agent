@@ -33,11 +33,11 @@ func newListCmd() *cobra.Command {
 
 			// Display in table format
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-			fmt.Fprintln(w, "ID\tNAME\tVERSION\tSTATUS")
-			fmt.Fprintln(w, "--\t----\t-------\t------")
+			_, _ = fmt.Fprintln(w, "ID\tNAME\tVERSION\tSTATUS")
+			_, _ = fmt.Fprintln(w, "--\t----\t-------\t------")
 
 			for _, wf := range resp.Workflows {
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
+				_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
 					wf.ID,
 					wf.Name,
 					wf.Version,

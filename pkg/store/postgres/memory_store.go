@@ -22,6 +22,14 @@ func NewPostgresMemoryRegistry(store *Store) *PostgresMemoryRegistry {
 // --- Short-term memory ---
 
 func (r *PostgresMemoryRegistry) AddMessage(ctx context.Context, msg *registry.ShortTermMemory) error {
+	if msg.SequenceNum <= 0 {
+		if err := r.store.pool.QueryRow(ctx, `
+			SELECT COALESCE(MAX(sequence_num) + 1, 0)
+			FROM memory_short_term WHERE conversation_id = $1
+		`, msg.ConversationID).Scan(&msg.SequenceNum); err != nil {
+			return err
+		}
+	}
 	_, err := r.store.pool.Exec(ctx, `
 		INSERT INTO memory_short_term (id, agent_id, conversation_id, role, content,
 			token_count, metadata, sequence_num)

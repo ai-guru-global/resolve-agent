@@ -160,7 +160,7 @@ func TestListAgentsEndpoint(t *testing.T) {
 	if !ok {
 		t.Error("expected 'total' field in response")
 	}
-	if total.(float64) != 0 {
+	if tv, ok := total.(float64); !ok || tv != 0 {
 		t.Errorf("expected total 0 from empty registry, got %v", total)
 	}
 }
@@ -188,7 +188,7 @@ func TestListSkillsEndpoint(t *testing.T) {
 	if !ok {
 		t.Error("expected 'total' field in response")
 	}
-	if total.(float64) != 0 {
+	if tv, ok := total.(float64); !ok || tv != 0 {
 		t.Errorf("expected total 0 from empty registry, got %v", total)
 	}
 }
@@ -216,7 +216,7 @@ func TestListWorkflowsEndpoint(t *testing.T) {
 	if !ok {
 		t.Error("expected 'total' field in response")
 	}
-	if total.(float64) != 0 {
+	if tv, ok := total.(float64); !ok || tv != 0 {
 		t.Errorf("expected total 0 from empty registry, got %v", total)
 	}
 }
@@ -245,7 +245,7 @@ func TestListModelsEndpoint(t *testing.T) {
 		t.Error("expected 'total' field in response")
 	}
 	// Models handler returns a hardcoded list of 3 models
-	if total.(float64) != 3 {
+	if tv, ok := total.(float64); !ok || tv != 3 {
 		t.Errorf("expected total 3 models, got %v", total)
 	}
 }

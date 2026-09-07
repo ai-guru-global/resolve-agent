@@ -73,7 +73,7 @@ func TestInMemoryRAGRegistry(t *testing.T) {
 				ID:   "collection-" + string(rune('0'+i)),
 				Name: "Collection " + string(rune('0'+i)),
 			}
-			reg.Create(ctx, c)
+			_ = reg.Create(ctx, c)
 		}
 
 		// Test with limit

@@ -43,7 +43,7 @@ func TestClient_ListAgents(t *testing.T) {
 			},
 			Total: 1,
 		}
-		json.NewEncoder(w).Encode(response)
+		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
@@ -79,7 +79,7 @@ func TestClient_CreateAgent(t *testing.T) {
 		}
 
 		agent.Status = "active"
-		json.NewEncoder(w).Encode(agent)
+		_ = json.NewEncoder(w).Encode(agent)
 	}))
 	defer server.Close()
 
@@ -112,7 +112,7 @@ func TestClient_GetAgent(t *testing.T) {
 		}
 
 		agent := Agent{ID: "agent-1", Name: "Test Agent", Type: "mega", Status: "active"}
-		json.NewEncoder(w).Encode(agent)
+		_ = json.NewEncoder(w).Encode(agent)
 	}))
 	defer server.Close()
 
@@ -159,7 +159,7 @@ func TestClient_DeleteAgent(t *testing.T) {
 func TestClient_ErrorResponse(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(`{"error": "agent not found"}`))
+		_, _ = w.Write([]byte(`{"error": "agent not found"}`))
 	}))
 	defer server.Close()
 

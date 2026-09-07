@@ -141,7 +141,9 @@ func (b *NATSBus) Subscribe(ctx context.Context, eventType string, handler func(
 		var data map[string]interface{}
 		if err := json.Unmarshal(msg.Data, &data); err != nil {
 			b.logger.Error("Failed to unmarshal event data", "error", err)
-			msg.Nak()
+			if err := msg.Nak(); err != nil {
+				b.logger.Error("Failed to nak message", "error", err)
+			}
 			return
 		}
 
@@ -170,7 +172,9 @@ func (b *NATSBus) Subscribe(ctx context.Context, eventType string, handler func(
 	// Keep subscription alive until context is cancelled
 	go func() {
 		<-ctx.Done()
-		sub.Unsubscribe()
+		if err := sub.Unsubscribe(); err != nil {
+			b.logger.Error("Failed to unsubscribe", "error", err)
+		}
 	}()
 
 	return nil

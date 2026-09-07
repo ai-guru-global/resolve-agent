@@ -139,7 +139,7 @@ func (r *PostgresCodeAnalysisRegistry) AddFindings(ctx context.Context, findings
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }()
 
 	for _, f := range findings {
 		_, err := tx.Exec(ctx, `

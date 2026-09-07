@@ -3,8 +3,6 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"math/rand"
 	"net/http"
 	"strconv"
 
@@ -33,7 +31,7 @@ func (s *Server) handleCreateCallGraph(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if graph.ID == "" {
-		graph.ID = fmt.Sprintf("cg-%d", rand.Intn(999999))
+		graph.ID = generateID()
 	}
 	if err := s.callGraphRegistry.Create(ctx, &graph); err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())

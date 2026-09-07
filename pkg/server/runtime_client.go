@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ai-guru-global/resolve-agent/pkg/config"
@@ -24,6 +25,9 @@ type RuntimeClient struct {
 func NewRuntimeClient(cfg *config.Config) *RuntimeClient {
 	// Default to localhost:9091 for Python runtime
 	runtimeAddr := cfg.Server.RuntimeAddr
+	if runtimeAddr == "" {
+		runtimeAddr = cfg.Runtime.GRPCAddr
+	}
 	if runtimeAddr == "" {
 		runtimeAddr = "localhost:9091"
 	}
@@ -111,7 +115,7 @@ func (c *RuntimeClient) ExecuteAgent(
 			errCh <- fmt.Errorf("do request: %w", err)
 			return
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			body, _ := io.ReadAll(resp.Body)
@@ -192,7 +196,7 @@ func (c *RuntimeClient) ExecuteWorkflow(
 			errCh <- fmt.Errorf("do request: %w", err)
 			return
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			body, _ := io.ReadAll(resp.Body)
@@ -277,7 +281,7 @@ func (c *RuntimeClient) QueryRAG(
 	if err != nil {
 		return nil, fmt.Errorf("do request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
@@ -326,7 +330,7 @@ func (c *RuntimeClient) IngestRAG(
 	if err != nil {
 		return nil, fmt.Errorf("do request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
@@ -376,7 +380,7 @@ func (c *RuntimeClient) ExecuteSkill(
 	if err != nil {
 		return nil, fmt.Errorf("do request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
@@ -442,7 +446,7 @@ func (c *RuntimeClient) ImportCorpus(
 			errCh <- fmt.Errorf("do request: %w", err)
 			return
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			body, _ := io.ReadAll(resp.Body)
@@ -487,7 +491,7 @@ func (c *RuntimeClient) ImportCorpus(
 
 // Health checks if the runtime is healthy.
 func (c *RuntimeClient) Health(ctx context.Context) error {
-	url := fmt.Sprintf("%s/../health", c.baseURL) // /v1/../health -> /health
+	url := fmt.Sprintf("%s/health", strings.TrimSuffix(c.baseURL, "/v1"))
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)
@@ -497,7 +501,7 @@ func (c *RuntimeClient) Health(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("do request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("runtime health check failed: %d", resp.StatusCode)
@@ -547,7 +551,7 @@ func (c *RuntimeClient) SyncSolutionToRAG(
 	if err != nil {
 		return nil, fmt.Errorf("do request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
@@ -605,7 +609,7 @@ func (c *RuntimeClient) SemanticSearchSolutions(
 	if err != nil {
 		return nil, fmt.Errorf("do request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)

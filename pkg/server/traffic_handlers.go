@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"math/rand"
 	"net/http"
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
@@ -30,7 +29,7 @@ func (s *Server) handleCreateTrafficCapture(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	if capture.ID == "" {
-		capture.ID = fmt.Sprintf("tc-%d", rand.Intn(999999))
+		capture.ID = generateID()
 	}
 	if err := s.trafficCaptureRegistry.Create(ctx, &capture); err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
@@ -74,7 +73,7 @@ func (s *Server) handleAddTrafficRecords(w http.ResponseWriter, r *http.Request)
 	for _, rec := range body.Records {
 		rec.CaptureID = captureID
 		if rec.ID == "" {
-			rec.ID = fmt.Sprintf("tr-%d", rand.Intn(999999))
+			rec.ID = generateID()
 		}
 	}
 	if err := s.trafficCaptureRegistry.AddRecords(ctx, body.Records); err != nil {
@@ -115,7 +114,7 @@ func (s *Server) handleCreateTrafficGraph(w http.ResponseWriter, r *http.Request
 		return
 	}
 	if graph.ID == "" {
-		graph.ID = fmt.Sprintf("tg-%d", rand.Intn(999999))
+		graph.ID = generateID()
 	}
 	if err := s.trafficGraphRegistry.Create(ctx, &graph); err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
@@ -177,7 +176,7 @@ func (s *Server) handleAnalyzeTrafficGraph(w http.ResponseWriter, r *http.Reques
 		writeError(w, http.StatusBadGateway, fmt.Sprintf("runtime unavailable: %v", err))
 		return
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(resp.StatusCode)

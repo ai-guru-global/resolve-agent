@@ -31,7 +31,11 @@ func newRemoveCmd() *cobra.Command {
 			if !force {
 				fmt.Printf("Are you sure you want to remove skill '%s'? [y/N]: ", name)
 				var response string
-				fmt.Scanln(&response)
+				if _, err := fmt.Scanln(&response); err != nil {
+					// Input unavailable (e.g. EOF): treat as unconfirmed and cancel.
+					fmt.Println("Cancelled")
+					return nil
+				}
 				if response != "y" && response != "Y" {
 					fmt.Println("Cancelled")
 					return nil

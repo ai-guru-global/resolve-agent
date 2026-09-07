@@ -19,11 +19,14 @@ func NewPostgresWorkflowRegistry(store *Store) *PostgresWorkflowRegistry {
 }
 
 func (r *PostgresWorkflowRegistry) Create(ctx context.Context, workflow *registry.WorkflowDefinition) error {
+	if workflow.Type == "" {
+		workflow.Type = "fta"
+	}
 	_, err := r.store.pool.Exec(ctx, `
 		INSERT INTO workflows (id, name, description, type, definition, status, version)
-		VALUES ($1, $2, $3, 'fta', $4, $5, $6)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`,
-		workflow.ID, workflow.Name, workflow.Description,
+		workflow.ID, workflow.Name, workflow.Description, workflow.Type,
 		workflow.Tree, workflow.Status, workflow.Version,
 	)
 	if err != nil {

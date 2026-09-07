@@ -33,11 +33,11 @@ func newListCmd() *cobra.Command {
 
 			// Display in table format
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-			fmt.Fprintln(w, "NAME\tVERSION\tTYPE\tSTATUS")
-			fmt.Fprintln(w, "----\t-------\t----\t------")
+			_, _ = fmt.Fprintln(w, "NAME\tVERSION\tTYPE\tSTATUS")
+			_, _ = fmt.Fprintln(w, "----\t-------\t----\t------")
 
 			for _, skill := range resp.Skills {
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
+				_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
 					skill.Name,
 					skill.Version,
 					skill.Type,

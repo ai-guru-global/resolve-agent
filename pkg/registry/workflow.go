@@ -11,6 +11,7 @@ type WorkflowDefinition struct {
 	ID          string         `json:"id"`
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
+	Type        string         `json:"type"`
 	Tree        map[string]any `json:"tree"`
 	Status      string         `json:"status"`
 	Version     int64          `json:"version"`

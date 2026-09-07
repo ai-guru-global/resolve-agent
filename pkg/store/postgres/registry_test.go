@@ -23,12 +23,12 @@ func mustOpenStore(t *testing.T) *Store {
 	}
 
 	if err := store.Migrate(context.Background()); err != nil {
-		store.Close()
+		_ = store.Close()
 		t.Fatalf("Failed to migrate: %v", err)
 	}
 
 	t.Cleanup(func() {
-		store.Close()
+		_ = store.Close()
 	})
 
 	return store

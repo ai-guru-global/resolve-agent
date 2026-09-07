@@ -31,7 +31,11 @@ func newDeleteCmd() *cobra.Command {
 
 				fmt.Printf("Are you sure you want to delete agent '%s' (%s)? [y/N]: ", agent.Name, agent.ID)
 				var response string
-				fmt.Scanln(&response)
+				if _, err := fmt.Scanln(&response); err != nil {
+					// Input unavailable (e.g. EOF): treat as unconfirmed and cancel.
+					fmt.Println("Cancelled")
+					return nil
+				}
 				if response != "y" && response != "Y" {
 					fmt.Println("Cancelled")
 					return nil

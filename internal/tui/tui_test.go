@@ -35,7 +35,11 @@ func TestModel_View(t *testing.T) {
 func TestModel_Update_Quit(t *testing.T) {
 	m := New()
 	newModel, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
-	if !newModel.(Model).quitting {
+	m2, ok := newModel.(Model)
+	if !ok {
+		t.Fatal("expected Model type")
+	}
+	if !m2.quitting {
 		t.Error("expected quitting to be true")
 	}
 	if cmd == nil {
@@ -46,8 +50,12 @@ func TestModel_Update_Quit(t *testing.T) {
 func TestModel_Update_SwitchView(t *testing.T) {
 	m := New()
 	newModel, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'2'}})
-	if newModel.(Model).currentView != "agents" {
-		t.Errorf("expected currentView 'agents', got %q", newModel.(Model).currentView)
+	m2, ok := newModel.(Model)
+	if !ok {
+		t.Fatal("expected Model type")
+	}
+	if m2.currentView != "agents" {
+		t.Errorf("expected currentView 'agents', got %q", m2.currentView)
 	}
 }
 

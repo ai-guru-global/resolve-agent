@@ -5,7 +5,6 @@ package retry
 
 import (
 	"context"
-	"math"
 	"math/rand/v2"
 	"time"
 )
@@ -105,11 +104,11 @@ func Do(ctx context.Context, p Policy, fn func(ctx context.Context) error) error
 		case <-time.After(jitteredDelay):
 		}
 
-		// Exponential backoff.
-		delay = time.Duration(math.Min(
-			float64(delay)*p.Multiplier,
-			float64(p.MaxDelay),
-		))
+		// Exponential backoff. MaxDelay <= 0 means unbounded.
+		delay = time.Duration(float64(delay) * p.Multiplier)
+		if p.MaxDelay > 0 && delay > p.MaxDelay {
+			delay = p.MaxDelay
+		}
 	}
 
 	// All attempts exhausted — emit feedback signal.

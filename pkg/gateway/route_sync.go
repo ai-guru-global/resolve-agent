@@ -261,7 +261,7 @@ func (rs *RouteSync) syncSkillRoutes(ctx context.Context) error {
 				ServicePort:  9091,
 				LoadBalancer: "round_robin",
 			},
-			Enabled: skill.Status == "ready",
+			Enabled: skill.Status == "active",
 			Labels: map[string]string{
 				"component":     "skill",
 				"skill_name":    skill.Name,

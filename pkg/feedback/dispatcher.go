@@ -82,7 +82,7 @@ func (d *WebhookDispatcher) Dispatch(ctx context.Context, sig FeedbackSignal) er
 	if err != nil {
 		return fmt.Errorf("webhook dispatch: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode >= 400 {
 		return fmt.Errorf("webhook returned status %d", resp.StatusCode)

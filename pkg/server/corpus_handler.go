@@ -82,20 +82,20 @@ func (s *Server) handleCorpusImport(w http.ResponseWriter, r *http.Request) {
 			}
 
 			data, _ := json.Marshal(event)
-			fmt.Fprintf(w, "data: %s\n\n", data)
+			_, _ = fmt.Fprintf(w, "data: %s\n\n", data)
 			flusher.Flush()
 
 		case err := <-errCh:
 			if err != nil {
 				s.logger.Error("Corpus import stream error", "error", err)
 				data, _ := json.Marshal(map[string]any{"type": "error", "message": err.Error()})
-				fmt.Fprintf(w, "data: %s\n\n", data)
+				_, _ = fmt.Fprintf(w, "data: %s\n\n", data)
 				flusher.Flush()
 			}
 			errCh = nil
 
 		case <-ctx.Done():
-			fmt.Fprintf(w, "data: {\"type\": \"error\", \"message\": \"request timeout\"}\n\n")
+			_, _ = fmt.Fprintf(w, "data: {\"type\": \"error\", \"message\": \"request timeout\"}\n\n")
 			flusher.Flush()
 			return
 		}
@@ -106,7 +106,7 @@ func (s *Server) handleCorpusImport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Send final completion marker
-	fmt.Fprintf(w, "data: [DONE]\n\n")
+	_, _ = fmt.Fprintf(w, "data: [DONE]\n\n")
 	flusher.Flush()
 
 	s.logger.Info("Corpus import completed", "source", req.Source)

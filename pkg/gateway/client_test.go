@@ -170,7 +170,7 @@ func TestClientGetRoute(t *testing.T) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(expectedRoute)
+		_ = json.NewEncoder(w).Encode(expectedRoute)
 	}))
 	defer server.Close()
 
@@ -222,7 +222,7 @@ func TestClientListRoutes(t *testing.T) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(routes)
+		_ = json.NewEncoder(w).Encode(routes)
 	}))
 	defer server.Close()
 

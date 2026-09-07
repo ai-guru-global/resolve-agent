@@ -57,7 +57,7 @@ func New(cfg *config.Config, logger *slog.Logger) (*Server, error) {
 
 		// Run migrations
 		if err := pgStore.Migrate(context.Background()); err != nil {
-			pgStore.Close()
+			_ = pgStore.Close()
 			return nil, fmt.Errorf("failed to migrate postgres: %w", err)
 		}
 

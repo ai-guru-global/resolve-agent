@@ -43,7 +43,7 @@ func (c *Client) Health(ctx context.Context) error {
 		c.logger.Warn("Higress gateway health check failed", "url", c.adminURL, "error", err)
 		return fmt.Errorf("health check failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("gateway unhealthy: status %d", resp.StatusCode)
@@ -119,7 +119,7 @@ func (c *Client) DeleteRoute(ctx context.Context, routeName string) error {
 	if err != nil {
 		return fmt.Errorf("deleting route: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
 		return c.parseError(resp)
@@ -140,7 +140,7 @@ func (c *Client) GetRoute(ctx context.Context, routeName string) (*HigressRoute,
 	if err != nil {
 		return nil, fmt.Errorf("getting route: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, nil
@@ -169,7 +169,7 @@ func (c *Client) ListRoutes(ctx context.Context) ([]*HigressRoute, error) {
 	if err != nil {
 		return nil, fmt.Errorf("listing routes: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, c.parseError(resp)
@@ -210,7 +210,7 @@ func (c *Client) RegisterService(ctx context.Context, service *HigressService) e
 	if err != nil {
 		return fmt.Errorf("registering service: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		return c.parseError(resp)
@@ -231,7 +231,7 @@ func (c *Client) DeregisterService(ctx context.Context, serviceName string) erro
 	if err != nil {
 		return fmt.Errorf("deregistering service: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
 		return c.parseError(resp)
@@ -257,7 +257,7 @@ func (c *Client) doRouteRequest(ctx context.Context, method, path string, route 
 	if err != nil {
 		return fmt.Errorf("sending request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		return c.parseError(resp)

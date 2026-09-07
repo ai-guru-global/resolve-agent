@@ -15,6 +15,7 @@ func Load(configPath string) (*Config, error) {
 	// Set defaults
 	v.SetDefault("server.http_addr", ":8080")
 	v.SetDefault("server.grpc_addr", ":9090")
+	v.SetDefault("server.runtime_addr", "localhost:9091")
 	v.SetDefault("database.host", "localhost")
 	v.SetDefault("database.port", 5432)
 	v.SetDefault("database.user", "resolveagent")
@@ -22,6 +23,7 @@ func Load(configPath string) (*Config, error) {
 	v.SetDefault("database.dbname", "resolveagent")
 	v.SetDefault("database.sslmode", "disable")
 	v.SetDefault("redis.addr", "localhost:6379")
+	v.SetDefault("redis.password", "")
 	v.SetDefault("redis.db", 0)
 	v.SetDefault("nats.url", "nats://localhost:4222")
 	v.SetDefault("runtime.grpc_addr", "localhost:9091")

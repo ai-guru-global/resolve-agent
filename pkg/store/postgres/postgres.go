@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -451,6 +452,106 @@ func (s *Store) Migrate(ctx context.Context) error {
 				CREATE INDEX IF NOT EXISTS idx_rag_collections_name ON rag_collections(name)
 			`,
 		},
+		// =====================================================================
+		// Call Graph & Traffic Stores
+		// =====================================================================
+		{
+			version: 15,
+			sql: `
+				CREATE TABLE IF NOT EXISTS call_graphs (
+					id VARCHAR(64) PRIMARY KEY,
+					analysis_id VARCHAR(64) REFERENCES code_analyses(id) ON DELETE SET NULL,
+					repository_url VARCHAR(500) NOT NULL,
+					branch VARCHAR(255) DEFAULT 'main',
+					language VARCHAR(50) NOT NULL,
+					entry_point VARCHAR(500) NOT NULL,
+					node_count INTEGER DEFAULT 0,
+					edge_count INTEGER DEFAULT 0,
+					max_depth INTEGER DEFAULT 0,
+					status VARCHAR(50) DEFAULT 'pending',
+					graph_data JSONB DEFAULT '{}',
+					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+					updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+				);
+				CREATE TABLE IF NOT EXISTS call_graph_nodes (
+					id VARCHAR(64) PRIMARY KEY,
+					call_graph_id VARCHAR(64) NOT NULL REFERENCES call_graphs(id) ON DELETE CASCADE,
+					function_name VARCHAR(500) NOT NULL,
+					file_path VARCHAR(500),
+					line_start INTEGER,
+					line_end INTEGER,
+					package VARCHAR(255),
+					node_type VARCHAR(50) DEFAULT 'internal',
+					metadata JSONB DEFAULT '{}'
+				);
+				CREATE TABLE IF NOT EXISTS call_graph_edges (
+					id VARCHAR(64) PRIMARY KEY,
+					call_graph_id VARCHAR(64) NOT NULL REFERENCES call_graphs(id) ON DELETE CASCADE,
+					caller_node_id VARCHAR(64) NOT NULL REFERENCES call_graph_nodes(id) ON DELETE CASCADE,
+					callee_node_id VARCHAR(64) NOT NULL REFERENCES call_graph_nodes(id) ON DELETE CASCADE,
+					call_type VARCHAR(50) DEFAULT 'direct',
+					weight INTEGER DEFAULT 1,
+					metadata JSONB DEFAULT '{}'
+				);
+				CREATE TABLE IF NOT EXISTS traffic_captures (
+					id VARCHAR(64) PRIMARY KEY,
+					name VARCHAR(255) NOT NULL,
+					source_type VARCHAR(50) NOT NULL,
+					target_service VARCHAR(255),
+					start_time TIMESTAMP,
+					end_time TIMESTAMP,
+					status VARCHAR(50) DEFAULT 'pending',
+					config JSONB DEFAULT '{}',
+					summary JSONB DEFAULT '{}',
+					labels JSONB DEFAULT '{}',
+					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+					updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+				);
+				CREATE TABLE IF NOT EXISTS traffic_records (
+					id VARCHAR(64) PRIMARY KEY,
+					capture_id VARCHAR(64) NOT NULL REFERENCES traffic_captures(id) ON DELETE CASCADE,
+					source_service VARCHAR(255) NOT NULL,
+					dest_service VARCHAR(255) NOT NULL,
+					protocol VARCHAR(50),
+					method VARCHAR(20),
+					path VARCHAR(500),
+					status_code INTEGER,
+					latency_ms INTEGER,
+					request_size INTEGER,
+					response_size INTEGER,
+					trace_id VARCHAR(64),
+					span_id VARCHAR(32),
+					timestamp TIMESTAMP NOT NULL,
+					metadata JSONB DEFAULT '{}'
+				);
+				CREATE TABLE IF NOT EXISTS traffic_graphs (
+					id VARCHAR(64) PRIMARY KEY,
+					capture_id VARCHAR(64) REFERENCES traffic_captures(id) ON DELETE SET NULL,
+					name VARCHAR(255) NOT NULL,
+					graph_data JSONB DEFAULT '{}',
+					nodes JSONB DEFAULT '[]',
+					edges JSONB DEFAULT '[]',
+					analysis_report TEXT DEFAULT '',
+					suggestions JSONB DEFAULT '[]',
+					status VARCHAR(50) DEFAULT 'pending',
+					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+					updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+				);
+				CREATE INDEX IF NOT EXISTS idx_call_graphs_analysis_id ON call_graphs(analysis_id);
+				CREATE INDEX IF NOT EXISTS idx_call_graph_nodes_graph_id ON call_graph_nodes(call_graph_id);
+				CREATE INDEX IF NOT EXISTS idx_call_graph_edges_graph_id ON call_graph_edges(call_graph_id);
+				CREATE INDEX IF NOT EXISTS idx_call_graph_edges_caller ON call_graph_edges(caller_node_id);
+				CREATE INDEX IF NOT EXISTS idx_call_graph_edges_callee ON call_graph_edges(callee_node_id);
+				CREATE INDEX IF NOT EXISTS idx_traffic_captures_status ON traffic_captures(status);
+				CREATE INDEX IF NOT EXISTS idx_traffic_captures_source_type ON traffic_captures(source_type);
+				CREATE INDEX IF NOT EXISTS idx_traffic_records_capture_id ON traffic_records(capture_id);
+				CREATE INDEX IF NOT EXISTS idx_traffic_records_services ON traffic_records(source_service, dest_service);
+				CREATE INDEX IF NOT EXISTS idx_traffic_records_trace_id ON traffic_records(trace_id);
+				CREATE INDEX IF NOT EXISTS idx_traffic_records_timestamp ON traffic_records(timestamp);
+				CREATE INDEX IF NOT EXISTS idx_traffic_graphs_capture_id ON traffic_graphs(capture_id);
+				CREATE INDEX IF NOT EXISTS idx_traffic_graphs_status ON traffic_graphs(status)
+			`,
+		},
 	}
 
 	for _, migration := range migrations {
@@ -492,13 +593,14 @@ func (s *Store) Migrate(ctx context.Context) error {
 // GetAgent retrieves an agent by ID.
 func (s *Store) GetAgent(ctx context.Context, id string) (*AgentRecord, error) {
 	var agent AgentRecord
+	var createdAt, updatedAt time.Time
 	err := s.pool.QueryRow(ctx, `
 		SELECT id, name, description, type, config, status, labels, version, created_at, updated_at
 		FROM agents WHERE id = $1
 	`, id).Scan(
 		&agent.ID, &agent.Name, &agent.Description, &agent.Type,
 		&agent.Config, &agent.Status, &agent.Labels, &agent.Version,
-		&agent.CreatedAt, &agent.UpdatedAt,
+		&createdAt, &updatedAt,
 	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -506,6 +608,8 @@ func (s *Store) GetAgent(ctx context.Context, id string) (*AgentRecord, error) {
 		}
 		return nil, err
 	}
+	agent.CreatedAt = createdAt.Format(time.RFC3339)
+	agent.UpdatedAt = updatedAt.Format(time.RFC3339)
 	return &agent, nil
 }
 

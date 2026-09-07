@@ -116,7 +116,7 @@ func (r *PostgresTrafficCaptureRegistry) AddRecords(ctx context.Context, records
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }()
 
 	for _, rec := range records {
 		_, err := tx.Exec(ctx, `

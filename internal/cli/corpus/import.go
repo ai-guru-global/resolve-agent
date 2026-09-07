@@ -121,7 +121,7 @@ func runImport(ctx context.Context, source string, importTypes []string, ragColl
 	if err != nil {
 		return fmt.Errorf("connect to server: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)

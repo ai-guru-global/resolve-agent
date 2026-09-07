@@ -34,7 +34,9 @@ linters-settings:
       - shadow
   errcheck:
     check-type-assertions: true
-    check-blank: true
+    # 不再检查 blank 弃置：对不可处置错误（写 ResponseWriter、defer Close、stdout 输出）
+    # 强制检查只会产生虚假处理；可处置错误仍全部真实处理。
+    check-blank: false
   gocritic:
     enabled-tags:
       - diagnostic

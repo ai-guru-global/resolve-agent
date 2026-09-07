@@ -56,8 +56,26 @@ func (r *PostgresCallGraphRegistry) Get(ctx context.Context, id string) (*regist
 }
 
 func (r *PostgresCallGraphRegistry) List(ctx context.Context, opts registry.ListOptions) ([]*registry.CallGraph, int, error) {
+	// Build dynamic query
+	where := ""
+	args := []interface{}{}
+	argIdx := 1
+	for key, value := range opts.Filter {
+		switch key {
+		case "analysis_id", "status", "language":
+			if where == "" {
+				where = "WHERE "
+			} else {
+				where += " AND "
+			}
+			where += fmt.Sprintf("%s = $%d", key, argIdx)
+			args = append(args, value)
+			argIdx++
+		}
+	}
+
 	var total int
-	if err := r.store.pool.QueryRow(ctx, "SELECT COUNT(*) FROM call_graphs").Scan(&total); err != nil {
+	if err := r.store.pool.QueryRow(ctx, "SELECT COUNT(*) FROM call_graphs "+where, args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
@@ -66,11 +84,15 @@ func (r *PostgresCallGraphRegistry) List(ctx context.Context, opts registry.List
 		limit = 100
 	}
 
-	rows, err := r.store.pool.Query(ctx, `
+	querySQL := fmt.Sprintf(`
 		SELECT id, analysis_id, repository_url, branch, language, entry_point,
 			node_count, edge_count, max_depth, status, graph_data, created_at, updated_at
-		FROM call_graphs ORDER BY created_at DESC LIMIT $1 OFFSET $2
-	`, limit, opts.Offset)
+		FROM call_graphs %s
+		ORDER BY created_at DESC LIMIT $%d OFFSET $%d
+	`, where, argIdx, argIdx+1)
+	args = append(args, limit, opts.Offset)
+
+	rows, err := r.store.pool.Query(ctx, querySQL, args...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -125,7 +147,7 @@ func (r *PostgresCallGraphRegistry) AddNodes(ctx context.Context, nodes []*regis
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }()
 
 	for _, n := range nodes {
 		_, err := tx.Exec(ctx, `
@@ -148,7 +170,7 @@ func (r *PostgresCallGraphRegistry) AddEdges(ctx context.Context, edges []*regis
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }()
 
 	for _, e := range edges {
 		_, err := tx.Exec(ctx, `

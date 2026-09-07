@@ -195,7 +195,9 @@ func (m *ModelRouter) syncProviderRoutes(ctx context.Context) error {
 		}
 
 		if err := m.client.CreateRoute(ctx, route); err != nil {
-			m.client.UpdateRoute(ctx, route)
+			if uerr := m.client.UpdateRoute(ctx, route); uerr != nil {
+				m.logger.Warn("Failed to sync provider route", "provider", p.name, "error", uerr)
+			}
 		}
 	}
 

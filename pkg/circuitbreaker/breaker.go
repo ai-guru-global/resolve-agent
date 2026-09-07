@@ -78,6 +78,11 @@ func DefaultConfig(name string) Config {
 	}
 }
 
+// stateChange records a pending state transition for observer notification.
+type stateChange struct {
+	from, to State
+}
+
 // Breaker is a thread-safe circuit breaker.
 type Breaker struct {
 	mu              sync.Mutex
@@ -87,6 +92,7 @@ type Breaker struct {
 	halfOpenCalls   int
 	lastFailureTime time.Time
 	lastStateChange time.Time
+	pending         []stateChange
 }
 
 // New creates a Breaker with the given config, starting in the closed state.
@@ -124,33 +130,32 @@ func (b *Breaker) Execute(ctx context.Context, fn func(ctx context.Context) erro
 // beforeRequest checks whether the request is allowed under the current state.
 func (b *Breaker) beforeRequest() error {
 	b.mu.Lock()
-	defer b.mu.Unlock()
-
+	var err error
 	switch b.state {
 	case StateClosed:
-		return nil
 	case StateOpen:
 		// Check if recovery timeout has elapsed.
 		if time.Since(b.lastFailureTime) >= b.cfg.RecoveryTimeout {
 			b.transitionTo(StateHalfOpen)
-			b.halfOpenCalls = 0
-			return nil
+			b.halfOpenCalls = 1
+		} else {
+			err = ErrCircuitOpen
 		}
-		return ErrCircuitOpen
 	case StateHalfOpen:
 		if b.halfOpenCalls >= b.cfg.HalfOpenMaxCalls {
-			return ErrCircuitOpen
+			err = ErrCircuitOpen
+		} else {
+			b.halfOpenCalls++
 		}
-		b.halfOpenCalls++
-		return nil
 	}
-	return nil
+	b.mu.Unlock()
+	b.notify()
+	return err
 }
 
 // afterRequest records the outcome of a request.
 func (b *Breaker) afterRequest(err error) {
 	b.mu.Lock()
-	defer b.mu.Unlock()
 
 	if err == nil {
 		// Success: reset failures, close circuit if half-open.
@@ -158,6 +163,8 @@ func (b *Breaker) afterRequest(err error) {
 		if b.state == StateHalfOpen {
 			b.transitionTo(StateClosed)
 		}
+		b.mu.Unlock()
+		b.notify()
 		return
 	}
 
@@ -177,15 +184,28 @@ func (b *Breaker) afterRequest(err error) {
 		// Failure while open: no transition; reopening is governed solely
 		// by the recovery timeout checked in beforeRequest.
 	}
+	b.mu.Unlock()
+	b.notify()
 }
 
-// transitionTo changes the circuit breaker state and notifies the observer.
+// transitionTo changes the circuit breaker state. Callers must hold b.mu;
+// observer notification is deferred until the lock is released.
 func (b *Breaker) transitionTo(to State) {
-	from := b.state
+	b.pending = append(b.pending, stateChange{from: b.state, to: to})
 	b.state = to
 	b.lastStateChange = time.Now()
-	if b.cfg.Observer != nil {
-		b.cfg.Observer.OnStateChange(b.cfg.Name, from, to)
+}
+
+// notify delivers pending transition events to the observer.
+func (b *Breaker) notify() {
+	if b.cfg.Observer == nil || len(b.pending) == 0 {
+		b.pending = nil
+		return
+	}
+	pending := b.pending
+	b.pending = nil
+	for _, p := range pending {
+		b.cfg.Observer.OnStateChange(b.cfg.Name, p.from, p.to)
 	}
 }
 
@@ -206,12 +226,13 @@ func (b *Breaker) Failures() int {
 // Reset forces the breaker back to closed state with zero failures.
 func (b *Breaker) Reset() {
 	b.mu.Lock()
-	defer b.mu.Unlock()
 	b.failures = 0
 	b.halfOpenCalls = 0
 	if b.state != StateClosed {
 		b.transitionTo(StateClosed)
 	}
+	b.mu.Unlock()
+	b.notify()
 }
 
 // String returns a human-readable summary of the breaker.

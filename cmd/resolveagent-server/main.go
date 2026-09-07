@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log/slog"
 	"os"
@@ -14,6 +15,9 @@ import (
 )
 
 func main() {
+	configPath := flag.String("config", "", "path to config file")
+	flag.Parse()
+
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
@@ -21,7 +25,7 @@ func main() {
 
 	slog.Info("Starting ResolveAgent Platform Services", "version", version.Version)
 
-	cfg, err := config.Load("")
+	cfg, err := config.Load(*configPath)
 	if err != nil {
 		slog.Error("Failed to load configuration", "error", err)
 		os.Exit(1)

@@ -2,7 +2,9 @@ package agent
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"time"
 
@@ -92,7 +94,13 @@ func createInteractiveSession(agentID string) {
 	for {
 		fmt.Print("> ")
 		var message string
-		fmt.Scanln(&message)
+		if _, err := fmt.Scanln(&message); err != nil {
+			if errors.Is(err, io.EOF) {
+				break // Input stream ended: exit the interactive loop.
+			}
+			// Empty line / parse issue: re-prompt instead of dispatching empty input.
+			continue
+		}
 
 		if message == "exit" || message == "quit" {
 			break

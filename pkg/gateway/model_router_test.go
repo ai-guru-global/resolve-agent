@@ -108,7 +108,7 @@ func TestModelRouterListModels(t *testing.T) {
 	}
 
 	for _, m := range models {
-		router.RegisterModel(context.Background(), m)
+		_ = router.RegisterModel(context.Background(), m)
 	}
 
 	list := router.ListModels()
@@ -132,7 +132,7 @@ func TestModelRouterUnregisterModel(t *testing.T) {
 		Enabled:  true,
 	}
 
-	router.RegisterModel(context.Background(), route)
+	_ = router.RegisterModel(context.Background(), route)
 
 	// Verify it exists
 	_, ok := router.GetModel("to-delete")

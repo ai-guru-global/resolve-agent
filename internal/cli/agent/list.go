@@ -56,11 +56,11 @@ func outputTable(agents []*client.Agent) error {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tNAME\tTYPE\tSTATUS")
-	fmt.Fprintln(w, "--\t----\t----\t------")
+	_, _ = fmt.Fprintln(w, "ID\tNAME\tTYPE\tSTATUS")
+	_, _ = fmt.Fprintln(w, "--\t----\t----\t------")
 
 	for _, agent := range agents {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
 			agent.ID,
 			agent.Name,
 			agent.Type,

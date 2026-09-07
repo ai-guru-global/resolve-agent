@@ -223,7 +223,7 @@ func (s *Server) handleExecuteAgent(w http.ResponseWriter, r *http.Request) {
 			case "content", "content_chunk":
 				fullContent.WriteString(resp.Content)
 				data, _ := json.Marshal(resp)
-				fmt.Fprintf(w, "data: %s\n\n", data)
+				_, _ = fmt.Fprintf(w, "data: %s\n\n", data)
 				flusher.Flush()
 
 			case "event":
@@ -232,13 +232,13 @@ func (s *Server) handleExecuteAgent(w http.ResponseWriter, r *http.Request) {
 					executionComplete = true
 				}
 				data, _ := json.Marshal(resp)
-				fmt.Fprintf(w, "data: %s\n\n", data)
+				_, _ = fmt.Fprintf(w, "data: %s\n\n", data)
 				flusher.Flush()
 
 			case "error":
 				s.logger.Error("Execution error", "error", resp.Error)
 				data, _ := json.Marshal(resp)
-				fmt.Fprintf(w, "data: %s\n\n", data)
+				_, _ = fmt.Fprintf(w, "data: %s\n\n", data)
 				flusher.Flush()
 			}
 
@@ -246,13 +246,13 @@ func (s *Server) handleExecuteAgent(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				s.logger.Error("Stream error", "error", err)
 				data, _ := json.Marshal(map[string]any{"type": "error", "message": err.Error()})
-				fmt.Fprintf(w, "data: %s\n\n", data)
+				_, _ = fmt.Fprintf(w, "data: %s\n\n", data)
 				flusher.Flush()
 			}
 			errCh = nil
 
 		case <-ctx.Done():
-			fmt.Fprintf(w, "data: {\"type\": \"error\", \"message\": \"request timeout\"}\n\n")
+			_, _ = fmt.Fprintf(w, "data: {\"type\": \"error\", \"message\": \"request timeout\"}\n\n")
 			flusher.Flush()
 			return
 		}
@@ -263,7 +263,7 @@ func (s *Server) handleExecuteAgent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Send final completion marker
-	fmt.Fprintf(w, "data: [DONE]\n\n")
+	_, _ = fmt.Fprintf(w, "data: [DONE]\n\n")
 	flusher.Flush()
 
 	s.logger.Info("Agent execution completed",

@@ -104,11 +104,11 @@ func newCollectionListCmd() *cobra.Command {
 
 			// Display in table format
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-			fmt.Fprintln(w, "ID\tNAME\tDOCUMENTS\tVECTORS\tSTATUS")
-			fmt.Fprintln(w, "--\t----\t---------\t-------\t------")
+			_, _ = fmt.Fprintln(w, "ID\tNAME\tDOCUMENTS\tVECTORS\tSTATUS")
+			_, _ = fmt.Fprintln(w, "--\t----\t---------\t-------\t------")
 
 			for _, col := range resp.Collections {
-				fmt.Fprintf(w, "%s\t%s\t%d\t%d\t%s\n",
+				_, _ = fmt.Fprintf(w, "%s\t%s\t%d\t%d\t%s\n",
 					col.ID,
 					col.Name,
 					col.DocumentCount,
@@ -145,7 +145,11 @@ func newCollectionDeleteCmd() *cobra.Command {
 			if !force {
 				fmt.Printf("Are you sure you want to delete collection '%s' (%s)? [y/N]: ", collection.Name, id)
 				var response string
-				fmt.Scanln(&response)
+				if _, err := fmt.Scanln(&response); err != nil {
+					// Input unavailable (e.g. EOF): treat as unconfirmed and cancel.
+					fmt.Println("Cancelled")
+					return nil
+				}
 				if response != "y" && response != "Y" {
 					fmt.Println("Cancelled")
 					return nil

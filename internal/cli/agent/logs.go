@@ -55,11 +55,11 @@ func displayLogs(logs []*client.ExecutionLog) error {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "TIME\tLEVEL\tMESSAGE")
-	fmt.Fprintln(w, "----\t-----\t-------")
+	_, _ = fmt.Fprintln(w, "TIME\tLEVEL\tMESSAGE")
+	_, _ = fmt.Fprintln(w, "----\t-----\t-------")
 
 	for _, log := range logs {
-		fmt.Fprintf(w, "%s\t%s\t%s\n",
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\n",
 			log.Timestamp.Format("15:04:05"),
 			log.Level,
 			log.Message,

@@ -17,19 +17,19 @@ func TestFeedbackLoop_EmitAndReceive(t *testing.T) {
 	skipIfNoServer(t)
 
 	cfg := feedback.DefaultConfig()
-	collector := feedback.NewCollector(cfg)
+	collector := feedback.NewCollector(&cfg)
 	defer collector.Close()
 
 	// Track received signals.
-	var received []feedback.Signal
-	collector.Subscribe("*", func(_ context.Context, sig feedback.Signal) {
+	var received []*feedback.Signal
+	collector.Subscribe("*", func(_ context.Context, sig *feedback.Signal) {
 		received = append(received, sig)
 	})
 
 	ctx := context.Background()
 
 	// Simulate a workflow completion signal.
-	err := collector.Emit(ctx, feedback.Signal{
+	err := collector.Emit(ctx, &feedback.Signal{
 		Source:   feedback.SourceWorkflow,
 		Event:    feedback.EventWorkflowComplete,
 		Severity: feedback.SeverityInfo,
@@ -42,7 +42,7 @@ func TestFeedbackLoop_EmitAndReceive(t *testing.T) {
 	}
 
 	// Simulate a retry exhausted signal.
-	err = collector.Emit(ctx, feedback.Signal{
+	err = collector.Emit(ctx, &feedback.Signal{
 		Source:   feedback.SourceRetry,
 		Event:    feedback.EventRetryExhausted,
 		Severity: feedback.SeverityError,
@@ -67,7 +67,7 @@ func TestFeedbackLoop_EmitAndReceive(t *testing.T) {
 	// Verify aggregator stats.
 	agg := feedback.NewAggregator(5 * time.Minute)
 	for _, sig := range snapshot {
-		agg.Record(sig)
+		agg.Record(&sig)
 	}
 	stats := agg.Stats()
 	if len(stats) != 2 {
@@ -80,18 +80,19 @@ func TestFeedbackLoop_EmitAndReceive(t *testing.T) {
 func TestFeedbackLoop_SubscriberFiltering(t *testing.T) {
 	skipIfNoServer(t)
 
-	collector := feedback.NewCollector(feedback.DefaultConfig())
+	cfg2 := feedback.DefaultConfig()
+	collector := feedback.NewCollector(&cfg2)
 	defer collector.Close()
 
-	var retryOnly []feedback.Signal
-	collector.Subscribe(feedback.SourceRetry, func(_ context.Context, sig feedback.Signal) {
+	var retryOnly []*feedback.Signal
+	collector.Subscribe(feedback.SourceRetry, func(_ context.Context, sig *feedback.Signal) {
 		retryOnly = append(retryOnly, sig)
 	})
 
 	ctx := context.Background()
-	_ = collector.Emit(ctx, feedback.Signal{Source: feedback.SourceHealth, Event: "check"})
-	_ = collector.Emit(ctx, feedback.Signal{Source: feedback.SourceRetry, Event: feedback.EventRetrySuccess})
-	_ = collector.Emit(ctx, feedback.Signal{Source: feedback.SourceWorkflow, Event: "done"})
+	_ = collector.Emit(ctx, &feedback.Signal{Source: feedback.SourceHealth, Event: "check"})
+	_ = collector.Emit(ctx, &feedback.Signal{Source: feedback.SourceRetry, Event: feedback.EventRetrySuccess})
+	_ = collector.Emit(ctx, &feedback.Signal{Source: feedback.SourceWorkflow, Event: "done"})
 
 	if len(retryOnly) != 1 {
 		t.Errorf("expected 1 retry signal, got %d", len(retryOnly))

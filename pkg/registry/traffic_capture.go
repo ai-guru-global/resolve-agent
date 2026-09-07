@@ -69,6 +69,8 @@ func NewInMemoryTrafficCaptureRegistry() *InMemoryTrafficCaptureRegistry {
 	}
 }
 
+// Create stores a new traffic capture, stamping timestamps, defaulting
+// status to "pending", and rejecting duplicate IDs.
 func (r *InMemoryTrafficCaptureRegistry) Create(_ context.Context, capture *TrafficCapture) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -87,6 +89,7 @@ func (r *InMemoryTrafficCaptureRegistry) Create(_ context.Context, capture *Traf
 	return nil
 }
 
+// Get returns the traffic capture with the given ID, or an error if absent.
 func (r *InMemoryTrafficCaptureRegistry) Get(_ context.Context, id string) (*TrafficCapture, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -98,6 +101,8 @@ func (r *InMemoryTrafficCaptureRegistry) Get(_ context.Context, id string) (*Tra
 	return capture, nil
 }
 
+// List returns traffic captures filtered by the optional status/source_type
+// filter, paginated, with the total count.
 func (r *InMemoryTrafficCaptureRegistry) List(_ context.Context, opts ListOptions) ([]*TrafficCapture, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -142,6 +147,8 @@ func (r *InMemoryTrafficCaptureRegistry) List(_ context.Context, opts ListOption
 	return captures[offset:end], total, nil
 }
 
+// Update replaces an existing traffic capture and refreshes its update
+// timestamp.
 func (r *InMemoryTrafficCaptureRegistry) Update(_ context.Context, capture *TrafficCapture) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -154,6 +161,7 @@ func (r *InMemoryTrafficCaptureRegistry) Update(_ context.Context, capture *Traf
 	return nil
 }
 
+// Delete removes a traffic capture together with all of its records.
 func (r *InMemoryTrafficCaptureRegistry) Delete(_ context.Context, id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -167,6 +175,7 @@ func (r *InMemoryTrafficCaptureRegistry) Delete(_ context.Context, id string) er
 	return nil
 }
 
+// AddRecords stores a batch of traffic records keyed by their IDs.
 func (r *InMemoryTrafficCaptureRegistry) AddRecords(_ context.Context, records []*TrafficRecord) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -177,6 +186,8 @@ func (r *InMemoryTrafficCaptureRegistry) AddRecords(_ context.Context, records [
 	return nil
 }
 
+// ListRecords returns the records of a capture, paginated, with the total
+// count.
 func (r *InMemoryTrafficCaptureRegistry) ListRecords(_ context.Context, captureID string, opts ListOptions) ([]*TrafficRecord, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -205,6 +216,8 @@ func (r *InMemoryTrafficCaptureRegistry) ListRecords(_ context.Context, captureI
 	return records[offset:end], total, nil
 }
 
+// GetRecordsByService returns the records of a capture where the service is
+// the source or destination.
 func (r *InMemoryTrafficCaptureRegistry) GetRecordsByService(_ context.Context, captureID string, serviceName string) ([]*TrafficRecord, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

@@ -75,6 +75,8 @@ func NewInMemoryCodeAnalysisRegistry() *InMemoryCodeAnalysisRegistry {
 	}
 }
 
+// Create stores a new analysis run, stamping timestamps, defaulting status
+// to "pending", and rejecting duplicate IDs.
 func (r *InMemoryCodeAnalysisRegistry) Create(_ context.Context, analysis *CodeAnalysis) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -94,6 +96,7 @@ func (r *InMemoryCodeAnalysisRegistry) Create(_ context.Context, analysis *CodeA
 	return nil
 }
 
+// Get returns the analysis run with the given ID, or an error if absent.
 func (r *InMemoryCodeAnalysisRegistry) Get(_ context.Context, id string) (*CodeAnalysis, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -105,6 +108,8 @@ func (r *InMemoryCodeAnalysisRegistry) Get(_ context.Context, id string) (*CodeA
 	return analysis, nil
 }
 
+// List returns analysis runs filtered by the optional status/analyzer_type/
+// language filter, paginated, with the total count.
 func (r *InMemoryCodeAnalysisRegistry) List(_ context.Context, opts ListOptions) ([]*CodeAnalysis, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -153,6 +158,8 @@ func (r *InMemoryCodeAnalysisRegistry) List(_ context.Context, opts ListOptions)
 	return analyses[offset:end], total, nil
 }
 
+// Update replaces an existing analysis run and refreshes its update
+// timestamp.
 func (r *InMemoryCodeAnalysisRegistry) Update(_ context.Context, analysis *CodeAnalysis) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -166,6 +173,7 @@ func (r *InMemoryCodeAnalysisRegistry) Update(_ context.Context, analysis *CodeA
 	return nil
 }
 
+// Delete removes an analysis run together with all of its findings.
 func (r *InMemoryCodeAnalysisRegistry) Delete(_ context.Context, id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -180,6 +188,7 @@ func (r *InMemoryCodeAnalysisRegistry) Delete(_ context.Context, id string) erro
 	return nil
 }
 
+// AddFinding stores a single finding, stamping its creation time.
 func (r *InMemoryCodeAnalysisRegistry) AddFinding(_ context.Context, finding *CodeAnalysisFinding) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -189,6 +198,7 @@ func (r *InMemoryCodeAnalysisRegistry) AddFinding(_ context.Context, finding *Co
 	return nil
 }
 
+// AddFindings stores a batch of findings, stamping their creation time.
 func (r *InMemoryCodeAnalysisRegistry) AddFindings(_ context.Context, findings []*CodeAnalysisFinding) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -201,6 +211,8 @@ func (r *InMemoryCodeAnalysisRegistry) AddFindings(_ context.Context, findings [
 	return nil
 }
 
+// ListFindings returns the findings of an analysis run, paginated, with the
+// total count.
 func (r *InMemoryCodeAnalysisRegistry) ListFindings(_ context.Context, analysisID string, opts ListOptions) ([]*CodeAnalysisFinding, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -229,6 +241,8 @@ func (r *InMemoryCodeAnalysisRegistry) ListFindings(_ context.Context, analysisI
 	return findings[offset:end], total, nil
 }
 
+// GetFindingsBySeverity returns the findings of an analysis run with the
+// given severity.
 func (r *InMemoryCodeAnalysisRegistry) GetFindingsBySeverity(_ context.Context, analysisID string, severity string) ([]*CodeAnalysisFinding, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

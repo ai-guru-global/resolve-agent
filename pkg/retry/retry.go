@@ -9,9 +9,9 @@ import (
 	"time"
 )
 
-// RetryObserver receives lifecycle events from the retry loop,
+// Observer receives lifecycle events from the retry loop,
 // enabling the feedback subsystem to track retry outcomes.
-type RetryObserver interface {
+type Observer interface {
 	// OnRetrySuccess is called when the operation succeeds after retries.
 	OnRetrySuccess(ctx context.Context, attempts int, totalDuration time.Duration)
 	// OnRetryExhausted is called when all retry attempts are exhausted.
@@ -33,7 +33,7 @@ type Policy struct {
 	// RetryIf is an optional predicate; if set, only retry when it returns true.
 	RetryIf func(err error) bool
 	// Observer receives retry lifecycle events for feedback loop integration.
-	Observer RetryObserver
+	Observer Observer
 }
 
 // DefaultPolicy returns a sensible default retry policy.

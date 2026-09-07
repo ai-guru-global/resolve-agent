@@ -9,17 +9,19 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// PostgresRAGRegistry implements registry.RAGRegistry using PostgreSQL.
-type PostgresRAGRegistry struct {
+// RAGRegistry implements registry.RAGRegistry using PostgreSQL.
+type RAGRegistry struct {
 	store *Store
 }
 
-// NewPostgresRAGRegistry creates a new PostgreSQL-backed RAG registry.
-func NewPostgresRAGRegistry(store *Store) *PostgresRAGRegistry {
-	return &PostgresRAGRegistry{store: store}
+// NewRAGRegistry creates a new PostgreSQL-backed RAG registry.
+func NewRAGRegistry(store *Store) *RAGRegistry {
+	return &RAGRegistry{store: store}
 }
 
-func (r *PostgresRAGRegistry) Create(ctx context.Context, collection *registry.RAGCollection) error {
+// Create inserts a new RAG collection row, stamping timestamps and
+// defaulting status to "active".
+func (r *RAGRegistry) Create(ctx context.Context, collection *registry.RAGCollection) error {
 	now := time.Now()
 	if collection.Status == "" {
 		collection.Status = "active"
@@ -41,7 +43,9 @@ func (r *PostgresRAGRegistry) Create(ctx context.Context, collection *registry.R
 	return nil
 }
 
-func (r *PostgresRAGRegistry) Get(ctx context.Context, id string) (*registry.RAGCollection, error) {
+// Get scans the RAG collection row with the given ID, reporting not-found as
+// an error.
+func (r *RAGRegistry) Get(ctx context.Context, id string) (*registry.RAGCollection, error) {
 	var collection registry.RAGCollection
 	err := r.store.pool.QueryRow(ctx, `
 		SELECT id, name, description, config, status, labels, created_at, updated_at
@@ -60,7 +64,9 @@ func (r *PostgresRAGRegistry) Get(ctx context.Context, id string) (*registry.RAG
 	return &collection, nil
 }
 
-func (r *PostgresRAGRegistry) List(ctx context.Context, opts registry.ListOptions) ([]*registry.RAGCollection, int, error) {
+// List returns RAG collections ordered by name with limit/offset pagination
+// and the total count.
+func (r *RAGRegistry) List(ctx context.Context, opts registry.ListOptions) ([]*registry.RAGCollection, int, error) {
 	var total int
 	if err := r.store.pool.QueryRow(ctx, "SELECT COUNT(*) FROM rag_collections").Scan(&total); err != nil {
 		return nil, 0, err
@@ -95,7 +101,9 @@ func (r *PostgresRAGRegistry) List(ctx context.Context, opts registry.ListOption
 	return collections, total, nil
 }
 
-func (r *PostgresRAGRegistry) Update(ctx context.Context, collection *registry.RAGCollection) error {
+// Update overwrites the RAG collection row with a fresh update timestamp,
+// reporting an error when the ID is absent.
+func (r *RAGRegistry) Update(ctx context.Context, collection *registry.RAGCollection) error {
 	collection.UpdatedAt = time.Now()
 	tag, err := r.store.pool.Exec(ctx, `
 		UPDATE rag_collections SET name=$2, description=$3, config=$4, status=$5, labels=$6, updated_at=$7
@@ -114,7 +122,8 @@ func (r *PostgresRAGRegistry) Update(ctx context.Context, collection *registry.R
 	return nil
 }
 
-func (r *PostgresRAGRegistry) Delete(ctx context.Context, id string) error {
+// Delete removes the RAG collection row with the given ID.
+func (r *RAGRegistry) Delete(ctx context.Context, id string) error {
 	_, err := r.store.pool.Exec(ctx, "DELETE FROM rag_collections WHERE id = $1", id)
 	return err
 }

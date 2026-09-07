@@ -21,15 +21,15 @@ func TestFeedbackLoop_EmitAndReceive(t *testing.T) {
 	defer collector.Close()
 
 	// Track received signals.
-	var received []feedback.FeedbackSignal
-	collector.Subscribe("*", func(_ context.Context, sig feedback.FeedbackSignal) {
+	var received []feedback.Signal
+	collector.Subscribe("*", func(_ context.Context, sig feedback.Signal) {
 		received = append(received, sig)
 	})
 
 	ctx := context.Background()
 
 	// Simulate a workflow completion signal.
-	err := collector.Emit(ctx, feedback.FeedbackSignal{
+	err := collector.Emit(ctx, feedback.Signal{
 		Source:   feedback.SourceWorkflow,
 		Event:    feedback.EventWorkflowComplete,
 		Severity: feedback.SeverityInfo,
@@ -42,7 +42,7 @@ func TestFeedbackLoop_EmitAndReceive(t *testing.T) {
 	}
 
 	// Simulate a retry exhausted signal.
-	err = collector.Emit(ctx, feedback.FeedbackSignal{
+	err = collector.Emit(ctx, feedback.Signal{
 		Source:   feedback.SourceRetry,
 		Event:    feedback.EventRetryExhausted,
 		Severity: feedback.SeverityError,
@@ -83,15 +83,15 @@ func TestFeedbackLoop_SubscriberFiltering(t *testing.T) {
 	collector := feedback.NewCollector(feedback.DefaultConfig())
 	defer collector.Close()
 
-	var retryOnly []feedback.FeedbackSignal
-	collector.Subscribe(feedback.SourceRetry, func(_ context.Context, sig feedback.FeedbackSignal) {
+	var retryOnly []feedback.Signal
+	collector.Subscribe(feedback.SourceRetry, func(_ context.Context, sig feedback.Signal) {
 		retryOnly = append(retryOnly, sig)
 	})
 
 	ctx := context.Background()
-	_ = collector.Emit(ctx, feedback.FeedbackSignal{Source: feedback.SourceHealth, Event: "check"})
-	_ = collector.Emit(ctx, feedback.FeedbackSignal{Source: feedback.SourceRetry, Event: feedback.EventRetrySuccess})
-	_ = collector.Emit(ctx, feedback.FeedbackSignal{Source: feedback.SourceWorkflow, Event: "done"})
+	_ = collector.Emit(ctx, feedback.Signal{Source: feedback.SourceHealth, Event: "check"})
+	_ = collector.Emit(ctx, feedback.Signal{Source: feedback.SourceRetry, Event: feedback.EventRetrySuccess})
+	_ = collector.Emit(ctx, feedback.Signal{Source: feedback.SourceWorkflow, Event: "done"})
 
 	if len(retryOnly) != 1 {
 		t.Errorf("expected 1 retry signal, got %d", len(retryOnly))

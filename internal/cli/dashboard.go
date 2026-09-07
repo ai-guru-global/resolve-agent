@@ -1,3 +1,6 @@
+// Package cli implements the ResolveAgent command-line interface, built on
+// Cobra, providing commands for agents, workflows, skills, RAG, corpus, and
+// configuration management.
 package cli
 
 import (

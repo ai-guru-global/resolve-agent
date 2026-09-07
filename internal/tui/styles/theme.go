@@ -1,3 +1,5 @@
+// Package styles defines the lipgloss color theme and shared styles for the
+// TUI.
 package styles
 
 import (

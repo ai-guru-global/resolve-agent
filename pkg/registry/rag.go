@@ -41,6 +41,8 @@ func NewInMemoryRAGRegistry() *InMemoryRAGRegistry {
 	}
 }
 
+// Create stores a new RAG collection, stamping timestamps, defaulting status
+// to "active", and rejecting duplicate IDs.
 func (r *InMemoryRAGRegistry) Create(_ context.Context, collection *RAGCollection) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -61,6 +63,7 @@ func (r *InMemoryRAGRegistry) Create(_ context.Context, collection *RAGCollectio
 	return nil
 }
 
+// Get returns the RAG collection with the given ID, or an error if absent.
 func (r *InMemoryRAGRegistry) Get(_ context.Context, id string) (*RAGCollection, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -72,6 +75,8 @@ func (r *InMemoryRAGRegistry) Get(_ context.Context, id string) (*RAGCollection,
 	return collection, nil
 }
 
+// List returns RAG collections filtered by the optional status/name filter,
+// paginated, with the total count.
 func (r *InMemoryRAGRegistry) List(_ context.Context, opts ListOptions) ([]*RAGCollection, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -120,6 +125,8 @@ func (r *InMemoryRAGRegistry) List(_ context.Context, opts ListOptions) ([]*RAGC
 	return collections[offset:end], total, nil
 }
 
+// Update replaces an existing RAG collection and refreshes its update
+// timestamp.
 func (r *InMemoryRAGRegistry) Update(_ context.Context, collection *RAGCollection) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -133,6 +140,7 @@ func (r *InMemoryRAGRegistry) Update(_ context.Context, collection *RAGCollectio
 	return nil
 }
 
+// Delete removes the RAG collection with the given ID.
 func (r *InMemoryRAGRegistry) Delete(_ context.Context, id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

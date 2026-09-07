@@ -57,6 +57,8 @@ func NewGenericInMemoryRegistry[T any](keyer Keyer[T], validate Validator[T]) *G
 	}
 }
 
+// Create validates the entity, then stores it keyed by the keyer, rejecting
+// duplicates.
 func (r *GenericInMemoryRegistry[T]) Create(_ context.Context, entity *T) error {
 	if r.validate != nil {
 		if err := r.validate(entity); err != nil {
@@ -76,6 +78,7 @@ func (r *GenericInMemoryRegistry[T]) Create(_ context.Context, entity *T) error 
 	return nil
 }
 
+// Get returns the entity stored under the given key, or an error if absent.
 func (r *GenericInMemoryRegistry[T]) Get(_ context.Context, id string) (*T, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -87,6 +90,8 @@ func (r *GenericInMemoryRegistry[T]) Get(_ context.Context, id string) (*T, erro
 	return entity, nil
 }
 
+// List returns all entities with offset/limit pagination applied, along with
+// the total count.
 func (r *GenericInMemoryRegistry[T]) List(_ context.Context, opts ListOptions) ([]*T, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -108,6 +113,8 @@ func (r *GenericInMemoryRegistry[T]) List(_ context.Context, opts ListOptions) (
 	return all, total, nil
 }
 
+// Update validates the entity, then replaces the stored entity with the same
+// key.
 func (r *GenericInMemoryRegistry[T]) Update(_ context.Context, entity *T) error {
 	if r.validate != nil {
 		if err := r.validate(entity); err != nil {
@@ -127,6 +134,8 @@ func (r *GenericInMemoryRegistry[T]) Update(_ context.Context, entity *T) error 
 	return nil
 }
 
+// Delete removes the entity stored under the given key and reports an error
+// if absent.
 func (r *GenericInMemoryRegistry[T]) Delete(_ context.Context, id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

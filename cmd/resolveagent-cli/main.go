@@ -1,3 +1,5 @@
+// Command resolveagent-cli is the entry point of the ResolveAgent
+// command-line interface.
 package main
 
 import (

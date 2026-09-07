@@ -88,6 +88,8 @@ func NewInMemoryTroubleshootingSolutionRegistry() *InMemoryTroubleshootingSoluti
 	}
 }
 
+// Create stores a new troubleshooting solution, stamping timestamps,
+// defaulting version to 1, and rejecting duplicate IDs.
 func (r *InMemoryTroubleshootingSolutionRegistry) Create(_ context.Context, solution *TroubleshootingSolution) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -107,6 +109,7 @@ func (r *InMemoryTroubleshootingSolutionRegistry) Create(_ context.Context, solu
 	return nil
 }
 
+// Get returns the solution with the given ID, or an error if absent.
 func (r *InMemoryTroubleshootingSolutionRegistry) Get(_ context.Context, id string) (*TroubleshootingSolution, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -118,6 +121,8 @@ func (r *InMemoryTroubleshootingSolutionRegistry) Get(_ context.Context, id stri
 	return solution, nil
 }
 
+// List returns solutions filtered by the optional status/domain/severity
+// filter, paginated, with the total count.
 func (r *InMemoryTroubleshootingSolutionRegistry) List(_ context.Context, opts ListOptions) ([]*TroubleshootingSolution, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -166,6 +171,7 @@ func (r *InMemoryTroubleshootingSolutionRegistry) List(_ context.Context, opts L
 	return solutions[offset:end], total, nil
 }
 
+// Update replaces an existing solution and refreshes its update timestamp.
 func (r *InMemoryTroubleshootingSolutionRegistry) Update(_ context.Context, solution *TroubleshootingSolution) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -179,6 +185,7 @@ func (r *InMemoryTroubleshootingSolutionRegistry) Update(_ context.Context, solu
 	return nil
 }
 
+// Delete removes the solution with the given ID.
 func (r *InMemoryTroubleshootingSolutionRegistry) Delete(_ context.Context, id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -187,6 +194,8 @@ func (r *InMemoryTroubleshootingSolutionRegistry) Delete(_ context.Context, id s
 	return nil
 }
 
+// Search returns solutions matching the domain, component, severity, status,
+// tag, and keyword filters, paginated, with the total count.
 func (r *InMemoryTroubleshootingSolutionRegistry) Search(_ context.Context, opts SolutionSearchOptions) ([]*TroubleshootingSolution, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -249,6 +258,8 @@ func (r *InMemoryTroubleshootingSolutionRegistry) Search(_ context.Context, opts
 	return results[offset:end], total, nil
 }
 
+// BulkCreate stores the solutions whose IDs are not yet present, stamping
+// timestamps, and returns how many were created.
 func (r *InMemoryTroubleshootingSolutionRegistry) BulkCreate(_ context.Context, solutions []*TroubleshootingSolution) (int, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -270,6 +281,8 @@ func (r *InMemoryTroubleshootingSolutionRegistry) BulkCreate(_ context.Context, 
 	return created, nil
 }
 
+// RecordExecution stores a solution execution record, stamping its creation
+// time.
 func (r *InMemoryTroubleshootingSolutionRegistry) RecordExecution(_ context.Context, exec *SolutionExecution) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -279,6 +292,8 @@ func (r *InMemoryTroubleshootingSolutionRegistry) RecordExecution(_ context.Cont
 	return nil
 }
 
+// ListExecutions returns the execution records of a solution, paginated,
+// with the total count.
 func (r *InMemoryTroubleshootingSolutionRegistry) ListExecutions(_ context.Context, solutionID string, opts ListOptions) ([]*SolutionExecution, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

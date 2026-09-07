@@ -46,6 +46,8 @@ func NewInMemoryTrafficGraphRegistry() *InMemoryTrafficGraphRegistry {
 	}
 }
 
+// Create stores a new traffic graph, stamping timestamps, defaulting status
+// to "pending", and rejecting duplicate IDs.
 func (r *InMemoryTrafficGraphRegistry) Create(_ context.Context, graph *TrafficGraph) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -64,6 +66,7 @@ func (r *InMemoryTrafficGraphRegistry) Create(_ context.Context, graph *TrafficG
 	return nil
 }
 
+// Get returns the traffic graph with the given ID, or an error if absent.
 func (r *InMemoryTrafficGraphRegistry) Get(_ context.Context, id string) (*TrafficGraph, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -75,6 +78,8 @@ func (r *InMemoryTrafficGraphRegistry) Get(_ context.Context, id string) (*Traff
 	return graph, nil
 }
 
+// List returns traffic graphs filtered by the optional status/capture_id
+// filter, paginated, with the total count.
 func (r *InMemoryTrafficGraphRegistry) List(_ context.Context, opts ListOptions) ([]*TrafficGraph, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -119,6 +124,8 @@ func (r *InMemoryTrafficGraphRegistry) List(_ context.Context, opts ListOptions)
 	return graphs[offset:end], total, nil
 }
 
+// Update replaces an existing traffic graph and refreshes its update
+// timestamp.
 func (r *InMemoryTrafficGraphRegistry) Update(_ context.Context, graph *TrafficGraph) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -131,6 +138,7 @@ func (r *InMemoryTrafficGraphRegistry) Update(_ context.Context, graph *TrafficG
 	return nil
 }
 
+// Delete removes the traffic graph with the given ID.
 func (r *InMemoryTrafficGraphRegistry) Delete(_ context.Context, id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -139,6 +147,7 @@ func (r *InMemoryTrafficGraphRegistry) Delete(_ context.Context, id string) erro
 	return nil
 }
 
+// GetByCaptureID returns all traffic graphs derived from a capture.
 func (r *InMemoryTrafficGraphRegistry) GetByCaptureID(_ context.Context, captureID string) ([]*TrafficGraph, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -152,6 +161,8 @@ func (r *InMemoryTrafficGraphRegistry) GetByCaptureID(_ context.Context, capture
 	return graphs, nil
 }
 
+// UpdateReport attaches an analysis report and suggestions to a graph and
+// marks it analyzed.
 func (r *InMemoryTrafficGraphRegistry) UpdateReport(_ context.Context, id string, report string, suggestions []any) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

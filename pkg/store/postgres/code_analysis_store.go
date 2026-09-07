@@ -8,17 +8,18 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// PostgresCodeAnalysisRegistry implements registry.CodeAnalysisRegistry using PostgreSQL.
-type PostgresCodeAnalysisRegistry struct {
+// CodeAnalysisRegistry implements registry.CodeAnalysisRegistry using PostgreSQL.
+type CodeAnalysisRegistry struct {
 	store *Store
 }
 
-// NewPostgresCodeAnalysisRegistry creates a new PostgreSQL-backed code analysis registry.
-func NewPostgresCodeAnalysisRegistry(store *Store) *PostgresCodeAnalysisRegistry {
-	return &PostgresCodeAnalysisRegistry{store: store}
+// NewCodeAnalysisRegistry creates a new PostgreSQL-backed code analysis registry.
+func NewCodeAnalysisRegistry(store *Store) *CodeAnalysisRegistry {
+	return &CodeAnalysisRegistry{store: store}
 }
 
-func (r *PostgresCodeAnalysisRegistry) Create(ctx context.Context, analysis *registry.CodeAnalysis) error {
+// Create inserts a new code analysis run row.
+func (r *CodeAnalysisRegistry) Create(ctx context.Context, analysis *registry.CodeAnalysis) error {
 	_, err := r.store.pool.Exec(ctx, `
 		INSERT INTO code_analyses (id, name, repository_url, branch, commit_sha, language,
 			analyzer_type, config, status, summary, duration_ms, labels, triggered_by,
@@ -33,7 +34,9 @@ func (r *PostgresCodeAnalysisRegistry) Create(ctx context.Context, analysis *reg
 	return err
 }
 
-func (r *PostgresCodeAnalysisRegistry) Get(ctx context.Context, id string) (*registry.CodeAnalysis, error) {
+// Get scans the code analysis row with the given ID, reporting not-found as
+// an error.
+func (r *CodeAnalysisRegistry) Get(ctx context.Context, id string) (*registry.CodeAnalysis, error) {
 	var a registry.CodeAnalysis
 	err := r.store.pool.QueryRow(ctx, `
 		SELECT id, name, repository_url, branch, commit_sha, language, analyzer_type,
@@ -55,7 +58,9 @@ func (r *PostgresCodeAnalysisRegistry) Get(ctx context.Context, id string) (*reg
 	return &a, nil
 }
 
-func (r *PostgresCodeAnalysisRegistry) List(ctx context.Context, opts registry.ListOptions) ([]*registry.CodeAnalysis, int, error) {
+// List returns code analysis runs, newest first, paginated with the total
+// count.
+func (r *CodeAnalysisRegistry) List(ctx context.Context, opts registry.ListOptions) ([]*registry.CodeAnalysis, int, error) {
 	var total int
 	if err := r.store.pool.QueryRow(ctx, "SELECT COUNT(*) FROM code_analyses").Scan(&total); err != nil {
 		return nil, 0, err
@@ -93,7 +98,9 @@ func (r *PostgresCodeAnalysisRegistry) List(ctx context.Context, opts registry.L
 	return analyses, total, nil
 }
 
-func (r *PostgresCodeAnalysisRegistry) Update(ctx context.Context, analysis *registry.CodeAnalysis) error {
+// Update overwrites the code analysis row, reporting an error when the ID is
+// absent.
+func (r *CodeAnalysisRegistry) Update(ctx context.Context, analysis *registry.CodeAnalysis) error {
 	tag, err := r.store.pool.Exec(ctx, `
 		UPDATE code_analyses SET name=$2, repository_url=$3, branch=$4, commit_sha=$5,
 			language=$6, analyzer_type=$7, config=$8, status=$9, summary=$10,
@@ -114,12 +121,14 @@ func (r *PostgresCodeAnalysisRegistry) Update(ctx context.Context, analysis *reg
 	return nil
 }
 
-func (r *PostgresCodeAnalysisRegistry) Delete(ctx context.Context, id string) error {
+// Delete removes the code analysis row with the given ID.
+func (r *CodeAnalysisRegistry) Delete(ctx context.Context, id string) error {
 	_, err := r.store.pool.Exec(ctx, "DELETE FROM code_analyses WHERE id = $1", id)
 	return err
 }
 
-func (r *PostgresCodeAnalysisRegistry) AddFinding(ctx context.Context, finding *registry.CodeAnalysisFinding) error {
+// AddFinding inserts a single analysis finding row.
+func (r *CodeAnalysisRegistry) AddFinding(ctx context.Context, finding *registry.CodeAnalysisFinding) error {
 	_, err := r.store.pool.Exec(ctx, `
 		INSERT INTO code_analysis_findings (id, analysis_id, rule_id, severity, category,
 			message, file_path, line_start, line_end, column_start, column_end,
@@ -134,7 +143,8 @@ func (r *PostgresCodeAnalysisRegistry) AddFinding(ctx context.Context, finding *
 	return err
 }
 
-func (r *PostgresCodeAnalysisRegistry) AddFindings(ctx context.Context, findings []*registry.CodeAnalysisFinding) error {
+// AddFindings inserts analysis finding rows in a single transaction.
+func (r *CodeAnalysisRegistry) AddFindings(ctx context.Context, findings []*registry.CodeAnalysisFinding) error {
 	tx, err := r.store.pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -160,7 +170,9 @@ func (r *PostgresCodeAnalysisRegistry) AddFindings(ctx context.Context, findings
 	return tx.Commit(ctx)
 }
 
-func (r *PostgresCodeAnalysisRegistry) ListFindings(ctx context.Context, analysisID string, opts registry.ListOptions) ([]*registry.CodeAnalysisFinding, int, error) {
+// ListFindings returns the findings of an analysis ordered by severity and
+// creation time, paginated with the total count.
+func (r *CodeAnalysisRegistry) ListFindings(ctx context.Context, analysisID string, opts registry.ListOptions) ([]*registry.CodeAnalysisFinding, int, error) {
 	var total int
 	if err := r.store.pool.QueryRow(ctx,
 		"SELECT COUNT(*) FROM code_analysis_findings WHERE analysis_id = $1", analysisID,
@@ -201,7 +213,9 @@ func (r *PostgresCodeAnalysisRegistry) ListFindings(ctx context.Context, analysi
 	return findings, total, nil
 }
 
-func (r *PostgresCodeAnalysisRegistry) GetFindingsBySeverity(ctx context.Context, analysisID string, severity string) ([]*registry.CodeAnalysisFinding, error) {
+// GetFindingsBySeverity returns the findings of an analysis with the given
+// severity, ordered by creation time.
+func (r *CodeAnalysisRegistry) GetFindingsBySeverity(ctx context.Context, analysisID string, severity string) ([]*registry.CodeAnalysisFinding, error) {
 	rows, err := r.store.pool.Query(ctx, `
 		SELECT id, analysis_id, rule_id, severity, category, message, file_path,
 			line_start, line_end, column_start, column_end, snippet, suggestion,

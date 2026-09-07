@@ -8,17 +8,18 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// PostgresTrafficCaptureRegistry implements registry.TrafficCaptureRegistry using PostgreSQL.
-type PostgresTrafficCaptureRegistry struct {
+// TrafficCaptureRegistry implements registry.TrafficCaptureRegistry using PostgreSQL.
+type TrafficCaptureRegistry struct {
 	store *Store
 }
 
-// NewPostgresTrafficCaptureRegistry creates a new PostgreSQL-backed traffic capture registry.
-func NewPostgresTrafficCaptureRegistry(store *Store) *PostgresTrafficCaptureRegistry {
-	return &PostgresTrafficCaptureRegistry{store: store}
+// NewTrafficCaptureRegistry creates a new PostgreSQL-backed traffic capture registry.
+func NewTrafficCaptureRegistry(store *Store) *TrafficCaptureRegistry {
+	return &TrafficCaptureRegistry{store: store}
 }
 
-func (r *PostgresTrafficCaptureRegistry) Create(ctx context.Context, capture *registry.TrafficCapture) error {
+// Create inserts a new traffic capture row.
+func (r *TrafficCaptureRegistry) Create(ctx context.Context, capture *registry.TrafficCapture) error {
 	_, err := r.store.pool.Exec(ctx, `
 		INSERT INTO traffic_captures (id, name, source_type, target_service,
 			start_time, end_time, status, config, summary, labels)
@@ -31,7 +32,9 @@ func (r *PostgresTrafficCaptureRegistry) Create(ctx context.Context, capture *re
 	return err
 }
 
-func (r *PostgresTrafficCaptureRegistry) Get(ctx context.Context, id string) (*registry.TrafficCapture, error) {
+// Get scans the traffic capture row with the given ID, reporting not-found
+// as an error.
+func (r *TrafficCaptureRegistry) Get(ctx context.Context, id string) (*registry.TrafficCapture, error) {
 	var c registry.TrafficCapture
 	err := r.store.pool.QueryRow(ctx, `
 		SELECT id, name, source_type, target_service, start_time, end_time,
@@ -51,7 +54,9 @@ func (r *PostgresTrafficCaptureRegistry) Get(ctx context.Context, id string) (*r
 	return &c, nil
 }
 
-func (r *PostgresTrafficCaptureRegistry) List(ctx context.Context, opts registry.ListOptions) ([]*registry.TrafficCapture, int, error) {
+// List returns traffic captures, newest first, paginated with the total
+// count.
+func (r *TrafficCaptureRegistry) List(ctx context.Context, opts registry.ListOptions) ([]*registry.TrafficCapture, int, error) {
 	var total int
 	if err := r.store.pool.QueryRow(ctx, "SELECT COUNT(*) FROM traffic_captures").Scan(&total); err != nil {
 		return nil, 0, err
@@ -87,7 +92,9 @@ func (r *PostgresTrafficCaptureRegistry) List(ctx context.Context, opts registry
 	return captures, total, nil
 }
 
-func (r *PostgresTrafficCaptureRegistry) Update(ctx context.Context, capture *registry.TrafficCapture) error {
+// Update overwrites the traffic capture row, reporting an error when the ID
+// is absent.
+func (r *TrafficCaptureRegistry) Update(ctx context.Context, capture *registry.TrafficCapture) error {
 	tag, err := r.store.pool.Exec(ctx, `
 		UPDATE traffic_captures SET name=$2, source_type=$3, target_service=$4,
 			start_time=$5, end_time=$6, status=$7, config=$8, summary=$9, labels=$10
@@ -106,12 +113,14 @@ func (r *PostgresTrafficCaptureRegistry) Update(ctx context.Context, capture *re
 	return nil
 }
 
-func (r *PostgresTrafficCaptureRegistry) Delete(ctx context.Context, id string) error {
+// Delete removes the traffic capture row with the given ID.
+func (r *TrafficCaptureRegistry) Delete(ctx context.Context, id string) error {
 	_, err := r.store.pool.Exec(ctx, "DELETE FROM traffic_captures WHERE id = $1", id)
 	return err
 }
 
-func (r *PostgresTrafficCaptureRegistry) AddRecords(ctx context.Context, records []*registry.TrafficRecord) error {
+// AddRecords inserts traffic records in a single transaction.
+func (r *TrafficCaptureRegistry) AddRecords(ctx context.Context, records []*registry.TrafficRecord) error {
 	tx, err := r.store.pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -137,7 +146,9 @@ func (r *PostgresTrafficCaptureRegistry) AddRecords(ctx context.Context, records
 	return tx.Commit(ctx)
 }
 
-func (r *PostgresTrafficCaptureRegistry) ListRecords(ctx context.Context, captureID string, opts registry.ListOptions) ([]*registry.TrafficRecord, int, error) {
+// ListRecords returns the records of a capture, newest first, paginated with
+// the total count.
+func (r *TrafficCaptureRegistry) ListRecords(ctx context.Context, captureID string, opts registry.ListOptions) ([]*registry.TrafficRecord, int, error) {
 	var total int
 	if err := r.store.pool.QueryRow(ctx,
 		"SELECT COUNT(*) FROM traffic_records WHERE capture_id = $1", captureID,
@@ -178,7 +189,9 @@ func (r *PostgresTrafficCaptureRegistry) ListRecords(ctx context.Context, captur
 	return records, total, nil
 }
 
-func (r *PostgresTrafficCaptureRegistry) GetRecordsByService(ctx context.Context, captureID string, serviceName string) ([]*registry.TrafficRecord, error) {
+// GetRecordsByService returns the records of a capture where the service is
+// the source or destination, newest first.
+func (r *TrafficCaptureRegistry) GetRecordsByService(ctx context.Context, captureID string, serviceName string) ([]*registry.TrafficRecord, error) {
 	rows, err := r.store.pool.Query(ctx, `
 		SELECT id, capture_id, source_service, dest_service, protocol, method, path,
 			status_code, latency_ms, request_size, response_size, trace_id, span_id,

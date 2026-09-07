@@ -1,3 +1,5 @@
+// Package config loads ResolveAgent configuration from files and environment
+// variables via Viper and defines the configuration schema.
 package config
 
 import (

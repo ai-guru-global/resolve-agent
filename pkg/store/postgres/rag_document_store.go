@@ -8,17 +8,18 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// PostgresRAGDocumentRegistry implements registry.RAGDocumentRegistry using PostgreSQL.
-type PostgresRAGDocumentRegistry struct {
+// RAGDocumentRegistry implements registry.RAGDocumentRegistry using PostgreSQL.
+type RAGDocumentRegistry struct {
 	store *Store
 }
 
-// NewPostgresRAGDocumentRegistry creates a new PostgreSQL-backed RAG document registry.
-func NewPostgresRAGDocumentRegistry(store *Store) *PostgresRAGDocumentRegistry {
-	return &PostgresRAGDocumentRegistry{store: store}
+// NewRAGDocumentRegistry creates a new PostgreSQL-backed RAG document registry.
+func NewRAGDocumentRegistry(store *Store) *RAGDocumentRegistry {
+	return &RAGDocumentRegistry{store: store}
 }
 
-func (r *PostgresRAGDocumentRegistry) CreateDocument(ctx context.Context, doc *registry.RAGDocument) error {
+// CreateDocument inserts a new RAG document metadata row.
+func (r *RAGDocumentRegistry) CreateDocument(ctx context.Context, doc *registry.RAGDocument) error {
 	_, err := r.store.pool.Exec(ctx, `
 		INSERT INTO rag_documents (id, collection_id, title, source_uri, content_hash,
 			content_type, chunk_count, vector_ids, metadata, status, size_bytes)
@@ -31,7 +32,9 @@ func (r *PostgresRAGDocumentRegistry) CreateDocument(ctx context.Context, doc *r
 	return err
 }
 
-func (r *PostgresRAGDocumentRegistry) GetDocument(ctx context.Context, id string) (*registry.RAGDocument, error) {
+// GetDocument scans the document row with the given ID, reporting not-found
+// as an error.
+func (r *RAGDocumentRegistry) GetDocument(ctx context.Context, id string) (*registry.RAGDocument, error) {
 	var doc registry.RAGDocument
 	err := r.store.pool.QueryRow(ctx, `
 		SELECT id, collection_id, title, source_uri, content_hash, content_type,
@@ -51,7 +54,9 @@ func (r *PostgresRAGDocumentRegistry) GetDocument(ctx context.Context, id string
 	return &doc, nil
 }
 
-func (r *PostgresRAGDocumentRegistry) ListDocuments(ctx context.Context, collectionID string, opts registry.ListOptions) ([]*registry.RAGDocument, int, error) {
+// ListDocuments returns the documents of a collection, newest first,
+// paginated with the total count.
+func (r *RAGDocumentRegistry) ListDocuments(ctx context.Context, collectionID string, opts registry.ListOptions) ([]*registry.RAGDocument, int, error) {
 	var total int
 	if err := r.store.pool.QueryRow(ctx,
 		"SELECT COUNT(*) FROM rag_documents WHERE collection_id = $1", collectionID,
@@ -90,7 +95,9 @@ func (r *PostgresRAGDocumentRegistry) ListDocuments(ctx context.Context, collect
 	return docs, total, nil
 }
 
-func (r *PostgresRAGDocumentRegistry) UpdateDocument(ctx context.Context, doc *registry.RAGDocument) error {
+// UpdateDocument overwrites the document row, reporting an error when the ID
+// is absent.
+func (r *RAGDocumentRegistry) UpdateDocument(ctx context.Context, doc *registry.RAGDocument) error {
 	tag, err := r.store.pool.Exec(ctx, `
 		UPDATE rag_documents SET collection_id=$2, title=$3, source_uri=$4, content_hash=$5,
 			content_type=$6, chunk_count=$7, vector_ids=$8, metadata=$9, status=$10, size_bytes=$11
@@ -109,12 +116,15 @@ func (r *PostgresRAGDocumentRegistry) UpdateDocument(ctx context.Context, doc *r
 	return nil
 }
 
-func (r *PostgresRAGDocumentRegistry) DeleteDocument(ctx context.Context, id string) error {
+// DeleteDocument removes the document row with the given ID.
+func (r *RAGDocumentRegistry) DeleteDocument(ctx context.Context, id string) error {
 	_, err := r.store.pool.Exec(ctx, "DELETE FROM rag_documents WHERE id = $1", id)
 	return err
 }
 
-func (r *PostgresRAGDocumentRegistry) GetDocumentByHash(ctx context.Context, collectionID string, contentHash string) (*registry.RAGDocument, error) {
+// GetDocumentByHash scans the document of a collection with the given
+// content hash, reporting not-found as an error.
+func (r *RAGDocumentRegistry) GetDocumentByHash(ctx context.Context, collectionID string, contentHash string) (*registry.RAGDocument, error) {
 	var doc registry.RAGDocument
 	err := r.store.pool.QueryRow(ctx, `
 		SELECT id, collection_id, title, source_uri, content_hash, content_type,
@@ -134,7 +144,8 @@ func (r *PostgresRAGDocumentRegistry) GetDocumentByHash(ctx context.Context, col
 	return &doc, nil
 }
 
-func (r *PostgresRAGDocumentRegistry) RecordIngestion(ctx context.Context, record *registry.RAGIngestionRecord) error {
+// RecordIngestion inserts an ingestion history row.
+func (r *RAGDocumentRegistry) RecordIngestion(ctx context.Context, record *registry.RAGIngestionRecord) error {
 	_, err := r.store.pool.Exec(ctx, `
 		INSERT INTO rag_ingestion_history (id, collection_id, document_id, action, status,
 			chunks_processed, vectors_created, error, duration_ms, metadata)
@@ -147,7 +158,9 @@ func (r *PostgresRAGDocumentRegistry) RecordIngestion(ctx context.Context, recor
 	return err
 }
 
-func (r *PostgresRAGDocumentRegistry) ListIngestionHistory(ctx context.Context, collectionID string, opts registry.ListOptions) ([]*registry.RAGIngestionRecord, int, error) {
+// ListIngestionHistory returns the ingestion events of a collection, newest
+// first, paginated with the total count.
+func (r *RAGDocumentRegistry) ListIngestionHistory(ctx context.Context, collectionID string, opts registry.ListOptions) ([]*registry.RAGIngestionRecord, int, error) {
 	var total int
 	if err := r.store.pool.QueryRow(ctx,
 		"SELECT COUNT(*) FROM rag_ingestion_history WHERE collection_id = $1", collectionID,

@@ -1,3 +1,5 @@
+// Package server implements the ResolveAgent HTTP API server, wiring REST
+// handlers to the platform registries and services.
 package server
 
 import (

@@ -1,3 +1,5 @@
+// Package rag provides CLI commands for managing RAG collections and
+// documents, including ingestion and querying.
 package rag
 
 import (

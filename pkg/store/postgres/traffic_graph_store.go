@@ -8,17 +8,18 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// PostgresTrafficGraphRegistry implements registry.TrafficGraphRegistry using PostgreSQL.
-type PostgresTrafficGraphRegistry struct {
+// TrafficGraphRegistry implements registry.TrafficGraphRegistry using PostgreSQL.
+type TrafficGraphRegistry struct {
 	store *Store
 }
 
-// NewPostgresTrafficGraphRegistry creates a new PostgreSQL-backed traffic graph registry.
-func NewPostgresTrafficGraphRegistry(store *Store) *PostgresTrafficGraphRegistry {
-	return &PostgresTrafficGraphRegistry{store: store}
+// NewTrafficGraphRegistry creates a new PostgreSQL-backed traffic graph registry.
+func NewTrafficGraphRegistry(store *Store) *TrafficGraphRegistry {
+	return &TrafficGraphRegistry{store: store}
 }
 
-func (r *PostgresTrafficGraphRegistry) Create(ctx context.Context, graph *registry.TrafficGraph) error {
+// Create inserts a new traffic graph row.
+func (r *TrafficGraphRegistry) Create(ctx context.Context, graph *registry.TrafficGraph) error {
 	_, err := r.store.pool.Exec(ctx, `
 		INSERT INTO traffic_graphs (id, capture_id, name, graph_data, nodes, edges,
 			analysis_report, suggestions, status)
@@ -30,7 +31,9 @@ func (r *PostgresTrafficGraphRegistry) Create(ctx context.Context, graph *regist
 	return err
 }
 
-func (r *PostgresTrafficGraphRegistry) Get(ctx context.Context, id string) (*registry.TrafficGraph, error) {
+// Get scans the traffic graph row with the given ID, reporting not-found as
+// an error.
+func (r *TrafficGraphRegistry) Get(ctx context.Context, id string) (*registry.TrafficGraph, error) {
 	var g registry.TrafficGraph
 	var captureID *string
 	err := r.store.pool.QueryRow(ctx, `
@@ -53,7 +56,8 @@ func (r *PostgresTrafficGraphRegistry) Get(ctx context.Context, id string) (*reg
 	return &g, nil
 }
 
-func (r *PostgresTrafficGraphRegistry) List(ctx context.Context, opts registry.ListOptions) ([]*registry.TrafficGraph, int, error) {
+// List returns traffic graphs, newest first, paginated with the total count.
+func (r *TrafficGraphRegistry) List(ctx context.Context, opts registry.ListOptions) ([]*registry.TrafficGraph, int, error) {
 	var total int
 	if err := r.store.pool.QueryRow(ctx, "SELECT COUNT(*) FROM traffic_graphs").Scan(&total); err != nil {
 		return nil, 0, err
@@ -92,7 +96,9 @@ func (r *PostgresTrafficGraphRegistry) List(ctx context.Context, opts registry.L
 	return graphs, total, nil
 }
 
-func (r *PostgresTrafficGraphRegistry) Update(ctx context.Context, graph *registry.TrafficGraph) error {
+// Update overwrites the traffic graph row, reporting an error when the ID is
+// absent.
+func (r *TrafficGraphRegistry) Update(ctx context.Context, graph *registry.TrafficGraph) error {
 	tag, err := r.store.pool.Exec(ctx, `
 		UPDATE traffic_graphs SET capture_id=$2, name=$3, graph_data=$4,
 			nodes=$5, edges=$6, analysis_report=$7, suggestions=$8, status=$9
@@ -110,12 +116,15 @@ func (r *PostgresTrafficGraphRegistry) Update(ctx context.Context, graph *regist
 	return nil
 }
 
-func (r *PostgresTrafficGraphRegistry) Delete(ctx context.Context, id string) error {
+// Delete removes the traffic graph row with the given ID.
+func (r *TrafficGraphRegistry) Delete(ctx context.Context, id string) error {
 	_, err := r.store.pool.Exec(ctx, "DELETE FROM traffic_graphs WHERE id = $1", id)
 	return err
 }
 
-func (r *PostgresTrafficGraphRegistry) GetByCaptureID(ctx context.Context, captureID string) ([]*registry.TrafficGraph, error) {
+// GetByCaptureID returns the traffic graphs derived from a capture, newest
+// first.
+func (r *TrafficGraphRegistry) GetByCaptureID(ctx context.Context, captureID string) ([]*registry.TrafficGraph, error) {
 	rows, err := r.store.pool.Query(ctx, `
 		SELECT id, capture_id, name, graph_data, nodes, edges, analysis_report,
 			suggestions, status, created_at, updated_at
@@ -144,7 +153,9 @@ func (r *PostgresTrafficGraphRegistry) GetByCaptureID(ctx context.Context, captu
 	return graphs, nil
 }
 
-func (r *PostgresTrafficGraphRegistry) UpdateReport(ctx context.Context, id string, report string, suggestions []any) error {
+// UpdateReport stores an analysis report and suggestions on a graph and
+// marks it analyzed, reporting an error when the ID is absent.
+func (r *TrafficGraphRegistry) UpdateReport(ctx context.Context, id string, report string, suggestions []any) error {
 	tag, err := r.store.pool.Exec(ctx, `
 		UPDATE traffic_graphs SET analysis_report=$2, suggestions=$3, status='analyzed'
 		WHERE id = $1

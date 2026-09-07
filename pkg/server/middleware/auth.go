@@ -1,3 +1,5 @@
+// Package middleware provides HTTP middlewares for authentication, logging,
+// tracing, and telemetry.
 package middleware
 
 import (

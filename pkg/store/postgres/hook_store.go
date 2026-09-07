@@ -8,17 +8,18 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// PostgresHookRegistry implements registry.HookRegistry using PostgreSQL.
-type PostgresHookRegistry struct {
+// HookRegistry implements registry.HookRegistry using PostgreSQL.
+type HookRegistry struct {
 	store *Store
 }
 
-// NewPostgresHookRegistry creates a new PostgreSQL-backed hook registry.
-func NewPostgresHookRegistry(store *Store) *PostgresHookRegistry {
-	return &PostgresHookRegistry{store: store}
+// NewHookRegistry creates a new PostgreSQL-backed hook registry.
+func NewHookRegistry(store *Store) *HookRegistry {
+	return &HookRegistry{store: store}
 }
 
-func (r *PostgresHookRegistry) Create(ctx context.Context, hook *registry.HookDefinition) error {
+// Create inserts a new hook definition row.
+func (r *HookRegistry) Create(ctx context.Context, hook *registry.HookDefinition) error {
 	_, err := r.store.pool.Exec(ctx, `
 		INSERT INTO hooks (id, name, description, hook_type, trigger_point, target_id,
 			execution_order, handler_type, config, enabled, labels)
@@ -31,7 +32,9 @@ func (r *PostgresHookRegistry) Create(ctx context.Context, hook *registry.HookDe
 	return err
 }
 
-func (r *PostgresHookRegistry) Get(ctx context.Context, id string) (*registry.HookDefinition, error) {
+// Get scans the hook definition row with the given ID, reporting not-found
+// as an error.
+func (r *HookRegistry) Get(ctx context.Context, id string) (*registry.HookDefinition, error) {
 	var hook registry.HookDefinition
 	var targetID *string
 	err := r.store.pool.QueryRow(ctx, `
@@ -55,7 +58,9 @@ func (r *PostgresHookRegistry) Get(ctx context.Context, id string) (*registry.Ho
 	return &hook, nil
 }
 
-func (r *PostgresHookRegistry) List(ctx context.Context, opts registry.ListOptions) ([]*registry.HookDefinition, int, error) {
+// List returns hooks ordered by execution order and name, paginated with the
+// total count.
+func (r *HookRegistry) List(ctx context.Context, opts registry.ListOptions) ([]*registry.HookDefinition, int, error) {
 	var total int
 	if err := r.store.pool.QueryRow(ctx, "SELECT COUNT(*) FROM hooks").Scan(&total); err != nil {
 		return nil, 0, err
@@ -95,7 +100,9 @@ func (r *PostgresHookRegistry) List(ctx context.Context, opts registry.ListOptio
 	return hooks, total, nil
 }
 
-func (r *PostgresHookRegistry) Update(ctx context.Context, hook *registry.HookDefinition) error {
+// Update overwrites the hook definition row, reporting an error when the ID
+// is absent.
+func (r *HookRegistry) Update(ctx context.Context, hook *registry.HookDefinition) error {
 	tag, err := r.store.pool.Exec(ctx, `
 		UPDATE hooks SET name=$2, description=$3, hook_type=$4, trigger_point=$5,
 			target_id=$6, execution_order=$7, handler_type=$8, config=$9, enabled=$10, labels=$11
@@ -114,12 +121,15 @@ func (r *PostgresHookRegistry) Update(ctx context.Context, hook *registry.HookDe
 	return nil
 }
 
-func (r *PostgresHookRegistry) Delete(ctx context.Context, id string) error {
+// Delete removes the hook definition row with the given ID.
+func (r *HookRegistry) Delete(ctx context.Context, id string) error {
 	_, err := r.store.pool.Exec(ctx, "DELETE FROM hooks WHERE id = $1", id)
 	return err
 }
 
-func (r *PostgresHookRegistry) ListByTriggerPoint(ctx context.Context, triggerPoint string, targetID string) ([]*registry.HookDefinition, error) {
+// ListByTriggerPoint returns enabled hooks for a trigger point targeting the
+// entity or globally, ordered by execution order.
+func (r *HookRegistry) ListByTriggerPoint(ctx context.Context, triggerPoint string, targetID string) ([]*registry.HookDefinition, error) {
 	rows, err := r.store.pool.Query(ctx, `
 		SELECT id, name, description, hook_type, trigger_point, target_id,
 			execution_order, handler_type, config, enabled, labels, created_at, updated_at
@@ -152,7 +162,8 @@ func (r *PostgresHookRegistry) ListByTriggerPoint(ctx context.Context, triggerPo
 	return hooks, nil
 }
 
-func (r *PostgresHookRegistry) RecordExecution(ctx context.Context, exec *registry.HookExecution) error {
+// RecordExecution inserts a hook execution record row.
+func (r *HookRegistry) RecordExecution(ctx context.Context, exec *registry.HookExecution) error {
 	_, err := r.store.pool.Exec(ctx, `
 		INSERT INTO hook_executions (id, hook_id, trigger_event, target_entity_id,
 			status, input_data, output_data, error, duration_ms, started_at, completed_at)
@@ -165,7 +176,9 @@ func (r *PostgresHookRegistry) RecordExecution(ctx context.Context, exec *regist
 	return err
 }
 
-func (r *PostgresHookRegistry) ListExecutions(ctx context.Context, hookID string, opts registry.ListOptions) ([]*registry.HookExecution, int, error) {
+// ListExecutions returns the execution records of a hook, newest first,
+// paginated with the total count.
+func (r *HookRegistry) ListExecutions(ctx context.Context, hookID string, opts registry.ListOptions) ([]*registry.HookExecution, int, error) {
 	var total int
 	if err := r.store.pool.QueryRow(ctx,
 		"SELECT COUNT(*) FROM hook_executions WHERE hook_id = $1", hookID,

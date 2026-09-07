@@ -1,3 +1,5 @@
+// Package event defines the platform event model and the publish/subscribe
+// bus interface used to distribute events across components.
 package event
 
 import (

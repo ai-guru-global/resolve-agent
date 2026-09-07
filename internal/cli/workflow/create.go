@@ -1,3 +1,5 @@
+// Package workflow provides CLI commands for creating, validating, running,
+// and visualizing FTA workflows.
 package workflow
 
 import (

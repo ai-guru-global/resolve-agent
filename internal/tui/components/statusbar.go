@@ -1,3 +1,4 @@
+// Package components provides reusable styled widgets for the TUI.
 package components
 
 import (

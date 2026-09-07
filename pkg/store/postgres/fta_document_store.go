@@ -8,17 +8,18 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// PostgresFTADocumentRegistry implements registry.FTADocumentRegistry using PostgreSQL.
-type PostgresFTADocumentRegistry struct {
+// FTADocumentRegistry implements registry.FTADocumentRegistry using PostgreSQL.
+type FTADocumentRegistry struct {
 	store *Store
 }
 
-// NewPostgresFTADocumentRegistry creates a new PostgreSQL-backed FTA document registry.
-func NewPostgresFTADocumentRegistry(store *Store) *PostgresFTADocumentRegistry {
-	return &PostgresFTADocumentRegistry{store: store}
+// NewFTADocumentRegistry creates a new PostgreSQL-backed FTA document registry.
+func NewFTADocumentRegistry(store *Store) *FTADocumentRegistry {
+	return &FTADocumentRegistry{store: store}
 }
 
-func (r *PostgresFTADocumentRegistry) CreateDocument(ctx context.Context, doc *registry.FTADocument) error {
+// CreateDocument inserts a new FTA document row.
+func (r *FTADocumentRegistry) CreateDocument(ctx context.Context, doc *registry.FTADocument) error {
 	_, err := r.store.pool.Exec(ctx, `
 		INSERT INTO fta_documents (id, workflow_id, name, description, fault_tree,
 			version, status, metadata, labels, created_by)
@@ -30,7 +31,9 @@ func (r *PostgresFTADocumentRegistry) CreateDocument(ctx context.Context, doc *r
 	return err
 }
 
-func (r *PostgresFTADocumentRegistry) GetDocument(ctx context.Context, id string) (*registry.FTADocument, error) {
+// GetDocument scans the FTA document row with the given ID, reporting
+// not-found as an error.
+func (r *FTADocumentRegistry) GetDocument(ctx context.Context, id string) (*registry.FTADocument, error) {
 	var doc registry.FTADocument
 	var workflowID, createdBy *string
 	err := r.store.pool.QueryRow(ctx, `
@@ -57,7 +60,9 @@ func (r *PostgresFTADocumentRegistry) GetDocument(ctx context.Context, id string
 	return &doc, nil
 }
 
-func (r *PostgresFTADocumentRegistry) ListDocuments(ctx context.Context, opts registry.ListOptions) ([]*registry.FTADocument, int, error) {
+// ListDocuments returns FTA documents, newest first, paginated with the
+// total count.
+func (r *FTADocumentRegistry) ListDocuments(ctx context.Context, opts registry.ListOptions) ([]*registry.FTADocument, int, error) {
 	var total int
 	if err := r.store.pool.QueryRow(ctx, "SELECT COUNT(*) FROM fta_documents").Scan(&total); err != nil {
 		return nil, 0, err
@@ -100,7 +105,9 @@ func (r *PostgresFTADocumentRegistry) ListDocuments(ctx context.Context, opts re
 	return docs, total, nil
 }
 
-func (r *PostgresFTADocumentRegistry) UpdateDocument(ctx context.Context, doc *registry.FTADocument) error {
+// UpdateDocument overwrites the FTA document row, reporting an error when
+// the ID is absent.
+func (r *FTADocumentRegistry) UpdateDocument(ctx context.Context, doc *registry.FTADocument) error {
 	tag, err := r.store.pool.Exec(ctx, `
 		UPDATE fta_documents SET workflow_id=$2, name=$3, description=$4, fault_tree=$5,
 			version=$6, status=$7, metadata=$8, labels=$9, created_by=$10
@@ -118,12 +125,15 @@ func (r *PostgresFTADocumentRegistry) UpdateDocument(ctx context.Context, doc *r
 	return nil
 }
 
-func (r *PostgresFTADocumentRegistry) DeleteDocument(ctx context.Context, id string) error {
+// DeleteDocument removes the FTA document row with the given ID.
+func (r *FTADocumentRegistry) DeleteDocument(ctx context.Context, id string) error {
 	_, err := r.store.pool.Exec(ctx, "DELETE FROM fta_documents WHERE id = $1", id)
 	return err
 }
 
-func (r *PostgresFTADocumentRegistry) ListByWorkflow(ctx context.Context, workflowID string) ([]*registry.FTADocument, error) {
+// ListByWorkflow returns the FTA documents attached to a workflow, newest
+// first.
+func (r *FTADocumentRegistry) ListByWorkflow(ctx context.Context, workflowID string) ([]*registry.FTADocument, error) {
 	rows, err := r.store.pool.Query(ctx, `
 		SELECT id, workflow_id, name, description, fault_tree, version, status,
 			metadata, labels, created_by, created_at, updated_at
@@ -156,7 +166,8 @@ func (r *PostgresFTADocumentRegistry) ListByWorkflow(ctx context.Context, workfl
 	return docs, nil
 }
 
-func (r *PostgresFTADocumentRegistry) CreateAnalysisResult(ctx context.Context, result *registry.FTAAnalysisResult) error {
+// CreateAnalysisResult inserts a new FTA analysis result row.
+func (r *FTADocumentRegistry) CreateAnalysisResult(ctx context.Context, result *registry.FTAAnalysisResult) error {
 	_, err := r.store.pool.Exec(ctx, `
 		INSERT INTO fta_analysis_results (id, document_id, execution_id, top_event_result,
 			minimal_cut_sets, basic_event_probabilities, gate_results, importance_measures,
@@ -171,7 +182,9 @@ func (r *PostgresFTADocumentRegistry) CreateAnalysisResult(ctx context.Context, 
 	return err
 }
 
-func (r *PostgresFTADocumentRegistry) GetAnalysisResult(ctx context.Context, id string) (*registry.FTAAnalysisResult, error) {
+// GetAnalysisResult scans the FTA analysis result row with the given ID,
+// reporting not-found as an error.
+func (r *FTADocumentRegistry) GetAnalysisResult(ctx context.Context, id string) (*registry.FTAAnalysisResult, error) {
 	var result registry.FTAAnalysisResult
 	var execID *string
 	err := r.store.pool.QueryRow(ctx, `
@@ -197,7 +210,9 @@ func (r *PostgresFTADocumentRegistry) GetAnalysisResult(ctx context.Context, id 
 	return &result, nil
 }
 
-func (r *PostgresFTADocumentRegistry) ListAnalysisResults(ctx context.Context, documentID string, opts registry.ListOptions) ([]*registry.FTAAnalysisResult, int, error) {
+// ListAnalysisResults returns the analysis results of an FTA document,
+// newest first, paginated with the total count.
+func (r *FTADocumentRegistry) ListAnalysisResults(ctx context.Context, documentID string, opts registry.ListOptions) ([]*registry.FTAAnalysisResult, int, error) {
 	var total int
 	if err := r.store.pool.QueryRow(ctx,
 		"SELECT COUNT(*) FROM fta_analysis_results WHERE document_id = $1", documentID,

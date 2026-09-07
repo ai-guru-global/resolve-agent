@@ -1,3 +1,6 @@
+// Package gateway provides an HTTP client for the Higress admin API, the
+// single integration point for route management and model routing between
+// ResolveAgent and the Higress gateway.
 package gateway
 
 import (

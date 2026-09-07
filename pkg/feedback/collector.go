@@ -22,12 +22,12 @@ type Collector struct {
 }
 
 // SignalHandler is a callback invoked when a matching signal arrives.
-type SignalHandler func(ctx context.Context, sig FeedbackSignal)
+type SignalHandler func(ctx context.Context, sig Signal)
 
 // Dispatcher is an output destination for feedback signals.
 type Dispatcher interface {
 	// Dispatch sends a signal to the external destination.
-	Dispatch(ctx context.Context, sig FeedbackSignal) error
+	Dispatch(ctx context.Context, sig Signal) error
 	// Name returns a human-readable dispatcher identifier.
 	Name() string
 }
@@ -48,7 +48,7 @@ func NewCollector(cfg Config) *Collector {
 // Emit ingests a signal into the feedback loop.
 // It assigns an ID and timestamp if missing, stores the signal,
 // notifies subscribers, and dispatches to configured outputs.
-func (c *Collector) Emit(ctx context.Context, sig FeedbackSignal) error {
+func (c *Collector) Emit(ctx context.Context, sig Signal) error {
 	c.mu.RLock()
 	if c.closed {
 		c.mu.RUnlock()
@@ -112,7 +112,7 @@ func (c *Collector) AddDispatcher(d Dispatcher) {
 }
 
 // Snapshot returns the current ring buffer contents.
-func (c *Collector) Snapshot() []FeedbackSignal {
+func (c *Collector) Snapshot() []Signal {
 	return c.buffer.Snapshot()
 }
 

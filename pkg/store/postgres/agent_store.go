@@ -1,3 +1,5 @@
+// Package postgres provides PostgreSQL-backed implementations of the registry
+// interfaces from pkg/registry, built on a shared pgx connection pool.
 package postgres
 
 import (
@@ -8,17 +10,18 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// PostgresAgentRegistry implements registry.AgentRegistry using PostgreSQL.
-type PostgresAgentRegistry struct {
+// AgentRegistry implements registry.AgentRegistry using PostgreSQL.
+type AgentRegistry struct {
 	store *Store
 }
 
-// NewPostgresAgentRegistry creates a new PostgreSQL-backed agent registry.
-func NewPostgresAgentRegistry(store *Store) *PostgresAgentRegistry {
-	return &PostgresAgentRegistry{store: store}
+// NewAgentRegistry creates a new PostgreSQL-backed agent registry.
+func NewAgentRegistry(store *Store) *AgentRegistry {
+	return &AgentRegistry{store: store}
 }
 
-func (r *PostgresAgentRegistry) Create(ctx context.Context, agent *registry.AgentDefinition) error {
+// Create inserts a new agent definition row.
+func (r *AgentRegistry) Create(ctx context.Context, agent *registry.AgentDefinition) error {
 	_, err := r.store.pool.Exec(ctx, `
 		INSERT INTO agents (id, name, description, type, config, status, labels, version)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -32,7 +35,9 @@ func (r *PostgresAgentRegistry) Create(ctx context.Context, agent *registry.Agen
 	return nil
 }
 
-func (r *PostgresAgentRegistry) Get(ctx context.Context, id string) (*registry.AgentDefinition, error) {
+// Get scans the agent definition row with the given ID, reporting not-found
+// as an error.
+func (r *AgentRegistry) Get(ctx context.Context, id string) (*registry.AgentDefinition, error) {
 	var agent registry.AgentDefinition
 	err := r.store.pool.QueryRow(ctx, `
 		SELECT id, name, description, type, config, status, labels, version
@@ -50,7 +55,9 @@ func (r *PostgresAgentRegistry) Get(ctx context.Context, id string) (*registry.A
 	return &agent, nil
 }
 
-func (r *PostgresAgentRegistry) List(ctx context.Context, opts registry.ListOptions) ([]*registry.AgentDefinition, int, error) {
+// List returns agents ordered by name with limit/offset pagination and the
+// total count.
+func (r *AgentRegistry) List(ctx context.Context, opts registry.ListOptions) ([]*registry.AgentDefinition, int, error) {
 	var total int
 	if err := r.store.pool.QueryRow(ctx, "SELECT COUNT(*) FROM agents").Scan(&total); err != nil {
 		return nil, 0, err
@@ -84,7 +91,9 @@ func (r *PostgresAgentRegistry) List(ctx context.Context, opts registry.ListOpti
 	return agents, total, nil
 }
 
-func (r *PostgresAgentRegistry) Update(ctx context.Context, agent *registry.AgentDefinition) error {
+// Update overwrites the agent definition row, reporting an error when the ID
+// is absent.
+func (r *AgentRegistry) Update(ctx context.Context, agent *registry.AgentDefinition) error {
 	tag, err := r.store.pool.Exec(ctx, `
 		UPDATE agents SET name=$2, description=$3, type=$4, config=$5, status=$6, labels=$7, version=$8
 		WHERE id = $1
@@ -101,7 +110,8 @@ func (r *PostgresAgentRegistry) Update(ctx context.Context, agent *registry.Agen
 	return nil
 }
 
-func (r *PostgresAgentRegistry) Delete(ctx context.Context, id string) error {
+// Delete removes the agent definition row with the given ID.
+func (r *AgentRegistry) Delete(ctx context.Context, id string) error {
 	_, err := r.store.pool.Exec(ctx, "DELETE FROM agents WHERE id = $1", id)
 	return err
 }

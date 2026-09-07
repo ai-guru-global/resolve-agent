@@ -1,3 +1,6 @@
+// Command resolveagent-server starts the ResolveAgent platform server: it
+// loads configuration, initializes registries and services, and serves the
+// HTTP API until interrupted.
 package main
 
 import (

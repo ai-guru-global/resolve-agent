@@ -1,3 +1,5 @@
+// Package corpus provides CLI commands for importing external knowledge
+// corpora into ResolveAgent.
 package corpus
 
 import (

@@ -74,6 +74,7 @@ func NewInMemoryMemoryRegistry() *InMemoryMemoryRegistry {
 	}
 }
 
+// AddMessage stores a conversation message, stamping its creation time.
 func (r *InMemoryMemoryRegistry) AddMessage(_ context.Context, msg *ShortTermMemory) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -83,6 +84,8 @@ func (r *InMemoryMemoryRegistry) AddMessage(_ context.Context, msg *ShortTermMem
 	return nil
 }
 
+// GetConversation returns a conversation's messages ordered by sequence
+// number, keeping only the most recent limit messages when limit > 0.
 func (r *InMemoryMemoryRegistry) GetConversation(_ context.Context, conversationID string, limit int) ([]*ShortTermMemory, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -106,6 +109,7 @@ func (r *InMemoryMemoryRegistry) GetConversation(_ context.Context, conversation
 	return msgs, nil
 }
 
+// DeleteConversation removes all messages belonging to a conversation.
 func (r *InMemoryMemoryRegistry) DeleteConversation(_ context.Context, conversationID string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -118,6 +122,8 @@ func (r *InMemoryMemoryRegistry) DeleteConversation(_ context.Context, conversat
 	return nil
 }
 
+// ListConversations returns an agent's distinct conversation IDs sorted and
+// paginated, with the total count.
 func (r *InMemoryMemoryRegistry) ListConversations(_ context.Context, agentID string, opts ListOptions) ([]string, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -152,6 +158,8 @@ func (r *InMemoryMemoryRegistry) ListConversations(_ context.Context, agentID st
 	return convIDs[offset:end], total, nil
 }
 
+// StoreLongTermMemory persists a long-term memory, stamping timestamps and
+// defaulting importance to 0.5.
 func (r *InMemoryMemoryRegistry) StoreLongTermMemory(_ context.Context, mem *LongTermMemory) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -168,6 +176,8 @@ func (r *InMemoryMemoryRegistry) StoreLongTermMemory(_ context.Context, mem *Lon
 	return nil
 }
 
+// GetLongTermMemory returns the long-term memory with the given ID, or an
+// error if absent.
 func (r *InMemoryMemoryRegistry) GetLongTermMemory(_ context.Context, id string) (*LongTermMemory, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -179,6 +189,8 @@ func (r *InMemoryMemoryRegistry) GetLongTermMemory(_ context.Context, id string)
 	return mem, nil
 }
 
+// SearchLongTermMemory returns non-expired memories of an agent filtered by
+// user and type, ordered by importance and paginated.
 func (r *InMemoryMemoryRegistry) SearchLongTermMemory(_ context.Context, agentID string, userID string, memoryType string, opts ListOptions) ([]*LongTermMemory, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -223,6 +235,8 @@ func (r *InMemoryMemoryRegistry) SearchLongTermMemory(_ context.Context, agentID
 	return results[offset:end], total, nil
 }
 
+// UpdateLongTermMemory replaces an existing long-term memory and refreshes
+// its update timestamp.
 func (r *InMemoryMemoryRegistry) UpdateLongTermMemory(_ context.Context, mem *LongTermMemory) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -236,6 +250,7 @@ func (r *InMemoryMemoryRegistry) UpdateLongTermMemory(_ context.Context, mem *Lo
 	return nil
 }
 
+// DeleteLongTermMemory removes the long-term memory with the given ID.
 func (r *InMemoryMemoryRegistry) DeleteLongTermMemory(_ context.Context, id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -244,6 +259,8 @@ func (r *InMemoryMemoryRegistry) DeleteLongTermMemory(_ context.Context, id stri
 	return nil
 }
 
+// IncrementAccessCount bumps the access counter and last-accessed time of a
+// long-term memory.
 func (r *InMemoryMemoryRegistry) IncrementAccessCount(_ context.Context, id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -258,6 +275,8 @@ func (r *InMemoryMemoryRegistry) IncrementAccessCount(_ context.Context, id stri
 	return nil
 }
 
+// PruneExpiredMemories removes long-term memories past their expiry and
+// returns how many were removed.
 func (r *InMemoryMemoryRegistry) PruneExpiredMemories(_ context.Context) (int, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()

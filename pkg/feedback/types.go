@@ -64,9 +64,9 @@ const (
 	EventCircuitBreakClose = "circuit_breaker.close"
 )
 
-// FeedbackSignal is the atomic unit of the feedback loop.
+// Signal is the atomic unit of the feedback loop.
 // Every subsystem emits signals; the aggregator consumes and dispatches them.
-type FeedbackSignal struct {
+type Signal struct {
 	// ID is a unique identifier for deduplication.
 	ID string `json:"id"`
 	// Source identifies the emitting subsystem.

@@ -9,19 +9,21 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// PostgresMemoryRegistry implements registry.MemoryRegistry using PostgreSQL.
-type PostgresMemoryRegistry struct {
+// MemoryRegistry implements registry.MemoryRegistry using PostgreSQL.
+type MemoryRegistry struct {
 	store *Store
 }
 
-// NewPostgresMemoryRegistry creates a new PostgreSQL-backed memory registry.
-func NewPostgresMemoryRegistry(store *Store) *PostgresMemoryRegistry {
-	return &PostgresMemoryRegistry{store: store}
+// NewMemoryRegistry creates a new PostgreSQL-backed memory registry.
+func NewMemoryRegistry(store *Store) *MemoryRegistry {
+	return &MemoryRegistry{store: store}
 }
 
 // --- Short-term memory ---
 
-func (r *PostgresMemoryRegistry) AddMessage(ctx context.Context, msg *registry.ShortTermMemory) error {
+// AddMessage inserts a conversation message, assigning the next sequence
+// number when unset.
+func (r *MemoryRegistry) AddMessage(ctx context.Context, msg *registry.ShortTermMemory) error {
 	if msg.SequenceNum <= 0 {
 		if err := r.store.pool.QueryRow(ctx, `
 			SELECT COALESCE(MAX(sequence_num) + 1, 0)
@@ -41,7 +43,9 @@ func (r *PostgresMemoryRegistry) AddMessage(ctx context.Context, msg *registry.S
 	return err
 }
 
-func (r *PostgresMemoryRegistry) GetConversation(ctx context.Context, conversationID string, limit int) ([]*registry.ShortTermMemory, error) {
+// GetConversation returns a conversation's most recent messages (limit
+// defaults to 200) in chronological order.
+func (r *MemoryRegistry) GetConversation(ctx context.Context, conversationID string, limit int) ([]*registry.ShortTermMemory, error) {
 	if limit <= 0 {
 		limit = 200
 	}
@@ -77,14 +81,17 @@ func (r *PostgresMemoryRegistry) GetConversation(ctx context.Context, conversati
 	return msgs, nil
 }
 
-func (r *PostgresMemoryRegistry) DeleteConversation(ctx context.Context, conversationID string) error {
+// DeleteConversation removes all messages belonging to a conversation.
+func (r *MemoryRegistry) DeleteConversation(ctx context.Context, conversationID string) error {
 	_, err := r.store.pool.Exec(ctx,
 		"DELETE FROM memory_short_term WHERE conversation_id = $1", conversationID,
 	)
 	return err
 }
 
-func (r *PostgresMemoryRegistry) ListConversations(ctx context.Context, agentID string, opts registry.ListOptions) ([]string, int, error) {
+// ListConversations returns an agent's distinct conversation IDs ordered and
+// paginated, with the total count.
+func (r *MemoryRegistry) ListConversations(ctx context.Context, agentID string, opts registry.ListOptions) ([]string, int, error) {
 	var total int
 	if err := r.store.pool.QueryRow(ctx,
 		"SELECT COUNT(DISTINCT conversation_id) FROM memory_short_term WHERE agent_id = $1",
@@ -120,7 +127,8 @@ func (r *PostgresMemoryRegistry) ListConversations(ctx context.Context, agentID 
 
 // --- Long-term memory ---
 
-func (r *PostgresMemoryRegistry) StoreLongTermMemory(ctx context.Context, mem *registry.LongTermMemory) error {
+// StoreLongTermMemory inserts a long-term memory row.
+func (r *MemoryRegistry) StoreLongTermMemory(ctx context.Context, mem *registry.LongTermMemory) error {
 	_, err := r.store.pool.Exec(ctx, `
 		INSERT INTO memory_long_term (id, agent_id, user_id, memory_type, content,
 			importance, access_count, source_conversations, embedding_id,
@@ -134,7 +142,9 @@ func (r *PostgresMemoryRegistry) StoreLongTermMemory(ctx context.Context, mem *r
 	return err
 }
 
-func (r *PostgresMemoryRegistry) GetLongTermMemory(ctx context.Context, id string) (*registry.LongTermMemory, error) {
+// GetLongTermMemory scans the long-term memory row with the given ID,
+// reporting not-found as an error.
+func (r *MemoryRegistry) GetLongTermMemory(ctx context.Context, id string) (*registry.LongTermMemory, error) {
 	var mem registry.LongTermMemory
 	var userID, embeddingID *string
 	err := r.store.pool.QueryRow(ctx, `
@@ -163,7 +173,9 @@ func (r *PostgresMemoryRegistry) GetLongTermMemory(ctx context.Context, id strin
 	return &mem, nil
 }
 
-func (r *PostgresMemoryRegistry) SearchLongTermMemory(ctx context.Context, agentID string, userID string, memoryType string, opts registry.ListOptions) ([]*registry.LongTermMemory, int, error) {
+// SearchLongTermMemory returns non-expired memories of an agent filtered by
+// user and type, ordered by importance and paginated, with the total count.
+func (r *MemoryRegistry) SearchLongTermMemory(ctx context.Context, agentID string, userID string, memoryType string, opts registry.ListOptions) ([]*registry.LongTermMemory, int, error) {
 	// Build dynamic query
 	baseWhere := "WHERE agent_id = $1 AND (expires_at IS NULL OR expires_at > NOW())"
 	args := []interface{}{agentID}
@@ -229,7 +241,9 @@ func (r *PostgresMemoryRegistry) SearchLongTermMemory(ctx context.Context, agent
 	return memories, total, nil
 }
 
-func (r *PostgresMemoryRegistry) UpdateLongTermMemory(ctx context.Context, mem *registry.LongTermMemory) error {
+// UpdateLongTermMemory overwrites the long-term memory row, reporting an
+// error when the ID is absent.
+func (r *MemoryRegistry) UpdateLongTermMemory(ctx context.Context, mem *registry.LongTermMemory) error {
 	tag, err := r.store.pool.Exec(ctx, `
 		UPDATE memory_long_term SET agent_id=$2, user_id=$3, memory_type=$4, content=$5,
 			importance=$6, access_count=$7, source_conversations=$8, embedding_id=$9,
@@ -249,12 +263,15 @@ func (r *PostgresMemoryRegistry) UpdateLongTermMemory(ctx context.Context, mem *
 	return nil
 }
 
-func (r *PostgresMemoryRegistry) DeleteLongTermMemory(ctx context.Context, id string) error {
+// DeleteLongTermMemory removes the long-term memory row with the given ID.
+func (r *MemoryRegistry) DeleteLongTermMemory(ctx context.Context, id string) error {
 	_, err := r.store.pool.Exec(ctx, "DELETE FROM memory_long_term WHERE id = $1", id)
 	return err
 }
 
-func (r *PostgresMemoryRegistry) IncrementAccessCount(ctx context.Context, id string) error {
+// IncrementAccessCount bumps a long-term memory's access counter and
+// refreshes its last-accessed time, reporting an error when the ID is absent.
+func (r *MemoryRegistry) IncrementAccessCount(ctx context.Context, id string) error {
 	tag, err := r.store.pool.Exec(ctx, `
 		UPDATE memory_long_term SET access_count = access_count + 1, last_accessed_at = $2
 		WHERE id = $1
@@ -268,7 +285,9 @@ func (r *PostgresMemoryRegistry) IncrementAccessCount(ctx context.Context, id st
 	return nil
 }
 
-func (r *PostgresMemoryRegistry) PruneExpiredMemories(ctx context.Context) (int, error) {
+// PruneExpiredMemories deletes expired long-term memories and returns how
+// many rows were removed.
+func (r *MemoryRegistry) PruneExpiredMemories(ctx context.Context) (int, error) {
 	tag, err := r.store.pool.Exec(ctx,
 		"DELETE FROM memory_long_term WHERE expires_at IS NOT NULL AND expires_at < NOW()",
 	)

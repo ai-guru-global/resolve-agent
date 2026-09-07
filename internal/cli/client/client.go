@@ -1,3 +1,5 @@
+// Package client provides the HTTP client the CLI uses to communicate with
+// the ResolveAgent API.
 package client
 
 import (

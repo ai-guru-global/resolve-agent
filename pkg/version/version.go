@@ -1,3 +1,5 @@
+// Package version exposes build-time metadata (version, commit, build date,
+// and Go runtime) for the ResolveAgent binaries.
 package version
 
 import (

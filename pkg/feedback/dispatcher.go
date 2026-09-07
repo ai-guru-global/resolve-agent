@@ -33,7 +33,7 @@ func NewLogDispatcher(logger *slog.Logger, level string) *LogDispatcher {
 }
 
 // Dispatch logs the signal at the configured level.
-func (d *LogDispatcher) Dispatch(_ context.Context, sig FeedbackSignal) error {
+func (d *LogDispatcher) Dispatch(_ context.Context, sig Signal) error {
 	d.logger.Log(context.Background(), d.level, "feedback signal",
 		"id", sig.ID,
 		"source", sig.Source,
@@ -66,7 +66,7 @@ func NewWebhookDispatcher(url string) *WebhookDispatcher {
 }
 
 // Dispatch POSTs the signal as JSON.
-func (d *WebhookDispatcher) Dispatch(ctx context.Context, sig FeedbackSignal) error {
+func (d *WebhookDispatcher) Dispatch(ctx context.Context, sig Signal) error {
 	body, err := json.Marshal(sig)
 	if err != nil {
 		return fmt.Errorf("marshal signal: %w", err)
@@ -113,7 +113,7 @@ func NewNATSDispatcher(conn NATSPublisher, subject string) *NATSDispatcher {
 }
 
 // Dispatch publishes the signal as JSON to the configured NATS subject.
-func (d *NATSDispatcher) Dispatch(_ context.Context, sig FeedbackSignal) error {
+func (d *NATSDispatcher) Dispatch(_ context.Context, sig Signal) error {
 	data, err := json.Marshal(sig)
 	if err != nil {
 		return fmt.Errorf("marshal signal: %w", err)

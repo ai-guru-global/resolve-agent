@@ -1,3 +1,4 @@
+// Package redis provides a Redis-backed cache implementation.
 package redis
 
 import (

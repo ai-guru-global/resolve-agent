@@ -1,3 +1,4 @@
+// Package views provides the view models rendered by the TUI dashboard.
 package views
 
 // AgentDetailView displays detailed information about an agent.

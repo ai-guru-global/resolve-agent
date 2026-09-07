@@ -79,6 +79,8 @@ func NewInMemoryCallGraphRegistry() *InMemoryCallGraphRegistry {
 	}
 }
 
+// Create stores a new call graph, stamping timestamps, defaulting status to
+// "pending", and rejecting duplicate IDs.
 func (r *InMemoryCallGraphRegistry) Create(_ context.Context, graph *CallGraph) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -97,6 +99,7 @@ func (r *InMemoryCallGraphRegistry) Create(_ context.Context, graph *CallGraph) 
 	return nil
 }
 
+// Get returns the call graph with the given ID, or an error if absent.
 func (r *InMemoryCallGraphRegistry) Get(_ context.Context, id string) (*CallGraph, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -108,6 +111,8 @@ func (r *InMemoryCallGraphRegistry) Get(_ context.Context, id string) (*CallGrap
 	return graph, nil
 }
 
+// List returns call graphs filtered by the optional status/language/
+// analysis_id filter, paginated, with the total count.
 func (r *InMemoryCallGraphRegistry) List(_ context.Context, opts ListOptions) ([]*CallGraph, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -156,6 +161,8 @@ func (r *InMemoryCallGraphRegistry) List(_ context.Context, opts ListOptions) ([
 	return graphs[offset:end], total, nil
 }
 
+// Update replaces an existing call graph and refreshes its update
+// timestamp.
 func (r *InMemoryCallGraphRegistry) Update(_ context.Context, graph *CallGraph) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -168,6 +175,7 @@ func (r *InMemoryCallGraphRegistry) Update(_ context.Context, graph *CallGraph) 
 	return nil
 }
 
+// Delete removes a call graph together with all of its nodes and edges.
 func (r *InMemoryCallGraphRegistry) Delete(_ context.Context, id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -187,6 +195,7 @@ func (r *InMemoryCallGraphRegistry) Delete(_ context.Context, id string) error {
 	return nil
 }
 
+// AddNodes stores a batch of call graph nodes keyed by their IDs.
 func (r *InMemoryCallGraphRegistry) AddNodes(_ context.Context, nodes []*CallGraphNode) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -197,6 +206,7 @@ func (r *InMemoryCallGraphRegistry) AddNodes(_ context.Context, nodes []*CallGra
 	return nil
 }
 
+// AddEdges stores a batch of call graph edges keyed by their IDs.
 func (r *InMemoryCallGraphRegistry) AddEdges(_ context.Context, edges []*CallGraphEdge) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -207,6 +217,8 @@ func (r *InMemoryCallGraphRegistry) AddEdges(_ context.Context, edges []*CallGra
 	return nil
 }
 
+// ListNodes returns the nodes of a call graph, paginated, with the total
+// count.
 func (r *InMemoryCallGraphRegistry) ListNodes(_ context.Context, callGraphID string, opts ListOptions) ([]*CallGraphNode, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -235,6 +247,8 @@ func (r *InMemoryCallGraphRegistry) ListNodes(_ context.Context, callGraphID str
 	return nodes[offset:end], total, nil
 }
 
+// ListEdges returns the edges of a call graph, paginated, with the total
+// count.
 func (r *InMemoryCallGraphRegistry) ListEdges(_ context.Context, callGraphID string, opts ListOptions) ([]*CallGraphEdge, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -263,6 +277,8 @@ func (r *InMemoryCallGraphRegistry) ListEdges(_ context.Context, callGraphID str
 	return edges[offset:end], total, nil
 }
 
+// GetSubgraph returns the nodes and edges reachable from an entry node via
+// BFS within the given depth (default 5).
 func (r *InMemoryCallGraphRegistry) GetSubgraph(_ context.Context, callGraphID string, entryNodeID string, depth int) ([]*CallGraphNode, []*CallGraphEdge, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

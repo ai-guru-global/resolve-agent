@@ -36,7 +36,7 @@ func mustOpenStore(t *testing.T) *Store {
 
 func TestPostgresAgentRegistry(t *testing.T) {
 	store := mustOpenStore(t)
-	r := NewPostgresAgentRegistry(store)
+	r := NewAgentRegistry(store)
 	ctx := context.Background()
 
 	agent := &registry.AgentDefinition{
@@ -98,7 +98,7 @@ func TestPostgresAgentRegistry(t *testing.T) {
 
 func TestPostgresSkillRegistry(t *testing.T) {
 	store := mustOpenStore(t)
-	r := NewPostgresSkillRegistry(store)
+	r := NewSkillRegistry(store)
 	ctx := context.Background()
 
 	skill := &registry.SkillDefinition{
@@ -164,7 +164,7 @@ func TestPostgresSkillRegistry(t *testing.T) {
 
 func TestPostgresWorkflowRegistry(t *testing.T) {
 	store := mustOpenStore(t)
-	r := NewPostgresWorkflowRegistry(store)
+	r := NewWorkflowRegistry(store)
 	ctx := context.Background()
 
 	workflow := &registry.WorkflowDefinition{
@@ -224,7 +224,7 @@ func TestPostgresWorkflowRegistry(t *testing.T) {
 
 func TestPostgresRAGRegistry(t *testing.T) {
 	store := mustOpenStore(t)
-	r := NewPostgresRAGRegistry(store)
+	r := NewRAGRegistry(store)
 	ctx := context.Background()
 
 	collection := &registry.RAGCollection{

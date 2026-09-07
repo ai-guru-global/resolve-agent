@@ -1,3 +1,5 @@
+// Package config provides CLI commands for viewing and managing the
+// ResolveAgent CLI configuration.
 package config
 
 import (

@@ -8,17 +8,19 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// PostgresWorkflowRegistry implements registry.WorkflowRegistry using PostgreSQL.
-type PostgresWorkflowRegistry struct {
+// WorkflowRegistry implements registry.WorkflowRegistry using PostgreSQL.
+type WorkflowRegistry struct {
 	store *Store
 }
 
-// NewPostgresWorkflowRegistry creates a new PostgreSQL-backed workflow registry.
-func NewPostgresWorkflowRegistry(store *Store) *PostgresWorkflowRegistry {
-	return &PostgresWorkflowRegistry{store: store}
+// NewWorkflowRegistry creates a new PostgreSQL-backed workflow registry.
+func NewWorkflowRegistry(store *Store) *WorkflowRegistry {
+	return &WorkflowRegistry{store: store}
 }
 
-func (r *PostgresWorkflowRegistry) Create(ctx context.Context, workflow *registry.WorkflowDefinition) error {
+// Create inserts a new workflow definition row, defaulting its type to
+// "fta".
+func (r *WorkflowRegistry) Create(ctx context.Context, workflow *registry.WorkflowDefinition) error {
 	if workflow.Type == "" {
 		workflow.Type = "fta"
 	}
@@ -35,7 +37,9 @@ func (r *PostgresWorkflowRegistry) Create(ctx context.Context, workflow *registr
 	return nil
 }
 
-func (r *PostgresWorkflowRegistry) Get(ctx context.Context, id string) (*registry.WorkflowDefinition, error) {
+// Get scans the workflow definition row with the given ID, reporting
+// not-found as an error.
+func (r *WorkflowRegistry) Get(ctx context.Context, id string) (*registry.WorkflowDefinition, error) {
 	var workflow registry.WorkflowDefinition
 	err := r.store.pool.QueryRow(ctx, `
 		SELECT id, name, description, definition, status, version
@@ -53,7 +57,9 @@ func (r *PostgresWorkflowRegistry) Get(ctx context.Context, id string) (*registr
 	return &workflow, nil
 }
 
-func (r *PostgresWorkflowRegistry) List(ctx context.Context, opts registry.ListOptions) ([]*registry.WorkflowDefinition, int, error) {
+// List returns workflows ordered by name with limit/offset pagination and
+// the total count.
+func (r *WorkflowRegistry) List(ctx context.Context, opts registry.ListOptions) ([]*registry.WorkflowDefinition, int, error) {
 	var total int
 	if err := r.store.pool.QueryRow(ctx, "SELECT COUNT(*) FROM workflows").Scan(&total); err != nil {
 		return nil, 0, err
@@ -87,7 +93,9 @@ func (r *PostgresWorkflowRegistry) List(ctx context.Context, opts registry.ListO
 	return workflows, total, nil
 }
 
-func (r *PostgresWorkflowRegistry) Update(ctx context.Context, workflow *registry.WorkflowDefinition) error {
+// Update overwrites the workflow definition row, reporting an error when the
+// ID is absent.
+func (r *WorkflowRegistry) Update(ctx context.Context, workflow *registry.WorkflowDefinition) error {
 	tag, err := r.store.pool.Exec(ctx, `
 		UPDATE workflows SET name=$2, description=$3, definition=$4, status=$5, version=$6
 		WHERE id = $1
@@ -104,7 +112,8 @@ func (r *PostgresWorkflowRegistry) Update(ctx context.Context, workflow *registr
 	return nil
 }
 
-func (r *PostgresWorkflowRegistry) Delete(ctx context.Context, id string) error {
+// Delete removes the workflow definition row with the given ID.
+func (r *WorkflowRegistry) Delete(ctx context.Context, id string) error {
 	_, err := r.store.pool.Exec(ctx, "DELETE FROM workflows WHERE id = $1", id)
 	return err
 }

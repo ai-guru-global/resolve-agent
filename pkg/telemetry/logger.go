@@ -1,3 +1,4 @@
+// Package telemetry configures structured slog logging for the platform.
 package telemetry
 
 import (

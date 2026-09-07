@@ -13,6 +13,7 @@ import (
 // Status represents the health state of a component.
 type Status string
 
+// Well-known health statuses reported by components.
 const (
 	StatusUp       Status = "UP"
 	StatusDown     Status = "DOWN"

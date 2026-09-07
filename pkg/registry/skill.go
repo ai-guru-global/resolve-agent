@@ -44,6 +44,8 @@ func NewInMemorySkillRegistry() *InMemorySkillRegistry {
 	}
 }
 
+// Register adds a skill definition keyed by its name, overwriting any
+// existing entry.
 func (r *InMemorySkillRegistry) Register(_ context.Context, skill *SkillDefinition) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -52,6 +54,8 @@ func (r *InMemorySkillRegistry) Register(_ context.Context, skill *SkillDefiniti
 	return nil
 }
 
+// Get returns the skill definition with the given name, or an error if
+// absent.
 func (r *InMemorySkillRegistry) Get(_ context.Context, name string) (*SkillDefinition, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -63,6 +67,7 @@ func (r *InMemorySkillRegistry) Get(_ context.Context, name string) (*SkillDefin
 	return skill, nil
 }
 
+// List returns all registered skills; the list options are ignored.
 func (r *InMemorySkillRegistry) List(_ context.Context, _ ListOptions) ([]*SkillDefinition, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -74,6 +79,7 @@ func (r *InMemorySkillRegistry) List(_ context.Context, _ ListOptions) ([]*Skill
 	return skills, len(skills), nil
 }
 
+// Unregister removes the skill definition with the given name.
 func (r *InMemorySkillRegistry) Unregister(_ context.Context, name string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -82,6 +88,8 @@ func (r *InMemorySkillRegistry) Unregister(_ context.Context, name string) error
 	return nil
 }
 
+// ListByType returns all registered skills of the given type; the list
+// options are ignored.
 func (r *InMemorySkillRegistry) ListByType(_ context.Context, skillType string, _ ListOptions) ([]*SkillDefinition, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

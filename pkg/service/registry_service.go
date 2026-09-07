@@ -1,3 +1,6 @@
+// Package service implements the gRPC services that expose platform
+// registries (agents, skills, workflows, and model routes) to external
+// runtimes such as the Python agent runtime.
 package service
 
 import (

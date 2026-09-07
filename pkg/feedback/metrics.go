@@ -30,7 +30,7 @@ func NewMetricsCollector() *MetricsCollector {
 }
 
 // Record increments the counter for a given signal.
-func (m *MetricsCollector) Record(sig FeedbackSignal) {
+func (m *MetricsCollector) Record(sig Signal) {
 	key := sig.Source + ":" + sig.Event + ":" + sig.Severity.String()
 	m.mu.Lock()
 	counter, ok := m.counters[key]

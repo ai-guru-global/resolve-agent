@@ -8,17 +8,18 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// PostgresCallGraphRegistry implements registry.CallGraphRegistry using PostgreSQL.
-type PostgresCallGraphRegistry struct {
+// CallGraphRegistry implements registry.CallGraphRegistry using PostgreSQL.
+type CallGraphRegistry struct {
 	store *Store
 }
 
-// NewPostgresCallGraphRegistry creates a new PostgreSQL-backed call graph registry.
-func NewPostgresCallGraphRegistry(store *Store) *PostgresCallGraphRegistry {
-	return &PostgresCallGraphRegistry{store: store}
+// NewCallGraphRegistry creates a new PostgreSQL-backed call graph registry.
+func NewCallGraphRegistry(store *Store) *CallGraphRegistry {
+	return &CallGraphRegistry{store: store}
 }
 
-func (r *PostgresCallGraphRegistry) Create(ctx context.Context, graph *registry.CallGraph) error {
+// Create inserts a new call graph row.
+func (r *CallGraphRegistry) Create(ctx context.Context, graph *registry.CallGraph) error {
 	_, err := r.store.pool.Exec(ctx, `
 		INSERT INTO call_graphs (id, analysis_id, repository_url, branch, language,
 			entry_point, node_count, edge_count, max_depth, status, graph_data)
@@ -31,7 +32,9 @@ func (r *PostgresCallGraphRegistry) Create(ctx context.Context, graph *registry.
 	return err
 }
 
-func (r *PostgresCallGraphRegistry) Get(ctx context.Context, id string) (*registry.CallGraph, error) {
+// Get scans the call graph row with the given ID, reporting not-found as an
+// error.
+func (r *CallGraphRegistry) Get(ctx context.Context, id string) (*registry.CallGraph, error) {
 	var g registry.CallGraph
 	var analysisID *string
 	err := r.store.pool.QueryRow(ctx, `
@@ -55,7 +58,9 @@ func (r *PostgresCallGraphRegistry) Get(ctx context.Context, id string) (*regist
 	return &g, nil
 }
 
-func (r *PostgresCallGraphRegistry) List(ctx context.Context, opts registry.ListOptions) ([]*registry.CallGraph, int, error) {
+// List returns call graphs filtered by the optional analysis_id/status/
+// language filter, newest first, paginated with the total count.
+func (r *CallGraphRegistry) List(ctx context.Context, opts registry.ListOptions) ([]*registry.CallGraph, int, error) {
 	// Build dynamic query
 	where := ""
 	args := []interface{}{}
@@ -117,7 +122,9 @@ func (r *PostgresCallGraphRegistry) List(ctx context.Context, opts registry.List
 	return graphs, total, nil
 }
 
-func (r *PostgresCallGraphRegistry) Update(ctx context.Context, graph *registry.CallGraph) error {
+// Update overwrites the call graph row, reporting an error when the ID is
+// absent.
+func (r *CallGraphRegistry) Update(ctx context.Context, graph *registry.CallGraph) error {
 	tag, err := r.store.pool.Exec(ctx, `
 		UPDATE call_graphs SET analysis_id=$2, repository_url=$3, branch=$4,
 			language=$5, entry_point=$6, node_count=$7, edge_count=$8,
@@ -137,12 +144,14 @@ func (r *PostgresCallGraphRegistry) Update(ctx context.Context, graph *registry.
 	return nil
 }
 
-func (r *PostgresCallGraphRegistry) Delete(ctx context.Context, id string) error {
+// Delete removes the call graph row with the given ID.
+func (r *CallGraphRegistry) Delete(ctx context.Context, id string) error {
 	_, err := r.store.pool.Exec(ctx, "DELETE FROM call_graphs WHERE id = $1", id)
 	return err
 }
 
-func (r *PostgresCallGraphRegistry) AddNodes(ctx context.Context, nodes []*registry.CallGraphNode) error {
+// AddNodes inserts call graph nodes in a single transaction.
+func (r *CallGraphRegistry) AddNodes(ctx context.Context, nodes []*registry.CallGraphNode) error {
 	tx, err := r.store.pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -165,7 +174,8 @@ func (r *PostgresCallGraphRegistry) AddNodes(ctx context.Context, nodes []*regis
 	return tx.Commit(ctx)
 }
 
-func (r *PostgresCallGraphRegistry) AddEdges(ctx context.Context, edges []*registry.CallGraphEdge) error {
+// AddEdges inserts call graph edges in a single transaction.
+func (r *CallGraphRegistry) AddEdges(ctx context.Context, edges []*registry.CallGraphEdge) error {
 	tx, err := r.store.pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -188,7 +198,9 @@ func (r *PostgresCallGraphRegistry) AddEdges(ctx context.Context, edges []*regis
 	return tx.Commit(ctx)
 }
 
-func (r *PostgresCallGraphRegistry) ListNodes(ctx context.Context, callGraphID string, opts registry.ListOptions) ([]*registry.CallGraphNode, int, error) {
+// ListNodes returns the nodes of a call graph ordered by type and function
+// name, paginated with the total count.
+func (r *CallGraphRegistry) ListNodes(ctx context.Context, callGraphID string, opts registry.ListOptions) ([]*registry.CallGraphNode, int, error) {
 	var total int
 	if err := r.store.pool.QueryRow(ctx,
 		"SELECT COUNT(*) FROM call_graph_nodes WHERE call_graph_id = $1", callGraphID,
@@ -226,7 +238,9 @@ func (r *PostgresCallGraphRegistry) ListNodes(ctx context.Context, callGraphID s
 	return nodes, total, nil
 }
 
-func (r *PostgresCallGraphRegistry) ListEdges(ctx context.Context, callGraphID string, opts registry.ListOptions) ([]*registry.CallGraphEdge, int, error) {
+// ListEdges returns the edges of a call graph, paginated with the total
+// count.
+func (r *CallGraphRegistry) ListEdges(ctx context.Context, callGraphID string, opts registry.ListOptions) ([]*registry.CallGraphEdge, int, error) {
 	var total int
 	if err := r.store.pool.QueryRow(ctx,
 		"SELECT COUNT(*) FROM call_graph_edges WHERE call_graph_id = $1", callGraphID,
@@ -263,7 +277,9 @@ func (r *PostgresCallGraphRegistry) ListEdges(ctx context.Context, callGraphID s
 	return edges, total, nil
 }
 
-func (r *PostgresCallGraphRegistry) GetSubgraph(ctx context.Context, callGraphID string, entryNodeID string, depth int) ([]*registry.CallGraphNode, []*registry.CallGraphEdge, error) {
+// GetSubgraph traverses the call graph from an entry node via recursive CTE
+// up to the given depth (default 5) and returns the visited nodes and edges.
+func (r *CallGraphRegistry) GetSubgraph(ctx context.Context, callGraphID string, entryNodeID string, depth int) ([]*registry.CallGraphNode, []*registry.CallGraphEdge, error) {
 	if depth <= 0 {
 		depth = 5
 	}

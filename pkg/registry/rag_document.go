@@ -66,6 +66,8 @@ func NewInMemoryRAGDocumentRegistry() *InMemoryRAGDocumentRegistry {
 	}
 }
 
+// CreateDocument stores new document metadata, stamping timestamps,
+// defaulting status to "pending", and rejecting duplicate IDs.
 func (r *InMemoryRAGDocumentRegistry) CreateDocument(_ context.Context, doc *RAGDocument) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -85,6 +87,7 @@ func (r *InMemoryRAGDocumentRegistry) CreateDocument(_ context.Context, doc *RAG
 	return nil
 }
 
+// GetDocument returns the document with the given ID, or an error if absent.
 func (r *InMemoryRAGDocumentRegistry) GetDocument(_ context.Context, id string) (*RAGDocument, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -96,6 +99,8 @@ func (r *InMemoryRAGDocumentRegistry) GetDocument(_ context.Context, id string) 
 	return doc, nil
 }
 
+// ListDocuments returns the documents of a collection, optionally filtered
+// by status, paginated, with the total count.
 func (r *InMemoryRAGDocumentRegistry) ListDocuments(_ context.Context, collectionID string, opts ListOptions) ([]*RAGDocument, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -130,6 +135,8 @@ func (r *InMemoryRAGDocumentRegistry) ListDocuments(_ context.Context, collectio
 	return docs[offset:end], total, nil
 }
 
+// UpdateDocument replaces an existing document and refreshes its update
+// timestamp.
 func (r *InMemoryRAGDocumentRegistry) UpdateDocument(_ context.Context, doc *RAGDocument) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -143,6 +150,7 @@ func (r *InMemoryRAGDocumentRegistry) UpdateDocument(_ context.Context, doc *RAG
 	return nil
 }
 
+// DeleteDocument removes the document with the given ID.
 func (r *InMemoryRAGDocumentRegistry) DeleteDocument(_ context.Context, id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -151,6 +159,8 @@ func (r *InMemoryRAGDocumentRegistry) DeleteDocument(_ context.Context, id strin
 	return nil
 }
 
+// GetDocumentByHash returns the document of a collection with the given
+// content hash, or an error if none exists.
 func (r *InMemoryRAGDocumentRegistry) GetDocumentByHash(_ context.Context, collectionID string, contentHash string) (*RAGDocument, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -163,6 +173,7 @@ func (r *InMemoryRAGDocumentRegistry) GetDocumentByHash(_ context.Context, colle
 	return nil, fmt.Errorf("document with hash %s not found in collection %s", contentHash, collectionID)
 }
 
+// RecordIngestion stores an ingestion event, stamping its creation time.
 func (r *InMemoryRAGDocumentRegistry) RecordIngestion(_ context.Context, record *RAGIngestionRecord) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -172,6 +183,8 @@ func (r *InMemoryRAGDocumentRegistry) RecordIngestion(_ context.Context, record 
 	return nil
 }
 
+// ListIngestionHistory returns the ingestion events of a collection,
+// paginated, with the total count.
 func (r *InMemoryRAGDocumentRegistry) ListIngestionHistory(_ context.Context, collectionID string, opts ListOptions) ([]*RAGIngestionRecord, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

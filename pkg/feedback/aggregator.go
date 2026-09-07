@@ -42,7 +42,7 @@ func NewAggregator(window time.Duration) *Aggregator {
 }
 
 // Record adds a signal to the aggregation window.
-func (a *Aggregator) Record(sig FeedbackSignal) {
+func (a *Aggregator) Record(sig Signal) {
 	key := sig.Source + ":" + sig.Event
 
 	a.mu.Lock()

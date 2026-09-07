@@ -1,3 +1,5 @@
+// Package tui implements the Bubble Tea terminal dashboard for the
+// ResolveAgent platform.
 package tui
 
 import (

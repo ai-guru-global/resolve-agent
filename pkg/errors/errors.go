@@ -26,6 +26,7 @@ var (
 // Code represents a machine-readable error code.
 type Code string
 
+// Standard error codes used across the platform.
 const (
 	CodeNotFound        Code = "NOT_FOUND"
 	CodeAlreadyExists   Code = "ALREADY_EXISTS"
@@ -81,14 +82,20 @@ func Wrapf(code Code, cause error, format string, args ...any) *Error {
 
 // Convenience constructors for common error types.
 
+// NotFound returns a structured error reporting that an entity of the given
+// type with the given ID was not found.
 func NotFound(entity, id string) *Error {
 	return Newf(CodeNotFound, "%s %q not found", entity, id)
 }
 
+// AlreadyExists returns a structured error reporting that an entity of the
+// given type with the given ID already exists.
 func AlreadyExists(entity, id string) *Error {
 	return Newf(CodeAlreadyExists, "%s %q already exists", entity, id)
 }
 
+// InvalidArgument returns a structured error reporting that a field failed
+// validation.
 func InvalidArgument(field, reason string) *Error {
 	return Newf(CodeInvalidArgument, "invalid %s: %s", field, reason)
 }

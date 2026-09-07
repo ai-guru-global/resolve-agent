@@ -68,6 +68,8 @@ func NewInMemoryHookRegistry() *InMemoryHookRegistry {
 	}
 }
 
+// Create stores a new hook definition, stamping timestamps, and rejecting
+// duplicate IDs.
 func (r *InMemoryHookRegistry) Create(_ context.Context, hook *HookDefinition) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -84,6 +86,7 @@ func (r *InMemoryHookRegistry) Create(_ context.Context, hook *HookDefinition) e
 	return nil
 }
 
+// Get returns the hook definition with the given ID, or an error if absent.
 func (r *InMemoryHookRegistry) Get(_ context.Context, id string) (*HookDefinition, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -95,6 +98,8 @@ func (r *InMemoryHookRegistry) Get(_ context.Context, id string) (*HookDefinitio
 	return hook, nil
 }
 
+// List returns hooks filtered by the optional hook_type/trigger_point/
+// handler_type filter, paginated, with the total count.
 func (r *InMemoryHookRegistry) List(_ context.Context, opts ListOptions) ([]*HookDefinition, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -143,6 +148,8 @@ func (r *InMemoryHookRegistry) List(_ context.Context, opts ListOptions) ([]*Hoo
 	return hooks[offset:end], total, nil
 }
 
+// Update replaces an existing hook definition and refreshes its update
+// timestamp.
 func (r *InMemoryHookRegistry) Update(_ context.Context, hook *HookDefinition) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -156,6 +163,7 @@ func (r *InMemoryHookRegistry) Update(_ context.Context, hook *HookDefinition) e
 	return nil
 }
 
+// Delete removes the hook definition with the given ID.
 func (r *InMemoryHookRegistry) Delete(_ context.Context, id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -164,6 +172,8 @@ func (r *InMemoryHookRegistry) Delete(_ context.Context, id string) error {
 	return nil
 }
 
+// ListByTriggerPoint returns enabled hooks for a trigger point targeting the
+// entity or globally, ordered by execution order.
 func (r *InMemoryHookRegistry) ListByTriggerPoint(_ context.Context, triggerPoint string, targetID string) ([]*HookDefinition, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -191,6 +201,8 @@ func (r *InMemoryHookRegistry) ListByTriggerPoint(_ context.Context, triggerPoin
 	return result, nil
 }
 
+// RecordExecution stores a hook execution record, stamping its creation
+// time.
 func (r *InMemoryHookRegistry) RecordExecution(_ context.Context, exec *HookExecution) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -200,6 +212,8 @@ func (r *InMemoryHookRegistry) RecordExecution(_ context.Context, exec *HookExec
 	return nil
 }
 
+// ListExecutions returns the execution records of a hook, paginated, with
+// the total count.
 func (r *InMemoryHookRegistry) ListExecutions(_ context.Context, hookID string, opts ListOptions) ([]*HookExecution, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

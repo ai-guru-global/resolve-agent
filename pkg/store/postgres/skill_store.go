@@ -8,17 +8,18 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// PostgresSkillRegistry implements registry.SkillRegistry using PostgreSQL.
-type PostgresSkillRegistry struct {
+// SkillRegistry implements registry.SkillRegistry using PostgreSQL.
+type SkillRegistry struct {
 	store *Store
 }
 
-// NewPostgresSkillRegistry creates a new PostgreSQL-backed skill registry.
-func NewPostgresSkillRegistry(store *Store) *PostgresSkillRegistry {
-	return &PostgresSkillRegistry{store: store}
+// NewSkillRegistry creates a new PostgreSQL-backed skill registry.
+func NewSkillRegistry(store *Store) *SkillRegistry {
+	return &SkillRegistry{store: store}
 }
 
-func (r *PostgresSkillRegistry) Register(ctx context.Context, skill *registry.SkillDefinition) error {
+// Register inserts or upserts a skill definition keyed by its name.
+func (r *SkillRegistry) Register(ctx context.Context, skill *registry.SkillDefinition) error {
 	_, err := r.store.pool.Exec(ctx, `
 		INSERT INTO skills (name, version, description, author, manifest, source_type, source_uri, status, labels)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -39,7 +40,9 @@ func (r *PostgresSkillRegistry) Register(ctx context.Context, skill *registry.Sk
 	return err
 }
 
-func (r *PostgresSkillRegistry) Get(ctx context.Context, name string) (*registry.SkillDefinition, error) {
+// Get scans the skill definition row with the given name, reporting
+// not-found as an error.
+func (r *SkillRegistry) Get(ctx context.Context, name string) (*registry.SkillDefinition, error) {
 	var skill registry.SkillDefinition
 	err := r.store.pool.QueryRow(ctx, `
 		SELECT name, version, description, author, manifest, source_type, source_uri, status, labels
@@ -57,7 +60,9 @@ func (r *PostgresSkillRegistry) Get(ctx context.Context, name string) (*registry
 	return &skill, nil
 }
 
-func (r *PostgresSkillRegistry) List(ctx context.Context, opts registry.ListOptions) ([]*registry.SkillDefinition, int, error) {
+// List returns skills ordered by name with limit/offset pagination and the
+// total count.
+func (r *SkillRegistry) List(ctx context.Context, opts registry.ListOptions) ([]*registry.SkillDefinition, int, error) {
 	// Count total
 	var total int
 	countSQL := "SELECT COUNT(*) FROM skills"
@@ -95,12 +100,15 @@ func (r *PostgresSkillRegistry) List(ctx context.Context, opts registry.ListOpti
 	return skills, total, nil
 }
 
-func (r *PostgresSkillRegistry) Unregister(ctx context.Context, name string) error {
+// Unregister removes the skill definition row with the given name.
+func (r *SkillRegistry) Unregister(ctx context.Context, name string) error {
 	_, err := r.store.pool.Exec(ctx, "DELETE FROM skills WHERE name = $1", name)
 	return err
 }
 
-func (r *PostgresSkillRegistry) ListByType(ctx context.Context, skillType string, opts registry.ListOptions) ([]*registry.SkillDefinition, int, error) {
+// ListByType returns skills with the given source type, ordered by name,
+// paginated with the total count.
+func (r *SkillRegistry) ListByType(ctx context.Context, skillType string, opts registry.ListOptions) ([]*registry.SkillDefinition, int, error) {
 	var total int
 	if err := r.store.pool.QueryRow(ctx,
 		"SELECT COUNT(*) FROM skills WHERE source_type = $1", skillType,

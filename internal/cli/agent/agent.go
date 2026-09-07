@@ -1,3 +1,5 @@
+// Package agent provides CLI commands for managing agents, including
+// creation, listing, deletion, execution, and log viewing.
 package agent
 
 import (

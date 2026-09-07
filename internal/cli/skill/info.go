@@ -1,3 +1,5 @@
+// Package skill provides CLI commands for inspecting, installing, and
+// managing registered skills.
 package skill
 
 import (

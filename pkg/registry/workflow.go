@@ -39,6 +39,7 @@ func NewInMemoryWorkflowRegistry() *InMemoryWorkflowRegistry {
 	}
 }
 
+// Create stores a new workflow definition and rejects duplicate IDs.
 func (r *InMemoryWorkflowRegistry) Create(_ context.Context, workflow *WorkflowDefinition) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -51,6 +52,8 @@ func (r *InMemoryWorkflowRegistry) Create(_ context.Context, workflow *WorkflowD
 	return nil
 }
 
+// Get returns the workflow definition with the given ID, or an error if
+// absent.
 func (r *InMemoryWorkflowRegistry) Get(_ context.Context, id string) (*WorkflowDefinition, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -62,6 +65,7 @@ func (r *InMemoryWorkflowRegistry) Get(_ context.Context, id string) (*WorkflowD
 	return wf, nil
 }
 
+// List returns all workflow definitions; the list options are ignored.
 func (r *InMemoryWorkflowRegistry) List(_ context.Context, _ ListOptions) ([]*WorkflowDefinition, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -73,6 +77,8 @@ func (r *InMemoryWorkflowRegistry) List(_ context.Context, _ ListOptions) ([]*Wo
 	return workflows, len(workflows), nil
 }
 
+// Update replaces an existing workflow definition and reports an error if
+// absent.
 func (r *InMemoryWorkflowRegistry) Update(_ context.Context, workflow *WorkflowDefinition) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -85,6 +91,7 @@ func (r *InMemoryWorkflowRegistry) Update(_ context.Context, workflow *WorkflowD
 	return nil
 }
 
+// Delete removes the workflow definition with the given ID.
 func (r *InMemoryWorkflowRegistry) Delete(_ context.Context, id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

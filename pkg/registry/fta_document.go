@@ -67,6 +67,8 @@ func NewInMemoryFTADocumentRegistry() *InMemoryFTADocumentRegistry {
 	}
 }
 
+// CreateDocument stores a new FTA document, stamping timestamps, defaulting
+// status to "draft" and version to 1, and rejecting duplicate IDs.
 func (r *InMemoryFTADocumentRegistry) CreateDocument(_ context.Context, doc *FTADocument) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -89,6 +91,8 @@ func (r *InMemoryFTADocumentRegistry) CreateDocument(_ context.Context, doc *FTA
 	return nil
 }
 
+// GetDocument returns the FTA document with the given ID, or an error if
+// absent.
 func (r *InMemoryFTADocumentRegistry) GetDocument(_ context.Context, id string) (*FTADocument, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -100,6 +104,8 @@ func (r *InMemoryFTADocumentRegistry) GetDocument(_ context.Context, id string) 
 	return doc, nil
 }
 
+// ListDocuments returns FTA documents filtered by the optional status/
+// workflow_id filter, paginated, with the total count.
 func (r *InMemoryFTADocumentRegistry) ListDocuments(_ context.Context, opts ListOptions) ([]*FTADocument, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -144,6 +150,8 @@ func (r *InMemoryFTADocumentRegistry) ListDocuments(_ context.Context, opts List
 	return docs[offset:end], total, nil
 }
 
+// UpdateDocument replaces an existing FTA document and refreshes its update
+// timestamp.
 func (r *InMemoryFTADocumentRegistry) UpdateDocument(_ context.Context, doc *FTADocument) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -157,6 +165,8 @@ func (r *InMemoryFTADocumentRegistry) UpdateDocument(_ context.Context, doc *FTA
 	return nil
 }
 
+// DeleteDocument removes an FTA document together with all of its analysis
+// results.
 func (r *InMemoryFTADocumentRegistry) DeleteDocument(_ context.Context, id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -171,6 +181,7 @@ func (r *InMemoryFTADocumentRegistry) DeleteDocument(_ context.Context, id strin
 	return nil
 }
 
+// ListByWorkflow returns the FTA documents attached to a workflow.
 func (r *InMemoryFTADocumentRegistry) ListByWorkflow(_ context.Context, workflowID string) ([]*FTADocument, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -184,6 +195,8 @@ func (r *InMemoryFTADocumentRegistry) ListByWorkflow(_ context.Context, workflow
 	return docs, nil
 }
 
+// CreateAnalysisResult stores an FTA analysis result, stamping its creation
+// time, and rejects duplicate IDs.
 func (r *InMemoryFTADocumentRegistry) CreateAnalysisResult(_ context.Context, result *FTAAnalysisResult) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -197,6 +210,8 @@ func (r *InMemoryFTADocumentRegistry) CreateAnalysisResult(_ context.Context, re
 	return nil
 }
 
+// GetAnalysisResult returns the FTA analysis result with the given ID, or
+// an error if absent.
 func (r *InMemoryFTADocumentRegistry) GetAnalysisResult(_ context.Context, id string) (*FTAAnalysisResult, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -208,6 +223,8 @@ func (r *InMemoryFTADocumentRegistry) GetAnalysisResult(_ context.Context, id st
 	return result, nil
 }
 
+// ListAnalysisResults returns the analysis results of an FTA document,
+// paginated, with the total count.
 func (r *InMemoryFTADocumentRegistry) ListAnalysisResults(_ context.Context, documentID string, opts ListOptions) ([]*FTAAnalysisResult, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

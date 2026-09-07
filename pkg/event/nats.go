@@ -3,6 +3,7 @@ package event
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -82,10 +83,10 @@ func (b *NATSBus) createStreams() error {
 			MaxAge:   24 * time.Hour,
 			Storage:  nats.FileStorage,
 		})
-		if err != nil && err != nats.ErrStreamNameAlreadyInUse {
+		if err != nil && !errors.Is(err, nats.ErrStreamNameAlreadyInUse) {
 			return fmt.Errorf("failed to create stream %s: %w", stream, err)
 		}
-		if err == nats.ErrStreamNameAlreadyInUse {
+		if errors.Is(err, nats.ErrStreamNameAlreadyInUse) {
 			b.logger.Debug("Stream already exists", "stream", stream)
 		} else {
 			b.logger.Info("Created stream", "stream", stream)
@@ -116,7 +117,7 @@ func (b *NATSBus) Publish(ctx context.Context, event Event) error {
 }
 
 // PublishData sends event data directly.
-func (b *NATSBus) PublishData(eventType string, subject string, data interface{}) error {
+func (b *NATSBus) PublishData(eventType, subject string, data interface{}) error {
 	fullSubject := fmt.Sprintf("%s.%s", eventType, subject)
 
 	payload, err := json.Marshal(data)

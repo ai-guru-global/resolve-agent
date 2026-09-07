@@ -72,7 +72,7 @@ func InitTracer(ctx context.Context, cfg TracerConfig, logger *slog.Logger) (fun
 	)
 
 	// Create OTLP exporter
-	exporter, err := createExporter(ctx, cfg.OTLPEndpoint, logger)
+	exporter, err := createExporter(ctx, cfg.OTLPEndpoint)
 	if err != nil {
 		logger.Warn("Failed to create OTLP exporter, continuing without exporter",
 			"error", err,
@@ -131,14 +131,15 @@ func InitTracer(ctx context.Context, cfg TracerConfig, logger *slog.Logger) (fun
 	return shutdown, nil
 }
 
-// createExporter creates an OTLP trace exporter
-func createExporter(ctx context.Context, endpoint string, logger *slog.Logger) (sdktrace.SpanExporter, error) {
+// createExporter creates an OTLP trace exporter.
+func createExporter(ctx context.Context, endpoint string) (sdktrace.SpanExporter, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
+	//nolint:staticcheck // grpc.DialContext+WithBlock kept deliberately: startup needs a bounded blocking connect so exporter setup fails fast; grpc.NewClient dials lazily and would defer connection errors to the first RPC. Migration deferred.
 	conn, err := grpc.DialContext(ctx, endpoint,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
+		grpc.WithBlock(), //nolint:staticcheck // pairs with the DialContext above for fail-fast exporter creation at startup.
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to OTLP endpoint: %w", err)

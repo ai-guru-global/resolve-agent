@@ -24,6 +24,7 @@ func newRunCmd() *cobra.Command {
 			// Parse input
 			var input map[string]interface{}
 			if inputFile != "" {
+				//nolint:gosec // path comes from the operator's own CLI flag on a local tool, not attacker-controlled
 				data, err := os.ReadFile(inputFile)
 				if err != nil {
 					return fmt.Errorf("failed to read input file: %w", err)
@@ -62,11 +63,12 @@ func newRunCmd() *cobra.Command {
 				fmt.Printf("  Status:       %s\n", resp.Status)
 				fmt.Println("\nUse 'resolveagent workflow logs' to check execution status.")
 			} else {
-				if resp.Status == "completed" {
+				switch resp.Status {
+				case "completed":
 					fmt.Printf("✓ Workflow execution completed\n")
-				} else if resp.Status == "failed" {
+				case "failed":
 					fmt.Printf("✗ Workflow execution failed\n")
-				} else {
+				default:
 					fmt.Printf("Workflow execution: %s\n", resp.Status)
 				}
 

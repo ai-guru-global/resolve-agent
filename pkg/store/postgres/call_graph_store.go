@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
@@ -47,7 +48,7 @@ func (r *CallGraphRegistry) Get(ctx context.Context, id string) (*registry.CallG
 		&g.Status, &g.GraphData, &g.CreatedAt, &g.UpdatedAt,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("call graph %s not found", id)
 		}
 		return nil, err
@@ -279,7 +280,7 @@ func (r *CallGraphRegistry) ListEdges(ctx context.Context, callGraphID string, o
 
 // GetSubgraph traverses the call graph from an entry node via recursive CTE
 // up to the given depth (default 5) and returns the visited nodes and edges.
-func (r *CallGraphRegistry) GetSubgraph(ctx context.Context, callGraphID string, entryNodeID string, depth int) ([]*registry.CallGraphNode, []*registry.CallGraphEdge, error) {
+func (r *CallGraphRegistry) GetSubgraph(ctx context.Context, callGraphID, entryNodeID string, depth int) ([]*registry.CallGraphNode, []*registry.CallGraphEdge, error) {
 	if depth <= 0 {
 		depth = 5
 	}
@@ -309,11 +310,11 @@ func (r *CallGraphRegistry) GetSubgraph(ctx context.Context, callGraphID string,
 	var nodes []*registry.CallGraphNode
 	for rows.Next() {
 		var n registry.CallGraphNode
-		if err := rows.Scan(
+		if scanErr := rows.Scan(
 			&n.ID, &n.CallGraphID, &n.FunctionName, &n.FilePath,
 			&n.LineStart, &n.LineEnd, &n.Package, &n.NodeType, &n.Metadata,
-		); err != nil {
-			return nil, nil, err
+		); scanErr != nil {
+			return nil, nil, scanErr
 		}
 		nodes = append(nodes, &n)
 	}

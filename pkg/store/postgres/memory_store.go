@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -91,12 +92,12 @@ func (r *MemoryRegistry) DeleteConversation(ctx context.Context, conversationID 
 
 // ListConversations returns an agent's distinct conversation IDs ordered and
 // paginated, with the total count.
-func (r *MemoryRegistry) ListConversations(ctx context.Context, agentID string, opts registry.ListOptions) ([]string, int, error) {
-	var total int
-	if err := r.store.pool.QueryRow(ctx,
+func (r *MemoryRegistry) ListConversations(ctx context.Context, agentID string, opts registry.ListOptions) (convIDs []string, total int, err error) {
+	err = r.store.pool.QueryRow(ctx,
 		"SELECT COUNT(DISTINCT conversation_id) FROM memory_short_term WHERE agent_id = $1",
 		agentID,
-	).Scan(&total); err != nil {
+	).Scan(&total)
+	if err != nil {
 		return nil, 0, err
 	}
 
@@ -114,11 +115,10 @@ func (r *MemoryRegistry) ListConversations(ctx context.Context, agentID string, 
 	}
 	defer rows.Close()
 
-	var convIDs []string
 	for rows.Next() {
 		var id string
-		if err := rows.Scan(&id); err != nil {
-			return nil, 0, err
+		if scanErr := rows.Scan(&id); scanErr != nil {
+			return nil, 0, scanErr
 		}
 		convIDs = append(convIDs, id)
 	}
@@ -159,7 +159,7 @@ func (r *MemoryRegistry) GetLongTermMemory(ctx context.Context, id string) (*reg
 		&mem.LastAccessedAt, &mem.CreatedAt, &mem.UpdatedAt,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("long-term memory %s not found", id)
 		}
 		return nil, err
@@ -175,7 +175,7 @@ func (r *MemoryRegistry) GetLongTermMemory(ctx context.Context, id string) (*reg
 
 // SearchLongTermMemory returns non-expired memories of an agent filtered by
 // user and type, ordered by importance and paginated, with the total count.
-func (r *MemoryRegistry) SearchLongTermMemory(ctx context.Context, agentID string, userID string, memoryType string, opts registry.ListOptions) ([]*registry.LongTermMemory, int, error) {
+func (r *MemoryRegistry) SearchLongTermMemory(ctx context.Context, agentID, userID, memoryType string, opts registry.ListOptions) ([]*registry.LongTermMemory, int, error) {
 	// Build dynamic query
 	baseWhere := "WHERE agent_id = $1 AND (expires_at IS NULL OR expires_at > NOW())"
 	args := []interface{}{agentID}

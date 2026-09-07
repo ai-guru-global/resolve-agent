@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"sync"
 	"time"
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
@@ -21,7 +20,6 @@ type RouteSync struct {
 	logger        *slog.Logger
 
 	syncInterval time.Duration
-	mu           sync.RWMutex
 	syncedRoutes map[string]string // routeName -> version/hash
 	stopCh       chan struct{}
 }
@@ -111,9 +109,7 @@ func (rs *RouteSync) Sync(ctx context.Context) error {
 	rs.logger.Info("Syncing routes with Higress gateway")
 
 	// 1. Sync platform service routes (static routes for API server)
-	if err := rs.syncPlatformRoutes(ctx); err != nil {
-		return fmt.Errorf("syncing platform routes: %w", err)
-	}
+	rs.syncPlatformRoutes(ctx)
 
 	// 2. Sync agent routes from registry
 	if err := rs.syncAgentRoutes(ctx); err != nil {
@@ -129,7 +125,7 @@ func (rs *RouteSync) Sync(ctx context.Context) error {
 	return nil
 }
 
-func (rs *RouteSync) syncPlatformRoutes(ctx context.Context) error {
+func (rs *RouteSync) syncPlatformRoutes(ctx context.Context) {
 	// Platform API routes - static routes to the platform service
 	platformRoutes := []*HigressRoute{
 		{
@@ -199,8 +195,6 @@ func (rs *RouteSync) syncPlatformRoutes(ctx context.Context) error {
 			rs.logger.Error("Failed to sync platform route", "route", route.Name, "error", err)
 		}
 	}
-
-	return nil
 }
 
 func (rs *RouteSync) syncAgentRoutes(ctx context.Context) error {

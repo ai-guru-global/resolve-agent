@@ -174,7 +174,7 @@ func (r *InMemoryHookRegistry) Delete(_ context.Context, id string) error {
 
 // ListByTriggerPoint returns enabled hooks for a trigger point targeting the
 // entity or globally, ordered by execution order.
-func (r *InMemoryHookRegistry) ListByTriggerPoint(_ context.Context, triggerPoint string, targetID string) ([]*HookDefinition, error) {
+func (r *InMemoryHookRegistry) ListByTriggerPoint(_ context.Context, triggerPoint, targetID string) ([]*HookDefinition, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 

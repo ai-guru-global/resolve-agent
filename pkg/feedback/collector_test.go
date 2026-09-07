@@ -11,7 +11,7 @@ func TestRingBuffer_PushAndSnapshot(t *testing.T) {
 	rb := NewRingBuffer(3)
 
 	for i := 0; i < 5; i++ {
-		rb.Push(Signal{
+		rb.Push(&Signal{
 			Source: "test",
 			Event:  "event",
 			ID:     generateID(),
@@ -39,7 +39,7 @@ func TestRingBuffer_Empty(t *testing.T) {
 
 func TestRingBuffer_Clear(t *testing.T) {
 	rb := NewRingBuffer(5)
-	rb.Push(Signal{Source: "x"})
+	rb.Push(&Signal{Source: "x"})
 	rb.Clear()
 	if rb.Len() != 0 {
 		t.Errorf("expected Len()=0 after clear, got %d", rb.Len())
@@ -48,25 +48,25 @@ func TestRingBuffer_Clear(t *testing.T) {
 
 func TestCollector_EmitAndSubscribe(t *testing.T) {
 	cfg := DefaultConfig()
-	c := NewCollector(cfg)
+	c := NewCollector(&cfg)
 	defer c.Close()
 
 	var received []Signal
 	var mu sync.Mutex
-	c.Subscribe(SourceRetry, func(_ context.Context, sig Signal) {
+	c.Subscribe(SourceRetry, func(_ context.Context, sig *Signal) {
 		mu.Lock()
-		received = append(received, sig)
+		received = append(received, *sig)
 		mu.Unlock()
 	})
 
 	ctx := context.Background()
-	_ = c.Emit(ctx, Signal{
+	_ = c.Emit(ctx, &Signal{
 		Source:   SourceRetry,
 		Event:    EventRetryExhausted,
 		Severity: SeverityError,
 		Message:  "all retries failed",
 	})
-	_ = c.Emit(ctx, Signal{
+	_ = c.Emit(ctx, &Signal{
 		Source:   SourceHealth,
 		Event:    EventHealthDown,
 		Severity: SeverityCritical,
@@ -84,20 +84,21 @@ func TestCollector_EmitAndSubscribe(t *testing.T) {
 }
 
 func TestCollector_WildcardSubscriber(t *testing.T) {
-	c := NewCollector(DefaultConfig())
+	cfg := DefaultConfig()
+	c := NewCollector(&cfg)
 	defer c.Close()
 
 	var count int
 	var mu sync.Mutex
-	c.Subscribe("*", func(_ context.Context, _ Signal) {
+	c.Subscribe("*", func(_ context.Context, _ *Signal) {
 		mu.Lock()
 		count++
 		mu.Unlock()
 	})
 
 	ctx := context.Background()
-	_ = c.Emit(ctx, Signal{Source: "a", Event: "e1"})
-	_ = c.Emit(ctx, Signal{Source: "b", Event: "e2"})
+	_ = c.Emit(ctx, &Signal{Source: "a", Event: "e1"})
+	_ = c.Emit(ctx, &Signal{Source: "b", Event: "e2"})
 
 	mu.Lock()
 	defer mu.Unlock()
@@ -107,15 +108,16 @@ func TestCollector_WildcardSubscriber(t *testing.T) {
 }
 
 func TestCollector_EmitAssignsIDAndTimestamp(t *testing.T) {
-	c := NewCollector(DefaultConfig())
+	cfg := DefaultConfig()
+	c := NewCollector(&cfg)
 	defer c.Close()
 
 	var captured Signal
-	c.Subscribe("*", func(_ context.Context, sig Signal) {
-		captured = sig
+	c.Subscribe("*", func(_ context.Context, sig *Signal) {
+		captured = *sig
 	})
 
-	_ = c.Emit(context.Background(), Signal{Source: "test", Event: "e"})
+	_ = c.Emit(context.Background(), &Signal{Source: "test", Event: "e"})
 
 	if captured.ID == "" {
 		t.Error("expected ID to be assigned")
@@ -126,10 +128,11 @@ func TestCollector_EmitAssignsIDAndTimestamp(t *testing.T) {
 }
 
 func TestCollector_ClosedRejectsEmit(t *testing.T) {
-	c := NewCollector(DefaultConfig())
+	cfg := DefaultConfig()
+	c := NewCollector(&cfg)
 	c.Close()
 
-	err := c.Emit(context.Background(), Signal{Source: "x"})
+	err := c.Emit(context.Background(), &Signal{Source: "x"})
 	if err == nil {
 		t.Error("expected error from closed collector")
 	}
@@ -140,7 +143,7 @@ func TestAggregator_RecordAndStats(t *testing.T) {
 	now := time.Now().UTC()
 
 	for i := 0; i < 10; i++ {
-		agg.Record(Signal{
+		agg.Record(&Signal{
 			Source:    SourceRetry,
 			Event:     EventRetryExhausted,
 			Severity:  SeverityError,
@@ -148,7 +151,7 @@ func TestAggregator_RecordAndStats(t *testing.T) {
 		})
 	}
 	for i := 0; i < 3; i++ {
-		agg.Record(Signal{
+		agg.Record(&Signal{
 			Source:    SourceHealth,
 			Event:     EventHealthDown,
 			Severity:  SeverityCritical,
@@ -182,7 +185,7 @@ func TestAggregator_RecordAndStats(t *testing.T) {
 
 func TestAggregator_Reset(t *testing.T) {
 	agg := NewAggregator(time.Minute)
-	agg.Record(Signal{
+	agg.Record(&Signal{
 		Source:    "test",
 		Event:     "e",
 		Timestamp: time.Now(),

@@ -46,7 +46,7 @@ type DatabaseConfig struct {
 }
 
 // DSN returns the PostgreSQL connection string.
-func (d DatabaseConfig) DSN() string {
+func (d *DatabaseConfig) DSN() string {
 	return "host=" + d.Host +
 		" port=" + strconv.Itoa(d.Port) +
 		" user=" + d.User +

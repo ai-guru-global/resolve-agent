@@ -72,7 +72,7 @@ func newTestServer(t *testing.T) *Server {
 func TestHealthEndpoint(t *testing.T) {
 	srv := newTestServer(t)
 
-	req := httptest.NewRequest("GET", "/api/v1/health", nil)
+	req := httptest.NewRequest("GET", "/api/v1/health", http.NoBody)
 	w := httptest.NewRecorder()
 	srv.httpServer.Handler.ServeHTTP(w, req)
 
@@ -95,7 +95,7 @@ func TestHealthEndpoint(t *testing.T) {
 func TestHealthzEndpoint(t *testing.T) {
 	srv := newTestServer(t)
 
-	req := httptest.NewRequest("GET", "/healthz", nil)
+	req := httptest.NewRequest("GET", "/healthz", http.NoBody)
 	w := httptest.NewRecorder()
 	srv.httpServer.Handler.ServeHTTP(w, req)
 
@@ -115,7 +115,7 @@ func TestHealthzEndpoint(t *testing.T) {
 func TestSystemInfoEndpoint(t *testing.T) {
 	srv := newTestServer(t)
 
-	req := httptest.NewRequest("GET", "/api/v1/system/info", nil)
+	req := httptest.NewRequest("GET", "/api/v1/system/info", http.NoBody)
 	w := httptest.NewRecorder()
 	srv.httpServer.Handler.ServeHTTP(w, req)
 
@@ -139,7 +139,7 @@ func TestSystemInfoEndpoint(t *testing.T) {
 func TestListAgentsEndpoint(t *testing.T) {
 	srv := newTestServer(t)
 
-	req := httptest.NewRequest("GET", "/api/v1/agents", nil)
+	req := httptest.NewRequest("GET", "/api/v1/agents", http.NoBody)
 	w := httptest.NewRecorder()
 	srv.httpServer.Handler.ServeHTTP(w, req)
 
@@ -168,7 +168,7 @@ func TestListAgentsEndpoint(t *testing.T) {
 func TestListSkillsEndpoint(t *testing.T) {
 	srv := newTestServer(t)
 
-	req := httptest.NewRequest("GET", "/api/v1/skills", nil)
+	req := httptest.NewRequest("GET", "/api/v1/skills", http.NoBody)
 	w := httptest.NewRecorder()
 	srv.httpServer.Handler.ServeHTTP(w, req)
 
@@ -196,7 +196,7 @@ func TestListSkillsEndpoint(t *testing.T) {
 func TestListWorkflowsEndpoint(t *testing.T) {
 	srv := newTestServer(t)
 
-	req := httptest.NewRequest("GET", "/api/v1/workflows", nil)
+	req := httptest.NewRequest("GET", "/api/v1/workflows", http.NoBody)
 	w := httptest.NewRecorder()
 	srv.httpServer.Handler.ServeHTTP(w, req)
 
@@ -224,7 +224,7 @@ func TestListWorkflowsEndpoint(t *testing.T) {
 func TestListModelsEndpoint(t *testing.T) {
 	srv := newTestServer(t)
 
-	req := httptest.NewRequest("GET", "/api/v1/models", nil)
+	req := httptest.NewRequest("GET", "/api/v1/models", http.NoBody)
 	w := httptest.NewRecorder()
 	srv.httpServer.Handler.ServeHTTP(w, req)
 
@@ -253,7 +253,7 @@ func TestListModelsEndpoint(t *testing.T) {
 func TestListCollectionsEndpoint(t *testing.T) {
 	srv := newTestServer(t)
 
-	req := httptest.NewRequest("GET", "/api/v1/rag/collections", nil)
+	req := httptest.NewRequest("GET", "/api/v1/rag/collections", http.NoBody)
 	w := httptest.NewRecorder()
 	srv.httpServer.Handler.ServeHTTP(w, req)
 
@@ -274,7 +274,7 @@ func TestListCollectionsEndpoint(t *testing.T) {
 func TestNotFoundRoute(t *testing.T) {
 	srv := newTestServer(t)
 
-	req := httptest.NewRequest("GET", "/api/v1/nonexistent", nil)
+	req := httptest.NewRequest("GET", "/api/v1/nonexistent", http.NoBody)
 	w := httptest.NewRecorder()
 	srv.httpServer.Handler.ServeHTTP(w, req)
 

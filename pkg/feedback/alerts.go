@@ -47,7 +47,6 @@ type AlertEngine struct {
 	mu       sync.RWMutex
 	rules    []AlertRule
 	metrics  *MetricsCollector
-	agg      *Aggregator
 	handler  AlertHandler
 	logger   *slog.Logger
 	interval time.Duration
@@ -57,12 +56,10 @@ type AlertEngine struct {
 // NewAlertEngine creates an alert engine with the given configuration.
 func NewAlertEngine(
 	metrics *MetricsCollector,
-	agg *Aggregator,
 	logger *slog.Logger,
 ) *AlertEngine {
 	return &AlertEngine{
 		metrics:  metrics,
-		agg:      agg,
 		logger:   logger,
 		interval: 30 * time.Second,
 		stopCh:   make(chan struct{}),
@@ -126,11 +123,10 @@ func (e *AlertEngine) Evaluate(ctx context.Context) {
 	handler := e.handler
 	e.mu.RUnlock()
 
-	stats := e.agg.Stats()
 	snapshot := e.metrics.Snapshot()
 
 	for _, rule := range rules {
-		value := e.resolveCondition(rule.Condition, stats, snapshot)
+		value := e.resolveCondition(rule.Condition, snapshot)
 		if value < 0 {
 			// Condition is satisfied (resolveCondition returns -1 for triggered).
 			e.logger.Warn("alert fired",
@@ -148,7 +144,7 @@ func (e *AlertEngine) Evaluate(ctx context.Context) {
 // resolveCondition is a simplified condition evaluator.
 // Returns -1 if the condition is met, or the current value otherwise.
 // Supports: "metric_name > threshold", "metric_name < threshold"
-func (e *AlertEngine) resolveCondition(condition string, stats []AggregatedStats, snapshot map[string]int64) float64 {
+func (e *AlertEngine) resolveCondition(condition string, snapshot map[string]int64) float64 {
 	parts := strings.Fields(condition)
 	if len(parts) != 3 {
 		return 0

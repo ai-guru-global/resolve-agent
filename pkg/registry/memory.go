@@ -124,7 +124,7 @@ func (r *InMemoryMemoryRegistry) DeleteConversation(_ context.Context, conversat
 
 // ListConversations returns an agent's distinct conversation IDs sorted and
 // paginated, with the total count.
-func (r *InMemoryMemoryRegistry) ListConversations(_ context.Context, agentID string, opts ListOptions) ([]string, int, error) {
+func (r *InMemoryMemoryRegistry) ListConversations(_ context.Context, agentID string, opts ListOptions) (convIDs []string, total int, err error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -141,13 +141,13 @@ func (r *InMemoryMemoryRegistry) ListConversations(_ context.Context, agentID st
 		}
 	}
 
-	convIDs := make([]string, 0, len(seen))
+	convIDs = make([]string, 0, len(seen))
 	for id := range seen {
 		convIDs = append(convIDs, id)
 	}
 	sort.Strings(convIDs)
 
-	total := len(convIDs)
+	total = len(convIDs)
 	if offset >= total {
 		return []string{}, total, nil
 	}
@@ -191,7 +191,7 @@ func (r *InMemoryMemoryRegistry) GetLongTermMemory(_ context.Context, id string)
 
 // SearchLongTermMemory returns non-expired memories of an agent filtered by
 // user and type, ordered by importance and paginated.
-func (r *InMemoryMemoryRegistry) SearchLongTermMemory(_ context.Context, agentID string, userID string, memoryType string, opts ListOptions) ([]*LongTermMemory, int, error) {
+func (r *InMemoryMemoryRegistry) SearchLongTermMemory(_ context.Context, agentID, userID, memoryType string, opts ListOptions) ([]*LongTermMemory, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 

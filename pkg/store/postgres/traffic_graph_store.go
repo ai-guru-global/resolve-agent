@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
@@ -45,7 +46,7 @@ func (r *TrafficGraphRegistry) Get(ctx context.Context, id string) (*registry.Tr
 		&g.AnalysisReport, &g.Suggestions, &g.Status, &g.CreatedAt, &g.UpdatedAt,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("traffic graph %s not found", id)
 		}
 		return nil, err
@@ -155,7 +156,7 @@ func (r *TrafficGraphRegistry) GetByCaptureID(ctx context.Context, captureID str
 
 // UpdateReport stores an analysis report and suggestions on a graph and
 // marks it analyzed, reporting an error when the ID is absent.
-func (r *TrafficGraphRegistry) UpdateReport(ctx context.Context, id string, report string, suggestions []any) error {
+func (r *TrafficGraphRegistry) UpdateReport(ctx context.Context, id, report string, suggestions []any) error {
 	tag, err := r.store.pool.Exec(ctx, `
 		UPDATE traffic_graphs SET analysis_report=$2, suggestions=$3, status='analyzed'
 		WHERE id = $1

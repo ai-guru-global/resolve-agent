@@ -62,6 +62,7 @@ func newIngestCmd() *cobra.Command {
 			totalVectors := 0
 
 			for i, file := range files {
+				//nolint:gosec // path comes from the operator's own CLI args on a local tool, not attacker-controlled
 				content, err := os.ReadFile(file)
 				if err != nil {
 					fmt.Printf("  ✗ %s: failed to read (%v)\n", file, err)

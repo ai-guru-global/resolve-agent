@@ -86,24 +86,24 @@ func (c *RuntimeClient) ExecuteAgent(
 	ctx context.Context,
 	agentID string,
 	req *ExecuteAgentRequest,
-) (<-chan *ExecuteAgentResponse, <-chan error) {
-	resultCh := make(chan *ExecuteAgentResponse, 10)
-	errCh := make(chan error, 1)
+) (resultCh <-chan *ExecuteAgentResponse, errCh <-chan error) {
+	resCh := make(chan *ExecuteAgentResponse, 10)
+	errs := make(chan error, 1)
 
 	go func() {
-		defer close(resultCh)
-		defer close(errCh)
+		defer close(resCh)
+		defer close(errs)
 
 		url := fmt.Sprintf("%s/agents/%s/execute", c.baseURL, agentID)
 		body, err := json.Marshal(req)
 		if err != nil {
-			errCh <- fmt.Errorf("marshal request: %w", err)
+			errs <- fmt.Errorf("marshal request: %w", err)
 			return
 		}
 
 		httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
 		if err != nil {
-			errCh <- fmt.Errorf("create request: %w", err)
+			errs <- fmt.Errorf("create request: %w", err)
 			return
 		}
 		httpReq.Header.Set("Content-Type", "application/json")
@@ -112,14 +112,14 @@ func (c *RuntimeClient) ExecuteAgent(
 
 		resp, err := c.httpClient.Do(httpReq)
 		if err != nil {
-			errCh <- fmt.Errorf("do request: %w", err)
+			errs <- fmt.Errorf("do request: %w", err)
 			return
 		}
 		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			body, _ := io.ReadAll(resp.Body)
-			errCh <- fmt.Errorf("unexpected status: %d, body: %s", resp.StatusCode, string(body))
+			errs <- fmt.Errorf("unexpected status: %d, body: %s", resp.StatusCode, string(body))
 			return
 		}
 
@@ -142,18 +142,18 @@ func (c *RuntimeClient) ExecuteAgent(
 			}
 
 			select {
-			case resultCh <- &response:
+			case resCh <- &response:
 			case <-ctx.Done():
 				return
 			}
 		}
 
 		if err := scanner.Err(); err != nil {
-			errCh <- fmt.Errorf("scan response: %w", err)
+			errs <- fmt.Errorf("scan response: %w", err)
 		}
 	}()
 
-	return resultCh, errCh
+	return resCh, errs
 }
 
 // ExecuteWorkflowRequest is the request body for workflow execution.
@@ -167,24 +167,24 @@ func (c *RuntimeClient) ExecuteWorkflow(
 	ctx context.Context,
 	workflowID string,
 	req *ExecuteWorkflowRequest,
-) (<-chan *ExecuteAgentResponse, <-chan error) {
-	resultCh := make(chan *ExecuteAgentResponse, 10)
-	errCh := make(chan error, 1)
+) (resultCh <-chan *ExecuteAgentResponse, errCh <-chan error) {
+	resCh := make(chan *ExecuteAgentResponse, 10)
+	errs := make(chan error, 1)
 
 	go func() {
-		defer close(resultCh)
-		defer close(errCh)
+		defer close(resCh)
+		defer close(errs)
 
 		url := fmt.Sprintf("%s/workflows/%s/execute", c.baseURL, workflowID)
 		body, err := json.Marshal(req)
 		if err != nil {
-			errCh <- fmt.Errorf("marshal request: %w", err)
+			errs <- fmt.Errorf("marshal request: %w", err)
 			return
 		}
 
 		httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
 		if err != nil {
-			errCh <- fmt.Errorf("create request: %w", err)
+			errs <- fmt.Errorf("create request: %w", err)
 			return
 		}
 		httpReq.Header.Set("Content-Type", "application/json")
@@ -193,14 +193,14 @@ func (c *RuntimeClient) ExecuteWorkflow(
 
 		resp, err := c.httpClient.Do(httpReq)
 		if err != nil {
-			errCh <- fmt.Errorf("do request: %w", err)
+			errs <- fmt.Errorf("do request: %w", err)
 			return
 		}
 		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			body, _ := io.ReadAll(resp.Body)
-			errCh <- fmt.Errorf("unexpected status: %d, body: %s", resp.StatusCode, string(body))
+			errs <- fmt.Errorf("unexpected status: %d, body: %s", resp.StatusCode, string(body))
 			return
 		}
 
@@ -223,18 +223,18 @@ func (c *RuntimeClient) ExecuteWorkflow(
 			}
 
 			select {
-			case resultCh <- &response:
+			case resCh <- &response:
 			case <-ctx.Done():
 				return
 			}
 		}
 
 		if err := scanner.Err(); err != nil {
-			errCh <- fmt.Errorf("scan response: %w", err)
+			errs <- fmt.Errorf("scan response: %w", err)
 		}
 	}()
 
-	return resultCh, errCh
+	return resCh, errs
 }
 
 // RAGQueryRequest is the request body for RAG query.
@@ -416,24 +416,24 @@ type CorpusImportEvent struct {
 func (c *RuntimeClient) ImportCorpus(
 	ctx context.Context,
 	req *CorpusImportRequest,
-) (<-chan *CorpusImportEvent, <-chan error) {
-	resultCh := make(chan *CorpusImportEvent, 10)
-	errCh := make(chan error, 1)
+) (resultCh <-chan *CorpusImportEvent, errCh <-chan error) {
+	resCh := make(chan *CorpusImportEvent, 10)
+	errs := make(chan error, 1)
 
 	go func() {
-		defer close(resultCh)
-		defer close(errCh)
+		defer close(resCh)
+		defer close(errs)
 
 		url := fmt.Sprintf("%s/corpus/import", c.baseURL)
 		body, err := json.Marshal(req)
 		if err != nil {
-			errCh <- fmt.Errorf("marshal request: %w", err)
+			errs <- fmt.Errorf("marshal request: %w", err)
 			return
 		}
 
 		httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
 		if err != nil {
-			errCh <- fmt.Errorf("create request: %w", err)
+			errs <- fmt.Errorf("create request: %w", err)
 			return
 		}
 		httpReq.Header.Set("Content-Type", "application/json")
@@ -443,14 +443,14 @@ func (c *RuntimeClient) ImportCorpus(
 		longClient := &http.Client{}
 		resp, err := longClient.Do(httpReq)
 		if err != nil {
-			errCh <- fmt.Errorf("do request: %w", err)
+			errs <- fmt.Errorf("do request: %w", err)
 			return
 		}
 		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			body, _ := io.ReadAll(resp.Body)
-			errCh <- fmt.Errorf("unexpected status: %d, body: %s", resp.StatusCode, string(body))
+			errs <- fmt.Errorf("unexpected status: %d, body: %s", resp.StatusCode, string(body))
 			return
 		}
 
@@ -475,24 +475,24 @@ func (c *RuntimeClient) ImportCorpus(
 			}
 
 			select {
-			case resultCh <- &event:
+			case resCh <- &event:
 			case <-ctx.Done():
 				return
 			}
 		}
 
 		if err := scanner.Err(); err != nil {
-			errCh <- fmt.Errorf("scan response: %w", err)
+			errs <- fmt.Errorf("scan response: %w", err)
 		}
 	}()
 
-	return resultCh, errCh
+	return resCh, errs
 }
 
 // Health checks if the runtime is healthy.
 func (c *RuntimeClient) Health(ctx context.Context) error {
 	url := fmt.Sprintf("%s/health", strings.TrimSuffix(c.baseURL, "/v1"))
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, http.NoBody)
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)
 	}

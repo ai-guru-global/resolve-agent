@@ -78,8 +78,8 @@ func TestPostgresAgentRegistry(t *testing.T) {
 
 	// Update
 	agent.Name = "Updated Agent"
-	if err := r.Update(ctx, agent); err != nil {
-		t.Fatalf("Update failed: %v", err)
+	if uerr := r.Update(ctx, agent); uerr != nil {
+		t.Fatalf("Update failed: %v", uerr)
 	}
 	got, _ = r.Get(ctx, agent.ID)
 	if got.Name != "Updated Agent" {
@@ -87,8 +87,8 @@ func TestPostgresAgentRegistry(t *testing.T) {
 	}
 
 	// Delete
-	if err := r.Delete(ctx, agent.ID); err != nil {
-		t.Fatalf("Delete failed: %v", err)
+	if derr := r.Delete(ctx, agent.ID); derr != nil {
+		t.Fatalf("Delete failed: %v", derr)
 	}
 	_, err = r.Get(ctx, agent.ID)
 	if err == nil {
@@ -153,8 +153,8 @@ func TestPostgresSkillRegistry(t *testing.T) {
 	}
 
 	// Unregister
-	if err := r.Unregister(ctx, skill.Name); err != nil {
-		t.Fatalf("Unregister failed: %v", err)
+	if uerr := r.Unregister(ctx, skill.Name); uerr != nil {
+		t.Fatalf("Unregister failed: %v", uerr)
 	}
 	_, err = r.Get(ctx, skill.Name)
 	if err == nil {
@@ -204,8 +204,8 @@ func TestPostgresWorkflowRegistry(t *testing.T) {
 
 	// Update
 	workflow.Name = "Updated Workflow"
-	if err := r.Update(ctx, workflow); err != nil {
-		t.Fatalf("Update failed: %v", err)
+	if uerr := r.Update(ctx, workflow); uerr != nil {
+		t.Fatalf("Update failed: %v", uerr)
 	}
 	got, _ = r.Get(ctx, workflow.ID)
 	if got.Name != "Updated Workflow" {
@@ -213,8 +213,8 @@ func TestPostgresWorkflowRegistry(t *testing.T) {
 	}
 
 	// Delete
-	if err := r.Delete(ctx, workflow.ID); err != nil {
-		t.Fatalf("Delete failed: %v", err)
+	if derr := r.Delete(ctx, workflow.ID); derr != nil {
+		t.Fatalf("Delete failed: %v", derr)
 	}
 	_, err = r.Get(ctx, workflow.ID)
 	if err == nil {
@@ -264,8 +264,8 @@ func TestPostgresRAGRegistry(t *testing.T) {
 
 	// Update
 	collection.Name = "Updated Collection"
-	if err := r.Update(ctx, collection); err != nil {
-		t.Fatalf("Update failed: %v", err)
+	if uerr := r.Update(ctx, collection); uerr != nil {
+		t.Fatalf("Update failed: %v", uerr)
 	}
 	got, _ = r.Get(ctx, collection.ID)
 	if got.Name != "Updated Collection" {
@@ -273,8 +273,8 @@ func TestPostgresRAGRegistry(t *testing.T) {
 	}
 
 	// Delete
-	if err := r.Delete(ctx, collection.ID); err != nil {
-		t.Fatalf("Delete failed: %v", err)
+	if derr := r.Delete(ctx, collection.ID); derr != nil {
+		t.Fatalf("Delete failed: %v", derr)
 	}
 	_, err = r.Get(ctx, collection.ID)
 	if err == nil {

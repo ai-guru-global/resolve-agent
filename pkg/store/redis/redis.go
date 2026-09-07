@@ -4,6 +4,7 @@ package redis
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -21,7 +22,7 @@ type Cache struct {
 }
 
 // New creates a new Redis cache.
-func New(addr string, password string, db int, logger *slog.Logger) (*Cache, error) {
+func New(addr, password string, db int, logger *slog.Logger) (*Cache, error) {
 	c := &Cache{
 		addr:     addr,
 		password: password,
@@ -82,7 +83,7 @@ func (c *Cache) Close() error {
 // Get retrieves a value by key.
 func (c *Cache) Get(ctx context.Context, key string) (string, error) {
 	val, err := c.client.Get(ctx, key).Result()
-	if err == redis.Nil {
+	if errors.Is(err, redis.Nil) {
 		return "", fmt.Errorf("key not found: %s", key)
 	}
 	if err != nil {
@@ -92,7 +93,7 @@ func (c *Cache) Get(ctx context.Context, key string) (string, error) {
 }
 
 // Set stores a value with optional expiration.
-func (c *Cache) Set(ctx context.Context, key string, value string, expiration time.Duration) error {
+func (c *Cache) Set(ctx context.Context, key, value string, expiration time.Duration) error {
 	if err := c.client.Set(ctx, key, value, expiration).Err(); err != nil {
 		return fmt.Errorf("failed to set key: %w", err)
 	}

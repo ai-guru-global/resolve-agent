@@ -35,7 +35,7 @@ func DefaultAuthConfig() AuthConfig {
 
 // AuthMiddleware provides unified authentication for the platform.
 type AuthMiddleware struct {
-	config  AuthConfig
+	config  *AuthConfig
 	logger  *slog.Logger
 	apiKeys map[string]APIKeyInfo
 }
@@ -62,7 +62,7 @@ type AuthContext struct {
 type authContextKey struct{}
 
 // NewAuthMiddleware creates a new authentication middleware.
-func NewAuthMiddleware(config AuthConfig, logger *slog.Logger) *AuthMiddleware {
+func NewAuthMiddleware(config *AuthConfig, logger *slog.Logger) *AuthMiddleware {
 	return &AuthMiddleware{
 		config:  config,
 		logger:  logger,
@@ -71,8 +71,8 @@ func NewAuthMiddleware(config AuthConfig, logger *slog.Logger) *AuthMiddleware {
 }
 
 // RegisterAPIKey registers an API key for authentication.
-func (m *AuthMiddleware) RegisterAPIKey(key APIKeyInfo) {
-	m.apiKeys[key.Key] = key
+func (m *AuthMiddleware) RegisterAPIKey(key *APIKeyInfo) {
+	m.apiKeys[key.Key] = *key
 }
 
 // Middleware returns the HTTP middleware function.

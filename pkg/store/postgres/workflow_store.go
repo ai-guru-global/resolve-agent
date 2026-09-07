@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
@@ -49,7 +50,7 @@ func (r *WorkflowRegistry) Get(ctx context.Context, id string) (*registry.Workfl
 		&workflow.Tree, &workflow.Status, &workflow.Version,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("workflow %s not found", id)
 		}
 		return nil, err

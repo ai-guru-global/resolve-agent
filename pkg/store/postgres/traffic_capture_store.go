@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
@@ -46,7 +47,7 @@ func (r *TrafficCaptureRegistry) Get(ctx context.Context, id string) (*registry.
 		&c.Labels, &c.CreatedAt, &c.UpdatedAt,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("traffic capture %s not found", id)
 		}
 		return nil, err
@@ -191,7 +192,7 @@ func (r *TrafficCaptureRegistry) ListRecords(ctx context.Context, captureID stri
 
 // GetRecordsByService returns the records of a capture where the service is
 // the source or destination, newest first.
-func (r *TrafficCaptureRegistry) GetRecordsByService(ctx context.Context, captureID string, serviceName string) ([]*registry.TrafficRecord, error) {
+func (r *TrafficCaptureRegistry) GetRecordsByService(ctx context.Context, captureID, serviceName string) ([]*registry.TrafficRecord, error) {
 	rows, err := r.store.pool.Query(ctx, `
 		SELECT id, capture_id, source_service, dest_service, protocol, method, path,
 			status_code, latency_ms, request_size, response_size, trace_id, span_id,

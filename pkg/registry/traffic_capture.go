@@ -218,7 +218,7 @@ func (r *InMemoryTrafficCaptureRegistry) ListRecords(_ context.Context, captureI
 
 // GetRecordsByService returns the records of a capture where the service is
 // the source or destination.
-func (r *InMemoryTrafficCaptureRegistry) GetRecordsByService(_ context.Context, captureID string, serviceName string) ([]*TrafficRecord, error) {
+func (r *InMemoryTrafficCaptureRegistry) GetRecordsByService(_ context.Context, captureID, serviceName string) ([]*TrafficRecord, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 

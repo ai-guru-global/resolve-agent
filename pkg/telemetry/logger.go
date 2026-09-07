@@ -7,7 +7,7 @@ import (
 )
 
 // NewLogger creates a structured logger with the given level.
-func NewLogger(level string, format string) *slog.Logger {
+func NewLogger(level, format string) *slog.Logger {
 	var lvl slog.Level
 	switch level {
 	case "debug":

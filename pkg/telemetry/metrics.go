@@ -39,7 +39,7 @@ type MetricsConfig struct {
 }
 
 // InitMetrics initializes the OpenTelemetry metrics provider with Prometheus exporter.
-func InitMetrics(cfg MetricsConfig, logger *slog.Logger) (func(), error) {
+func InitMetrics(cfg *MetricsConfig, logger *slog.Logger) (func(), error) {
 	if cfg.ServiceName == "" {
 		cfg.ServiceName = "resolve-agent"
 	}
@@ -103,6 +103,9 @@ func InitMetrics(cfg MetricsConfig, logger *slog.Logger) (func(), error) {
 	server := &http.Server{
 		Addr:    ":" + cfg.PrometheusPort,
 		Handler: mux,
+		// Bounded header-read time guards the metrics endpoint against
+		// slowloris-style connection holding (gosec G112).
+		ReadHeaderTimeout: 30 * time.Second,
 	}
 
 	go func() {

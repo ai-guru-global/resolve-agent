@@ -43,6 +43,7 @@ func newCreateCmd() *cobra.Command {
 			}
 
 			// Read workflow definition
+			//nolint:gosec // path comes from the operator's own CLI flag on a local tool, not attacker-controlled
 			data, err := os.ReadFile(file)
 			if err != nil {
 				return fmt.Errorf("failed to read workflow file: %w", err)
@@ -50,8 +51,8 @@ func newCreateCmd() *cobra.Command {
 
 			// Parse YAML definition
 			var definition map[string]interface{}
-			if err := yaml.Unmarshal(data, &definition); err != nil {
-				return fmt.Errorf("failed to parse workflow file: %w", err)
+			if yerr := yaml.Unmarshal(data, &definition); yerr != nil {
+				return fmt.Errorf("failed to parse workflow file: %w", yerr)
 			}
 
 			// Create workflow object

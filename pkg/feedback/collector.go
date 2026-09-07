@@ -17,23 +17,23 @@ type Collector struct {
 	buffer      *RingBuffer
 	subscribers map[string][]SignalHandler // keyed by source filter ("*" = all)
 	dispatchers []Dispatcher
-	cfg         Config
+	cfg         *Config
 	closed      bool
 }
 
 // SignalHandler is a callback invoked when a matching signal arrives.
-type SignalHandler func(ctx context.Context, sig Signal)
+type SignalHandler func(ctx context.Context, sig *Signal)
 
 // Dispatcher is an output destination for feedback signals.
 type Dispatcher interface {
 	// Dispatch sends a signal to the external destination.
-	Dispatch(ctx context.Context, sig Signal) error
+	Dispatch(ctx context.Context, sig *Signal) error
 	// Name returns a human-readable dispatcher identifier.
 	Name() string
 }
 
 // NewCollector creates a Collector with the given configuration.
-func NewCollector(cfg Config) *Collector {
+func NewCollector(cfg *Config) *Collector {
 	size := cfg.RingBufferSize
 	if size <= 0 {
 		size = 1000
@@ -48,7 +48,7 @@ func NewCollector(cfg Config) *Collector {
 // Emit ingests a signal into the feedback loop.
 // It assigns an ID and timestamp if missing, stores the signal,
 // notifies subscribers, and dispatches to configured outputs.
-func (c *Collector) Emit(ctx context.Context, sig Signal) error {
+func (c *Collector) Emit(ctx context.Context, sig *Signal) error {
 	c.mu.RLock()
 	if c.closed {
 		c.mu.RUnlock()

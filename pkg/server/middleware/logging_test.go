@@ -16,7 +16,7 @@ func TestLogging(t *testing.T) {
 		_, _ = w.Write([]byte("OK"))
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/test", http.NoBody)
 	rr := httptest.NewRecorder()
 
 	handler.ServeHTTP(rr, req)
@@ -37,7 +37,7 @@ func TestLogging_StatusCode(t *testing.T) {
 		w.WriteHeader(http.StatusNotFound)
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/not-found", nil)
+	req := httptest.NewRequest(http.MethodGet, "/not-found", http.NoBody)
 	rr := httptest.NewRecorder()
 
 	handler.ServeHTTP(rr, req)

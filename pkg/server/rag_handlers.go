@@ -198,8 +198,8 @@ func (s *Server) handleIngestDocuments(w http.ResponseWriter, r *http.Request) {
 		} `json:"documents"`
 		FilePath string `json:"file_path"`
 	}
-	if err := json.Unmarshal(body, &req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+	if jerr := json.Unmarshal(body, &req); jerr != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON: "+jerr.Error())
 		return
 	}
 
@@ -253,8 +253,8 @@ func (s *Server) handleQueryCollection(w http.ResponseWriter, r *http.Request) {
 		TopK    int                    `json:"top_k"`
 		Filters map[string]interface{} `json:"filters"`
 	}
-	if err := json.Unmarshal(body, &req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+	if jerr := json.Unmarshal(body, &req); jerr != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON: "+jerr.Error())
 		return
 	}
 
@@ -311,6 +311,7 @@ func (s *Server) handleQueryCollection(w http.ResponseWriter, r *http.Request) {
 // Helper function to generate unique IDs
 func generateID() string {
 	// Use nanosecond timestamp + random suffix for uniqueness
+	//nolint:gosec // non-cryptographic: the random part is only a uniqueness suffix for locally generated IDs
 	return fmt.Sprintf("%d-%04d", time.Now().UnixNano(), rand.Intn(10000))
 }
 

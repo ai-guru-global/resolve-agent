@@ -74,6 +74,7 @@ func newCreateCmd() *cobra.Command {
 }
 
 func createFromFile(path string) (*client.Agent, error) {
+	//nolint:gosec // path comes from the operator's own CLI flag on a local tool, not attacker-controlled
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)

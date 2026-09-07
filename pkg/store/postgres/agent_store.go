@@ -4,6 +4,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
@@ -47,7 +48,7 @@ func (r *AgentRegistry) Get(ctx context.Context, id string) (*registry.AgentDefi
 		&agent.Config, &agent.Status, &agent.Labels, &agent.Version,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("agent %s not found", id)
 		}
 		return nil, err

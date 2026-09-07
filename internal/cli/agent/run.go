@@ -2,10 +2,7 @@ package agent
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io"
-	"os"
 	"time"
 
 	"github.com/ai-guru-global/resolve-agent/internal/cli/client"
@@ -59,12 +56,9 @@ func newRunCmd() *cobra.Command {
 				return fmt.Errorf("execution failed: %w", err)
 			}
 
-			if stream {
-				// Handle streaming response
-				fmt.Println(resp.Content)
-			} else {
-				fmt.Println(resp.Content)
-			}
+			// Streaming and non-streaming requests both return the final
+			// response body here; print it once for either mode.
+			fmt.Println(resp.Content)
 
 			fmt.Println()
 			fmt.Printf("Execution completed in %s\n", time.Duration(resp.Duration*float64(time.Second)))
@@ -81,43 +75,4 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().BoolP("wait", "w", true, "Wait for completion")
 
 	return cmd
-}
-
-// createInteractiveSession creates an interactive session with the agent
-func createInteractiveSession(agentID string) {
-	fmt.Println("Interactive mode. Type 'exit' or 'quit' to end.")
-	fmt.Println()
-
-	c := client.New()
-	ctx := context.Background()
-
-	for {
-		fmt.Print("> ")
-		var message string
-		if _, err := fmt.Scanln(&message); err != nil {
-			if errors.Is(err, io.EOF) {
-				break // Input stream ended: exit the interactive loop.
-			}
-			// Empty line / parse issue: re-prompt instead of dispatching empty input.
-			continue
-		}
-
-		if message == "exit" || message == "quit" {
-			break
-		}
-
-		req := &client.ExecuteRequest{
-			Message: message,
-			Wait:    true,
-		}
-
-		resp, err := c.ExecuteAgent(ctx, agentID, req)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			continue
-		}
-
-		fmt.Println(resp.Content)
-		fmt.Println()
-	}
 }

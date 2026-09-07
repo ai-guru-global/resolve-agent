@@ -163,7 +163,7 @@ func (r *InMemoryTrafficGraphRegistry) GetByCaptureID(_ context.Context, capture
 
 // UpdateReport attaches an analysis report and suggestions to a graph and
 // marks it analyzed.
-func (r *InMemoryTrafficGraphRegistry) UpdateReport(_ context.Context, id string, report string, suggestions []any) error {
+func (r *InMemoryTrafficGraphRegistry) UpdateReport(_ context.Context, id, report string, suggestions []any) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

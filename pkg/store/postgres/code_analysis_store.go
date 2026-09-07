@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
@@ -50,7 +51,7 @@ func (r *CodeAnalysisRegistry) Get(ctx context.Context, id string) (*registry.Co
 		&a.StartedAt, &a.CompletedAt, &a.CreatedAt, &a.UpdatedAt,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("analysis %s not found", id)
 		}
 		return nil, err
@@ -215,7 +216,7 @@ func (r *CodeAnalysisRegistry) ListFindings(ctx context.Context, analysisID stri
 
 // GetFindingsBySeverity returns the findings of an analysis with the given
 // severity, ordered by creation time.
-func (r *CodeAnalysisRegistry) GetFindingsBySeverity(ctx context.Context, analysisID string, severity string) ([]*registry.CodeAnalysisFinding, error) {
+func (r *CodeAnalysisRegistry) GetFindingsBySeverity(ctx context.Context, analysisID, severity string) ([]*registry.CodeAnalysisFinding, error) {
 	rows, err := r.store.pool.Query(ctx, `
 		SELECT id, analysis_id, rule_id, severity, category, message, file_path,
 			line_start, line_end, column_start, column_end, snippet, suggestion,

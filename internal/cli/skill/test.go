@@ -22,7 +22,9 @@ func newTestCmd() *cobra.Command {
 
 			// Parse input
 			var input map[string]interface{}
-			if inputFile != "" {
+			switch {
+			case inputFile != "":
+				//nolint:gosec // path comes from the operator's own CLI flag on a local tool, not attacker-controlled
 				data, err := os.ReadFile(inputFile)
 				if err != nil {
 					return fmt.Errorf("failed to read input file: %w", err)
@@ -30,11 +32,11 @@ func newTestCmd() *cobra.Command {
 				if err := json.Unmarshal(data, &input); err != nil {
 					return fmt.Errorf("failed to parse input file: %w", err)
 				}
-			} else if inputStr != "" {
+			case inputStr != "":
 				if err := json.Unmarshal([]byte(inputStr), &input); err != nil {
 					return fmt.Errorf("failed to parse input data: %w", err)
 				}
-			} else {
+			default:
 				input = map[string]interface{}{}
 			}
 

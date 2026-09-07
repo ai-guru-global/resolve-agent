@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
@@ -46,7 +47,7 @@ func (r *RAGDocumentRegistry) GetDocument(ctx context.Context, id string) (*regi
 		&doc.Status, &doc.SizeBytes, &doc.CreatedAt, &doc.UpdatedAt,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("document %s not found", id)
 		}
 		return nil, err
@@ -124,7 +125,7 @@ func (r *RAGDocumentRegistry) DeleteDocument(ctx context.Context, id string) err
 
 // GetDocumentByHash scans the document of a collection with the given
 // content hash, reporting not-found as an error.
-func (r *RAGDocumentRegistry) GetDocumentByHash(ctx context.Context, collectionID string, contentHash string) (*registry.RAGDocument, error) {
+func (r *RAGDocumentRegistry) GetDocumentByHash(ctx context.Context, collectionID, contentHash string) (*registry.RAGDocument, error) {
 	var doc registry.RAGDocument
 	err := r.store.pool.QueryRow(ctx, `
 		SELECT id, collection_id, title, source_uri, content_hash, content_type,
@@ -136,7 +137,7 @@ func (r *RAGDocumentRegistry) GetDocumentByHash(ctx context.Context, collectionI
 		&doc.Status, &doc.SizeBytes, &doc.CreatedAt, &doc.UpdatedAt,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("document with hash %s not found in collection %s", contentHash, collectionID)
 		}
 		return nil, err

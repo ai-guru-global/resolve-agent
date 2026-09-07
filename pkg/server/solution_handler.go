@@ -146,12 +146,12 @@ func (s *Server) handleSearchSolutions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var opts registry.SolutionSearchOptions
-	if err := json.Unmarshal(body, &opts); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+	if jerr := json.Unmarshal(body, &opts); jerr != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON: "+jerr.Error())
 		return
 	}
 
-	solutions, total, err := s.solutionRegistry.Search(ctx, opts)
+	solutions, total, err := s.solutionRegistry.Search(ctx, &opts)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -173,8 +173,8 @@ func (s *Server) handleBulkCreateSolutions(w http.ResponseWriter, r *http.Reques
 	var req struct {
 		Solutions []*registry.TroubleshootingSolution `json:"solutions"`
 	}
-	if err := json.Unmarshal(body, &req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+	if jerr := json.Unmarshal(body, &req); jerr != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON: "+jerr.Error())
 		return
 	}
 

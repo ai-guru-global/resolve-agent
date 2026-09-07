@@ -27,11 +27,11 @@ func NewRingBuffer(capacity int) *RingBuffer {
 }
 
 // Push adds a signal to the buffer, overwriting the oldest if full.
-func (rb *RingBuffer) Push(sig Signal) {
+func (rb *RingBuffer) Push(sig *Signal) {
 	rb.mu.Lock()
 	defer rb.mu.Unlock()
 
-	rb.buf[rb.head] = sig
+	rb.buf[rb.head] = *sig
 	rb.head = (rb.head + 1) % rb.cap
 	if rb.size < rb.cap {
 		rb.size++

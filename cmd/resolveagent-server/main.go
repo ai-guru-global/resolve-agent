@@ -18,6 +18,12 @@ import (
 )
 
 func main() {
+	if err := run(); err != nil {
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	configPath := flag.String("config", "", "path to config file")
 	flag.Parse()
 
@@ -31,13 +37,13 @@ func main() {
 	cfg, err := config.Load(*configPath)
 	if err != nil {
 		slog.Error("Failed to load configuration", "error", err)
-		os.Exit(1)
+		return err
 	}
 
 	srv, err := server.New(cfg, logger)
 	if err != nil {
 		slog.Error("Failed to create server", "error", err)
-		os.Exit(1)
+		return err
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -55,8 +61,9 @@ func main() {
 
 	if err := srv.Run(ctx); err != nil {
 		slog.Error("Server exited with error", "error", err)
-		os.Exit(1)
+		return err
 	}
 
 	fmt.Println("ResolveAgent Platform Services stopped.")
+	return nil
 }

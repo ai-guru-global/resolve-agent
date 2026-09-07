@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -603,7 +604,7 @@ func (s *Store) GetAgent(ctx context.Context, id string) (*AgentRecord, error) {
 		&createdAt, &updatedAt,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("agent not found: %s", id)
 		}
 		return nil, err

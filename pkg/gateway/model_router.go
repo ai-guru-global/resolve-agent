@@ -146,23 +146,22 @@ func (m *ModelRouter) ListModels() []*ModelRoute {
 func (m *ModelRouter) SyncRoutes(ctx context.Context, routes []ModelRoute) error {
 	m.logger.Info("Syncing model routes", "count", len(routes))
 
-	for _, route := range routes {
-		routeCopy := route
+	for i := range routes {
+		// RegisterModel receives a copy so the caller's slice is never mutated.
+		routeCopy := routes[i]
 		if err := m.RegisterModel(ctx, &routeCopy); err != nil {
-			m.logger.Error("Failed to sync model route", "model", route.ModelID, "error", err)
+			m.logger.Error("Failed to sync model route", "model", routes[i].ModelID, "error", err)
 			continue
 		}
 	}
 
 	// Register default provider routes for known providers
-	if err := m.syncProviderRoutes(ctx); err != nil {
-		m.logger.Warn("Failed to sync provider routes", "error", err)
-	}
+	m.syncProviderRoutes(ctx)
 
 	return nil
 }
 
-func (m *ModelRouter) syncProviderRoutes(ctx context.Context) error {
+func (m *ModelRouter) syncProviderRoutes(ctx context.Context) {
 	// Provider base routes for API compatibility
 	providers := []struct {
 		name     string
@@ -200,8 +199,6 @@ func (m *ModelRouter) syncProviderRoutes(ctx context.Context) error {
 			}
 		}
 	}
-
-	return nil
 }
 
 func (m *ModelRouter) modelToHigressRoute(route *ModelRoute) *HigressRoute {

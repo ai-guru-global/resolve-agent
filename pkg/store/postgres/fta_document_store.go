@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
@@ -46,7 +47,7 @@ func (r *FTADocumentRegistry) GetDocument(ctx context.Context, id string) (*regi
 		&createdBy, &doc.CreatedAt, &doc.UpdatedAt,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("FTA document %s not found", id)
 		}
 		return nil, err
@@ -199,7 +200,7 @@ func (r *FTADocumentRegistry) GetAnalysisResult(ctx context.Context, id string) 
 		&result.Status, &result.DurationMs, &result.Context, &result.CreatedAt,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("FTA analysis result %s not found", id)
 		}
 		return nil, err

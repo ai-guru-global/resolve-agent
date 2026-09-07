@@ -67,7 +67,7 @@ type TroubleshootingSolutionRegistry interface {
 	List(ctx context.Context, opts ListOptions) ([]*TroubleshootingSolution, int, error)
 	Update(ctx context.Context, solution *TroubleshootingSolution) error
 	Delete(ctx context.Context, id string) error
-	Search(ctx context.Context, opts SolutionSearchOptions) ([]*TroubleshootingSolution, int, error)
+	Search(ctx context.Context, opts *SolutionSearchOptions) ([]*TroubleshootingSolution, int, error)
 	BulkCreate(ctx context.Context, solutions []*TroubleshootingSolution) (int, error)
 	RecordExecution(ctx context.Context, exec *SolutionExecution) error
 	ListExecutions(ctx context.Context, solutionID string, opts ListOptions) ([]*SolutionExecution, int, error)
@@ -196,7 +196,7 @@ func (r *InMemoryTroubleshootingSolutionRegistry) Delete(_ context.Context, id s
 
 // Search returns solutions matching the domain, component, severity, status,
 // tag, and keyword filters, paginated, with the total count.
-func (r *InMemoryTroubleshootingSolutionRegistry) Search(_ context.Context, opts SolutionSearchOptions) ([]*TroubleshootingSolution, int, error) {
+func (r *InMemoryTroubleshootingSolutionRegistry) Search(_ context.Context, opts *SolutionSearchOptions) ([]*TroubleshootingSolution, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 

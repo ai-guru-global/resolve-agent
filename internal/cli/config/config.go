@@ -92,7 +92,7 @@ func newInitCmd() *cobra.Command {
 			}
 
 			configDir := filepath.Join(home, ".resolveagent")
-			if err := os.MkdirAll(configDir, 0o755); err != nil {
+			if err := os.MkdirAll(configDir, 0o750); err != nil {
 				return fmt.Errorf("failed to create config directory: %w", err)
 			}
 
@@ -102,8 +102,8 @@ func newInitCmd() *cobra.Command {
 
 			if err := viper.WriteConfig(); err != nil {
 				if os.IsNotExist(err) {
-					if err := viper.SafeWriteConfig(); err != nil {
-						return fmt.Errorf("failed to write config: %w", err)
+					if werr := viper.SafeWriteConfig(); werr != nil {
+						return fmt.Errorf("failed to write config: %w", werr)
 					}
 				} else {
 					return fmt.Errorf("failed to write config: %w", err)

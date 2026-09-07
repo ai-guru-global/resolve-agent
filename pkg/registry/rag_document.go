@@ -161,7 +161,7 @@ func (r *InMemoryRAGDocumentRegistry) DeleteDocument(_ context.Context, id strin
 
 // GetDocumentByHash returns the document of a collection with the given
 // content hash, or an error if none exists.
-func (r *InMemoryRAGDocumentRegistry) GetDocumentByHash(_ context.Context, collectionID string, contentHash string) (*RAGDocument, error) {
+func (r *InMemoryRAGDocumentRegistry) GetDocumentByHash(_ context.Context, collectionID, contentHash string) (*RAGDocument, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 

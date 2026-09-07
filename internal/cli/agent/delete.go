@@ -34,7 +34,7 @@ func newDeleteCmd() *cobra.Command {
 				if _, err := fmt.Scanln(&response); err != nil {
 					// Input unavailable (e.g. EOF): treat as unconfirmed and cancel.
 					fmt.Println("Cancelled")
-					return nil
+					return nil //nolint:nilerr // EOF/empty input means the operator declined; declining a destructive action is a normal exit, not an error
 				}
 				if response != "y" && response != "Y" {
 					fmt.Println("Cancelled")

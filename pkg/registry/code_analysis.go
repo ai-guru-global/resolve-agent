@@ -243,7 +243,7 @@ func (r *InMemoryCodeAnalysisRegistry) ListFindings(_ context.Context, analysisI
 
 // GetFindingsBySeverity returns the findings of an analysis run with the
 // given severity.
-func (r *InMemoryCodeAnalysisRegistry) GetFindingsBySeverity(_ context.Context, analysisID string, severity string) ([]*CodeAnalysisFinding, error) {
+func (r *InMemoryCodeAnalysisRegistry) GetFindingsBySeverity(_ context.Context, analysisID, severity string) ([]*CodeAnalysisFinding, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 

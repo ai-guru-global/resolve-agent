@@ -92,7 +92,7 @@ func (r *GenericInMemoryRegistry[T]) Get(_ context.Context, id string) (*T, erro
 
 // List returns all entities with offset/limit pagination applied, along with
 // the total count.
-func (r *GenericInMemoryRegistry[T]) List(_ context.Context, opts ListOptions) ([]*T, int, error) {
+func (r *GenericInMemoryRegistry[T]) List(_ context.Context, opts ListOptions) (items []*T, totalCount int, err error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 

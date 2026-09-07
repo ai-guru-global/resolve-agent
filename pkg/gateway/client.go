@@ -36,7 +36,7 @@ func NewClient(adminURL string, logger *slog.Logger) *Client {
 
 // Health checks if the Higress gateway is reachable.
 func (c *Client) Health(ctx context.Context) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.adminURL+"/health", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.adminURL+"/health", http.NoBody)
 	if err != nil {
 		return fmt.Errorf("creating health request: %w", err)
 	}
@@ -113,7 +113,7 @@ func (c *Client) UpdateRoute(ctx context.Context, route *HigressRoute) error {
 
 // DeleteRoute deletes a route from Higress.
 func (c *Client) DeleteRoute(ctx context.Context, routeName string) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.adminURL+"/routes/"+routeName, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.adminURL+"/routes/"+routeName, http.NoBody)
 	if err != nil {
 		return fmt.Errorf("creating delete request: %w", err)
 	}
@@ -134,7 +134,7 @@ func (c *Client) DeleteRoute(ctx context.Context, routeName string) error {
 
 // GetRoute retrieves a route from Higress.
 func (c *Client) GetRoute(ctx context.Context, routeName string) (*HigressRoute, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.adminURL+"/routes/"+routeName, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.adminURL+"/routes/"+routeName, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("creating get request: %w", err)
 	}
@@ -163,7 +163,7 @@ func (c *Client) GetRoute(ctx context.Context, routeName string) (*HigressRoute,
 
 // ListRoutes lists all routes from Higress.
 func (c *Client) ListRoutes(ctx context.Context) ([]*HigressRoute, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.adminURL+"/routes", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.adminURL+"/routes", http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("creating list request: %w", err)
 	}
@@ -225,7 +225,7 @@ func (c *Client) RegisterService(ctx context.Context, service *HigressService) e
 
 // DeregisterService removes a service from Higress.
 func (c *Client) DeregisterService(ctx context.Context, serviceName string) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.adminURL+"/services/"+serviceName, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.adminURL+"/services/"+serviceName, http.NoBody)
 	if err != nil {
 		return fmt.Errorf("creating deregister request: %w", err)
 	}

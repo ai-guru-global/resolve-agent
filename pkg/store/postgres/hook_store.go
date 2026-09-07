@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
@@ -47,7 +48,7 @@ func (r *HookRegistry) Get(ctx context.Context, id string) (*registry.HookDefini
 		&hook.Config, &hook.Enabled, &hook.Labels, &hook.CreatedAt, &hook.UpdatedAt,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("hook %s not found", id)
 		}
 		return nil, err
@@ -129,7 +130,7 @@ func (r *HookRegistry) Delete(ctx context.Context, id string) error {
 
 // ListByTriggerPoint returns enabled hooks for a trigger point targeting the
 // entity or globally, ordered by execution order.
-func (r *HookRegistry) ListByTriggerPoint(ctx context.Context, triggerPoint string, targetID string) ([]*registry.HookDefinition, error) {
+func (r *HookRegistry) ListByTriggerPoint(ctx context.Context, triggerPoint, targetID string) ([]*registry.HookDefinition, error) {
 	rows, err := r.store.pool.Query(ctx, `
 		SELECT id, name, description, hook_type, trigger_point, target_id,
 			execution_order, handler_type, config, enabled, labels, created_at, updated_at

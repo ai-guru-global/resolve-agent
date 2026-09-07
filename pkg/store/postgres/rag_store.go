@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -56,7 +57,7 @@ func (r *RAGRegistry) Get(ctx context.Context, id string) (*registry.RAGCollecti
 		&collection.CreatedAt, &collection.UpdatedAt,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("collection %s not found", id)
 		}
 		return nil, err

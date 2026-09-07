@@ -69,7 +69,7 @@ func TestChecker_Run_Degraded(t *testing.T) {
 }
 
 func TestLivenessHandler(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	req := httptest.NewRequest(http.MethodGet, "/healthz", http.NoBody)
 	rr := httptest.NewRecorder()
 
 	LivenessHandler()(rr, req)
@@ -88,7 +88,7 @@ func TestReadinessHandler(t *testing.T) {
 		return ComponentHealth{Status: StatusUp}
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/readyz", nil)
+	req := httptest.NewRequest(http.MethodGet, "/readyz", http.NoBody)
 	rr := httptest.NewRecorder()
 
 	ReadinessHandler(c)(rr, req)
@@ -104,7 +104,7 @@ func TestReadinessHandler_Down(t *testing.T) {
 		return ComponentHealth{Status: StatusDown}
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/readyz", nil)
+	req := httptest.NewRequest(http.MethodGet, "/readyz", http.NoBody)
 	rr := httptest.NewRecorder()
 
 	ReadinessHandler(c)(rr, req)

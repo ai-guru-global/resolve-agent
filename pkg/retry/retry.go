@@ -89,6 +89,7 @@ func Do(ctx context.Context, p Policy, fn func(ctx context.Context) error) error
 		// Apply jitter.
 		jitteredDelay := delay
 		if p.Jitter > 0 {
+			//nolint:gosec // non-cryptographic: retry jitter only needs uniform randomness, not a crypto-strength source
 			jitter := time.Duration(float64(delay) * p.Jitter * rand.Float64())
 			jitteredDelay = delay + jitter
 		}

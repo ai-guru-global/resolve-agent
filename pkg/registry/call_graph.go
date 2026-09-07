@@ -279,7 +279,7 @@ func (r *InMemoryCallGraphRegistry) ListEdges(_ context.Context, callGraphID str
 
 // GetSubgraph returns the nodes and edges reachable from an entry node via
 // BFS within the given depth (default 5).
-func (r *InMemoryCallGraphRegistry) GetSubgraph(_ context.Context, callGraphID string, entryNodeID string, depth int) ([]*CallGraphNode, []*CallGraphEdge, error) {
+func (r *InMemoryCallGraphRegistry) GetSubgraph(_ context.Context, callGraphID, entryNodeID string, depth int) ([]*CallGraphNode, []*CallGraphEdge, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 

@@ -38,7 +38,7 @@ func New() *Client {
 // Get performs a GET request.
 func (c *Client) Get(ctx context.Context, path string) ([]byte, error) {
 	url := fmt.Sprintf("%s%s", c.baseURL, path)
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func (c *Client) Post(ctx context.Context, path string, data interface{}) ([]byt
 // Delete performs a DELETE request.
 func (c *Client) Delete(ctx context.Context, path string) ([]byte, error) {
 	url := fmt.Sprintf("%s%s", c.baseURL, path)
-	req, err := http.NewRequestWithContext(ctx, "DELETE", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "DELETE", url, http.NoBody)
 	if err != nil {
 		return nil, err
 	}

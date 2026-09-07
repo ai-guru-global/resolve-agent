@@ -54,6 +54,12 @@ func TestWriteRegistryError(t *testing.T) {
 			wantStatus: http.StatusInternalServerError,
 			wantBody:   "internal error",
 		},
+		{
+			name:       "structured error with unrecognized code hides message",
+			err:        errors.New(errors.Code("FUTURE_CODE"), "secret unrecognized detail"),
+			wantStatus: http.StatusInternalServerError,
+			wantBody:   "internal error",
+		},
 	}
 
 	for _, tt := range tests {

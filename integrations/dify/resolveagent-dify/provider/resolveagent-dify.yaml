@@ -8,6 +8,31 @@ identity:
     en_US: Fault tree analysis, code diagnostics, and intelligent troubleshooting powered by ResolveAgent.
     zh_Hans: 基于 ResolveAgent 的故障树分析、代码诊断和智能排障工具。
   icon: icon.svg
+credentials_for_provider:
+  endpoint:
+    type: text-input
+    required: true
+    label:
+      en_US: ResolveAgent Endpoint
+      zh_Hans: ResolveAgent 服务地址
+    placeholder:
+      en_US: http://localhost:8080
+      zh_Hans: http://localhost:8080
+    help:
+      en_US: Base URL of the ResolveAgent backend API.
+      zh_Hans: ResolveAgent 后端 API 的基础地址。
+  api_key:
+    type: secret-input
+    required: true
+    label:
+      en_US: API Key
+      zh_Hans: API 密钥
+    placeholder:
+      en_US: Enter your ResolveAgent API key
+      zh_Hans: 请输入 ResolveAgent API 密钥
+    help:
+      en_US: API key used to authenticate against the ResolveAgent backend.
+      zh_Hans: 用于访问 ResolveAgent 后端服务的 API 密钥。
 tools:
   - tools/fta_analyzer.yaml
   - tools/code_diagnosis.yaml

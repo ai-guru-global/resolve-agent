@@ -52,6 +52,8 @@ Performs static code analysis to find bugs, performance, and security issues.
 ```
 resolveagent-dify/
 ├── manifest.yaml           # Plugin metadata
+├── icon.svg                # Plugin icon
+├── main.py                 # Plugin entrypoint
 ├── requirements.txt        # Python dependencies
 ├── provider/
 │   ├── resolveagent-dify.yaml

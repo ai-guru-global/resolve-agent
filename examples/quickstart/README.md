@@ -22,13 +22,17 @@ docker compose -f docker-compose.yaml up -d
 ### 2. Register an agent
 
 ```bash
-resolveagent agent create -f examples/quickstart/agent.yaml
+resolveagent agent create quickstart-agent -f examples/quickstart/agent.yaml
 ```
 
 ### 3. Run a workflow
 
 ```bash
-resolveagent workflow run -f examples/quickstart/workflow.yaml
+# Create the workflow from its definition file
+resolveagent workflow create quickstart-diagnosis -f examples/quickstart/workflow.yaml
+
+# Run it using the ID printed by the create command
+resolveagent workflow run <workflow-id>
 ```
 
 ## Files

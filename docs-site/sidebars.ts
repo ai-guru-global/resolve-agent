@@ -59,7 +59,6 @@ const sidebars: SidebarsConfig = {
       items: [
         'adr/001-why-multilang',
         'adr/002-gateway-choice',
-        'adr/003-orchestration-framework',
       ],
     },
   ],

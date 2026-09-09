@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <strong>Production-grade AIOps Mega-Agent Platform for Troubleshooting & Resolution</strong>
+  <strong>Production-grade AIOps Mega-Agent Platform for Troubleshooting &amp; Resolution</strong>
 </p>
 
 <p align="center">
@@ -36,10 +36,28 @@
 
 ---
 
+## ✨ At a Glance | 项目速览
+
+| 维度 | 数据 |
+|------|------|
+| **技术栈** | Go 1.25 平台服务 + Python 3.11+ Agent 运行时 + React 23 页 WebUI + 移动端 |
+| **分析路由** | 4 条业务路径：FTA 故障树推理 / Skill 技能编排 / RAG 检索增强 / 代码分析（+ LLM 直答兜底） |
+| **FTA 引擎** | 6 种门类型（AND/OR/NOT/VOTING/INHIBIT/PRIORITY-AND）+ 最小割集 + 蒙特卡洛仿真 |
+| **记忆体系** | 3 层架构：Working（进程内）/ Episodic（Redis TTL）/ Long-term（Milvus/Qdrant LRU） |
+| **数据层** | PostgreSQL 16 表 6 组 / Redis / NATS / Milvus-Qdrant 双后端向量库 |
+| **Registry** | 14 个领域注册表（agent / skill / workflow / rag / fta / solution / memory / traffic…） |
+| **质量工程** | 347 个 Python 单元测试项 + 8 套集成测试 + Go `-race` 测试 + Go E2E（构建标签隔离） |
+| **工程治理** | golangci-lint 全量治理 / sentinel 错误链 + 防泄漏统一出口 / 单流水线 CI（Go 1.25） |
+| **文档** | 19 篇带 `file:line` 锚点的源码蒸馏设计文档 + 25 篇中文技术文档 + Docusaurus 站点 |
+
+---
+
 ## 📋 Table of Contents
 
 - [What is ResolveAgent?](#what-is-resolveagent)
 - [Why ResolveAgent?](#why-resolveagent)
+- [How It Works: 一条告警的旅程](#how-it-works-一条告警的旅程)
+- [Core Concepts](#core-concepts)
 - [Use Cases](#use-cases)
 - [GTM Strategy Hub](#gtm-strategy-hub)
 - [Quick Start in 60 Seconds](#quick-start-in-60-seconds)
@@ -47,15 +65,16 @@
 - [Twelve Architecture Highlights](#twelve-architecture-highlights)
 - [Architecture Deep Dive](#architecture-deep-dive)
 - [Quick Start (Detailed)](#quick-start-detailed)
-- [Troubleshooting](#troubleshooting)
-- [Feature Status](#feature-status)
-- [Project Structure](#project-structure)
+- [CLI](#cli)
+- [WebUI](#webui)
 - [Configuration](#configuration)
 - [Documentation](#documentation)
 - [Testing](#testing)
-- [Metrics](#metrics)
-- [WebUI](#webui)
+- [Observability](#observability)
+- [Feature Status](#feature-status)
+- [Project Structure](#project-structure)
 - [Deployment](#deployment)
+- [Troubleshooting](#troubleshooting)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [Security](#security)
@@ -72,7 +91,33 @@
 
 ResolveAgent is designed for teams running complex distributed systems who need to compress the time from **alert → root cause → fix** from hours to minutes, while continuously capturing tribal knowledge into reusable skills and RAG corpora.
 
-> 📖 Full methodology and competitive assessment: [COMPREHENSIVE_ASSESSMENT_AND_METHODOLOGY.md](documentation/COMPREHENSIVE_ASSESSMENT_AND_METHODOLOGY.md)
+> 📖 Full methodology and competitive assessment: [COMPREHENSIVE_ASSESSMENT_AND_METHODOLOGY.md](docs/archive/session-reports/COMPREHENSIVE_ASSESSMENT_AND_METHODOLOGY.md)
+
+### 核心闭环 | The Resolution Flywheel
+
+ResolveAgent 的独特机制不是"单路径 AI 问答"，而是一个**自增强的排查知识飞轮**：
+
+```
+  告警 / 工单
+      │
+      ▼
+  意图识别  ── Intelligent Selector：意图分析 → 上下文增强
+      │
+      ▼
+  路由分发  ── FTA / Skill / RAG / 代码分析 / LLM 直答
+      │
+      ▼
+  多路求解  ──▶ 根因结论 + 修复建议 + 证据链
+      │
+      ▼
+  语料写回  ── RAG 文档 · 技能 · 长期记忆
+      │
+      └──▶ 权重自适应，回流至下一次「路由分发」
+
+        用得越多 → 知识越厚 → 排查越准
+```
+
+每次排查的结果都会回流为语料（RAG 文档）、技能（Skill）与长期记忆，并驱动路由权重自适应调整——**平台随使用变得更聪明**。
 
 ---
 
@@ -86,8 +131,52 @@ Traditional AI chatbots give a single answer path. ResolveAgent introduces **mul
 | **Resilient routing** | Failures are not dead ends; the selector learns from them, retries with enriched context, and adapts route weights over time. |
 | **Formal fault-tree reasoning** | FTA engine with six gate types, minimal cut sets, and Monte-Carlo simulation for rigorous root-cause analysis. |
 | **Knowledge self-reinforcement** | Every resolution enriches skills, RAG documents, and memory, so the platform gets smarter with use. |
+| **Full-chain auditability** | Intent classification, route decisions, evidence solving, and corpus write-back are all logged with context snapshots — replayable and reviewable. |
 | **Production-grade resilience** | Circuit breakers, fallback cascades, structured observability, and OpenTelemetry tracing out of the box. |
 | **Polyglot runtime** | Go platform services for scale, Python runtime for AI/ML, and React WebUI for operators. |
+
+---
+
+## How It Works: 一条告警的旅程
+
+以一次典型的 K8s Pod 告警为例，ResolveAgent 端到端的处理链路：
+
+```
+ ① 接入        ② 意图分析         ③ 路由决策            ④ 多路求解
+┌─────────┐  ┌──────────────┐  ┌─────────────────┐  ┌──────────────────────┐
+│ 告警/工单 │─▶│ Intelligent  │─▶│ Route Decision  │─▶│ FTA:   故障树建模     │
+│ 文本/事件 │  │ Selector     │  │                 │  │ Skill: k8s-pod-crash │
+└─────────┘  │ · 意图分类    │  │ fta / skill /   │  │ RAG:   运行手册检索   │
+             │ · 上下文增强  │  │ knowledge /     │  │ Code:  调用链分析     │
+             │   (记忆/偏好/ │  │ code_analysis / │  │ Reasoning: LLM 直答  │
+             │    代码检测)  │  │ reasoning       │  └──────────┬───────────┘
+             └──────────────┘  └─────────────────┘             │
+                                                               ▼
+ ⑦ 权重自适应    ⑥ 语料写回                          ⑤ 证据结论
+┌────────────┐  ┌─────────────────────┐        ┌─────────────────────┐
+│ Adaptive   │◀─│ · RAG 文档沉淀       │◀───────│ 根因 + 最小割集 +     │
+│ Weight     │  │ · 技能沉淀           │        │ 修复建议 + 证据链     │
+│ Adjuster   │  │ · 长期记忆沉淀        │        └─────────────────────┘
+└────────────┘  └─────────────────────┘
+```
+
+关键设计：**任何一路失败都不是终点**。`ResilientSelector` 会记录失败上下文，按错误分类切换偏好路径（如 RAG 资源缺失 → 偏好 LLM 推理兜底），并排除已尝试路径重试，最多 3 次；全程决策留痕于审计日志，可回放、可复盘。
+
+---
+
+## Core Concepts
+
+| 概念 | 说明 |
+|------|------|
+| **Route / RouteType** | 路由路径类型：`fta`（故障树推理）、`skill`（技能编排）、`knowledge`（RAG 检索）、`code_analysis`（代码分析）、`reasoning`（LLM 直答） |
+| **IntelligentSelector** | 三阶段元路由器：意图分析 → 上下文增强 → 路由决策，支持 rule / llm / hybrid 三种策略 |
+| **ResilientSelector** | 反馈驱动弹性路由：失败重试 + 错误分类路由偏好 + 上下文重增强 |
+| **MegaAgent** | 顶层编排层：将 Selector、Planner、Memory、Skill、Hook 组装为可降级的完整 Agent（见 [选择器适配器](docs/zh/selector-adapters.md)） |
+| **FTA / 最小割集** | 形式化故障树：门类型组合表达故障传播逻辑，最小割集给出导致顶事件的最小根因组合 |
+| **Skill** | 插件化专家技能（如 `k8s-pod-crash`）：manifest 描述 + 沙箱执行 + 生命周期管理 |
+| **Corpus 语料** | 排查知识资产：RAG 文档、调用链语料、技能沉淀，支撑"越用越准"的飞轮 |
+| **Hierarchical Memory** | 三层记忆：Working（会话内滚动窗口）/ Episodic（Redis TTL）/ Long-term（向量库 LRU） |
+| **Loop Engineering** | 持续反馈闭环：信号收集 → 聚合 → 决策 → 执行，覆盖健康度/重试/工作流/熔断器 |
 
 ---
 
@@ -118,6 +207,8 @@ ResolveAgent is built for SREs, platform engineers, and operations teams who nee
 - **GTM 战略线路规划图** — 目标客户画像（ICP）与里程碑的线路化呈现
 
 页面以浅色「日间调度大厅」为默认视觉，终端窗与雷达屏保留深色作为控制室仪器的对比锚点。导航、首屏与页脚均可一键进入**产品页在线演示**：<https://vxxzrdpyfrl6.meoo.fun>（浏览器端 mock 数据驱动，无需本地后端）。
+
+`GTM/assets/design-variants/` 保留五套设计变体稿（调度发车板 / 经典标准 / 挑战者风格等），记录视觉方向的演进过程。
 
 页面设计契约（企业级视觉纪律：无 glow、无装饰性动效、仪器语法）见 [GTM/DESIGN.md](GTM/DESIGN.md)。
 
@@ -178,6 +269,8 @@ After startup, open the WebUI at **http://localhost:5174** and the Platform API 
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
+**三层分工：** Go 平台负责注册表、鉴权、存储与反馈闭环等高并发基础服务；Python 运行时承载 Agent 编排与 AI 引擎（agentscope）；React WebUI 面向运维操作者。三者经 HTTP/SSE + gRPC 互联。
+
 ---
 
 ## Twelve Architecture Highlights
@@ -197,7 +290,7 @@ After startup, open the WebUI at **http://localhost:5174** and the Platform API 
 | 11 | **Circuit Breaker (Go)** | `pkg/circuitbreaker/` | 三态熔断器自愈运维：Closed → Open → HalfOpen → Closed |
 | 12 | **Adaptive Weight Adjuster** | `selector/resilient_selector.py` | 基于反馈的路由权重动态调整 + 时间衰减 + 自动降级 |
 
-> 📖 完整方法论与对标评估见 [COMPREHENSIVE_ASSESSMENT_AND_METHODOLOGY.md](documentation/COMPREHENSIVE_ASSESSMENT_AND_METHODOLOGY.md)
+> 📖 完整方法论与对标评估见 [COMPREHENSIVE_ASSESSMENT_AND_METHODOLOGY.md](docs/archive/session-reports/COMPREHENSIVE_ASSESSMENT_AND_METHODOLOGY.md)
 
 ---
 
@@ -609,10 +702,20 @@ Startup endpoints:
 ### Alternative Startup (Makefile)
 
 ```bash
-make setup-dev      # 初始化开发环境（依赖 + Git Hooks）
-make compose-deps   # 启动依赖容器
-make build          # 构建 Go / Python / WebUI
-make compose-up     # Docker Compose 全栈启动
+make setup-dev        # 初始化开发环境（依赖 + Git Hooks）
+make compose-deps     # 启动依赖容器
+make build            # 构建 Go / Python / WebUI
+make compose-up       # Docker Compose 全栈启动
+
+# 测试与质量
+make test             # 全量测试（Go + Python + WebUI）
+make test-e2e         # Go E2E 测试（构建标签隔离）
+make test-integration # 集成测试
+make lint             # 全语言 lint 门禁（Go/Python/Web/Proto）
+
+# 数据库
+make migrate-up       # 应用数据库迁移（需 DATABASE_URL）
+make seed             # 加载种子数据
 ```
 
 ### Python Agent Example
@@ -645,6 +748,362 @@ plan = await planner.create_plan(
 memory.add("user", "我想部署到 k8s", importance=0.8)
 recent = memory.get_recent(limit=10)
 ```
+
+---
+
+## CLI
+
+`resolveagent` 命令行工具（Go 实现，位于 `internal/cli/` + `cmd/resolveagent-cli/`），覆盖平台全部核心操作，并提供交互式 TUI 控制台（`internal/tui/`）：
+
+```bash
+# Agent 管理
+resolveagent agent create|list|describe|run|update|delete|logs
+
+# 技能管理
+resolveagent skill list|info|install|test|remove|init
+
+# 工作流管理
+resolveagent workflow create|list ...
+
+# RAG 与语料
+resolveagent rag ...        # 文档 / 集合管理
+resolveagent corpus ...     # 语料导入
+
+# 其他
+resolveagent config ...     # 配置管理
+resolveagent serve          # 本地服务模式
+resolveagent dashboard      # TUI 交互式控制台
+```
+
+> 📖 完整命令参考见 [CLI 参考](docs/zh/cli-reference.md)。
+
+---
+
+## WebUI
+
+访问 **http://localhost:5174** 查看可视化控制台，包含 23 个功能页面：
+
+- **Home / Dashboard** — 平台总览与执行模式
+- **Architecture** — 四层架构叙事
+- **Playground** — 与 Agent 多轮对话（Kimi K2.5 等模型）
+- **Selector / SelectorAdapters** — 智能路由决策可视化 + 自适应权重 + 适配器
+- **FTAEngine** — 故障树编辑器与仿真
+- **Workflows** — 工作流编排
+- **Agents** — Agent 管理与配置
+- **Skills** — 技能系统管理
+- **RAG** — 知识库与向量检索
+- **CodeAnalysis** — 代码分析（调用链图谱 + K8s 源码语料）
+- **TicketSummary** — 工单总结业务场景
+- **Solutions** — 解决方案（过滤器 + 新建/编辑表单 + 溯源信息）
+- **Monitoring / Traces** — 监控指标与链路追踪
+- **Database / DatabaseSchema** — 数据管理与 Schema
+- **AgentScopeHigress** — 网关集成演示
+- **Demo / Evaluation** — 演示与评估
+- **Settings** — 系统设置
+- **Mobile** — 移动端预览
+
+**演示数据体系（无后端也可完整体验）:**
+
+- **后端自动检测** — 优先连接真实 Platform API，不可用时自动回落到浏览器端 mock 数据，并显示**演示模式标识徽标**
+- **Mock 数据按域拆分** — `web/src/api/mock/`（ops / rag / skills / workflows / shared 五个域模块），`mock.ts` 仅保留编排层
+- **数据新鲜度守卫** — 演示数据带新鲜度测试（`bde3e40`），防止演示数据随时间推移变成"假旧"
+- **同源原则** — GTM 策略中枢的运行数据与产品控制台取自同一套演示数据源
+
+---
+
+## Configuration
+
+### Environment Variables (.env)
+
+平台与运行时配置统一使用 `RESOLVEAGENT_*` 前缀（参考 `.env.example`）:
+
+```bash
+# 服务地址
+RESOLVEAGENT_HTTP_ADDR=:8080
+RESOLVEAGENT_GRPC_ADDR=:9090
+RESOLVEAGENT_LOG_LEVEL=info
+
+# 数据层
+DATABASE_URL=postgres://resolveagent:resolveagent@localhost:5432/resolveagent?sslmode=disable
+RESOLVEAGENT_REDIS_ADDR=localhost:6379
+RESOLVEAGENT_NATS_URL=nats://localhost:4222
+
+# LLM (多 Provider)
+RESOLVEAGENT_LLM_QWEN_API_KEY=your-qwen-key
+RESOLVEAGENT_LLM_WENXIN_API_KEY=your-wenxin-key
+RESOLVEAGENT_LLM_ZHIPU_API_KEY=your-zhipu-key
+KIMI_API_KEY=your-kimi-key          # 经 OpenAI 兼容层接入
+LLM_BASE_URL=https://api.moonshot.cn/v1
+LLM_DEFAULT_MODEL=kimi-k2.5-turbo-preview
+# 小米 MiMo Token Plan (可选): 切到 MiMo 时 LLM_BASE_URL/LLM_DEFAULT_MODEL 改为:
+#   LLM_BASE_URL=https://token-plan-cn.xiaomimimo.com/v1 (区域端点: cn/sgp/ams)
+#   LLM_DEFAULT_MODEL=mimo-v2.5-pro
+#   XIAOMI_TOKEN_PLAN_API_KEY=tp-xxxx (按 base_url 自动路由, 与 Kimi 互不干扰)
+
+# 网关与可观测性
+RESOLVEAGENT_GATEWAY_ENABLED=true
+RESOLVEAGENT_TELEMETRY_ENABLED=true
+RESOLVEAGENT_TELEMETRY_OTLP_ENDPOINT=http://localhost:4318
+```
+
+> ⚠️ Kimi K2.5 等模型调用需在 `configs/models.yaml` / provider 配置中**禁用 thinking 模式**，详见 [Kimi K2.5 集成规范](docs/zh/agentscope-higress-integration.md) 与 [configuration.md](docs/zh/configuration.md)。
+
+### Configuration Files
+
+| 文件 | 说明 |
+|------|------|
+| `configs/resolveagent.yaml` | Go 平台服务配置（注册表/网关/存储） |
+| `configs/runtime.yaml` | Python 运行时配置（Agent/记忆/技能） |
+| `configs/models.yaml` | LLM 模型路由与参数配置 |
+| `configs/examples/` | 各环境配置示例（agent / skill / FTA workflow） |
+
+---
+
+## Documentation
+
+### Chinese Documentation (docs/zh/)
+
+> 全部使用向文档统一维护于 `docs/zh/`（25 篇），总览见 [INDEX](docs/zh/INDEX.md)。
+
+| 文档 | 说明 |
+|------|------|
+| [快速开始](docs/zh/quickstart.md) | 5 分钟启动第一个智能 Agent |
+| [本地部署](docs/zh/local-deployment.md) | 本地开发环境搭建 |
+| [架构详解](docs/zh/architecture.md) | 三语言分层架构与数据流 |
+| [智能选择器](docs/zh/intelligent-selector.md) | 路由机制与策略 |
+| [选择器适配器](docs/zh/selector-adapters.md) | SelectorProtocol / Hook / Skill 适配器与 MegaAgent 集成 |
+| [弹性选择器评估](docs/zh/resilient-selector-evaluation.md) | Resilient Selector 设计评估 |
+| [Loop Engineering](docs/zh/loop-engineering.md) | 循环工程方法论 |
+| [FTA 引擎](docs/zh/fta-engine.md) | 故障树分析引擎 |
+| [RAG 管道](docs/zh/rag-pipeline.md) | 检索增强生成（BGE 嵌入 → Milvus → 重排序） |
+| [技能系统](docs/zh/skill-system.md) | 技能注册与沙箱 |
+| [数据库 Schema](docs/zh/database-schema.md) | PostgreSQL 16 表 6 组设计与迁移策略 |
+| [工单总结 Agent](docs/zh/ticket-summary-agent.md) | 核心业务场景设计 |
+| [配置指南](docs/zh/configuration.md) | 环境变量与配置详解 |
+| [CLI 参考](docs/zh/cli-reference.md) | 命令行接口 |
+| [最佳实践](docs/zh/best-practices.md) | 生产最佳实践 |
+| [部署指南](docs/zh/deployment.md) | Docker/Helm/K8s 部署 |
+
+### Design Docs (docs/design/)
+
+带 `file:line` 锚点的源码蒸馏设计文档（00–18 共 19 篇，按 core / standard / shallow 三档组织），基于 commit `21fdb74`：
+
+| 文档 | 说明 |
+|------|------|
+| [设计文档索引](docs/design/INDEX.md) | 19 篇设计文档的导航入口与推荐阅读顺序 |
+| [系统总览](docs/design/00-overview.md) | 三层架构分工、进程入口、端到端数据流 |
+| [智能路由器](docs/design/01-selector.md) | Selector 三段式元路由与弹性循环 |
+| [执行引擎](docs/design/02-runtime.md) | Runtime 引擎的状态机与编排决策 |
+
+> [!TIP]
+> 其余 15 篇（FTA / RAG / 技能 / Go 平台 / Registry / 语料导入 / CLI / 流量分析 / 前端等）从 [INDEX](docs/design/INDEX.md) 进入。各篇结论均可按 frontmatter 里的 `source_commit` 逐条回溯源码验证。
+
+### Documentation Site
+
+Online documentation site (Docusaurus): [`docs-site/`](docs-site/) —— 涵盖架构（architecture）、API、ADR、运维（ops）、开发指南（dev-guide）与用户指南（user-guide）。
+
+---
+
+## Testing
+
+```bash
+# 全量测试（Go + Python + WebUI 并行）
+make test
+
+# Python 单元测试（347 个测试项，含熔断器/降级/记忆/规划/选择器/技能）
+cd python && PYTHONPATH=src .venv/bin/python -m pytest tests/unit/ -v
+
+# Python 集成测试（Dify 插件 / FTA 并行 / HTTP 服务 / MCP 适配器 / 弹性选择器等 8 套）
+cd python && PYTHONPATH=src .venv/bin/python -m pytest tests/integration/ -v
+
+# Go 测试（-race + 覆盖率）
+go test -race -coverprofile=coverage.out ./...
+
+# Go E2E 测试（构建标签隔离，支持 E2E_BASE_URL 覆盖服务地址）
+make test-e2e
+#   覆盖: agent lifecycle / workflow execution / feedback loop
+
+# WebUI 测试（Vitest，含演示数据新鲜度守卫）
+cd web && pnpm run test
+
+# 质量门禁（lint + test + coverage）
+make lint
+hack/quality-gate.sh
+```
+
+**测试覆盖亮点**（`python/tests/unit/`）:
+- `test_resilience.py` — 熔断器三态机、50 并发失败、降级级联
+- `test_memory.py` — 三层记忆、TTL 过期、LRU 逐出
+- `test_planning.py` — 双模式规划、JSON 容错解析、Replan
+- `test_resilient_selector.py`（集成） — 弹性路由重试与错误分类偏好
+- `test_mega_selector_modes.py` / `test_mega_workflow_degrade.py` — MegaAgent 编排模式与降级
+
+**质量工程实践:**
+- **Go lint 全量治理** — golangci-lint（钉 v1.64）覆盖 revive / errcheck / gofumpt / gocritic / errorlint / govet / gosec / unparam / nilerr / staticcheck / exhaustive 等规则，全部清零或显式注明理由
+- **sentinel 错误链** — registry / store 裸错误统一为 `pkg/errors` sentinel 链式包装，测试先行
+- **防泄漏错误出口** — `writeRegistryError` 统一映射 sentinel → HTTP 状态码，未知错误码只走通用 500，不回显内部消息
+
+---
+
+## Observability
+
+**指标（Prometheus）:**
+
+| 指标 | 说明 |
+|------|------|
+| `resolveagent_selector_decisions_total` | 路由决策总数 |
+| `resolveagent_selector_cache_hit_rate` | 缓存命中率 |
+| `resolveagent_audit_records_total` | 审计记录数 |
+| `resolveagent_memory_promotions_total` | 记忆沉淀数 |
+| `resolveagent_planner_replans_total` | Replan 次数 |
+| `resolveagent_toolhub_executions_total` | 工具执行数 |
+| `resolveagent_circuit_breaker_state` | 熔断器状态 (0=closed, 1=open, 2=half_open) |
+| `resolveagent_feedback_signals_total` | 🔄 反馈信号总数 (by source, event) |
+| `resolveagent_feedback_loop_duration_seconds` | 🔄 反馈循环处理耗时 |
+| `resolveagent_retry_exhausted_total` | 🔄 重试耗尽次数 |
+| `resolveagent_workflow_success_rate` | 🔄 工作流成功率 |
+| `resolveagent_adaptive_selector_weights` | 🔄 自适应选择器权重 (by route_type) |
+
+**链路与日志:**
+- **OpenTelemetry** — 结构化日志带 trace 关联（`pkg/logger/`），OTLP 导出（`RESOLVEAGENT_TELEMETRY_OTLP_ENDPOINT`）
+- **健康检查** — liveness / readiness 端点（`pkg/health/`）：Platform `/api/v1/health`，Runtime `/health`
+- **审计追踪** — Selector 决策审计（异步落库）+ ToolHub 执行审计 + 熔断器状态变化经反馈 Observer 采集
+
+---
+
+## Feature Status
+
+> **v0.3.0** | 核心组件经全面修复与测试加固（Python 347 个单元测试项 + 8 套集成测试）
+
+### 核心引擎
+
+| 引擎 | 状态 | 说明 |
+|------|------|------|
+| Intelligent Selector | 🟢 Ready | 三阶段元路由 + rule/llm/hybrid 策略 |
+| Resilient Selector | 🟢 Ready | 失败重试 + 错误分类路由偏好 + 自适应权重 |
+| Hierarchical Memory | 🟢 Ready | 三层记忆（Working/Episodic/Long-term） |
+| Hybrid Planner | 🟢 Ready | 双模式 + LLM 分解 + JSON 容错解析 |
+| FTA Engine | 🟢 Ready | 六门类型 + 最小割集 + 蒙特卡洛仿真 |
+| RAG Pipeline | 🟢 Ready | Milvus / Qdrant 双后端向量检索 |
+| ToolHub & Skills | 🟢 Ready | 技能注册 + 沙箱执行 + 安全审计 |
+| Resilience | 🟢 Ready | CircuitBreaker + FallbackCascade |
+| Loop Engineering | 🟢 Ready | Go 反馈闭环 + Python 工作流反馈 |
+| LLM Providers | 🟢 Ready | Qwen / 文心 / 智谱 / Higress / OpenAI 兼容（Kimi、MiMo Token Plan） |
+| MCP Adapter | 🟢 Ready | Model Context Protocol |
+
+### 基础设施
+
+| 组件 | 状态 | 说明 |
+|------|------|------|
+| Go Platform | 🟢 Ready | Registry / Auth / Route / Store / Feedback + sentinel 错误链防泄漏 |
+| Python Runtime | 🟢 Ready | HTTP + SSE 流式服务（`python -m resolveagent.runtime`） |
+| CLI & TUI | 🟢 Ready | agent/skill/workflow/rag/corpus 子命令 + TUI 控制台 |
+| WebUI | 🟢 Ready | 23 个功能页面（React + Vite + Tailwind）+ 演示模式徽标 |
+| Mobile Web | 🟢 Ready | `mobile/` 移动端适配 |
+| CI/CD | 🟢 Ready | 单一流水线（Go 1.25），覆盖 lint / test / e2e / mobile / docker 阶段 |
+| 部署 | 🟢 Ready | Docker Compose（deps 含外部 etcd）+ Helm + K8s manifests |
+
+---
+
+## Project Structure
+
+```
+resolve-agent/
+├── api/                          # 协议定义
+│   ├── proto/resolveagent/v1/   # Protocol Buffers
+│   ├── openapi/v1/              # OpenAPI 规范
+│   └── jsonschema/              # JSON Schema
+├── cmd/
+│   ├── resolveagent-cli/        # CLI 应用入口
+│   └── resolveagent-server/     # Platform Server 入口
+├── internal/
+│   ├── cli/                     # CLI 实现 (agent/skill/workflow/rag/corpus/config)
+│   └── tui/                     # 交互式 TUI 控制台
+├── pkg/                         # Go 平台服务
+│   ├── circuitbreaker/          # 🔄 三态熔断器
+│   ├── config/                  # 配置加载 (Viper)
+│   ├── errors/                  # sentinel 错误链
+│   ├── event/                   # 事件体系
+│   ├── feedback/                # 🔄 反馈循环 (Collector/RingBuffer/Aggregator)
+│   ├── gateway/                 # Higress 网关集成
+│   ├── health/                  # 健康检查 (liveness/readiness)
+│   ├── logger/                  # OpenTelemetry 关联结构化日志
+│   ├── registry/                # 14 个领域 Registry (agent/skill/rag/fta/solution/traffic…)
+│   ├── retry/                   # 重试机制
+│   ├── server/                  # HTTP/gRPC 服务 + writeRegistryError 统一错误出口
+│   ├── service/                 # 业务服务层
+│   ├── store/                   # Store 模式抽象 (postgres sentinel 化)
+│   ├── telemetry/               # 监控指标 (Prometheus/OTel)
+│   └── version/                 # 版本信息
+├── python/src/resolveagent/
+│   ├── selector/                # 🧠 智能选择器 (意图/上下文/路由/审计/弹性)
+│   ├── memory.py                # 💾 分层记忆
+│   ├── planning.py              # 🌳 混合规划器
+│   ├── toolhub.py               # 🔧 工具中心
+│   ├── resilience.py            # 🛡️ 弹性模式
+│   ├── message_bus.py           # 📡 消息总线
+│   ├── fta/                     # 🔍 FTA 引擎 + 反馈循环 + 回归验证
+│   ├── rag/                     # RAG 管道 (Milvus/Qdrant 双后端)
+│   ├── skills/                  # 技能系统 (manifest/executor/sandbox)
+│   ├── llm/                     # LLM Provider 体系
+│   ├── mcp/                     # MCP 适配器
+│   ├── hooks/                   # 生命周期钩子
+│   ├── code_analysis/           # 代码分析
+│   ├── docsync/                 # 文档同步
+│   ├── agent/                   # Agent 定义
+│   └── runtime/                 # 运行时服务
+├── web/                         # 🌐 React WebUI (Vite + Tailwind + shadcn/ui)（在线: https://vxxzrdpyfrl6.meoo.fun）
+│   └── src/api/mock/            # 演示数据按域拆分 (ops/rag/skills/workflows/shared)
+├── mobile/                      # 📱 移动端 Web 应用
+├── benchmarks/wiki-k8s/         # 基准语料（K8s wiki）
+├── docs-site/                   # 📚 Docusaurus 文档站点
+├── docs/                        # 文档 (设计蒸馏/中文文档/归档)
+│   ├── design/                  # 🧬 19 篇带 file:line 锚点的源码蒸馏设计文档
+│   ├── zh/                      # 25 篇中文技术文档
+│   └── archive/                 # 历史会话记录与评估报告归档
+├── GTM/                         # 🗺️ GTM 策略中枢静态页（在线: https://gjbs6uhxeute.meoo.fun）
+│   └── assets/design-variants/  # 设计变体稿存档
+├── configs/                     # 运行配置
+│   ├── resolveagent.yaml        # 平台配置
+│   ├── runtime.yaml             # 运行时配置
+│   ├── models.yaml              # 模型配置
+│   └── examples/                # 配置示例 (agent/skill/FTA workflow)
+├── scripts/                     # 开发运维脚本
+│   └── start-local.sh           # 🚀 本地一键启动 (all/deps/platform/runtime/web/status/...)
+├── deploy/                      # 部署配置
+│   ├── docker/                  # Dockerfile (platform/runtime/webui) + nginx
+│   ├── docker-compose/          # Compose (deps 含外部 etcd / 全栈)
+│   ├── helm/                    # Helm Chart
+│   └── k8s/                     # K8s manifests
+├── skills/                      # 技能注册 (intelligent-selector / rule-route)
+│   └── examples/                # 示例技能 (k8s-pod-crash / ticket-handler / consulting-qa / hello-world)
+├── examples/                    # 示例 (quickstart / integrations)
+├── integrations/dify/           # Dify 集成
+├── test/                        # E2E (Go 构建标签) / 集成 / fixtures
+├── hack/                        # 开发工具 (quality-gate / coverage-report)
+└── .github/workflows/           # CI/CD (ci / e2e / release / docker-publish)
+```
+
+---
+
+## Deployment
+
+```bash
+# 构建镜像 (platform / runtime / webui)
+make docker
+
+# Docker Compose 全栈
+make compose-up
+
+# Helm 部署
+make helm-install
+
+# 数据库迁移与种子数据
+make migrate-up
+make seed
+```
+
+生产部署推荐使用 `deploy/helm/resolveagent/`（含健康检查、资源限制、HPA 配置），详见 [部署指南](docs/zh/deployment.md)。
 
 ---
 
@@ -697,283 +1156,15 @@ UV_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple uv pip install --python .v
 
 ---
 
-## Feature Status
-
-> **v0.3.0** | 核心组件经全面修复与测试加固（Python 测试 432+ 用例全绿）
-
-### 核心引擎
-
-| 引擎 | 状态 | 说明 |
-|------|------|------|
-| Intelligent Selector | 🟢 Ready | 三阶段元路由 + rule/llm/hybrid 策略 |
-| Resilient Selector | 🟢 Ready | 失败重试 + 错误分类路由偏好 + 自适应权重 |
-| Hierarchical Memory | 🟢 Ready | 三层记忆（Working/Episodic/Long-term） |
-| Hybrid Planner | 🟢 Ready | 双模式 + LLM 分解 + JSON 容错解析 |
-| FTA Engine | 🟢 Ready | 六门类型 + 最小割集 + 蒙特卡洛仿真 |
-| RAG Pipeline | 🟢 Ready | Milvus / Qdrant 双后端向量检索 |
-| ToolHub & Skills | 🟢 Ready | 技能注册 + 沙箱执行 + 安全审计 |
-| Resilience | 🟢 Ready | CircuitBreaker + FallbackCascade |
-| Loop Engineering | 🟢 Ready | Go 反馈闭环 + Python 工作流反馈 |
-| LLM Providers | 🟢 Ready | Qwen / 文心 / 智谱 / Higress / OpenAI 兼容（Kimi 等） |
-| MCP Adapter | 🟢 Ready | Model Context Protocol |
-
-### 基础设施
-
-| 组件 | 状态 | 说明 |
-|------|------|------|
-| Go Platform | 🟢 Ready | Registry / Auth / Route / Store / Feedback |
-| Python Runtime | 🟢 Ready | HTTP + SSE 流式服务（`python -m resolveagent.runtime`） |
-| WebUI | 🟢 Ready | 23 个功能页面（React + Vite + Tailwind） |
-| Mobile Web | 🟢 Ready | `mobile/` 移动端适配 |
-| CI/CD | 🟢 Ready | `ci.yaml` / `e2e.yaml` / `release.yaml` / `docker-publish.yaml` |
-| 部署 | 🟢 Ready | Docker Compose + Helm + K8s manifests |
-
----
-
-## Project Structure
-
-```
-resolve-agent/
-├── api/                          # 协议定义
-│   ├── proto/resolveagent/v1/   # Protocol Buffers
-│   ├── openapi/v1/              # OpenAPI 规范
-│   └── jsonschema/              # JSON Schema
-├── cmd/
-│   ├── resolveagent-cli/        # CLI 应用
-│   └── resolveagent-server/     # Platform Server 入口
-├── pkg/                         # Go 平台服务
-│   ├── circuitbreaker/          # 🔄 三态熔断器
-│   ├── config/                  # 配置加载 (Viper)
-│   ├── event/                   # 事件体系
-│   ├── feedback/                # 🔄 反馈循环 (Collector/RingBuffer/Aggregator)
-│   ├── gateway/                 # Higress 网关集成
-│   ├── health/                  # 健康检查
-│   ├── registry/                # 9 大 Registry 注册表
-│   ├── retry/                   # 重试机制
-│   ├── server/                  # HTTP/gRPC 服务
-│   ├── store/                   # Store 模式抽象
-│   └── telemetry/               # 监控指标 (Prometheus/OTel)
-├── python/src/resolveagent/
-│   ├── selector/                # 🧠 智能选择器 (意图/上下文/路由/审计/弹性)
-│   ├── memory.py                # 💾 分层记忆
-│   ├── planning.py              # 🌳 混合规划器
-│   ├── toolhub.py               # 🔧 工具中心
-│   ├── resilience.py            # 🛡️ 弹性模式
-│   ├── message_bus.py           # 📡 消息总线
-│   ├── fta/                     # 🔍 FTA 引擎 + 反馈循环 + 回归验证
-│   ├── rag/                     # RAG 管道 (Milvus/Qdrant 双后端)
-│   ├── skills/                  # 技能系统 (manifest/executor/sandbox)
-│   ├── llm/                     # LLM Provider 体系
-│   ├── mcp/                     # MCP 适配器
-│   ├── hooks/                   # 生命周期钩子
-│   ├── code_analysis/           # 代码分析
-│   ├── docsync/                 # 文档同步
-│   ├── agent/                   # Agent 定义
-│   └── runtime/                 # 运行时服务
-├── web/                         # 🌐 React WebUI (Vite + Tailwind + shadcn/ui)（在线: https://vxxzrdpyfrl6.meoo.fun）
-├── mobile/                      # 📱 移动端 Web 应用
-├── docs-site/                   # 📚 Docusaurus 文档站点
-├── docs/                        # 文档 (架构/ADR/API/中文文档)
-│   └── zh/                      # 25 篇中文技术文档
-├── documentation/               # 综合评估与工程报告
-├── GTM/                         # 🗺️ GTM 策略中枢静态页（在线: https://gjbs6uhxeute.meoo.fun）
-├── configs/                     # 运行配置
-│   ├── resolveagent.yaml        # 平台配置
-│   ├── runtime.yaml             # 运行时配置
-│   └── models.yaml              # 模型配置
-├── scripts/                     # 开发运维脚本
-│   └── start-local.sh           # 🚀 本地一键启动 (all/deps/platform/runtime/web/status/...)
-├── deploy/                      # 部署配置
-│   ├── docker/                  # Dockerfile (platform/runtime/webui)
-│   ├── docker-compose/          # Compose (deps 含 etcd / 全栈)
-│   ├── helm/                    # Helm Chart
-│   └── k8s/                     # K8s manifests
-├── skills/                      # 技能注册表 (registry.yaml)
-├── examples/                    # 示例 (quickstart / integrations)
-├── integrations/dify/           # Dify 集成
-├── test/                        # E2E / 集成 / 负载测试
-├── hack/                        # 开发工具 (quality-gate / coverage-report)
-└── .github/workflows/           # CI/CD 流水线
-```
-
----
-
-## Configuration
-
-### Environment Variables (.env)
-
-平台与运行时配置统一使用 `RESOLVEAGENT_*` 前缀（参考 `.env.example`）:
-
-```bash
-# 服务地址
-RESOLVEAGENT_HTTP_ADDR=:8080
-RESOLVEAGENT_GRPC_ADDR=:9090
-RESOLVEAGENT_LOG_LEVEL=info
-
-# 数据层
-DATABASE_URL=postgres://resolveagent:resolveagent@localhost:5432/resolveagent?sslmode=disable
-RESOLVEAGENT_REDIS_ADDR=localhost:6379
-RESOLVEAGENT_NATS_URL=nats://localhost:4222
-
-# LLM (多 Provider)
-RESOLVEAGENT_LLM_QWEN_API_KEY=your-qwen-key
-RESOLVEAGENT_LLM_WENXIN_API_KEY=your-wenxin-key
-RESOLVEAGENT_LLM_ZHIPU_API_KEY=your-zhipu-key
-KIMI_API_KEY=your-kimi-key          # 经 OpenAI 兼容层接入
-LLM_BASE_URL=https://api.moonshot.cn/v1
-LLM_DEFAULT_MODEL=kimi-k2.5-turbo-preview
-# 小米 MiMo Token Plan (可选): 切到 MiMo 时 LLM_BASE_URL/LLM_DEFAULT_MODEL 改为:
-#   LLM_BASE_URL=https://token-plan-cn.xiaomimimo.com/v1 (区域端点: cn/sgp/ams)
-#   LLM_DEFAULT_MODEL=mimo-v2.5-pro
-#   XIAOMI_TOKEN_PLAN_API_KEY=tp-xxxx (按 base_url 自动路由, 与 Kimi 互不干扰)
-
-# 网关与可观测性
-RESOLVEAGENT_GATEWAY_ENABLED=true
-RESOLVEAGENT_TELEMETRY_ENABLED=true
-RESOLVEAGENT_TELEMETRY_OTLP_ENDPOINT=http://localhost:4318
-```
-
-> ⚠️ Kimi K2.5 等模型调用需在 `configs/models.yaml` / provider 配置中**禁用 thinking 模式**，详见 [Kimi K2.5 集成规范](docs/zh/agentscope-higress-integration.md) 与 [configuration.md](docs/zh/configuration.md)。
-
-### Configuration Files
-
-| 文件 | 说明 |
-|------|------|
-| `configs/resolveagent.yaml` | Go 平台服务配置（注册表/网关/存储） |
-| `configs/runtime.yaml` | Python 运行时配置（Agent/记忆/技能） |
-| `configs/models.yaml` | LLM 模型路由与参数配置 |
-| `configs/examples/` | 各环境配置示例 |
-
----
-
-## Documentation
-
-### Chinese Documentation (docs/zh/)
-
-| 文档 | 说明 |
-|------|------|
-| [快速开始](docs/zh/quickstart.md) | 本地部署与启动指南 |
-| [本地部署](docs/zh/local-deployment.md) | 本地开发环境搭建 |
-| [架构详解](docs/zh/architecture.md) | 系统架构深度解析 |
-| [智能选择器](docs/zh/intelligent-selector.md) | 路由机制与策略 |
-| [弹性选择器评估](docs/zh/resilient-selector-evaluation.md) | Resilient Selector 设计评估 |
-| [Loop Engineering](docs/zh/loop-engineering.md) | 循环工程方法论 |
-| [FTA 引擎](docs/zh/fta-engine.md) | 故障树分析引擎 |
-| [RAG 管道](docs/zh/rag-pipeline.md) | 检索增强生成 |
-| [技能系统](docs/zh/skill-system.md) | 技能注册与沙箱 |
-| [工单总结 Agent](docs/zh/ticket-summary-agent.md) | 核心业务场景设计 |
-| [配置指南](docs/zh/configuration.md) | 环境变量与配置详解 |
-| [CLI 参考](docs/zh/cli-reference.md) | 命令行接口 |
-| [最佳实践](docs/zh/best-practices.md) | 生产最佳实践 |
-| [部署指南](docs/zh/deployment.md) | Docker/Helm/K8s 部署 |
-
-### Documentation Site
-
-Online documentation site (Docusaurus): [`docs-site/`](docs-site/) —— 涵盖架构（architecture）、API、ADR、运维（ops）、开发指南（dev-guide）与用户指南（user-guide）。
-
----
-
-## Testing
-
-```bash
-# 全量测试（Go + Python + WebUI 并行）
-make test
-
-# Python 单元测试（432+ 用例，含熔断器/降级/记忆/规划）
-cd python && PYTHONPATH=src .venv/bin/python -m pytest tests/unit/ -v
-
-# Go 测试
-go test -race -coverprofile=coverage.out ./...
-
-# WebUI 测试
-cd web && pnpm run test
-
-# 质量门禁（lint + test + coverage）
-make lint
-hack/quality-gate.sh
-```
-
-**测试覆盖亮点**（`python/tests/unit/`）:
-- `test_resilience.py` — 熔断器三态机、50 并发失败、降级级联（19 用例）
-- `test_memory.py` — 三层记忆、TTL 过期、LRU 逐出
-- `test_planning.py` — 双模式规划、JSON 容错解析、Replan
-
----
-
-## Metrics
-
-| 指标 | 说明 |
-|------|------|
-| `resolveagent_selector_decisions_total` | 路由决策总数 |
-| `resolveagent_selector_cache_hit_rate` | 缓存命中率 |
-| `resolveagent_audit_records_total` | 审计记录数 |
-| `resolveagent_memory_promotions_total` | 记忆沉淀数 |
-| `resolveagent_planner_replans_total` | Replan 次数 |
-| `resolveagent_toolhub_executions_total` | 工具执行数 |
-| `resolveagent_circuit_breaker_state` | 熔断器状态 (0=closed, 1=open, 2=half_open) |
-| `resolveagent_feedback_signals_total` | 🔄 反馈信号总数 (by source, event) |
-| `resolveagent_feedback_loop_duration_seconds` | 🔄 反馈循环处理耗时 |
-| `resolveagent_retry_exhausted_total` | 🔄 重试耗尽次数 |
-| `resolveagent_workflow_success_rate` | 🔄 工作流成功率 |
-| `resolveagent_adaptive_selector_weights` | 🔄 自适应选择器权重 (by route_type) |
-
----
-
-## WebUI
-
-访问 **http://localhost:5174** 查看可视化控制台，包含 23 个功能页面：
-
-- **Home / Dashboard** — 平台总览与执行模式
-- **Architecture** — 四层架构叙事
-- **Playground** — 与 Agent 多轮对话（Kimi K2.5 等模型）
-- **Selector / SelectorAdapters** — 智能路由决策可视化 + 自适应权重 + 适配器
-- **FTAEngine** — 故障树编辑器与仿真
-- **Workflows** — 工作流编排
-- **Agents** — Agent 管理与配置
-- **Skills** — 技能系统管理
-- **RAG** — 知识库与向量检索
-- **CodeAnalysis** — 代码分析
-- **TicketSummary** — 工单总结业务场景
-- **Solutions** — 解决方案
-- **Monitoring / Traces** — 监控指标与链路追踪
-- **Database / DatabaseSchema** — 数据管理与 Schema
-- **AgentScopeHigress** — 网关集成演示
-- **Demo / Evaluation** — 演示与评估
-- **Settings** — 系统设置
-- **Mobile** — 移动端预览
-
----
-
-## Deployment
-
-```bash
-# 构建镜像 (platform / runtime / webui)
-make docker
-
-# Docker Compose 全栈
-make compose-up
-
-# Helm 部署
-make helm-install
-
-# 数据库迁移与种子数据
-make migrate-up
-make seed
-```
-
-生产部署推荐使用 `deploy/helm/resolveagent/`（含健康检查、资源限制、HPA 配置），详见 [部署指南](docs/zh/deployment.md)。
-
----
-
 ## Roadmap
 
 Our public roadmap is tracked in [ROADMAP.md](ROADMAP.md) and on [GitHub Issues](https://github.com/ai-guru-global/resolve-agent/issues).
 
 | Version | Theme | Highlights |
 |---------|-------|------------|
-| v0.1.0 | Foundation | Go platform (gRPC + REST), Python runtime, FTA engine, Intelligent Selector, RAG, WebUI, CLI, Docker Compose, Helm. |
-| v0.2.0 | Hardening | DB migrations, unified error handling, OpenTelemetry logging, health checks, integration tests, retry with backoff. |
-| v0.3.0 | WebUI & DevEx | Mock-data auto-detection, project cleanup, deployment unification, examples & scaffolding. |
+| v0.1.0 ✅ | Foundation | Go platform (gRPC + REST), Python runtime, FTA engine, Intelligent Selector, RAG, WebUI, CLI, Docker Compose, Helm. |
+| v0.2.0 ✅ | Hardening | DB migrations, unified error handling, OpenTelemetry logging, health checks, integration tests, retry with backoff.（负载基准进行中：`benchmarks/`） |
+| v0.3.0 🔨 | WebUI & DevEx | Mock-data auto-detection + 域拆分与新鲜度守卫, project cleanup, deployment unification, examples & scaffolding.（OpenAPI 自动生成规划中） |
 | v0.4.0 | Ecosystem | Skill marketplace, plugin SDK, multi-tenancy, RBAC, audit dashboard. |
 | v0.5.0 | Scale | Horizontal agent runtime, distributed workflows, NATS JetStream, advanced RAG. |
 
@@ -1000,9 +1191,12 @@ By contributing, you agree that your contributions will be licensed under the [A
 
 If you discover a security vulnerability, please **do not** open a public issue. Instead, report it privately via [GitHub Security Advisories](https://github.com/ai-guru-global/resolve-agent/security/advisories) or contact the maintainers listed in [MAINTAINERS.md](MAINTAINERS.md).
 
-For general security practices, see:
-- [LICENSE](LICENSE) — Apache 2.0
-- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — Community standards
+Built-in security practices:
+
+- **ToolHub SecurityPolicy** — 技能/工具基于角色的权限控制 + 执行审计
+- **Skill Sandbox** — 技能在沙箱中执行，隔离宿主环境
+- **防泄漏错误出口** — registry 错误统一经 `writeRegistryError` 输出，未知错误码不回显内部消息
+- **Higress 网关鉴权** — 可选 JWT 鉴权（`RESOLVEAGENT_GATEWAY_AUTH_ENABLED`）
 
 ---
 

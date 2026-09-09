@@ -1,0 +1,49 @@
+version: 1
+project: resolve-agent
+generator: code-up
+source_commit: 21fdb74
+output_dir: docs/design
+language: zh
+style_reference: ai-guru-database Document_Templates.md
+documents:
+  - path: 00-overview.md
+    depth: core
+  - path: 01-selector.md
+    depth: core
+  - path: 02-runtime.md
+    depth: core
+  - path: 03-fta.md
+    depth: standard
+  - path: 04-rag-corpus.md
+    depth: core
+  - path: 05-skills-hooks.md
+    depth: core
+  - path: 06-memory-planner-toolhub.md
+    depth: standard
+  - path: 07-code-analysis.md
+    depth: standard
+  - path: 08-mcp-llm.md
+    depth: standard
+  - path: 09-go-platform.md
+    depth: core
+  - path: 10-registry-store.md
+    depth: core
+  - path: 11-gateway-config.md
+    depth: standard
+  - path: 12-resilience-feedback.md
+    depth: standard
+  - path: 13-eventbus-observability.md
+    depth: standard
+  - path: 14-docsync-integrations.md
+    depth: shallow
+  - path: 15-web-frontend.md
+    depth: standard
+  # —— 补遗（2026-09-05 第二轮查漏补缺，LOC 审计发现的漏覆盖模块）——
+  - path: 16-corpus-import.md
+    depth: standard
+  - path: 17-cli.md
+    depth: standard
+  - path: 18-traffic-analysis.md
+    depth: standard
+  - path: INDEX.md
+    depth: shallow

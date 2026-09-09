@@ -1,6 +1,8 @@
 # ResolveAgent 文档索引
 
 > 所有架构设计与使用文档统一维护于 `docs/zh/` 目录，仅保留中文版本。
+>
+> 带源码 `file:line` 锚点的深度设计文档（16 篇蒸馏）见 [docs/design/INDEX.md](../design/INDEX.md)——本目录是使用向文档，该目录是设计原理与排查路径。
 
 ---
 

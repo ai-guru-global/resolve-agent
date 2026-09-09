@@ -181,6 +181,16 @@ class TestContextEnricher:
         assert "agent_id" in as_dict
         assert "available_skills" in as_dict
 
+    @pytest.mark.asyncio
+    async def test_conversation_history_without_registry_client(self, enricher):
+        """conversation_id without a registry client returns empty history (no UnboundLocalError)."""
+        result = await enricher.enrich(
+            input_text="test input",
+            agent_id="test-agent",
+            context={"conversation_id": "conv-1"},
+        )
+        assert result.conversation_history == []
+
 
 # ==================== Rule Strategy Tests ====================
 

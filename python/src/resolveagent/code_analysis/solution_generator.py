@@ -160,14 +160,13 @@ class SolutionGenerator:
         """Query RAG for context related to the error."""
         try:
             query = f"{error.error_type}: {error.message}"
-            result = await self._rag.query(
+            chunks = await self._rag.query(
                 collection_id=self._rag_collection,
                 query=query,
                 top_k=3,
             )
-            chunks = result.get("chunks", [])
             if chunks:
-                return "\n\n".join(c.get("content", "") for c in chunks[:3])
+                return "\n\n".join(c.get("content", c.get("text", "")) for c in chunks[:3])
         except Exception:
             logger.debug("RAG retrieval failed for %s", error.error_type, exc_info=True)
         return ""

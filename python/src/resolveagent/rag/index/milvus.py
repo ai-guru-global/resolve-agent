@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 from typing import Any
 
@@ -26,6 +27,31 @@ def _sanitize_collection_name(name: str) -> str:
     return sanitized
 
 
+_FILTER_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _build_filter_expression(filters: dict[str, Any]) -> str:
+    """Build a Milvus filter expression from a dict.
+
+    String values are quote-escaped; keys must be plain identifiers and
+    values containing control characters are rejected, so a crafted
+    filter cannot break out of the string literal and inject expression
+    syntax.
+    """
+    conditions = []
+    for key, value in filters.items():
+        if not _FILTER_KEY_RE.match(key):
+            raise ValueError(f"Illegal filter key: {key!r}")
+        if isinstance(value, str):
+            if any(c in value for c in ("\x00", "\n", "\r")):
+                raise ValueError(f"Illegal character in filter value: {value!r}")
+            escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+            conditions.append(f'metadata["{key}"] == "{escaped}"')
+        else:
+            conditions.append(f'metadata["{key}"] == {value}')
+    return " and ".join(conditions)
+
+
 class MilvusStore(VectorStore):
     """Milvus vector store for document embeddings.
 
@@ -41,8 +67,8 @@ class MilvusStore(VectorStore):
 
     def __init__(
         self,
-        host: str = "localhost",
-        port: int = 19530,
+        host: str | None = None,
+        port: int | None = None,
         user: str = "",
         password: str = "",
         database: str = "default",
@@ -50,14 +76,14 @@ class MilvusStore(VectorStore):
         """Initialize Milvus store.
 
         Args:
-            host: Milvus server host.
-            port: Milvus server port.
+            host: Milvus server host. Defaults to MILVUS_HOST env var, then localhost.
+            port: Milvus server port. Defaults to MILVUS_PORT env var, then 19530.
             user: Username for authentication.
             password: Password for authentication.
             database: Database name.
         """
-        self.host = host
-        self.port = port
+        self.host = host or os.getenv("MILVUS_HOST", "localhost")
+        self.port = port if port is not None else int(os.getenv("MILVUS_PORT", "19530"))
         self.user = user
         self.password = password
         self.database = database
@@ -296,13 +322,7 @@ class MilvusStore(VectorStore):
             # Build filter expression if provided
             filter_expr = None
             if filters:
-                conditions = []
-                for key, value in filters.items():
-                    if isinstance(value, str):
-                        conditions.append(f'metadata["{key}"] == "{value}"')
-                    else:
-                        conditions.append(f'metadata["{key}"] == {value}')
-                filter_expr = " and ".join(conditions)
+                filter_expr = _build_filter_expression(filters)
 
             # Load collection if not loaded
             self._client.load_collection(collection_name)

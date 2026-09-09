@@ -123,13 +123,13 @@ class TestIntelligentSelector:
         test_cases = [
             (
                 "诊断服务故障",
-                "fta",
-                "故障诊断应被路由到 FTA",
+                "workflow",
+                "故障诊断应被路由到 workflow (fta 归一为 workflow)",
             ),
             (
                 "分析根因",
-                "fta",
-                "根因分析应被路由到 FTA",
+                "workflow",
+                "根因分析应被路由到 workflow (fta 归一为 workflow)",
             ),
         ]
 

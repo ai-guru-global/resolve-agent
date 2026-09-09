@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any
 
 from resolveagent.rag.index.milvus import MilvusStore
@@ -21,19 +22,23 @@ class Retriever:
     def __init__(
         self,
         vector_backend: str = "milvus",
-        host: str = "localhost",
+        host: str | None = None,
         port: int | None = None,
     ) -> None:
         """Initialize retriever.
 
         Args:
             vector_backend: Vector store backend (milvus or qdrant).
-            host: Vector store host.
-            port: Vector store port (default depends on backend).
+            host: Vector store host. Defaults to MILVUS_HOST / QDRANT_HOST
+                env var, then localhost.
+            port: Vector store port (MILVUS_PORT / QDRANT_PORT env var,
+                then 19530 / 6333).
         """
         self.vector_backend = vector_backend
-        self.host = host
-        self.port = port or (19530 if vector_backend == "milvus" else 6333)
+        env_prefix = "MILVUS" if vector_backend == "milvus" else "QDRANT"
+        self.host = host or os.getenv(f"{env_prefix}_HOST", "localhost")
+        default_port = 19530 if vector_backend == "milvus" else 6333
+        self.port = port if port is not None else int(os.getenv(f"{env_prefix}_PORT", str(default_port)))
         self._store: MilvusStore | QdrantStore | None = None
 
     async def _get_store(self) -> MilvusStore | QdrantStore:

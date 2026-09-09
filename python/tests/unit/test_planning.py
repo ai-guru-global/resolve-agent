@@ -95,6 +95,47 @@ class TestCreatePlan:
         assert len(plan.steps) >= 1
 
 
+class TestFallbackContext:
+    """Regression: _simple_decompose_plan dropped the caller's context."""
+
+    @pytest.mark.asyncio
+    async def test_simple_fallback_preserves_context(self) -> None:
+        planner = HybridPlanner()
+        plan = await planner.create_plan(
+            "诊断数据库连接问题",
+            mode=PlanningMode.DELIBERATIVE,
+            context={"cluster": "prod"},
+        )
+        assert plan.context == {"cluster": "prod"}
+
+    @pytest.mark.asyncio
+    async def test_llm_failure_fallback_preserves_context(self) -> None:
+        class _BoomLLM:
+            default_model = "fake"
+
+            async def chat(self, messages: Any, model: str) -> Any:
+                raise RuntimeError("boom")
+
+        planner = HybridPlanner(llm_provider=_BoomLLM())
+        plan = await planner.create_plan(
+            "诊断问题",
+            mode=PlanningMode.DELIBERATIVE,
+            context={"cluster": "prod"},
+        )
+        assert plan.context == {"cluster": "prod"}
+
+    @pytest.mark.asyncio
+    async def test_llm_empty_steps_fallback_preserves_context(self) -> None:
+        llm = FakeLLM('{"steps": []}')
+        planner = HybridPlanner(llm_provider=llm)
+        plan = await planner.create_plan(
+            "诊断问题",
+            mode=PlanningMode.DELIBERATIVE,
+            context={"k": 1},
+        )
+        assert plan.context == {"k": 1}
+
+
 class TestExtractJson:
     def test_plain_json(self) -> None:
         assert HybridPlanner._extract_json('{"a": 1}') == {"a": 1}

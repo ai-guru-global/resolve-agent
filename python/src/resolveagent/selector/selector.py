@@ -200,8 +200,13 @@ class IntelligentSelector:
         decision = await route_fn(input_text, agent_id, ctx)
         latency_ms = (time.perf_counter() - start_time) * 1000
 
-        # Store in cache.
-        self._cache.put(cache_key, decision)
+        # Normalize route type vocabulary at the selector boundary (fta -> workflow).
+        decision.route_type = self._normalize_route_type(decision.route_type)
+
+        # Store in cache, except degraded fallback decisions — a transient
+        # LLM failure must not pollute the cache for the full TTL.
+        if not self._is_degraded_decision(decision):
+            self._cache.put(cache_key, decision)
 
         # Log decision and audit
         logger.info(
@@ -225,6 +230,20 @@ class IntelligentSelector:
         )
 
         return decision
+
+    @staticmethod
+    def _normalize_route_type(route_type: str) -> str:
+        """Map internal route type aliases to the output vocabulary."""
+        if route_type == "fta":
+            return "workflow"
+        return route_type
+
+    @staticmethod
+    def _is_degraded_decision(decision: RouteDecision) -> bool:
+        """Check whether a decision came from a degraded/fallback path."""
+        if getattr(decision, "degraded", False) or decision.parameters.get("fallback"):
+            return True
+        return "fallback" in decision.reasoning.lower() and decision.confidence < 0.6
 
     async def analyze_intent(self, input_text: str) -> dict[str, Any]:
         """Analyze the intent of user input without full routing.

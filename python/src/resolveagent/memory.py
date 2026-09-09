@@ -146,10 +146,12 @@ class EpisodicMemoryClient:
         redis_url: str = "redis://localhost:6379",
         session_prefix: str = "session:",
         max_session_entries: int = 100,
+        ttl: int = 7 * 24 * 3600,
     ) -> None:
         self._redis_url = redis_url
         self._session_prefix = session_prefix
         self._max_session_entries = max_session_entries
+        self._ttl = ttl
         self._client: Any | None = None
         self._connected = False
 
@@ -208,6 +210,8 @@ class EpisodicMemoryClient:
                     "last_updated": datetime.now().isoformat(),
                 },
             )
+            # 压缩后旧 entries 字段已过期, 删除避免 load() 读到过期数据
+            await self._client.hdel(key, "entries")
         else:
             # Store raw entries (JSON 序列化, 替代此前脆弱的 str()/ast.literal_eval 方案)
             import json
@@ -229,6 +233,9 @@ class EpisodicMemoryClient:
                     "last_updated": datetime.now().isoformat(),
                 },
             )
+
+        # 每次写入刷新 TTL, 避免 session 数据永久残留
+        await self._client.expire(key, self._ttl)
 
     def _semantic_summary(self, entries: list[MemoryEntry]) -> str:
         """简单语义压缩 - 提取关键信息.
@@ -267,16 +274,17 @@ class EpisodicMemoryClient:
         if not data:
             return None
 
-        # Try to load entries
-        entries_str = data.get("entries", "[]")
-        try:
-            import json
+        # Try to load entries; 压缩分支会删除该字段, 缺失时回退 summary
+        entries_str = data.get("entries")
+        if entries_str:
+            try:
+                import json
 
-            loaded = json.loads(entries_str)
-            if isinstance(loaded, list):
-                return loaded
-        except Exception:
-            pass
+                loaded = json.loads(entries_str)
+                if isinstance(loaded, list):
+                    return loaded
+            except Exception:
+                pass
         # Fallback to summary
         return [{"role": "system", "content": data.get("summary", ""), "type": "summary"}]
 
@@ -317,10 +325,14 @@ class LongTermMemoryClient:
             self._client = MilvusClient(uri=self._vector_store_url)
             # Ensure collection exists
             if not self._client.has_collection(self._collection_name):
+                # id_type="string": quick setup 默认 INT64 主键,
+                # 无法插入 store() 生成的字符串 UUID
                 self._client.create_collection(
                     collection_name=self._collection_name,
                     dimension=1024,  # Embedding dimension
                     metric_type="COSINE",
+                    id_type="string",
+                    max_length=64,
                 )
             self._connected = True
             logger.info(
@@ -404,7 +416,7 @@ class LongTermMemoryClient:
                     "text": r["entity"].get("text", ""),
                     "importance": r["entity"].get("importance", 0.5),
                     "timestamp": r["entity"].get("timestamp", ""),
-                    "score": r["score"],
+                    "score": r.get("distance", 0.0),
                 }
                 for r in results[0]
             ]
@@ -441,6 +453,8 @@ class HierarchicalMemory:
         self._episodic = episodic_client or EpisodicMemoryClient()
         self._long_term = long_term_client or LongTermMemoryClient()
         self._connected = False
+        # 持有 create_task 的强引用, 防止 task 被 GC 提前回收
+        self._pending_tasks: set[asyncio.Task[Any]] = set()
 
     async def connect(self) -> None:
         """连接所有记忆存储."""
@@ -479,7 +493,9 @@ class HierarchicalMemory:
                 # 同步上下文无事件循环: 跳过异步沉淀, 避免 create_task 抛 RuntimeError
                 logger.debug("No running event loop; skip async episodic persist")
             else:
-                loop.create_task(self._persist_to_episodic())
+                task = loop.create_task(self._persist_to_episodic())
+                self._pending_tasks.add(task)
+                task.add_done_callback(self._pending_tasks.discard)
 
     async def _persist_to_episodic(self) -> None:
         """异步持久化到 Episodic Memory."""

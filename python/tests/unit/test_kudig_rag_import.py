@@ -170,6 +170,10 @@ class TestImportState:
 
 
 class TestKudigRAGClient:
+    def test_default_base_url_uses_platform_port(self):
+        client = KudigRAGClient()
+        assert client._base_url == "http://localhost:8080/api/v1"
+
     def test_ensure_collection_exists(self):
         client = KudigRAGClient("http://test:3004/api/v1")
         mock_resp = MagicMock()

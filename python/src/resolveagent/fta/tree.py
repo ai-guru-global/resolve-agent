@@ -50,6 +50,7 @@ class FTAGate:
     input_ids: list[str] = field(default_factory=list)
     output_id: str = ""
     k_value: int = 1  # For VOTING gate
+    value: bool | None = None
 
     def evaluate(self, input_values: list[bool]) -> bool:
         """Evaluate the gate given input values.
@@ -147,4 +148,9 @@ class FaultTree:
             event = self.get_event(input_id)
             if event and event.value is not None:
                 values.append(event.value)
+                continue
+            # input_id may refer to another gate; use that gate's evaluated result
+            input_gate = next((g for g in self.gates if g.id == input_id), None)
+            if input_gate and input_gate.value is not None:
+                values.append(input_gate.value)
         return values

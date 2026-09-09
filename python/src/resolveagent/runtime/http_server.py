@@ -44,13 +44,21 @@ def _classify_exception(exc: Exception) -> tuple[str, str]:
     return ("INTERNAL", "unknown")
 
 
-def _build_error_event(exc: Exception, trace_id: str = "") -> dict[str, str]:
+def _build_error_event(exc: Exception, trace_id: str = "") -> dict[str, Any]:
     error_code, category = _classify_exception(exc)
+    message = str(exc)
     return {
         "type": "error",
+        # Nested form matches Go ExecuteAgentResponse.Error (json:"error");
+        # flat fields are kept for backward compatibility.
+        "error": {
+            "error_code": error_code,
+            "category": category,
+            "message": message,
+        },
         "error_code": error_code,
         "category": category,
-        "message": str(exc),
+        "message": message,
         "trace_id": trace_id,
     }
 
@@ -89,7 +97,7 @@ class RateLimitMiddleware:
 
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http":
-            client = scope.get("client", ("unknown", 0))[0]
+            client = self._client_ip(scope)
             now = time.time()
             # Clean old entries
             self.requests[client] = [t for t in self.requests[client] if now - t < 60]
@@ -98,7 +106,24 @@ class RateLimitMiddleware:
                 await response(scope, receive, send)
                 return
             self.requests[client].append(now)
+            self._prune_idle_clients(now)
         await self.app(scope, receive, send)
+
+    @staticmethod
+    def _client_ip(scope) -> str:
+        """Resolve the client IP, honoring X-Forwarded-For set by platform proxies."""
+        for name, value in scope.get("headers", []):
+            if name.lower() == b"x-forwarded-for":
+                return value.decode("latin-1").split(",")[0].strip()
+        # scope["client"] is None for unix sockets and some test transports
+        client = scope.get("client")
+        return client[0] if client else "unknown"
+
+    def _prune_idle_clients(self, now: float) -> None:
+        """Drop client buckets idle for over 5 minutes so the map stays bounded."""
+        stale = [c for c, ts in self.requests.items() if not ts or now - ts[-1] > 300]
+        for c in stale:
+            del self.requests[c]
 
 
 def _get_platform_address() -> str:
@@ -269,7 +294,13 @@ class RuntimeHTTPServer:
                     if cache_key not in server_self._selectors:
                         server_self._selectors[cache_key] = IntelligentSelector(strategy=payload.strategy)
                     selector = server_self._selectors[cache_key]
-                    rd = await selector.route(input_text, payload.agent_id, payload.context)
+                    rd = await selector.route(
+                        input_text,
+                        payload.agent_id,
+                        payload.context,
+                        enrich_context=payload.enrich_context,
+                        bypass_cache=payload.bypass_cache,
+                    )
                     decision = rd.__dict__
                 except Exception as exc:
                     logger.warning("Selector %s failed, degrading to rule: %s", payload.strategy, exc)
@@ -516,6 +547,7 @@ class RuntimeHTTPServer:
                         "content": content,
                         "metadata": {
                             "solution_id": solution_id,
+                            "title": title,
                             "domain": domain,
                             "tags": tags,
                             "type": "troubleshooting_solution",
@@ -548,7 +580,7 @@ class RuntimeHTTPServer:
                 query = body.get("query", "")
                 top_k = body.get("top_k", 10)
                 domain = body.get("domain", "")
-                body.get("tags", [])
+                tags = body.get("tags", [])
 
                 if not query:
                     raise HTTPException(status_code=400, detail="query is required")
@@ -556,28 +588,32 @@ class RuntimeHTTPServer:
                 from resolveagent.rag.pipeline import RAGPipeline
 
                 pipeline = RAGPipeline()
-                filters: dict[str, Any] = {
-                    "type": "troubleshooting_solution",
-                }
-                if domain:
-                    filters["domain"] = domain
-
                 results = await pipeline.query(
                     collection_id="solutions",
                     query=query,
                     top_k=top_k,
-                    filters=filters,
                 )
+
+                # RAGPipeline.query 不支持 metadata 过滤 (同 /v1/rag/query 的 NOTE),
+                # 在内存里按 domain/tags 过滤
+                filtered = []
+                for r in results:
+                    meta = r.get("metadata", {}) or {}
+                    if domain and meta.get("domain") != domain:
+                        continue
+                    if tags and not set(tags) & set(meta.get("tags") or []):
+                        continue
+                    filtered.append(r)
 
                 # Transform RAG results to solution search format
                 search_results = []
-                for r in results:
+                for r in filtered:
                     search_results.append(
                         {
                             "solution_id": r.get("metadata", {}).get("solution_id", ""),
                             "title": r.get("metadata", {}).get("title", ""),
                             "score": r.get("score", 0.0),
-                            "snippet": r.get("content", "")[:200],
+                            "snippet": r.get("text", "")[:200],
                         }
                     )
 

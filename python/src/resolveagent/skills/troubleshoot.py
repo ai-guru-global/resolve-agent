@@ -65,6 +65,15 @@ class TroubleshootingEngine:
     ) -> None:
         self._skill_executor = skill_executor
         self._llm_provider = llm_provider
+        self._skill_loader: Any | None = None
+
+    def _get_skill_loader(self) -> Any:
+        """Return a shared SkillLoader, creating it on first use."""
+        if self._skill_loader is None:
+            from resolveagent.skills.loader import SkillLoader
+
+            self._skill_loader = SkillLoader()
+        return self._skill_loader
 
     async def execute(
         self,
@@ -217,10 +226,13 @@ class TroubleshootingEngine:
         if not self._skill_executor:
             return "Skill executor not available", []
 
-        from resolveagent.skills.loader import SkillLoader
-
-        loader = SkillLoader()
+        loader = self._get_skill_loader()
         skill = loader.get(step.skill_ref or "")
+        if skill is None:
+            try:
+                skill = loader.load(step.skill_ref or "")
+            except FileNotFoundError:
+                skill = None
         if skill is None:
             return f"Referenced skill '{step.skill_ref}' not found", []
 

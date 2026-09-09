@@ -22,7 +22,7 @@ except ImportError:
     logger.debug("sentence-transformers not available, using fallback reranking")
 
 if TYPE_CHECKING:
-    from resolveagent.llm.base import LLMProvider
+    from resolveagent.llm.provider import LLMProvider
 
 
 class Reranker:
@@ -219,13 +219,15 @@ Document: {content[:500]}...
 Respond with only a number from 0 to 10."""
 
             try:
+                from resolveagent.llm.provider import ChatMessage
+
                 response = await self.llm_provider.chat(
                     messages=[
-                        {
-                            "role": "system",
-                            "content": "You are a relevance scorer. Respond with only a number 0-10.",
-                        },
-                        {"role": "user", "content": prompt},
+                        ChatMessage(
+                            role="system",
+                            content="You are a relevance scorer. Respond with only a number 0-10.",
+                        ),
+                        ChatMessage(role="user", content=prompt),
                     ],
                     temperature=0.0,
                     max_tokens=5,

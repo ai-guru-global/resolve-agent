@@ -105,7 +105,7 @@ class DynamicAnalysisEngine:
         if self._capture_client is not None:
             try:
                 source_types = list({s.get("type", "") for s in sources})
-                await self._capture_client.create(
+                created = await self._capture_client.create(
                     {
                         "name": session_name,
                         "source_type": ",".join(source_types),
@@ -114,6 +114,8 @@ class DynamicAnalysisEngine:
                         "config": {"sources": [s.get("type") for s in sources]},
                     }
                 )
+                if created and created.get("id"):
+                    capture_id = created["id"]
 
                 # Persist records
                 record_dicts = TrafficCollector.records_to_dicts(records)

@@ -132,6 +132,20 @@ class MCPRegistry:
         client = self._clients[server_name]
         try:
             result = await client.call_tool(actual_tool, params)
+            if isinstance(result, dict):
+                if result.get("success") is False:
+                    return {
+                        "success": False,
+                        "error": result.get("error", "Tool call failed"),
+                        "data": result,
+                    }
+                if result.get("isError"):
+                    content = result.get("content") or []
+                    error_text = (
+                        " ".join(c.get("text", "") for c in content if isinstance(c, dict)).strip()
+                        or "MCP tool returned an error"
+                    )
+                    return {"success": False, "error": error_text, "data": result}
             return {"success": True, "data": result}
         except Exception as e:
             logger.error("MCP tool execution failed: %s", e)

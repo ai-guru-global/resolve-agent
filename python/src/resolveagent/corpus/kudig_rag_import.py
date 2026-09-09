@@ -35,7 +35,7 @@ _STATE_FILE = "~/.resolveagent/kudig-rag-import-state.json"
 class KudigRAGClient:
     """Thin HTTP client for the Go server's RAG API."""
 
-    def __init__(self, base_url: str = "http://localhost:3004/api/v1") -> None:
+    def __init__(self, base_url: str = "http://localhost:8080/api/v1") -> None:
         self._base_url = base_url.rstrip("/")
         self._client = httpx.Client(timeout=httpx.Timeout(30.0, read=120.0))
 
@@ -296,7 +296,7 @@ class KudigImporter:
 
     def __init__(
         self,
-        api_base_url: str = "http://localhost:3004/api/v1",
+        api_base_url: str = "http://localhost:8080/api/v1",
         source: str = "https://github.com/kudig-io/kudig-database",
         collection_name: str = "kudig-rag",
         force_clone: bool = False,
@@ -488,8 +488,8 @@ def main(argv: list[str] | None = None) -> None:
     )
     parser.add_argument(
         "--api-url",
-        default="http://localhost:3004/api/v1",
-        help="Base URL for the RAG API (default: http://localhost:3004/api/v1)",
+        default="http://localhost:8080/api/v1",
+        help="Base URL for the RAG API (default: http://localhost:8080/api/v1)",
     )
     parser.add_argument(
         "--source",

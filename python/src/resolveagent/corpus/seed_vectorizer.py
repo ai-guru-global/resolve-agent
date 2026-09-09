@@ -298,6 +298,8 @@ async def vectorize_seeds(
     pipeline = RAGPipeline(
         embedding_model=embedding_model,
         vector_backend=vector_backend,
+        milvus_host=milvus_host,
+        milvus_port=milvus_port,
     )
     chunker = TextChunker(strategy=chunk_strategy, chunk_size=chunk_size)
 
@@ -321,6 +323,19 @@ async def vectorize_seeds(
             collection_name,
             len(group_docs),
         )
+
+        if force and vector_backend == "milvus":
+            try:
+                from resolveagent.rag.index.milvus import MilvusStore
+
+                store = MilvusStore(host=milvus_host, port=milvus_port)
+                await store.connect()
+                try:
+                    await store.delete_collection(collection_id)
+                finally:
+                    await store.disconnect()
+            except Exception as e:
+                logger.warning("Failed to drop existing collection %s: %s", collection_id, e)
 
         for doc in group_docs:
             try:

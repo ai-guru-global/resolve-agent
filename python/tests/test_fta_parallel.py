@@ -130,6 +130,56 @@ class TestParallelFTAEvaluator:
         assert result is True  # (A AND B) OR C OR D = True OR False OR True = True
 
     @pytest.mark.asyncio
+    async def test_evaluate_gate_referenced_by_gate_id(self):
+        """Gate inputs referencing another gate's id use that gate's computed value."""
+        evaluator = ParallelFTAEvaluator()
+
+        tree = FaultTree(
+            id="test",
+            name="Nested by gate id",
+            top_event_id="top",
+            events=[
+                FTAEvent(id="top", name="Top", event_type=EventType.TOP),
+                FTAEvent(id="mid", name="Mid", event_type=EventType.INTERMEDIATE),
+                FTAEvent(id="A", name="A", event_type=EventType.BASIC, value=True),
+                FTAEvent(id="B", name="B", event_type=EventType.BASIC, value=True),
+                FTAEvent(id="C", name="C", event_type=EventType.BASIC, value=True),
+            ],
+            gates=[
+                FTAGate(id="g1", name="AND1", gate_type=GateType.AND, input_ids=["A", "B"], output_id="mid"),
+                FTAGate(id="g2", name="AND2", gate_type=GateType.AND, input_ids=["g1", "C"], output_id="top"),
+            ],
+        )
+
+        result = await evaluator.evaluate_tree(tree, {})
+        assert result is True  # (A AND B)=True via g1, g1 AND C = True
+
+    @pytest.mark.asyncio
+    async def test_evaluate_gate_referenced_by_gate_id_false_propagates(self):
+        """A False intermediate gate result propagates through gate-id inputs."""
+        evaluator = ParallelFTAEvaluator()
+
+        tree = FaultTree(
+            id="test",
+            name="Nested by gate id",
+            top_event_id="top",
+            events=[
+                FTAEvent(id="top", name="Top", event_type=EventType.TOP),
+                FTAEvent(id="mid", name="Mid", event_type=EventType.INTERMEDIATE),
+                FTAEvent(id="A", name="A", event_type=EventType.BASIC, value=True),
+                FTAEvent(id="B", name="B", event_type=EventType.BASIC, value=False),
+                FTAEvent(id="C", name="C", event_type=EventType.BASIC, value=True),
+            ],
+            gates=[
+                FTAGate(id="g1", name="AND1", gate_type=GateType.AND, input_ids=["A", "B"], output_id="mid"),
+                FTAGate(id="g2", name="AND2", gate_type=GateType.AND, input_ids=["g1", "C"], output_id="top"),
+            ],
+        )
+
+        result = await evaluator.evaluate_tree(tree, {})
+        assert result is False  # g1 = True AND False = False -> top = False AND True = False
+
+    @pytest.mark.asyncio
     async def test_cache_usage(self):
         """Test that caching works correctly."""
         evaluator = ParallelFTAEvaluator()

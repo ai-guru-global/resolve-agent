@@ -5,7 +5,7 @@ import time
 import pytest
 
 from resolveagent.selector.cache import RouteDecisionCache, get_global_cache
-from resolveagent.selector.selector import RouteDecision
+from resolveagent.selector.selector import IntelligentSelector, RouteDecision
 
 
 class TestRouteDecisionCache:
@@ -161,3 +161,62 @@ class TestGlobalCache:
 
         # Cleanup
         _cm._global_cache = None
+
+
+class TestSelectorRouteCaching:
+    """Caching behavior of IntelligentSelector.route."""
+
+    @pytest.mark.asyncio
+    async def test_normal_decision_is_cached(self):
+        """A fresh, confident decision is served from cache on the second call."""
+        selector = IntelligentSelector(strategy="llm")
+        calls = 0
+
+        async def fake_route(input_text, agent_id, context):
+            nonlocal calls
+            calls += 1
+            return RouteDecision(route_type="skill", route_target="web-search", confidence=0.9, reasoning="LLM: clear case")
+
+        selector._strategies["llm"] = fake_route
+        await selector.route("hello")
+        await selector.route("hello")
+        assert calls == 1
+
+    @pytest.mark.asyncio
+    async def test_degraded_fallback_decision_not_cached(self):
+        """Low-confidence fallback decisions are recomputed, not cached."""
+        selector = IntelligentSelector(strategy="llm")
+        calls = 0
+
+        async def fake_route(input_text, agent_id, context):
+            nonlocal calls
+            calls += 1
+            return RouteDecision(route_type="direct", confidence=0.5, reasoning="Fallback: default routing (LLM timeout)")
+
+        selector._strategies["llm"] = fake_route
+        await selector.route("hello")
+        await selector.route("hello")
+        assert calls == 2
+
+    @pytest.mark.asyncio
+    async def test_bypass_cache_skips_cached_decision(self):
+        """bypass_cache=True forces a fresh decision even on a cache hit."""
+        selector = IntelligentSelector(strategy="llm")
+        calls = 0
+
+        async def fake_route(input_text, agent_id, context):
+            nonlocal calls
+            calls += 1
+            return RouteDecision(route_type="skill", route_target="web-search", confidence=0.9, reasoning="LLM: clear case")
+
+        selector._strategies["llm"] = fake_route
+        await selector.route("hello")
+        await selector.route("hello", bypass_cache=True)
+        assert calls == 2
+
+    @pytest.mark.asyncio
+    async def test_fta_route_type_normalized_to_workflow(self):
+        """Rule strategy's internal 'fta' is normalized to 'workflow' at the selector boundary."""
+        selector = IntelligentSelector(strategy="rule")
+        decision = await selector.route("diagnose the root cause of the outage")
+        assert decision.route_type == "workflow"

@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
+import asyncio
+import sys
+import types
+
 import pytest
 
 from resolveagent.memory import (
+    EpisodicMemoryClient,
     HierarchicalMemory,
+    LongTermMemoryClient,
     MemoryEntry,
     WorkingMemory,
 )
@@ -145,3 +151,161 @@ class TestMemoryEntry:
         assert entry.importance == 0.5
         assert entry.metadata == {}
         assert entry.timestamp
+
+
+class _FakeRedis:
+    """In-memory stand-in for redis.asyncio client (decode_responses=True)."""
+
+    def __init__(self) -> None:
+        self.hashes: dict[str, dict[str, str]] = {}
+        self.deleted_fields: list[tuple] = []
+        self.expirations: dict[str, int] = {}
+
+    async def hset(self, key, mapping) -> None:
+        self.hashes.setdefault(key, {}).update(mapping)
+
+    async def hdel(self, key, *fields) -> None:
+        for f in fields:
+            self.hashes.get(key, {}).pop(f, None)
+        self.deleted_fields.append((key, *fields))
+
+    async def hgetall(self, key) -> dict[str, str]:
+        return dict(self.hashes.get(key, {}))
+
+    async def expire(self, key, ttl) -> None:
+        self.expirations[key] = ttl
+
+    async def delete(self, key) -> None:
+        self.hashes.pop(key, None)
+
+
+def _episodic_with_fake(fake: _FakeRedis, **kwargs) -> EpisodicMemoryClient:
+    client = EpisodicMemoryClient(**kwargs)
+    client._client = fake
+    client._connected = True
+    return client
+
+
+class TestEpisodicMemory:
+    """EpisodicMemoryClient store/load behavior (fake Redis)."""
+
+    @pytest.mark.asyncio
+    async def test_compress_store_removes_stale_entries_and_sets_ttl(self) -> None:
+        """Regression: the compress branch left a stale "entries" field
+        behind, and load() preferred it over the fresh summary."""
+        fake = _FakeRedis()
+        client = _episodic_with_fake(fake, ttl=3600)
+        key = "session:s1"
+        fake.hashes[key] = {"entries": '[{"role": "user", "content": "old"}]'}
+
+        entries = [MemoryEntry(role="user", content=f"m{i}") for i in range(15)]
+        await client.store("s1", entries, compress=True)
+
+        assert (key, "entries") in fake.deleted_fields
+        assert "entries" not in fake.hashes[key]
+        assert "summary" in fake.hashes[key]
+        assert fake.expirations[key] == 3600
+
+    @pytest.mark.asyncio
+    async def test_raw_store_sets_ttl(self) -> None:
+        fake = _FakeRedis()
+        client = _episodic_with_fake(fake, ttl=123)
+        await client.store("s1", [MemoryEntry(role="user", content="hi")], compress=False)
+
+        assert "entries" in fake.hashes["session:s1"]
+        assert fake.expirations["session:s1"] == 123
+
+    @pytest.mark.asyncio
+    async def test_default_ttl_is_seven_days(self) -> None:
+        fake = _FakeRedis()
+        client = _episodic_with_fake(fake)
+        await client.store("s1", [MemoryEntry(role="user", content="hi")], compress=False)
+        assert fake.expirations["session:s1"] == 7 * 24 * 3600
+
+    @pytest.mark.asyncio
+    async def test_load_falls_back_to_summary_when_entries_absent(self) -> None:
+        fake = _FakeRedis()
+        client = _episodic_with_fake(fake)
+        fake.hashes["session:s1"] = {"summary": "sum-text", "entry_count": "12"}
+
+        loaded = await client.load("s1")
+        assert loaded == [{"role": "system", "content": "sum-text", "type": "summary"}]
+
+    @pytest.mark.asyncio
+    async def test_load_prefers_entries_when_present(self) -> None:
+        fake = _FakeRedis()
+        client = _episodic_with_fake(fake)
+        fake.hashes["session:s1"] = {
+            "entries": '[{"role": "user", "content": "fresh"}]',
+            "summary": "stale-summary",
+        }
+
+        loaded = await client.load("s1")
+        assert loaded == [{"role": "user", "content": "fresh"}]
+
+
+class TestLongTermMemory:
+    """LongTermMemoryClient Milvus interactions (fake pymilvus)."""
+
+    @pytest.mark.asyncio
+    async def test_search_reads_distance_key(self) -> None:
+        """Regression: pymilvus hits carry "distance", not "score";
+        the KeyError was swallowed and search always returned []."""
+
+        class _FakeMilvus:
+            def search(self, **kwargs):
+                return [[{"id": "m1", "distance": 0.42, "entity": {"text": "t", "importance": 0.9, "timestamp": "ts"}}]]
+
+        client = LongTermMemoryClient()
+        client._client = _FakeMilvus()
+        client._connected = True
+
+        results = await client.search([0.1] * 4, top_k=1)
+        assert len(results) == 1
+        assert results[0]["score"] == 0.42
+        assert results[0]["text"] == "t"
+
+    @pytest.mark.asyncio
+    async def test_connect_creates_string_primary_key_collection(self, monkeypatch) -> None:
+        """Regression: quick create_collection defaults to an INT64 primary
+        key, so inserting string UUIDs always failed."""
+        created: dict = {}
+
+        class _FakeMilvusClient:
+            def __init__(self, uri: str) -> None:
+                pass
+
+            def has_collection(self, name: str) -> bool:
+                return False
+
+            def create_collection(self, **kwargs) -> None:
+                created.update(kwargs)
+
+        fake_module = types.ModuleType("pymilvus")
+        fake_module.MilvusClient = _FakeMilvusClient
+        monkeypatch.setitem(sys.modules, "pymilvus", fake_module)
+
+        client = LongTermMemoryClient()
+        await client.connect()
+
+        assert client._connected
+        assert created["id_type"] == "string"
+        assert created["max_length"] == 64
+        assert created["dimension"] == 1024
+
+
+class TestPendingTasks:
+    @pytest.mark.asyncio
+    async def test_add_tracks_and_cleans_pending_task(self) -> None:
+        """Regression: create_task without a strong reference could be
+        garbage-collected before completion."""
+        mem = HierarchicalMemory(session_id="s1")
+        mem._connected = True
+        mem.add("user", "important finding", importance=0.9)
+
+        tasks = set(mem._pending_tasks)
+        assert len(tasks) == 1
+
+        await asyncio.gather(*tasks)
+        await asyncio.sleep(0)  # let done callbacks run
+        assert not mem._pending_tasks

@@ -23,6 +23,13 @@ class TextChunker:
         chunk_size: int = 512,
         chunk_overlap: int = 50,
     ) -> None:
+        # fixed 策略下 overlap >= chunk_size 会让 _chunk_fixed 死循环
+        # (start 每次回退不小于步进); 其余策略不消费 chunk_overlap, 不校验
+        if strategy == "fixed" and not 0 <= chunk_overlap < chunk_size:
+            raise ValueError(
+                f"chunk_overlap must satisfy 0 <= chunk_overlap < chunk_size, "
+                f"got chunk_size={chunk_size}, chunk_overlap={chunk_overlap}"
+            )
         self.strategy = strategy
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
@@ -60,9 +67,8 @@ class TextChunker:
         return chunks
 
     def _chunk_sentence(self, text: str) -> list[str]:
-        """Sentence-based chunking."""
-        # Simple sentence splitting
-        sentences = text.replace("!", ".").replace("?", ".").split(".")
+        """Sentence-based chunking (English and Chinese punctuation)."""
+        sentences = re.split(r"[.!?。!?]+", text)
         sentences = [s.strip() for s in sentences if s.strip()]
 
         chunks = []
@@ -70,6 +76,14 @@ class TextChunker:
         current_length = 0
 
         for sentence in sentences:
+            # 单句超过 chunk_size 时, 先冲刷当前块, 再按固定长度强制截断
+            while len(sentence) > self.chunk_size:
+                if current_chunk:
+                    chunks.append(". ".join(current_chunk) + ".")
+                    current_chunk = []
+                    current_length = 0
+                chunks.append(sentence[: self.chunk_size])
+                sentence = sentence[self.chunk_size :]
             if current_length + len(sentence) > self.chunk_size and current_chunk:
                 chunks.append(". ".join(current_chunk) + ".")
                 current_chunk = []

@@ -226,8 +226,6 @@ class ParallelFTAEvaluator(NodeEvaluator):
                 levels.append(current_level)
             queue = next_queue
 
-        # Reverse to get bottom-up order
-        levels.reverse()
         return levels
 
     async def _evaluate_level(
@@ -282,6 +280,10 @@ class ParallelFTAEvaluator(NodeEvaluator):
         if not event:
             return
 
+        # Statically assigned values are used as-is
+        if event.value is not None:
+            return
+
         # Check cache
         cache_key = f"be:{event_id}:{hash(str(context))}"
         cached = self._gate_cache.get(cache_key)
@@ -314,6 +316,7 @@ class ParallelFTAEvaluator(NodeEvaluator):
         cached = self._gate_cache.get(cache_key)
         if cached is not None:
             # Set output event value
+            gate.value = cached
             output_event = tree.get_event(gate.output_id)
             if output_event:
                 output_event.value = cached
@@ -326,11 +329,14 @@ class ParallelFTAEvaluator(NodeEvaluator):
             if event and event.value is not None:
                 input_values.append(event.value)
             else:
-                # Check if input is a gate
+                # Check if input is a gate: use the computed value of its output event
                 input_gate = next((g for g in tree.gates if g.id == input_id), None)
                 if input_gate:
-                    # Use gate's last known output
-                    input_values.append(input_gate.evaluate([]))
+                    gate_output = tree.get_event(input_gate.output_id)
+                    if gate_output and gate_output.value is not None:
+                        input_values.append(gate_output.value)
+                    else:
+                        input_values.append(False)
                 else:
                     input_values.append(False)
 
@@ -343,6 +349,7 @@ class ParallelFTAEvaluator(NodeEvaluator):
 
         # Cache result
         self._gate_cache.set(cache_key, result)
+        gate.value = result
 
         # Set output event value
         output_event = tree.get_event(gate.output_id)

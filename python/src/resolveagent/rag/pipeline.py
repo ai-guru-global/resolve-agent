@@ -33,6 +33,8 @@ class RAGPipeline:
         embedding_model: str | None = None,
         vector_backend: str = "milvus",
         rag_document_client: Any | None = None,
+        milvus_host: str | None = None,
+        milvus_port: int | None = None,
     ) -> None:
         self.embedding_model = embedding_model or os.getenv("EMBEDDING_MODEL", "text-embedding-v2")
         self.vector_backend = vector_backend
@@ -41,6 +43,8 @@ class RAGPipeline:
         self._retriever = Retriever(vector_backend=vector_backend)
         self._reranker = Reranker()
         self._rag_doc_client = rag_document_client
+        self._milvus_host = milvus_host
+        self._milvus_port = milvus_port
 
     async def ingest(
         self,
@@ -153,10 +157,17 @@ class RAGPipeline:
             embeddings: Embedding vectors.
             metadata: Document metadata.
         """
-        from resolveagent.rag.index.milvus import MilvusStore
+        # Initialize vector store connection based on configured backend
+        if self.vector_backend == "milvus":
+            from resolveagent.rag.index.milvus import MilvusStore
 
-        # Initialize vector store connection
-        store = MilvusStore()
+            store = MilvusStore(host=self._milvus_host, port=self._milvus_port)
+        elif self.vector_backend == "qdrant":
+            from resolveagent.rag.index.qdrant import QdrantStore
+
+            store = QdrantStore()
+        else:
+            raise ValueError(f"Unsupported vector backend: {self.vector_backend}")
         await store.connect()
 
         try:

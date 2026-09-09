@@ -79,18 +79,18 @@ def run(operation: str, path: str, content: str = "", **kwargs: Any) -> dict[str
 def _validate_path(path: str) -> str | None:
     """Validate and sanitize file path."""
     path = os.path.expanduser(path)
-    abs_path = os.path.abspath(path)
+    abs_path = os.path.realpath(path)
 
     for allowed_dir in ALLOWED_BASE_DIRS:
-        allowed_abs = os.path.abspath(os.path.expanduser(allowed_dir))
+        allowed_abs = os.path.realpath(os.path.expanduser(allowed_dir))
         if abs_path == allowed_abs or abs_path.startswith(allowed_abs + os.sep):
             return abs_path
 
     if not path.startswith("/"):
-        base_dir = os.path.expanduser(ALLOWED_BASE_DIRS[0])
+        base_dir = os.path.realpath(os.path.expanduser(ALLOWED_BASE_DIRS[0]))
         full_path = os.path.join(base_dir, path)
-        abs_full_path = os.path.abspath(full_path)
-        if abs_full_path.startswith(os.path.abspath(base_dir) + os.sep) or abs_full_path == os.path.abspath(base_dir):
+        abs_full_path = os.path.realpath(full_path)
+        if abs_full_path.startswith(base_dir + os.sep) or abs_full_path == base_dir:
             return abs_full_path
 
     logger.warning(f"Path validation failed: {path}")

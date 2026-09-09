@@ -352,8 +352,9 @@ class ExecutionEngine:
                 yield chunk
 
         else:
-            # Non-streaming execution for other types
-            result = await agent.reply(message)
+            # Non-streaming execution for other types; pass the decision so the
+            # agent skips its own redundant selector run.
+            result = await agent.reply(message, decision=decision)
 
             yield {
                 "type": "content",
@@ -380,7 +381,7 @@ class ExecutionEngine:
             Execution result.
         """
         message = {"content": input_text, "context": ctx.context}
-        return await agent.reply(message)
+        return await agent.reply(message, decision=decision)
 
     async def _stream_direct_llm(
         self,

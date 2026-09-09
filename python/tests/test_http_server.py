@@ -323,3 +323,132 @@ async def test_selector_route_response_schema(client):
     schema = resp.json()
     paths = schema.get("paths", {})
     assert "/v1/selector/route" in paths, f"/v1/selector/route not found in OpenAPI paths: {list(paths.keys())}"
+
+
+# -----------------------------------------------------------------------
+# Error event contract (Go ExecuteAgentResponse)
+# -----------------------------------------------------------------------
+
+
+def test_build_error_event_includes_nested_error():
+    """_build_error_event carries both the nested Go-style error and flat fields."""
+    from resolveagent.runtime.http_server import _build_error_event
+
+    event = _build_error_event(ValueError("bad input"))
+    assert event["type"] == "error"
+    assert event["error"] == {
+        "error_code": "INVALID_ARGUMENT",
+        "category": "validation",
+        "message": "bad input",
+    }
+    # Flat fields kept for backward compatibility
+    assert event["error_code"] == "INVALID_ARGUMENT"
+    assert event["message"] == "bad input"
+
+
+# -----------------------------------------------------------------------
+# Rate limiting: X-Forwarded-For and idle-client pruning
+# -----------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_rate_limit_uses_x_forwarded_for(app):
+    """Clients are rate-limited independently by X-Forwarded-For IP."""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        for _ in range(60):
+            await ac.get("/health", headers={"X-Forwarded-For": "203.0.113.7"})
+        resp = await ac.get("/health", headers={"X-Forwarded-For": "203.0.113.7"})
+        assert resp.status_code == 429
+        other = await ac.get("/health", headers={"X-Forwarded-For": "203.0.113.8"})
+        assert other.status_code == 200
+
+
+def test_rate_limit_prunes_idle_clients():
+    """Buckets idle for over 5 minutes are dropped from the map."""
+    import time
+
+    from resolveagent.runtime.http_server import RateLimitMiddleware
+
+    mw = RateLimitMiddleware(app=None)
+    now = time.time()
+    mw.requests["stale"] = [now - 400]
+    mw.requests["active"] = [now]
+    mw._prune_idle_clients(now)
+    assert "stale" not in mw.requests
+    assert "active" in mw.requests
+
+
+# -----------------------------------------------------------------------
+# /v1/selector/route flag passthrough
+# -----------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_selector_route_forwards_enrich_and_bypass_flags(server):
+    """enrich_context/bypass_cache flags are forwarded to selector.route()."""
+    from unittest.mock import AsyncMock, MagicMock
+
+    from resolveagent.selector.selector import RouteDecision
+
+    mock_selector = MagicMock()
+    mock_selector.route = AsyncMock(return_value=RouteDecision(route_type="skill", route_target="web-search", confidence=0.9))
+    server._selectors["hybrid"] = mock_selector
+
+    async with AsyncClient(transport=ASGITransport(app=server.app), base_url="http://test") as ac:
+        resp = await ac.post(
+            "/v1/selector/route",
+            json={
+                "input_text": "search the web for tutorials",
+                "strategy": "hybrid",
+                "enrich_context": True,
+                "bypass_cache": True,
+            },
+        )
+    assert resp.status_code == 200
+    _, kwargs = mock_selector.route.call_args
+    assert kwargs["enrich_context"] is True
+    assert kwargs["bypass_cache"] is True
+
+
+# -----------------------------------------------------------------------
+# /v1/solutions/semantic-search
+# -----------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_semantic_search_filters_results_in_memory(app, monkeypatch):
+    """Semantic search filters RAG results by domain/tags and maps the text key."""
+    from resolveagent.rag import pipeline as rag_pipeline
+
+    class _FakePipeline:
+        async def query(self, collection_id, query, top_k=5):
+            return [
+                {
+                    "text": "x" * 300,
+                    "score": 0.9,
+                    "metadata": {"solution_id": "s1", "title": "Pod Crash Fix", "domain": "k8s", "tags": ["pod"]},
+                },
+                {
+                    "text": "mysql restart",
+                    "score": 0.8,
+                    "metadata": {"solution_id": "s2", "title": "DB Fix", "domain": "db", "tags": ["mysql"]},
+                },
+            ]
+
+    monkeypatch.setattr(rag_pipeline, "RAGPipeline", _FakePipeline)
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        resp = await ac.post("/v1/solutions/semantic-search", json={"query": "pod crash", "domain": "k8s"})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 1
+        result = data["results"][0]
+        assert result["solution_id"] == "s1"
+        assert result["title"] == "Pod Crash Fix"
+        assert result["snippet"] == "x" * 200
+
+        resp = await ac.post("/v1/solutions/semantic-search", json={"query": "pod crash", "tags": ["mysql"]})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 1
+        assert data["results"][0]["solution_id"] == "s2"

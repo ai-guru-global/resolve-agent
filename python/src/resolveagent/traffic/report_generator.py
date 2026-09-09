@@ -229,14 +229,13 @@ class ReportGenerator:
         rag_context = ""
         if self._rag is not None:
             try:
-                rag_result = await self._rag.query(
+                chunks = await self._rag.query(
                     collection_id=self._rag_collection,
                     query=f"traffic analysis {' '.join(n.label for n in graph.nodes[:5])}",
                     top_k=3,
                 )
-                chunks = rag_result.get("chunks", [])
                 if chunks:
-                    rag_context = "\n\n相关历史分析参考:\n" + "\n".join(c.get("content", "") for c in chunks[:3])
+                    rag_context = "\n\n相关历史分析参考:\n" + "\n".join(c.get("content", c.get("text", "")) for c in chunks[:3])
             except Exception:
                 logger.debug("RAG context retrieval failed", exc_info=True)
 

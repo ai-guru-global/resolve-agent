@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -209,7 +209,7 @@ class TrafficCollector:
                 "response_size": r.response_size,
                 "trace_id": r.trace_id,
                 "span_id": r.span_id,
-                "timestamp": r.timestamp or datetime.utcnow().isoformat(),
+                "timestamp": r.timestamp or datetime.now(UTC).isoformat().replace("+00:00", "Z"),
                 "metadata": r.metadata,
             }
             for r in records

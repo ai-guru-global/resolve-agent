@@ -70,6 +70,7 @@ class FTAEngine:
 
             result = await self.evaluator.evaluate(event, context or {})
             event_results[event.id] = result
+            event.value = result
 
             yield {
                 "type": "node.completed",
@@ -89,6 +90,10 @@ class FTAEngine:
 
             result = gate.evaluate(tree.get_input_values(gate.id))
             gate_results[gate.id] = result
+            gate.value = result
+            output_event = tree.get_event(gate.output_id)
+            if output_event is not None:
+                output_event.value = result
             top_event_result = result  # Last gate is the top event
 
             yield {

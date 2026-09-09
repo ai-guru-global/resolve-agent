@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -45,8 +46,18 @@ class NodeEvaluator:
         self.llm_provider = llm_provider
         self.rag_pipeline = rag_pipeline
 
-        # Cache for evaluation results
-        self._cache: dict[str, bool] = {}
+        # Cache for evaluation results: key -> (timestamp, value)
+        self._cache: dict[str, tuple[float, bool]] = {}
+        self._cache_ttl = 300.0
+        self._skill_loader: Any | None = None
+
+    def _get_skill_loader(self) -> Any:
+        """Return a shared SkillLoader, creating it on first use."""
+        if self._skill_loader is None:
+            from resolveagent.skills.loader import SkillLoader
+
+            self._skill_loader = SkillLoader()
+        return self._skill_loader
 
     async def evaluate(self, event: FTAEvent, context: dict[str, Any]) -> bool:
         """Evaluate a basic event.
@@ -60,12 +71,16 @@ class NodeEvaluator:
         """
         # Check cache first
         cache_key = f"{event.id}:{hash(str(context))}"
-        if cache_key in self._cache:
-            logger.debug(
-                "Using cached evaluation result",
-                extra={"event_id": event.id, "result": self._cache[cache_key]},
-            )
-            return self._cache[cache_key]
+        cached = self._cache.get(cache_key)
+        if cached is not None:
+            cached_at, cached_value = cached
+            if time.monotonic() - cached_at < self._cache_ttl:
+                logger.debug(
+                    "Using cached evaluation result",
+                    extra={"event_id": event.id, "result": cached_value},
+                )
+                return cached_value
+            del self._cache[cache_key]
 
         # Parse evaluator string: "type:target"
         if not event.evaluator:
@@ -73,7 +88,7 @@ class NodeEvaluator:
                 "No evaluator defined for event",
                 extra={"event_id": event.id, "event_name": event.name},
             )
-            return True
+            return False
 
         evaluator_type, _, target = event.evaluator.partition(":")
 
@@ -95,10 +110,10 @@ class NodeEvaluator:
                 result = self._evaluate_context(target, context)
             else:
                 logger.warning("Unknown evaluator type: %s", evaluator_type)
-                result = True
+                result = False
 
             # Cache the result
-            self._cache[cache_key] = result
+            self._cache[cache_key] = (time.monotonic(), result)
             return result
 
         except Exception as e:
@@ -125,9 +140,15 @@ class NodeEvaluator:
                 "Skill executor not available, cannot evaluate skill",
                 extra={"skill_name": skill_name},
             )
-            return True
+            return False
 
         logger.info("Evaluating via skill: %s", skill_name)
+
+        try:
+            skill = self._get_skill_loader().load(skill_name)
+        except FileNotFoundError:
+            logger.error("Skill not found", extra={"skill_name": skill_name})
+            return False
 
         # Merge event parameters with context
         skill_input = {**params}
@@ -135,7 +156,17 @@ class NodeEvaluator:
             skill_input["_context"] = context["context"]
 
         try:
-            result = await self.skill_executor.execute(skill_name, skill_input)
+            result = await self.skill_executor.execute(skill, skill_input)
+
+            # SkillResult wraps outputs; plain values are used as-is
+            if hasattr(result, "outputs"):
+                if not getattr(result, "success", True):
+                    logger.warning(
+                        "Skill returned error",
+                        extra={"skill_name": skill_name, "error": getattr(result, "error", None)},
+                    )
+                    return False
+                result = result.outputs
 
             # Parse result as boolean
             if isinstance(result, bool):
@@ -182,7 +213,7 @@ class NodeEvaluator:
                 "RAG pipeline not available, cannot evaluate RAG",
                 extra={"collection_id": collection_id},
             )
-            return True
+            return False
 
         logger.info("Evaluating via RAG: %s", collection_id)
 
@@ -253,7 +284,7 @@ class NodeEvaluator:
                 "LLM provider not available, cannot evaluate LLM",
                 extra={"model_hint": model_hint},
             )
-            return True
+            return False
 
         logger.info("Evaluating via LLM: %s", model_hint)
 

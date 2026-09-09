@@ -16,9 +16,13 @@ if TYPE_CHECKING:
 
     from resolveagent.mcp.config import MCPServerConfig
 
+from resolveagent import __version__
 from resolveagent.mcp.types import JSONRPCRequest, JSONRPCResponse, MCPTool
 
 logger = logging.getLogger(__name__)
+
+# MCP protocol revision this client speaks.
+MCP_PROTOCOL_VERSION = "2024-11-05"
 
 
 # ---------------------------------------------------------------------------
@@ -52,16 +56,20 @@ class MCPClient(ABC):
     async def health_check(self) -> bool:
         """Check if the server is responsive.
 
+        Sends an MCP ``ping`` (falling back to ``tools/list`` for servers that
+        do not implement ping). ``initialize`` is deliberately not used here:
+        it is only valid once per session, during ``connect()``.
+
         Returns:
-            True if the server responds to a ping/initialize.
+            True if the server responds to the probe.
         """
-        try:
-            # Try initialize as a health check
-            result = await self._call_method("initialize", {"protocolVersion": "2024-11-05"})
-            return result is not None
-        except Exception as e:
-            logger.debug("Health check failed for %s: %s", self.config.name, e)
-            return False
+        for probe in ("ping", "tools/list"):
+            try:
+                await self._call_method(probe, {})
+                return True
+            except Exception as e:
+                logger.debug("Health check probe %s failed for %s: %s", probe, self.config.name, e)
+        return False
 
     async def list_tools(self) -> list[MCPTool]:
         """List available tools from the MCP server.
@@ -157,8 +165,38 @@ class StdioMCPClient(MCPClient):
             raise RuntimeError(f"Failed to start MCP server '{self.config.name}': {e}") from e
 
         self._connected = True
+
+        # MCP handshake: initialize request + initialized notification,
+        # required before any other method (e.g. tools/list) per the spec.
+        try:
+            await self._call_method(
+                "initialize",
+                {
+                    "protocolVersion": MCP_PROTOCOL_VERSION,
+                    "capabilities": {},
+                    "clientInfo": {"name": "resolveagent", "version": __version__},
+                },
+            )
+            await self._notify("notifications/initialized")
+        except Exception:
+            await self.close()
+            raise
+
         logger.info("MCP server started: %s (PID: %s)", self.config.name, self._process.pid)
         return self
+
+    async def _notify(self, method: str, params: dict[str, Any] | None = None) -> None:
+        """Send a JSON-RPC notification (no id, no response expected)."""
+        if not self._connected or self._process is None:
+            raise RuntimeError("MCP client not connected")
+
+        async with self._lock:
+            notification = JSONRPCRequest(method=method, params=params)
+            notification_json = notification.model_dump_json(exclude_none=True)
+
+            assert self._process.stdin is not None
+            self._process.stdin.write(notification_json.encode() + b"\n")
+            await self._process.stdin.drain()
 
     async def close(self) -> None:
         """Terminate the subprocess."""

@@ -424,6 +424,7 @@ class ContextEnricher:
         if not conversation_id:
             return []
 
+        memory_client = None
         # Try to use memory client if registry provides one
         if self._registry_client:
             try:
@@ -434,7 +435,7 @@ class ContextEnricher:
                     if endpoint:
                         from resolveagent.store.memory_client import MemoryClient
 
-                        memory_client = MemoryClient(address=endpoint.url.replace("http://", "").replace("https://", ""))
+                        memory_client = MemoryClient(address=f"{endpoint.host}:{endpoint.port}")
                         await memory_client.connect()
             except Exception as e:
                 self._logger.warning(f"Failed to get memory client: {e}")

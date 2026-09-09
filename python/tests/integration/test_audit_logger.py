@@ -153,3 +153,16 @@ class TestDecisionAuditLogger:
         await asyncio.sleep(0.2)
         await logger.close()
         assert logger._enabled is False
+
+    @pytest.mark.asyncio
+    async def test_flush_drains_queue(self) -> None:
+        """flush() returns once all queued records are written (no deadlock)."""
+        store = AsyncMock()
+        logger = DecisionAuditLogger(store_client=store)
+        try:
+            for _ in range(3):
+                await logger.log(_make_decision(), _make_context())
+            await asyncio.wait_for(logger.flush(), timeout=5.0)
+            assert store.create_audit_record.call_count == 3
+        finally:
+            await logger.close()

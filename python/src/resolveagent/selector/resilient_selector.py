@@ -29,6 +29,11 @@ from resolveagent.selector.selector import IntelligentSelector, RouteDecision
 logger = logging.getLogger(__name__)
 
 
+def _canonical_route_type(route_type: str) -> str:
+    """Treat 'fta' and 'workflow' as the same route when deduplicating."""
+    return "fta" if route_type == "workflow" else route_type
+
+
 # ---------------------------------------------------------------------------
 # Data models
 # ---------------------------------------------------------------------------
@@ -436,7 +441,7 @@ class ResilientSelector:
             )
 
             # Skip already-tried routes (force different route)
-            if decision.route_type in tried_routes and attempt_num > 0:
+            if _canonical_route_type(decision.route_type) in tried_routes and attempt_num > 0:
                 decision = self._force_alternative_route(decision, tried_routes, ctx)
 
             # Execute
@@ -445,7 +450,7 @@ class ResilientSelector:
             attempt_record.latency_ms = (time.monotonic() - attempt_start) * 1000
 
             session.attempts.append(attempt_record)
-            tried_routes.add(decision.route_type)
+            tried_routes.add(_canonical_route_type(decision.route_type))
 
             # Check if executor suggested a rephrase
             if not attempt_record.success and attempt_record.error:

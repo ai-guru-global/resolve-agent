@@ -139,7 +139,7 @@ class HybridPlanner:
             return await self._llm_decompose_plan(plan_id, goal, context or {})
         else:
             # Fallback: 简单分解
-            return self._simple_decompose_plan(plan_id, goal)
+            return self._simple_decompose_plan(plan_id, goal, context)
 
     async def _llm_decompose_plan(
         self,
@@ -195,7 +195,7 @@ class HybridPlanner:
             # LLM 返回空步骤时回退规则分解, 避免产生空计划直接"完成"
             if not steps:
                 logger.warning("LLM decomposition returned no steps, using simple fallback")
-                return self._simple_decompose_plan(plan_id, goal)
+                return self._simple_decompose_plan(plan_id, goal, context)
 
             return Plan(
                 id=plan_id,
@@ -208,7 +208,7 @@ class HybridPlanner:
 
         except Exception as e:
             logger.warning("LLM decomposition failed, using simple fallback: %s", e)
-            return self._simple_decompose_plan(plan_id, goal)
+            return self._simple_decompose_plan(plan_id, goal, context)
 
     @staticmethod
     def _extract_json(content: str) -> dict[str, Any]:
@@ -253,12 +253,18 @@ class HybridPlanner:
             raise ValueError(f"Expected JSON object, got {type(parsed).__name__}")
         return parsed
 
-    def _simple_decompose_plan(self, plan_id: str, goal: str) -> Plan:
+    def _simple_decompose_plan(
+        self,
+        plan_id: str,
+        goal: str,
+        context: dict[str, Any] | None = None,
+    ) -> Plan:
         """简单分解 (无 LLM 时 fallback).
 
         Args:
             plan_id: 计划 ID
             goal: 目标描述
+            context: 上下文
 
         Returns:
             简单分解的 Plan
@@ -317,6 +323,7 @@ class HybridPlanner:
             steps=steps,
             mode=PlanningMode.DELIBERATIVE,
             original_goal=goal,
+            context=context or {},
         )
 
     async def execute_step(

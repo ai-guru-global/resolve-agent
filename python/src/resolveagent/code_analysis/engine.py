@@ -212,6 +212,9 @@ class StaticAnalysisEngine:
             "data": {
                 "analysis_id": analysis_id,
                 "stats": result.stats,
+                "call_graph": result.call_graph,
+                "errors": result.errors,
+                "solutions": result.solutions,
             },
         }
 
@@ -239,6 +242,9 @@ class StaticAnalysisEngine:
             if event["type"] == "analysis_complete":
                 result.analysis_id = event["data"]["analysis_id"]
                 result.stats = event["data"]["stats"]
+                result.call_graph = event["data"]["call_graph"]
+                result.errors = event["data"]["errors"]
+                result.solutions = event["data"]["solutions"]
         return result
 
     async def _persist_call_graph(

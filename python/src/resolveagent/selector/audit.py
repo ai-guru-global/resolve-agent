@@ -79,11 +79,14 @@ class DecisionAuditLogger:
         while self._enabled:
             try:
                 record = await asyncio.wait_for(self._queue.get(), timeout=1.0)
-                await self._write_record(record)
             except TimeoutError:
                 continue
+            try:
+                await self._write_record(record)
             except Exception as e:
                 logger.error("Error processing audit record: %s", e)
+            finally:
+                self._queue.task_done()
 
     async def _write_record(self, record: AuditRecord) -> None:
         """Write an audit record to storage."""
@@ -195,7 +198,7 @@ class DecisionAuditLogger:
         await self._queue.join()
 
     async def close(self) -> None:
-        """Stop the worker and flush pending records."""
+        """Stop the worker immediately; records still queued are discarded."""
         self._enabled = False
         if self._worker_task:
             self._worker_task.cancel()

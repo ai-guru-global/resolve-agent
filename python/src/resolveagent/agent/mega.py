@@ -16,6 +16,9 @@ logger = logging.getLogger(__name__)
 # Valid selector mode values.
 SelectorMode = Literal["selector", "hooks", "skills"]
 
+# Maximum recursion depth for workflow agent nodes re-entering reply().
+MAX_REPLY_DEPTH = 3
+
 
 class MegaAgent(BaseAgent):
     """Mega Agent that owns the Intelligent Selector.
@@ -73,20 +76,41 @@ class MegaAgent(BaseAgent):
 
         return self._selector_instance
 
-    async def reply(self, message: dict[str, Any]) -> dict[str, Any]:
+    async def reply(
+        self,
+        message: dict[str, Any],
+        decision: RouteDecision | None = None,
+        _depth: int = 0,
+    ) -> dict[str, Any]:
         """Process a message through the Intelligent Selector and route accordingly.
 
         Args:
             message: Input message.
+            decision: Pre-computed routing decision. When provided (e.g. by the
+                ExecutionEngine, which already routed this request), the internal
+                selector run is skipped.
+            _depth: Internal recursion depth for workflow agent nodes; at
+                MAX_REPLY_DEPTH the request degrades to a direct LLM answer.
 
         Returns:
             Response from the selected subsystem.
         """
-        selector = self._get_selector()
-        decision = await selector.route(
-            input_text=message.get("content", ""),
-            agent_id=self.name,
-        )
+        degraded_by_depth = _depth >= MAX_REPLY_DEPTH
+        if degraded_by_depth:
+            logger.warning(
+                "Max reply recursion depth reached, degrading to direct answer",
+                extra={"agent": self.name, "depth": _depth},
+            )
+            from resolveagent.selector.selector import RouteDecision
+
+            decision = RouteDecision(route_type="direct", reasoning="max reply recursion depth reached")
+
+        if decision is None:
+            selector = self._get_selector()
+            decision = await selector.route(
+                input_text=message.get("content", ""),
+                agent_id=self.name,
+            )
 
         logger.info(
             "Selector decision",
@@ -100,7 +124,9 @@ class MegaAgent(BaseAgent):
 
         # Execute based on decision.route_type
         try:
-            result = await self._execute_by_route(decision, message)
+            result = await self._execute_by_route(decision, message, _depth=_depth)
+            if degraded_by_depth:
+                result["metadata"]["degraded"] = True
             return result
         except Exception as e:
             logger.error(
@@ -126,12 +152,14 @@ class MegaAgent(BaseAgent):
         self,
         decision: RouteDecision,
         message: dict[str, Any],
+        _depth: int = 0,
     ) -> dict[str, Any]:
         """Execute the request based on the routing decision.
 
         Args:
             decision: The routing decision from the Intelligent Selector.
             message: The original input message.
+            _depth: Recursion depth, propagated to workflow agent nodes.
 
         Returns:
             Execution result.
@@ -153,7 +181,7 @@ class MegaAgent(BaseAgent):
 
         elif route_type in ("workflow", "fta"):
             # FTA workflow execution
-            return await self._execute_workflow(content, decision)
+            return await self._execute_workflow(content, decision, _depth=_depth)
 
         elif route_type == "code_analysis":
             # Code analysis
@@ -161,7 +189,7 @@ class MegaAgent(BaseAgent):
 
         elif route_type == "multi":
             # Multi-route execution (chain of decisions)
-            return await self._execute_multi(content, decision)
+            return await self._execute_multi(content, decision, _depth=_depth)
 
         else:
             # Unknown route type, fallback to direct
@@ -327,6 +355,7 @@ class MegaAgent(BaseAgent):
         self,
         content: str,
         decision: RouteDecision,
+        _depth: int = 0,
     ) -> dict[str, Any]:
         """Execute an FTA workflow."""
         from resolveagent.fta.engine import FTAEngine
@@ -360,26 +389,27 @@ class MegaAgent(BaseAgent):
         # Execute workflow
         if workflow_def:
             # Use workflow definition to execute
-            result = await self._execute_defined_workflow(content, workflow_def, decision)
-            return result
+            result = await self._execute_defined_workflow(content, workflow_def, decision, _depth=_depth)
+            if str(result.get("content") or "").strip():
+                return result
 
-        # Fallback: simple workflow execution
-        return {
-            "role": "assistant",
-            "content": f"工作流 '{workflow_name}' 已启动分析:\n{content}",
-            "metadata": {
-                "route_type": decision.route_type,
-                "route_target": decision.route_target,
-                "confidence": decision.confidence,
-                "workflow": workflow_name,
-            },
-        }
+        # No executable workflow (missing definition or empty result): degrade
+        # to a direct LLM answer instead of returning a placeholder notice.
+        logger.info(
+            "Workflow cannot produce a real answer, degrading to direct",
+            extra={"workflow": workflow_name},
+        )
+        result = await self._execute_direct(content, decision)
+        result["metadata"]["degraded"] = True
+        result["metadata"]["workflow"] = workflow_name
+        return result
 
     async def _execute_defined_workflow(
         self,
         content: str,
         workflow_def: dict[str, Any],
         decision: RouteDecision,
+        _depth: int = 0,
     ) -> dict[str, Any]:
         """Execute a defined workflow.
 
@@ -387,6 +417,7 @@ class MegaAgent(BaseAgent):
             content: Input content.
             workflow_def: Workflow definition.
             decision: Route decision.
+            _depth: Recursion depth, incremented for nested agent nodes.
 
         Returns:
             Execution result.
@@ -417,8 +448,8 @@ class MegaAgent(BaseAgent):
             elif node_type == "end":
                 break
             elif node_type == "agent":
-                # Process with LLM
-                result = await self.reply({"content": current_data})
+                # Process with LLM; depth-guarded against recursive workflow routing
+                result = await self.reply({"content": current_data}, _depth=_depth + 1)
                 current_data = result.get("content", "")
                 results.append({"node": node_id, "result": current_data})
             elif node_type == "skill":
@@ -640,12 +671,13 @@ class MegaAgent(BaseAgent):
         self,
         content: str,
         decision: RouteDecision,
+        _depth: int = 0,
     ) -> dict[str, Any]:
         """Execute multiple routes in sequence."""
         results = []
 
         for sub_decision in decision.chain:
-            sub_result = await self._execute_by_route(sub_decision, {"content": content})
+            sub_result = await self._execute_by_route(sub_decision, {"content": content}, _depth=_depth)
             results.append(sub_result)
 
         # Combine results

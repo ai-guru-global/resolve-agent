@@ -38,6 +38,7 @@ class FTAEvent:
     evaluator: str = ""  # e.g., "skill:web-search", "rag:collection-id"
     parameters: dict[str, Any] = field(default_factory=dict)
     value: bool | None = None
+    probability: float | None = None  # Monte Carlo 仿真用；None 表示不参与概率仿真
 
 
 @dataclass

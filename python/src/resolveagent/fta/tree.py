@@ -155,3 +155,25 @@ class FaultTree:
             if input_gate and input_gate.value is not None:
                 values.append(input_gate.value)
         return values
+
+    def validate(self) -> list[str]:
+        """Return semantic warnings for gate misuse.
+
+        Currently checks: INHIBIT gates must have a CONDITIONING event input;
+        otherwise they silently behave as a plain AND gate.
+        """
+        warnings: list[str] = []
+        for gate in self.gates:
+            if gate.gate_type != GateType.INHIBIT:
+                continue
+            has_conditioning = any(
+                (event := self.get_event(input_id)) is not None
+                and event.event_type == EventType.CONDITIONING
+                for input_id in gate.input_ids
+            )
+            if not has_conditioning:
+                warnings.append(
+                    f"INHIBIT gate '{gate.id}' has no CONDITIONING event input; "
+                    "treating it as a plain AND gate"
+                )
+        return warnings

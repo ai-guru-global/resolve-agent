@@ -992,6 +992,18 @@ function InteractiveDemo() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isPaused, startCycling]);
 
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+      } else if (!isPaused) {
+        startCycling();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [isPaused, startCycling]);
+
   const selectScenario = (i: number) => {
     if (timerRef.current) clearInterval(timerRef.current);
     setIsPaused(true);

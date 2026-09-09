@@ -31,8 +31,8 @@ export default function AgentCreate() {
     api.getAgent(fromId).then((agent) => {
       setName(`${agent.name} (副本)`);
       setType(agent.type);
-      setModel(String(agent.config.model ?? 'mimo-v2.5-pro'));
-      setPrompt(agent.harness.system_prompt ?? '');
+      setModel(String(agent.config?.model ?? 'mimo-v2.5-pro'));
+      setPrompt(agent.harness?.system_prompt ?? '');
     }).catch(() => {
       toast.error('加载源 Agent 信息失败');
     }).finally(() => setPrefilling(false));

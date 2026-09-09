@@ -155,32 +155,32 @@ export default function AgentList() {
                   {/* Right: Harness summary */}
                   <div className="hidden sm:flex items-center gap-3 shrink-0">
                     {/* Mode badge */}
-                    <Badge variant="secondary" className={cn(
-                      'text-[10px] gap-1 border',
-                      agent.mode === 'all_skills'
-                        ? 'border-primary/20 bg-primary/5 text-primary'
-                        : 'border-primary/20 bg-primary/5 text-primary',
-                    )}>
-                      {agent.mode === 'all_skills' ? <Layers className="h-3 w-3" /> : <Brain className="h-3 w-3" />}
-                      {agent.mode === 'all_skills' ? 'All Skills' : 'Selector'}
-                    </Badge>
+                    {agent.mode && (
+                      <Badge variant="secondary" className={cn(
+                        'text-[10px] gap-1 border',
+                        'border-primary/20 bg-primary/5 text-primary',
+                      )}>
+                        {agent.mode === 'all_skills' ? <Layers className="h-3 w-3" /> : <Brain className="h-3 w-3" />}
+                        {agent.mode === 'all_skills' ? 'All Skills' : 'Selector'}
+                      </Badge>
+                    )}
 
                     {/* Skills count */}
                     <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
                       <Zap className="h-3 w-3" />
-                      {agent.harness.skills.length + agent.harness.tools.length}
+                      {(agent.harness?.skills?.length ?? 0) + (agent.harness?.tools?.length ?? 0)}
                     </span>
 
                     {/* Hooks count */}
                     <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
                       <Shield className="h-3 w-3" />
-                      {agent.harness.hooks.length}
+                      {agent.harness?.hooks?.length ?? 0}
                     </span>
 
                     {/* Memory */}
                     <span className={cn(
                       'flex items-center gap-1 text-[11px]',
-                      agent.harness.memory_enabled ? 'text-status-healthy' : 'text-muted-foreground/40',
+                      agent.harness?.memory_enabled ? 'text-status-healthy' : 'text-muted-foreground/40',
                     )}>
                       <MemoryStick className="h-3 w-3" />
                     </span>

@@ -1,82 +1,86 @@
-# DESIGN — ResolveAgent GTM 策略中枢
+# DESIGN — ResolveAgent GTM 白皮书
 
-<!-- impeccable:design-sidecar 1 · surface: GTM/index.html · seed: 69c678c1 · mode: persuade -->
+<!-- design-sidecar 2 · surface: GTM/index.html · hallmark rebuild 2026-09-07 · genre: editorial · macrostructure: Long Document · theme: Editorial · nav: N6 masthead · footer: Ft4 colophon -->
 
-记录自已构建页面（ground truth），非意图。世界：**调度控制室 / 调度总图**（用户锁定融合：总图主导 + 终端会话、对撞机事件回放为控制室仪器 + 类别标准转化层）。
+记录已构建页面（ground truth），非意图。世界：**编辑部白皮书**（暖纸 + 墨 + 朱砂）× 结构 **Long Document**（报头 → 封面 → 图版 → 账本 → 时刻表 → 封底 → 版权栏）。原「调度总图 / 白昼调度台」暗浅色仪器世界已整体退役，被 Hallmark redesign 全量替换；产品事实、文案意图、外链与演示数据全部沿用。
 
-**Register（2026-08-31 用户定向）**：全页向"绝对可信的企业级"收敛，以总图区块的冷色纪律为锚点——暖奶油/琥珀底全部退役为石板冷底，无 glow，无装饰性动效；仪表元素只用仪器语法（状态 LED、方位刻度、mono 数据）。
+**Register（当前事实）**：纸页就是纸页——无 glow、无阴影、无渐变、无滚动 reveal；强调只靠 weight / 字号 / 朱砂；所有演示数据带「示意 / 演示 / 规划示意」标签；无任何虚构声明（无客户案例 / 基准 / 证言）。终端窗与径迹版保留深色，是纸页上仅有的两块「影印仪器」。四线路色只出现在图版与账本数据内，不进入版式语言。
 
 ## World
 
-把每一次 Kubernetes 告警当作一趟列车：意图进站（枢纽「告警入口」），四条线路分岔（FTA / 技能 / RAG / 代码分析），终点站是根因。页面即一张运行中的调度总图 + 翻牌发车板。拒绝居中 hero + 三卡网格。
+把 GTM 页做成一份可引用的白皮书。访客读封面主张 → 图 1—5 看懂机制与闭环 → 数据账本对账 → 读 GTM 战略时刻表 → 封底预约演示。五张机制演示全部制成印刷图版（`figure.plate-fig` + `figcaption`，图 N 朱砂图号，`plate-note` 声明示意）。首屏 = N6 报头（期号行「第 1 号 · 市场进入策略（GTM）白皮书 · 二〇二六年九月」+ 刊名 ResolveAgent + 两侧 wing 语 + 1px/3px double 双细线导航）之下是居中封面：题眉、三行大标题、导语、署名行；随后 图 1 活字发车板作为第一张图版。
 
-## Palette
+## Palette（OKLCH token，无内联色值 · gate 48）
 
-| Token | Hex | 用途 |
+所有颜色与字体一律引用 `:root` token（`GTM/tokens.css` 为同块导出）。禁止在规则内书写 hex / oklch 字面量；散点色经 CSS 自定义属性类下发（`.lc-*` 注入 `--lc`、`.rt-*` 路由名、`.tag-*` SVG 铭牌、`.t-*` 深版径迹、`.ln-*` 线路描边）。
+
+| Token | 值 | 用途 |
 |---|---|---|
-| `--bg` | #0b1220 | 页面底（深夜蓝，控制室暗光场景） |
-| `--bg2` | #0e1626 | 交替区块底 |
-| `--panel/--panel2` | #111c30 / #0d1524 | 卡片/仪器面板 |
-| `--ink/--ink2/--ink3` | #e8eef7 / #a7b4c9 / #7d8da6 | 正文三级（均 ≥4.5:1） |
-| `--fta` | #ff6b35 | 线路1 故障树（信号橙，主 CTA 同色） |
-| `--rag` | #00c2a8 | 线路2 检索增强（青） |
-| `--skill` | #7c6cff | 线路3 技能（紫） |
-| `--code` | #ffc94d | 线路4 代码分析（琥珀）+ 焦点环/选区 |
-| `--flap/--flapbg` | #dfe8f4 / #1b2536 | 翻牌冷白字 / 石板牌底（`--flapbg2` #141c2b 下半） |
-| 状态绿 | #3fb950 / #9fe3b0 | SYSTEM OK、终端成功行、会话 LED |
+| `--paper` / `--paper-2` / `--paper-3` | oklch 97% / 94% / 90.5%（暖纸） | 页底 / 面板底 / 翻牌与条底 |
+| `--rule` / `--rule-2` | oklch 85% / 68% | 细线 / 深线（表头、double 线、焦点描边基线） |
+| `--ink` / `--ink-2` / `--ink-3` | oklch 21% / 38% / 52% | 正文三级 |
+| `--accent` | oklch 52% .17 35（朱砂） | ≤5%：题眉 / 图号 / `.em-ink`「根因」/ 预约演示 CTA / `.pos mark` / `.dchip b` / `::selection` / skip / `:focus-visible` / 飞轮中心 +6/班 |
+| `--line-fta / -rag / -skill / -code` | 57% .19 40 / 52% .11 175 / 47% .21 285 / 49% .12 80 | 四线路色（仅图版内 + 账本占比条 + ICP 站点圆） |
+| `--lchip-*`（四线加深） | 36% .14 46 / 29% .083 143 / 36% .155 323 / 30% .09 74 | 发车板线路 chip 实底（白字 ≥4.5:1，实测 4.7–4.9；经 40–41 校准，与线路描边分离成对 token） |
+| `--tag-*`（四线加深） | 各线路 L−10~16% | 总图站名铭牌 tag、账本路由名 `.rt-*` |
+| `--ok-ink` / `--ok-bg` | oklch 42% .11 155 / 93% .035 155 | 「系统运行正常」/ `.stat.go` 已发车牌 |
+| `--plate-*` | 16%~92% 低彩蓝灰 | 深色仪器（终端 / 径迹版）八件套：bg、bar、rule、ink、dim、o、ok、hl |
 
-四线路色在全页（总图、回放径迹、ICP 站点、flywheel）保持同一套，是“四线”身份的唯一集合。
+favicon 为品牌资产例外（data-URI 内联 hex ≈ 朱砂/墨）。
 
-## Type
+## Type（2+1：Fraunces + Newsreader 双衬线 × JetBrains Mono 机器数据）
 
-- Display：Barlow 800/900（拉丁）+ Noto Sans SC 900（中文标题）。
-- 发车板/时刻表/标签：Barlow Condensed 600/700，宽字距。
-- 数据/终端/统计：JetBrains Mono（tabular-nums）。
-- 正文：Noto Sans SC 400/500，measure ≤62ch。
-- 无 gradient text；强调靠 weight/size；无 eyebrow/kicker。
+- Display：`--font-display` Fraunces 900（+ Noto Serif SC 兜底）——h1（clamp 40–72px，三行硬换行）、h2、刊名、nsrow 大数、CTA、飞轮节点题。
+- Body：`--font-body` Newsreader 17px/1.75（+ Noto Serif SC）——导语、署名行、图注、icprow、timetable。
+- Mono：`--font-mono` JetBrains Mono——时刻 / 事件号 / 文件路径 / 指标 / logtable / colophon / 期号行 / mast wing / `.tk▸`。
+- 中文统一 Noto Serif SC；标题一律 roman（无 italic 表头，gate 38a）；Google Fonts `media=print onload` 异步 + noscript 回退。
 
 ## Components
 
-- **翻牌牌格 `.ftile`**：石板冷底渐变上下半 + 中线，冷白字；翻转动画 `flip`（rotateX）。状态列语义色：已发车=绿、运行中=冷白、待调度=琥珀（`.fstatus .warn/.ok`）。
-- **发车板 `.board/.flapgrid`**：6 列（时间/ID/告警/→/路由/状态），头部含 LED + SYSTEM OK + 时钟；发车仅由 chip 调度触发，无随机空翻。
-- **站名铭牌 `.plate`**：三层（线路 tag+名 / 机制 / mono 统计），圆角矩形描边。
-- **终点站 `.term`**：大号线路名 + “→ 根因” + 英文小字。
-- **线路 `.line`**：当前路径实线加粗，备选虚线（实/虚状态律）。
-- **枢纽 `.hub`**：冷白双环 + 铃铛 + 「告警入口」。
-- **意图 chips `.chip`**：圆角胶囊，选中转橙。
-- **stamped CTA `.stampcta`**：总图右下大号橙块（comp 签名）。
-- **终端 `.termwin`**：深底 mono 会话，栏头为绿色状态 LED + 「调度会话审计 · AUDIT TRACE」（mac 红黄绿圆点已退役），逐行 `linein` 显现。
-- **事件回放 `.scope`**：同心环 + 方位刻度环 + 四径迹（无 glow；hover/click 隔离，幽灵虚线=竞争假设）。
-- **时刻表 `.timetable/.ttrow`** + **状态牌 `.stat`**（已发车/筹备中/规划中）。
-- **指标 `.metric`**：mono 大数字 + 线路色。
+- **N6 报头 `header.nav-mast`**：期号行（mono 居中，≤560 缩字号收字距，≤400 letter-spacing 0 保单行）→ `mast-mid`（wing「多路径智能路由」/ 刊名 Fraunces 900 / wing「排查知识自沉淀闭环」，≤960 wing 隐藏）→ `mast-rule` 1px → `mast-nav` 8 项 ul（6 页内锚 + 产品页外链 + `.mast-cta` 预约演示朱砂下边线，≤960 隐藏）→ `mast-rule.double` 3px double。
+- **封面 `#cover`**：`.kicker` 朱砂 mono 题眉；h1 三行「告警进站，/四线分岔，/终点站是根因。」（`.em-ink` 只染「根因」）；`.standfirst` 导语居中 ≤58ch；`.byline` 上下细线夹 mono 署名行（含演示窗口与示意声明）。
+- **图版 `figure.plate-fig`**：细边 + 图体 + `figcaption.plate-cap`（上方 1px 分隔线；`.fig-no` 朱砂「图 N」）+ `.plate-note`（mono 11px 示意声明）。五图共用此骨架。
+- **图 1 发车板 `.board`**：`role=table` + aria-label（含「示意数据」）。板头 = 呼吸 LED + 「发车板 · 实时进站」+ 绿点「系统运行正常」（≤560 只留绿点）+ mono 时钟；`.board-scroll`（overflow-x:auto，≤960 min-width 560 平移）内 `.flapgrid` 4 列（时刻 / 事件编号 / 告警摘要 / 分发线路，`aria-live=off`）；`.ftile` 暖纸翻牌（`::after` 中线仅数字牌，`.wide` 不画中线），`.fchip` 实色 `--lc` 线路块；noscript 静态单行回退。
+- **图 2 调度总图**：svg viewBox `0 0 1440 740`，`.fig-scroll`（min-width 920 平移）。枢纽居下（720,646 双环 + 铃铛 + 「告警入口 / 实时进站」），四线向上放射（FTA 实线 w10，RAG w9 / SKILL w8 / CODE w7 虚线 16 12），白底站名铭牌 `.plate`（`tag-*` + 机制名 + mono 调用计数），顶部四座终点站，`#train` 纸底线路色描边圆。
+- **意图模拟器 `.simrow/.chip`**：4 枚告警胶囊（Pod NotReady 默认 `.on`），选中朱砂实底白字。
+- **叙述 ticker `.ticker`**：mono，`.tk▸` 朱砂，`aria-live=polite`。
+- **图 3 审计终端 `.termwin`（深色仪器一）**：`--plate-bar` 栏头 + 绿 LED + 「resolve · 调度会话审计」；`.termbody` 7 行 mono（route → classify 0.94 → dispatch → 最小割集 → crosscheck → corpus.write +4 篇 → ✓ 根因已确认 2m 07s），每行右缘毫秒时间戳 08:42:11.204 → 08:44:18.660，逐行 `linein` 显现，末行 `.cur` 光标闪烁。
+- **图 4 事件回放 `.scope`（深色仪器二）**：同心环 + 刻度 + 幽灵虚线环（竞争假设）；四径迹 `.track.t-*`（FTA 弯曲 / RAG 直线 / SKILL、CODE 弧）+ 端点圆；mono 注记 INC-20260828-001 · 置信度 0.89。`.iso` 隔离态未选径迹 opacity .14。
+- **径迹列表 `.trk`**：`14px minmax(0,1fr)` 两行网格——`.dot` 线路色 + `.nm` 名称与 `.md` mono 路径同行（各占 grid-column 2，`.md{overflow-wrap:anywhere}`）；`.on` 线路色描边；dblclick scope 复位 FTA。
+- **图 5 语料飞轮**：svg viewBox `0 0 648 420`，四段弧箭头循环（排查执行 → 语料生成 → 检索增强 → 更准路由），`.fly-cn`/`.fly-mono` 带 `paint-order:stroke` 纸色描边光晕防弧线穿字；中心「曝光量 +6 / 班」朱砂；`.docchips` 两行 mono（六类文档 + 双写集合 code-analysis / kudig-rag）。
+- **数据账本 `#ledger`**：`5fr/7fr` 两栏。左 `.ledger` 六行 `.lrow`（mono 键 + Fraunces 大数：48 执行 / 95.7% 闭环 / 14 决策 / 30 工单 / 45⁄102 集合·文档 / 7×26×42 底座）。右 `.sh-panel`：占比 `.share`（`--lc` 条 + mono 值，FTA/技能/RAG 21%、链式/代码 14%、直达 7%）+ 留痕表 `.logtable`（min-width 552，`.tscroll` 平移；`rt-*` 线路色路由名，tr-4821…tr-4698 五条 2.3s–16.8s，完整输入标题 ellipsis）。
+- **GTM 战略 `#strategy`**：h2「开通时刻表。规划示意，非承诺」；`blockquote.pos` 左 3px 朱砂边定位主张（`.pos mark` 朱砂「多路径智能路由 + 排查知识自沉淀闭环」）；`.strat-grid`：左 ICP 3 `.icprow`（`lc-*` 站点圆）+ 渠道 3 `.icprow`（`.stat.go` 已发车 / `.stat` 筹备中 / 规划中），右 `.timetable`（M1 2026 Q3 / M2 2026 Q4 / M3 2027 Q1）+ `.ns` 北极星 4 行（`3px double` 上边；−40% MTTR / ≥0.90 / +120每周 / 300每周，基线→目标 mono 副行）+ `.datanote` 规划目标示意。
+- **封底 `#close`**：Fraunces 大标题两行「让每一次告警，/都有终点站。」；`.cta-row`：`.cta` 预约演示（3px 朱砂下边线，→ GitHub Issues 参数化标题）+ 两枚 `.cta-ghost`（GitHub 仓库 / 产品文档）。
+- **版权栏 `.colophon`（Ft4）**：`3px double` 上边，三行居中 mono（署名·期号·示意声明 / 三外链 / 图版声明 + 演示窗口）。
 
-## Motion
+## Motion（3 个原语，无 reveal）
 
-签名时刻 = 翻牌发车 + 列车沿选中线路行驶（`getPointAtLength`）+ ticker 叙述 classify→dispatch→evaluate→corpus.write→根因。其余区块仅一次性 `rise` 显现（默认可见，动画为增强）。`prefers-reduced-motion` 全关。
+签名时刻 = 翻牌进站 + 列车行驶 + 终端逐行。发车板：`FEED` 12 条队列；`mkEv` 以真实时钟合成 `HH:MM:SS` + `YYYYMMDD-HHMMSS`；初始 4 条错峰 9/7/5/3 分钟落各自线路；每 6s 自动进站（逐位 30ms stagger，`.flip` rotateX 420ms `--ease-out`）。chip 点击 → `setLine`（选中实线余虚线）+ `runTrain`（`getPointAtLength` 2600ms easeOutCubic；四步 NARRATIVE ticker 按进度 0/.22/.55/1 切换，四线置信 0.94/0.91/0.89/0.96；700ms 后淡出）。终端 IO threshold .3 逐行 260ms stagger + `.cur` 1.1s steps。时钟 1s。`prefers-reduced-motion`：全部动画压至 150ms 一次性、`flip`/`.cur` 关、JS `RM` 跳过翻牌与列车并给静态 ticker 文案。
 
 ## Browser surfaces
 
-`::selection` 琥珀、细滚动条、`:focus-visible` 琥珀环、caret、tabular-nums 均已主题化。
+`::selection` 朱砂白字、`:focus-visible` 2px 朱砂环、`html{scroll-behavior:smooth}`（RM 下 auto）、lrow/nsrow/时钟 tabular-nums、细滚动条（track `--paper-2` / thumb 纸深）、skip link 朱砂底。`html,body{overflow-x:clip}`（gate 34）。
 
-## Responsive
+## Responsive（已实测 320/375/390/414/768/1440 全 0 横向溢出）
 
-≤960px：回放/flywheel/战略单列、指标两列、nav 链接隐藏、总图横向滚动（min-width 980）、翻牌缩字号。
+- ≤960：四 grid 收 `minmax(0,1fr)` 单列；mast-wing / mast-nav 隐藏；flapgrid 收 3 列 min-width 560（事件编号列隐藏）板块平移；section padding 收 64。
+- ≤560：wrap padding 20；ttrow flex-wrap（M 码 + 时间 + 状态牌一行，说明第二行）；lrow / nsrow 收两列 minmax(96px,140px)；termbody 收 padding；mast-line / board-head 缩排（sysok 只留绿点、时钟 margin-left:auto）。
+- ≤400：mast-line letter-spacing 0 保单行。
+- 平移容器：`.board-scroll`（发车板）、`.fig-scroll`（总图 svg min-width 920）、`.tscroll`（logtable min-width 552）、`.termbody`。
+- 防溢出：grid 全用 `minmax(0,Xfr)`（mobile 单列同为 minmax(0,1fr)——1fr 裸写会让 logtable min-width 撑破轨道，已修）；h1/h2 `overflow-wrap:anywhere`；CTA 与导航链接 nowrap 不折行。
 
 ## A11y
 
-跳转链接、aria-label（总图/回放/模拟器）、ticker `aria-live`、对比 ≥4.5:1、键盘可达 chips/trk/CTA。
+skip link；发车板 `role=table` + aria-label（内嵌示意声明）；三张 svg `role=img` + aria-label；模拟器 / 径迹列表 `role=group`；chips / trk 原生 button 键盘可达；ticker `aria-live=polite`、翻牌区 `aria-live=off`；`:focus-visible` 朱砂环；`prefers-reduced-motion` 全关；对比度：ink 三级 on 暖纸、`--plate-*` 深版、ok/status 牌均达标。
 
-## 已替换 / 已对接
+## 外链 / 对接（沿用）
 
-- 死链：预约演示 → GitHub Issues（参数化标题 `ResolveAgent 演示预约`）；GitHub 仓库 / 产品文档 → `https://github.com/ai-guru-global/resolve-agent[/tree/main/docs]`（外链带 `target="_blank" rel="noopener noreferrer"`）
-- 导航/页脚链接：navlinks 含 5 个页内锚点（调度总图/审计会话/事件回放/语料飞轮/GTM 战略），≤960px 隐藏，同屏 `.navtag` 副标题一并隐藏、头部 CTA `white-space:nowrap`（390px 实测单行）；页脚含 GitHub / 产品文档 两外链（`.foot a` 下划线细描边，hover 转 `--ink`）。曾按误传需求加入 FDE Scope 互跳链接，确认与本页无关后已移除
-- 里程碑：相对季度 → 具体 2026 Q3 / 2026 Q4 / 2027 Q1
-- 北极星：保留"目标示意"定位，副行加入基线（47min→28min / 0.87→≥0.90 / 45/周→120/周 / 86/周→300/周）
-- 置信度去重：终端 0.94（实例基于 Probe 评估）、回放 0.89（四路竞争假设）、模拟器按告警类型分发 0.94/0.89/0.91/0.96 四套叙述
-- 发车板：4→6 行，时间分散 14:12–14:31，ID 不连号（8473/8547/8634/8712/8799/8841），告警扩到 6 种（新增 ImagePullBackOff / PVC Pending），状态覆盖 已发车/运行中/待调度/回放中
+- 预约演示：mast-nav `.mast-cta` → `#close`；封底 `.cta` → GitHub Issues（`?title=ResolveAgent%20演示预约`）；外链均 `target="_blank" rel="noopener noreferrer"`。
+- 外链：产品页 `https://vxxzrdpyfrl6.meoo.fun`（mast-nav / colophon）、GitHub 仓库、产品文档（`…/tree/main/docs`）。
+- 页内锚：#mechanism / #audit / #replay / #flywheel / #ledger / #strategy / #cover / #close。
+- 置信度：终端 0.94、回放 0.89、NARRATIVE 0.94/0.91/0.89/0.96（同一套演示口径）。
 
 ## 未决 / 待实测
 
-- 调用次数、里程碑状态、北极星指标仍为规划示意，发布前需以实测替换
-- 无真实客户案例 / 基准 / 公开证言
-- INC-20260828-001 为演示用合成事件号，非真实故障
+- 调用计数（总图 plate「次」数）、线宽热度、里程碑状态、北极星、账本与占比均为演示窗口（2026-08-25 — 08-31）或规划示意，发布前需以实测替换。
+- 无真实客户案例 / 基准 / 公开证言；发车板事件号与时间为真实时钟合成的示意数据（每次访问变化）；INC-20260828-001 为演示用合成事件号。

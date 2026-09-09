@@ -24,15 +24,40 @@ spec:
               name: http
             - containerPort: {{ .Values.platform.service.grpcPort }}
               name: grpc
+          env:
+            - name: RESOLVEAGENT_DATABASE_HOST
+              value: {{ .Values.postgresql.host | quote }}
+            - name: RESOLVEAGENT_DATABASE_PORT
+              value: {{ .Values.postgresql.port | quote }}
+            - name: RESOLVEAGENT_DATABASE_USER
+              value: {{ .Values.postgresql.auth.username | quote }}
+            - name: RESOLVEAGENT_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resolveagent.name" . }}
+                  key: database-password
+            - name: RESOLVEAGENT_DATABASE_DBNAME
+              value: {{ .Values.postgresql.auth.database | quote }}
+            - name: RESOLVEAGENT_REDIS_ADDR
+              value: {{ .Values.redis.addr | quote }}
+            - name: RESOLVEAGENT_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resolveagent.name" . }}
+                  key: redis-password
+            - name: RESOLVEAGENT_NATS_URL
+              value: {{ .Values.nats.url | quote }}
+            - name: RESOLVEAGENT_SERVER_RUNTIME_ADDR
+              value: "{{ include "resolveagent.name" . }}-runtime:{{ .Values.runtime.service.port }}"
           resources:
             {{- toYaml .Values.platform.resources | nindent 12 }}
           livenessProbe:
             httpGet:
-              path: /api/v1/health
+              path: /healthz
               port: http
             initialDelaySeconds: 10
           readinessProbe:
             httpGet:
-              path: /api/v1/health
+              path: /healthz
               port: http
             initialDelaySeconds: 5

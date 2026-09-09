@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import Home from './pages/Home'
 import Diagnose from './pages/Diagnose'
 import Skills from './pages/Skills'
@@ -8,7 +8,7 @@ import Settings from './pages/Settings'
 
 function TabBar() {
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('home')
+  const location = useLocation()
 
   const tabs = [
     { id: 'home', label: '首页', path: '/', icon: '⌂' },
@@ -17,6 +17,8 @@ function TabBar() {
     { id: 'history', label: '历史', path: '/history', icon: '☰' },
     { id: 'settings', label: '设置', path: '/settings', icon: '◎' },
   ]
+
+  const activeTab = tabs.find((t) => t.path === location.pathname)?.id ?? 'home'
 
   return (
     <nav
@@ -33,7 +35,7 @@ function TabBar() {
           return (
             <button
               key={tab.id}
-              onClick={() => { setActiveTab(tab.id); navigate(tab.path) }}
+              onClick={() => navigate(tab.path)}
               className="flex-1 flex flex-col items-center justify-center gap-0.5 relative transition-all"
               style={{
                 color: isActive ? 'var(--color-accent)' : 'var(--color-text-tertiary)',

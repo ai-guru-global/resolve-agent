@@ -96,8 +96,8 @@ export default function AgentMemory() {
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">记忆状态</p>
-            <Badge variant="secondary" className={cn('mt-1 text-xs', agent?.harness.memory_enabled ? 'text-status-healthy bg-status-healthy/10' : 'text-muted-foreground')}>
-              {agent?.harness.memory_enabled ? '已启用' : '已禁用'}
+            <Badge variant="secondary" className={cn('mt-1 text-xs', agent?.harness?.memory_enabled ? 'text-status-healthy bg-status-healthy/10' : 'text-muted-foreground')}>
+              {agent?.harness?.memory_enabled ? '已启用' : '已禁用'}
             </Badge>
           </CardContent>
         </Card>

@@ -57,7 +57,7 @@ banner() {
 check_dependencies() {
     local missing=()
     command -v docker >/dev/null 2>&1 || missing+=("docker")
-    command -v docker compose >/dev/null 2>&1 || {
+    docker compose version >/dev/null 2>&1 || {
         command -v docker-compose >/dev/null 2>&1 || missing+=("docker-compose")
     }
 
@@ -131,7 +131,7 @@ cmd_dev() {
     echo ""
     log_ok "Development stack is running!"
     echo ""
-    echo "  Web UI (Vite): http://localhost:5173"
+    echo "  Web UI (Vite): http://localhost:5174"
     echo "  Platform:      http://localhost:${PLATFORM_HTTP_PORT:-8080}"
     echo "  Runtime:       localhost:${RUNTIME_GRPC_PORT:-9091}"
     echo ""

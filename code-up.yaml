@@ -1,0 +1,14 @@
+# code-up 配置 — 平铺点号键（gate.py 契约，禁止嵌套缩进写法）
+version: 1
+project.name: resolve-agent
+source.paths: [python/src/resolveagent, pkg, internal, cmd, web/src, configs]
+source.exclude: ["**/*_test.go", "**/tests/**", "**/test/**", "**/__pycache__/**", "**/*.pb.go", "web/node_modules/**", "web/dist/**", "python/src/resolveagent/api/**"]
+source.languages: [go, python, typescript]
+depth.mode: auto
+depth.thresholds.core: 0.7
+depth.thresholds.standard: 0.3
+depth.manual_overrides: {}
+output.dir: docs/design
+output.language: zh
+plan.auto_approve: false
+gate.fail_on: [error]

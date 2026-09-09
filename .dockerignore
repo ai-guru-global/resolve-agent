@@ -33,6 +33,7 @@ python/__pycache__/
 python/dist/
 python/.mypy_cache/
 python/.ruff_cache/
+python/.venv/
 **/__pycache__/
 *.pyc
 *.pyo
@@ -44,6 +45,8 @@ web/dist/
 # Deployment files (avoid recursive context)
 deploy/
 deployment/
+# webui.Dockerfile needs the nginx site config from the build context
+!deploy/docker/nginx/
 
 # Temporary files
 .tmp_pypandoc/

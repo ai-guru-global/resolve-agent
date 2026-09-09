@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useRef,
   useState,
   useMemo,
@@ -141,9 +142,12 @@ export function faultTreeToFlow(tree: FaultTree): { nodes: Node[]; edges: Edge[]
     const outputDepth = eventDepth.get(gate.output_id) ?? 0;
     const inputDepths = gate.input_ids.map((id) => eventDepth.get(id) ?? 0);
     const avgInputCol =
-      gate.input_ids.reduce((sum, id) => sum + (eventColumn.get(id) ?? 0), 0) /
-      gate.input_ids.length;
-    const avgDepth = (outputDepth + Math.max(...inputDepths)) / 2;
+      gate.input_ids.length > 0
+        ? gate.input_ids.reduce((sum, id) => sum + (eventColumn.get(id) ?? 0), 0) /
+          gate.input_ids.length
+        : 0;
+    const avgDepth =
+      inputDepths.length > 0 ? (outputDepth + Math.max(...inputDepths)) / 2 : outputDepth;
     const siblings = depthGroups.get(outputDepth) ?? [];
     const totalWidth = Math.max(siblings.length, gate.input_ids.length) * COL_WIDTH;
     const startX = -totalWidth / 2;
@@ -227,17 +231,24 @@ export function flowToFaultTree(
 
   for (const n of gateNodes) {
     const d = n.data as Record<string, unknown>;
-    // output: edge where this gate is the target (from a parent event)
-    const outputEdge = edges.find((e) => e.target === n.id && eventNodes.some((en) => en.id === e.source));
-    // inputs: edges where this gate is the source (to child events)
-    const inputEdges = edges.filter((e) => e.source === n.id);
+    // 方向规范化:不假定连线的拖动方向,统一取事件端节点,
+    // 按位置判断父子(父事件位于 gate 上方,子事件位于下方)
+    const outputCandidates: string[] = [];
+    const inputIds: string[] = [];
+    for (const e of edges) {
+      const otherId = e.source === n.id ? e.target : e.target === n.id ? e.source : null;
+      if (!otherId || !eventNodes.some((en) => en.id === otherId)) continue;
+      const other = nodes.find((nd) => nd.id === otherId);
+      if (other && other.position.y < n.position.y) outputCandidates.push(otherId);
+      else inputIds.push(otherId);
+    }
 
     gates.push({
       id: n.id,
       name: String(d.label ?? d.gateType ?? ''),
       type: String(d.gateType ?? 'OR') as FTAGate['type'],
-      output_id: outputEdge?.source ?? '',
-      input_ids: inputEdges.map((e) => e.target),
+      output_id: outputCandidates[0] ?? '',
+      input_ids: inputIds,
       k_value: d.kValue as number | undefined,
     });
   }
@@ -369,6 +380,15 @@ export default function FTATreeEditor({ faultTree, onSave, saving = false }: FTA
   const [panelOpen, setPanelOpen] = useState(false);
 
   const history = useHistory(initial.nodes, initial.edges);
+
+  // Sync nodes/edges when the faultTree prop changes
+  useEffect(() => {
+    setNodes(initial.nodes);
+    setEdges(initial.edges);
+    setDirty(false);
+    setSelectedNode(null);
+    setPanelOpen(false);
+  }, [initial, setNodes, setEdges]);
 
   // Track dirtiness
   const markDirty = useCallback(() => {

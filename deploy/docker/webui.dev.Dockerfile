@@ -12,6 +12,6 @@ RUN pnpm install --frozen-lockfile 2>/dev/null || pnpm install
 
 COPY . .
 
-EXPOSE 5173
+EXPOSE 5174
 
 CMD ["pnpm", "dev", "--host", "0.0.0.0"]

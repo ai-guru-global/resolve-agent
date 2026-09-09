@@ -59,16 +59,16 @@ export default function AgentEdit() {
     if (agent) {
       setName(agent.name);
       setType(agent.type);
-      setModel(String(agent.config.model ?? 'qwen-turbo'));
+      setModel(String(agent.config?.model ?? 'qwen-turbo'));
       setStatus(agent.status);
-      setMode(agent.mode);
-      setSystemPrompt(agent.harness.system_prompt);
-      setTools([...agent.harness.tools]);
-      setSkills([...agent.harness.skills]);
-      setHooks(agent.harness.hooks.map((h) => ({ ...h })));
-      setMemoryEnabled(agent.harness.memory_enabled);
-      setSandboxType(agent.harness.sandbox_type);
-      setContextStrategy(agent.harness.context_strategy);
+      setMode(agent.mode ?? 'selector');
+      setSystemPrompt(agent.harness?.system_prompt ?? '');
+      setTools([...(agent.harness?.tools ?? [])]);
+      setSkills([...(agent.harness?.skills ?? [])]);
+      setHooks((agent.harness?.hooks ?? []).map((h) => ({ ...h })));
+      setMemoryEnabled(agent.harness?.memory_enabled ?? true);
+      setSandboxType(agent.harness?.sandbox_type ?? 'container');
+      setContextStrategy(agent.harness?.context_strategy ?? 'default');
     }
   }, [agent]);
 

@@ -24,3 +24,13 @@ spec:
               name: grpc
           resources:
             {{- toYaml .Values.runtime.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: grpc
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: grpc
+            initialDelaySeconds: 5

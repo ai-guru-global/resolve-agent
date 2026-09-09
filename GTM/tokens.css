@@ -1,0 +1,51 @@
+/* ResolveAgent GTM · 编辑部白皮书 token 导出
+ * 与 GTM/index.html :root 同源 · genre: editorial · theme: Editorial · 2026-09-07
+ * 纸 + 墨 + 朱砂；四线路色只进图版与账本，不进版式语言。 */
+:root{
+  /* paper */
+  --paper:oklch(97% 0.012 85);
+  --paper-2:oklch(94% 0.014 85);
+  --paper-3:oklch(90.5% 0.016 84);
+  /* rules */
+  --rule:oklch(85% 0.010 80);
+  --rule-2:oklch(68% 0.012 75);
+  /* ink */
+  --ink:oklch(21% 0.014 60);
+  --ink-2:oklch(38% 0.014 62);
+  --ink-3:oklch(52% 0.012 68);
+  /* vermillion accent (≤5%) */
+  --accent:oklch(52% 0.17 35);
+  /* four route lines — 图版内使用 · 40–41 对比度校准后 */
+  --line-fta:oklch(57% 0.19 40);
+  --line-rag:oklch(52% 0.11 175);
+  --line-skill:oklch(47% 0.21 285);
+  --line-code:oklch(49% 0.12 80);
+  /* deepened chip surfaces — 发车板线路 chip 实底（白字 ≥4.5:1，实测 4.7+） */
+  --lchip-fta:oklch(36% 0.14 46);
+  --lchip-rag:oklch(29% 0.083 143);
+  --lchip-skill:oklch(36% 0.155 323);
+  --lchip-code:oklch(30% 0.09 74);
+  /* deepened route tags — 铭牌/路由名 */
+  --tag-fta:oklch(46% 0.17 38);
+  --tag-rag:oklch(44% 0.10 175);
+  --tag-skill:oklch(44% 0.18 285);
+  --tag-code:oklch(44% 0.11 80);
+  /* status */
+  --ok-ink:oklch(42% 0.11 155);
+  --ok-bg:oklch(93% 0.035 155);
+  /* dark instrument plates（终端 / 径迹版） */
+  --plate-bg:oklch(16% 0.008 260);
+  --plate-bar:oklch(21% 0.010 260);
+  --plate-rule:oklch(32% 0.010 260);
+  --plate-ink:oklch(92% 0.004 260);
+  --plate-dim:oklch(56% 0.008 260);
+  --plate-o:oklch(68% 0.008 260);
+  --plate-ok:oklch(82% 0.12 150);
+  --plate-hl:oklch(74% 0.15 45);
+  /* type */
+  --font-display:'Fraunces','Noto Serif SC',serif;
+  --font-body:'Newsreader','Noto Serif SC',serif;
+  --font-mono:'JetBrains Mono','Noto Serif SC',monospace;
+  /* motion */
+  --ease-out:cubic-bezier(0.16,1,0.3,1);
+}

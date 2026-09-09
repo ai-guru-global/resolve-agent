@@ -103,7 +103,7 @@ export default function SkillList() {
   const agentRefs = useMemo(() => {
     const map: Record<string, string[]> = {};
     for (const agent of agents) {
-      for (const skillName of agent.harness.skills) {
+      for (const skillName of agent.harness?.skills ?? []) {
         const bucket = map[skillName];
         if (bucket) bucket.push(agent.name);
         else map[skillName] = [agent.name];

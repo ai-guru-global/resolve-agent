@@ -97,10 +97,15 @@ test-integration: ## Run integration tests
 # =============================================================================
 # Database Migration
 # =============================================================================
+# WARNING: scripts/migration is DEPRECATED. The authoritative migration chain
+# is embedded in the Go platform (pkg/store/postgres/postgres.go) and runs at
+# platform startup. The SQL files there use an incompatible legacy schema
+# (UUID ids vs VARCHAR ids) - do not apply them to a platform-managed database.
 
 .PHONY: migrate-up migrate-down seed
 
 migrate-up: ## Apply database migrations (requires DATABASE_URL)
+	@echo "WARNING: scripts/migration is deprecated; the platform runs its own embedded migrations at startup (pkg/store/postgres)."
 	@echo "==> Applying migrations..."
 	@for f in $(SCRIPTS_DIR)/migration/*.up.sql; do \
 		echo "  Applying $$(basename $$f)..."; \
@@ -108,6 +113,7 @@ migrate-up: ## Apply database migrations (requires DATABASE_URL)
 	done
 
 migrate-down: ## Rollback database migrations (requires DATABASE_URL)
+	@echo "WARNING: scripts/migration is deprecated; the platform runs its own embedded migrations at startup (pkg/store/postgres)."
 	@echo "==> Rolling back migrations..."
 	@for f in $$(ls -r $(SCRIPTS_DIR)/migration/*.down.sql); do \
 		echo "  Rolling back $$(basename $$f)..."; \

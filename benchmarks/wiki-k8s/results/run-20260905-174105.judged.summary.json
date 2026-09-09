@@ -1,0 +1,36 @@
+{
+  "accuracy": {
+    "agent": {
+      "n": 90,
+      "success": 90,
+      "judge_mean": 9.11,
+      "kp_coverage": 0.841,
+      "p50_ms": 24362,
+      "p95_ms": 43449,
+      "errors": 0
+    },
+    "base": {
+      "n": 90,
+      "success": 90,
+      "judge_mean": 8.7,
+      "kp_coverage": 0.761,
+      "p50_ms": 15250,
+      "p95_ms": 23577,
+      "errors": 0
+    }
+  },
+  "consistency": {
+    "agent": {
+      "jaccard": 0.3,
+      "seq": 0.367,
+      "score_stdev": 0.349,
+      "flips": 4
+    },
+    "base": {
+      "jaccard": 0.277,
+      "seq": 0.271,
+      "score_stdev": 0.837,
+      "flips": 10
+    }
+  }
+}

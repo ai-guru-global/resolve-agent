@@ -452,15 +452,15 @@ export interface ModelConfig {
 
 // System settings types
 export interface SystemSettings {
-  resolve_net: ResolveNetConfig;
-  platform: {
+  resolve_net?: ResolveNetConfig;
+  platform?: {
     server_address: string;
     runtime_address: string;
     version: string;
     commit: string;
     build_date: string;
   };
-  models: ModelConfig[];
+  models?: ModelConfig[];
 }
 
 // Troubleshooting Solution types

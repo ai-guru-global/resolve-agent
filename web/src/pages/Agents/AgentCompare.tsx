@@ -71,8 +71,8 @@ export default function AgentCompare() {
             <CardContent className="space-y-0">
               <DiffRow label="类型" left={leftAgent.type} right={rightAgent.type} />
               <DiffRow label="状态" left={leftAgent.status} right={rightAgent.status} />
-              <DiffRow label="模式" left={leftAgent.mode} right={rightAgent.mode} />
-              <DiffRow label="模型" left={String(leftAgent.config.model ?? '')} right={String(rightAgent.config.model ?? '')} />
+              <DiffRow label="模式" left={leftAgent.mode ?? ''} right={rightAgent.mode ?? ''} />
+              <DiffRow label="模型" left={String(leftAgent.config?.model ?? '')} right={String(rightAgent.config?.model ?? '')} />
             </CardContent>
           </Card>
 
@@ -80,8 +80,8 @@ export default function AgentCompare() {
             <CardHeader><CardTitle className="text-sm">System Prompt</CardTitle></CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
-                <p className="text-xs font-mono bg-muted/20 rounded p-3 whitespace-pre-wrap">{leftAgent.harness.system_prompt || '(空)'}</p>
-                <p className="text-xs font-mono bg-muted/20 rounded p-3 whitespace-pre-wrap">{rightAgent.harness.system_prompt || '(空)'}</p>
+                <p className="text-xs font-mono bg-muted/20 rounded p-3 whitespace-pre-wrap">{leftAgent.harness?.system_prompt || '(空)'}</p>
+                <p className="text-xs font-mono bg-muted/20 rounded p-3 whitespace-pre-wrap">{rightAgent.harness?.system_prompt || '(空)'}</p>
               </div>
             </CardContent>
           </Card>
@@ -92,15 +92,15 @@ export default function AgentCompare() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-[10px] text-muted-foreground uppercase mb-1">Tools</p>
-                  <div className="flex flex-wrap gap-1">{leftAgent.harness.tools.map((t) => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}</div>
+                  <div className="flex flex-wrap gap-1">{(leftAgent.harness?.tools ?? []).map((t) => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}</div>
                   <p className="text-[10px] text-muted-foreground uppercase mb-1 mt-3">Skills</p>
-                  <div className="flex flex-wrap gap-1">{leftAgent.harness.skills.map((s) => <Badge key={s} variant="secondary" className="text-[10px]">{s}</Badge>)}</div>
+                  <div className="flex flex-wrap gap-1">{(leftAgent.harness?.skills ?? []).map((s) => <Badge key={s} variant="secondary" className="text-[10px]">{s}</Badge>)}</div>
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground uppercase mb-1">Tools</p>
-                  <div className="flex flex-wrap gap-1">{rightAgent.harness.tools.map((t) => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}</div>
+                  <div className="flex flex-wrap gap-1">{(rightAgent.harness?.tools ?? []).map((t) => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}</div>
                   <p className="text-[10px] text-muted-foreground uppercase mb-1 mt-3">Skills</p>
-                  <div className="flex flex-wrap gap-1">{rightAgent.harness.skills.map((s) => <Badge key={s} variant="secondary" className="text-[10px]">{s}</Badge>)}</div>
+                  <div className="flex flex-wrap gap-1">{(rightAgent.harness?.skills ?? []).map((s) => <Badge key={s} variant="secondary" className="text-[10px]">{s}</Badge>)}</div>
                 </div>
               </div>
             </CardContent>
@@ -109,10 +109,10 @@ export default function AgentCompare() {
           <Card>
             <CardHeader><CardTitle className="text-sm">基础设施</CardTitle></CardHeader>
             <CardContent className="space-y-0">
-              <DiffRow label="沙箱类型" left={leftAgent.harness.sandbox_type} right={rightAgent.harness.sandbox_type} />
-              <DiffRow label="上下文策略" left={leftAgent.harness.context_strategy} right={rightAgent.harness.context_strategy} />
-              <DiffRow label="持久记忆" left={leftAgent.harness.memory_enabled ? '启用' : '禁用'} right={rightAgent.harness.memory_enabled ? '启用' : '禁用'} />
-              <DiffRow label="Hooks 数量" left={String(leftAgent.harness.hooks.length)} right={String(rightAgent.harness.hooks.length)} />
+              <DiffRow label="沙箱类型" left={leftAgent.harness?.sandbox_type ?? ''} right={rightAgent.harness?.sandbox_type ?? ''} />
+              <DiffRow label="上下文策略" left={leftAgent.harness?.context_strategy ?? ''} right={rightAgent.harness?.context_strategy ?? ''} />
+              <DiffRow label="持久记忆" left={leftAgent.harness?.memory_enabled ? '启用' : '禁用'} right={rightAgent.harness?.memory_enabled ? '启用' : '禁用'} />
+              <DiffRow label="Hooks 数量" left={String(leftAgent.harness?.hooks?.length ?? 0)} right={String(rightAgent.harness?.hooks?.length ?? 0)} />
             </CardContent>
           </Card>
         </div>

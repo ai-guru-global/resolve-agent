@@ -25,7 +25,7 @@ const modelStatusMap: Record<string, { label: string; variant: StatusVariant }> 
 export default function Settings() {
   const { data: settings, isLoading } = useSettings();
 
-  const connStatus = settings?.resolve_net.status
+  const connStatus = settings?.resolve_net?.status
     ? connectionStatusMap[settings.resolve_net.status]
     : null;
 
@@ -58,32 +58,34 @@ export default function Settings() {
                     </div>
                   ))}
                 </div>
-              ) : settings ? (
+              ) : settings?.platform ? (
                 <>
                   <div className="space-y-2">
                     <Label>服务地址</Label>
-                    <Input value={settings.platform.server_address} readOnly className="font-mono" />
+                    <Input value={settings.platform.server_address ?? '未配置'} readOnly className="font-mono" />
                   </div>
                   <div className="space-y-2">
                     <Label>Agent 运行时地址</Label>
-                    <Input value={`${settings.platform.runtime_address} (gRPC)`} readOnly className="font-mono" />
+                    <Input value={`${settings.platform.runtime_address ?? '未配置'} (gRPC)`} readOnly className="font-mono" />
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>版本</Label>
-                      <Input value={settings.platform.version} readOnly className="font-mono" />
+                      <Input value={settings.platform.version ?? '未配置'} readOnly className="font-mono" />
                     </div>
                     <div className="space-y-2">
                       <Label>Commit</Label>
-                      <Input value={settings.platform.commit} readOnly className="font-mono" />
+                      <Input value={settings.platform.commit ?? '未配置'} readOnly className="font-mono" />
                     </div>
                     <div className="space-y-2">
                       <Label>构建时间</Label>
-                      <Input value={new Date(settings.platform.build_date).toLocaleDateString('zh-CN')} readOnly />
+                      <Input value={settings.platform.build_date ? new Date(settings.platform.build_date).toLocaleDateString('zh-CN') : '未配置'} readOnly />
                     </div>
                   </div>
                 </>
-              ) : null}
+              ) : (
+                <p className="text-sm text-muted-foreground">平台配置不可用</p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -105,9 +107,9 @@ export default function Settings() {
                     </div>
                   ))}
                 </div>
-              ) : settings && settings.models.length > 0 ? (
+              ) : settings && (settings.models?.length ?? 0) > 0 ? (
                 <div className="space-y-3">
-                  {settings.models.map((model, idx) => (
+                  {(settings.models ?? []).map((model, idx) => (
                     <div key={model.id}>
                       <div className="flex items-center justify-between py-2">
                         <div className="space-y-0.5">
@@ -127,7 +129,7 @@ export default function Settings() {
                           })()}
                         </div>
                       </div>
-                      {idx < settings.models.length - 1 && <Separator />}
+                      {idx < (settings.models?.length ?? 0) - 1 && <Separator />}
                     </div>
                   ))}
                 </div>
@@ -197,7 +199,7 @@ export default function Settings() {
                 ) : (
                   <span className="flex items-center gap-1.5 text-sm">
                     <StatusDot status={connStatus?.variant ?? 'unknown'} />
-                    {connStatus?.label ?? '未知'}
+                    {connStatus?.label ?? (settings?.resolve_net ? '未知' : '未配置')}
                   </span>
                 )}
               </div>
@@ -212,34 +214,36 @@ export default function Settings() {
                     </div>
                   ))}
                 </div>
-              ) : settings ? (
+              ) : settings?.resolve_net ? (
                 <>
                   <div className="space-y-2">
                     <Label>端点地址</Label>
-                    <Input value={settings.resolve_net.endpoint} readOnly className="font-mono" />
+                    <Input value={settings.resolve_net.endpoint ?? '未配置'} readOnly className="font-mono" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>认证方式</Label>
-                      <Input value={`${settings.resolve_net.auth_method} 证书认证`} readOnly />
+                      <Input value={settings.resolve_net.auth_method ? `${settings.resolve_net.auth_method} 证书认证` : '未配置'} readOnly />
                     </div>
                     <div className="space-y-2">
                       <Label>租户 ID</Label>
-                      <Input value={settings.resolve_net.tenant_id} readOnly className="font-mono" />
+                      <Input value={settings.resolve_net.tenant_id ?? '未配置'} readOnly className="font-mono" />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>同步间隔</Label>
-                      <Input value={`${settings.resolve_net.sync_interval_seconds} 秒`} readOnly />
+                      <Input value={settings.resolve_net.sync_interval_seconds != null ? `${settings.resolve_net.sync_interval_seconds} 秒` : '未配置'} readOnly />
                     </div>
                     <div className="space-y-2">
                       <Label>连接延迟</Label>
-                      <Input value={`${settings.resolve_net.latency_ms}ms`} readOnly className="font-mono" />
+                      <Input value={settings.resolve_net.latency_ms != null ? `${settings.resolve_net.latency_ms}ms` : '未配置'} readOnly className="font-mono" />
                     </div>
                   </div>
                 </>
-              ) : null}
+              ) : (
+                <p className="text-sm text-muted-foreground">ResolveNet 对接未配置</p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

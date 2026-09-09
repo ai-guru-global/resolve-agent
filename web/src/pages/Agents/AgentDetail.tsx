@@ -179,20 +179,20 @@ export default function AgentDetail() {
                   <Separator />
                   <div className="flex justify-between py-1">
                     <span className="text-sm text-muted-foreground">模型</span>
-                    <span className="text-sm font-mono">{String(agent.config.model ?? '—')}</span>
+                    <span className="text-sm font-mono">{String(agent.config?.model ?? '—')}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between py-1">
                     <span className="text-sm text-muted-foreground">运行模式</span>
                     <Badge variant="secondary" className="text-[10px] gap-1 border border-primary/20 bg-primary/5 text-primary">
-                      {agent.mode === 'all_skills' ? 'All Skills — 并行执行' : 'Selector — 精准路由'}
+                      {agent.mode ? (agent.mode === 'all_skills' ? 'All Skills — 并行执行' : 'Selector — 精准路由') : '—'}
                     </Badge>
                   </div>
                   <Separator />
                   <div className="flex justify-between py-1">
                     <span className="text-sm text-muted-foreground">创建时间</span>
                     <span className="text-sm">
-                      {agent.config.created_at
+                      {agent.config?.created_at
                         ? new Date(String(agent.config.created_at)).toLocaleString('zh-CN')
                         : '—'}
                     </span>
@@ -223,7 +223,7 @@ export default function AgentDetail() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm rounded-lg bg-muted/30 border border-border/20 p-4 font-mono leading-relaxed whitespace-pre-wrap">
-                    {agent.harness.system_prompt || '未配置系统提示词'}
+                    {agent.harness?.system_prompt || '未配置系统提示词'}
                   </p>
                 </CardContent>
               </Card>
@@ -241,9 +241,9 @@ export default function AgentDetail() {
                     <div>
                       <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 font-semibold">Tools</p>
                       <div className="space-y-1">
-                        {agent.harness.tools.length === 0 ? (
+                        {(agent.harness?.tools?.length ?? 0) === 0 ? (
                           <p className="text-xs text-muted-foreground/50">无绑定工具</p>
-                        ) : agent.harness.tools.map((t) => (
+                        ) : agent.harness?.tools?.map((t) => (
                           <div key={t} className="flex items-center gap-2 rounded-md bg-muted/20 border border-border/15 px-3 py-1.5">
                             <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                             <span className="text-xs font-mono">{t}</span>
@@ -254,9 +254,9 @@ export default function AgentDetail() {
                     <div>
                       <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 font-semibold">Skills</p>
                       <div className="space-y-1">
-                        {agent.harness.skills.length === 0 ? (
+                        {(agent.harness?.skills?.length ?? 0) === 0 ? (
                           <p className="text-xs text-muted-foreground/50">无绑定技能</p>
-                        ) : agent.harness.skills.map((s) => (
+                        ) : agent.harness?.skills?.map((s) => (
                           <div key={s} className="flex items-center gap-2 rounded-md bg-muted/20 border border-border/15 px-3 py-1.5">
                             <span className="h-1.5 w-1.5 rounded-full bg-status-healthy" />
                             <span className="text-xs font-mono">{s}</span>
@@ -369,11 +369,11 @@ export default function AgentDetail() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {agent.harness.hooks.length === 0 ? (
+                  {(agent.harness?.hooks?.length ?? 0) === 0 ? (
                     <p className="text-sm text-muted-foreground/50">无配置 Hooks</p>
                   ) : (
                     <div className="space-y-2">
-                      {agent.harness.hooks.map((hook, i) => (
+                      {agent.harness?.hooks?.map((hook, i) => (
                         <div key={i} className="flex items-center gap-3 rounded-md border border-border/20 bg-muted/10 px-4 py-2.5">
                           <span className={cn(
                             'h-2 w-2 rounded-full shrink-0',
@@ -412,15 +412,15 @@ export default function AgentDetail() {
                       <span className="text-sm text-muted-foreground">持久记忆</span>
                       <Badge variant="secondary" className={cn(
                         'text-[10px]',
-                        agent.harness.memory_enabled ? 'text-status-healthy bg-status-healthy/10' : 'text-muted-foreground bg-muted',
+                        agent.harness?.memory_enabled ? 'text-status-healthy bg-status-healthy/10' : 'text-muted-foreground bg-muted',
                       )}>
-                        {agent.harness.memory_enabled ? '已启用' : '已禁用'}
+                        {agent.harness?.memory_enabled ? '已启用' : '已禁用'}
                       </Badge>
                     </div>
                     <Separator />
                     <div className="flex justify-between py-1">
                       <span className="text-sm text-muted-foreground">上下文策略</span>
-                      <span className="text-sm">{contextLabels[agent.harness.context_strategy] ?? agent.harness.context_strategy}</span>
+                      <span className="text-sm">{agent.harness?.context_strategy ? (contextLabels[agent.harness.context_strategy] ?? agent.harness.context_strategy) : '—'}</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -434,7 +434,7 @@ export default function AgentDetail() {
                   <CardContent className="space-y-3">
                     <div className="flex justify-between py-1">
                       <span className="text-sm text-muted-foreground">沙箱类型</span>
-                      <span className="text-sm">{sandboxLabels[agent.harness.sandbox_type] ?? agent.harness.sandbox_type}</span>
+                      <span className="text-sm">{agent.harness?.sandbox_type ? (sandboxLabels[agent.harness.sandbox_type] ?? agent.harness.sandbox_type) : '—'}</span>
                     </div>
                   </CardContent>
                 </Card>

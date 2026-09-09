@@ -30,12 +30,13 @@ services:
       dockerfile: deploy/docker/platform.Dockerfile
       args:
         VERSION: ${RESOLVEAGENT_VERSION:-dev}
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
     image: ${DOCKER_REGISTRY:-ghcr.io/ai-guru-global}/resolveagent-platform:${RESOLVEAGENT_VERSION:-latest}
     container_name: resolveagent-platform
     restart: unless-stopped
     ports:
-      - "${PLATFORM_HTTP_PORT:-8080}:8080"
-      - "${PLATFORM_GRPC_PORT:-9090}:9090"
+      - "127.0.0.1:${PLATFORM_HTTP_PORT:-8080}:8080"
+      - "127.0.0.1:${PLATFORM_GRPC_PORT:-9090}:9090"
     environment:
       # Server
       RESOLVEAGENT_SERVER_HTTP_ADDR: ":8080"
@@ -55,6 +56,9 @@ services:
       RESOLVEAGENT_NATS_URL: ${RESOLVEAGENT_NATS_URL:-nats://nats:4222}
       # Runtime
       RESOLVEAGENT_RUNTIME_GRPC_ADDR: ${RESOLVEAGENT_RUNTIME_GRPC_ADDR:-runtime:9091}
+      # HTTP address of the Python runtime; takes precedence over the
+      # localhost default baked into configs/resolveagent.yaml
+      RESOLVEAGENT_SERVER_RUNTIME_ADDR: ${RESOLVEAGENT_SERVER_RUNTIME_ADDR:-runtime:9091}
       # Gateway
       RESOLVEAGENT_GATEWAY_ENABLED: ${RESOLVEAGENT_GATEWAY_ENABLED:-false}
       RESOLVEAGENT_GATEWAY_ADMIN_URL: ${RESOLVEAGENT_GATEWAY_ADMIN_URL:-}
@@ -90,17 +94,20 @@ services:
     container_name: resolveagent-runtime
     restart: unless-stopped
     ports:
-      - "${RUNTIME_GRPC_PORT:-9091}:9091"
+      - "127.0.0.1:${RUNTIME_GRPC_PORT:-9091}:9091"
     environment:
       RESOLVEAGENT_RUNTIME_HOST: "0.0.0.0"
       RESOLVEAGENT_RUNTIME_PORT: "9091"
       RESOLVEAGENT_AGENT_POOL_MAX_SIZE: ${RESOLVEAGENT_AGENT_POOL_MAX_SIZE:-100}
-      RESOLVEAGENT_SELECTOR_DEFAULT_STRATEGY: ${RESOLVEAGENT_SELECTOR_DEFAULT_STRATEGY:-hybrid}
+      RESOLVEAGENT_SELECTOR_STRATEGY: ${RESOLVEAGENT_SELECTOR_STRATEGY:-hybrid}
       RESOLVEAGENT_SELECTOR_CONFIDENCE_THRESHOLD: ${RESOLVEAGENT_SELECTOR_CONFIDENCE_THRESHOLD:-0.7}
-      # LLM API Keys
-      RESOLVEAGENT_LLM_QWEN_API_KEY: ${RESOLVEAGENT_LLM_QWEN_API_KEY:-}
-      RESOLVEAGENT_LLM_WENXIN_API_KEY: ${RESOLVEAGENT_LLM_WENXIN_API_KEY:-}
-      RESOLVEAGENT_LLM_ZHIPU_API_KEY: ${RESOLVEAGENT_LLM_ZHIPU_API_KEY:-}
+      # Platform HTTP address (read by the Python runtime)
+      RESOLVEAGENT_PLATFORM_ADDR: ${RESOLVEAGENT_PLATFORM_ADDR:-platform:8080}
+      # LLM API Keys - names the Python runtime actually reads
+      # (RESOLVEAGENT_LLM_QWEN/WENXIN/ZHIPU_API_KEY were never read)
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      WENXIN_API_KEY: ${WENXIN_API_KEY:-}
+      ZHIPU_API_KEY: ${ZHIPU_API_KEY:-}
       # Telemetry
       RESOLVEAGENT_TELEMETRY_ENABLED: ${RESOLVEAGENT_TELEMETRY_ENABLED:-false}
       RESOLVEAGENT_TELEMETRY_OTLP_ENDPOINT: ${RESOLVEAGENT_TELEMETRY_OTLP_ENDPOINT:-}
@@ -120,7 +127,7 @@ services:
     container_name: resolveagent-webui
     restart: unless-stopped
     ports:
-      - "${WEBUI_PORT:-3000}:80"
+      - "127.0.0.1:${WEBUI_PORT:-3000}:80"
     depends_on:
       platform:
         condition: service_healthy
@@ -141,7 +148,7 @@ services:
     container_name: resolveagent-postgres
     restart: unless-stopped
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     environment:
       POSTGRES_USER: ${RESOLVEAGENT_DATABASE_USER:-resolveagent}
       POSTGRES_PASSWORD: ${RESOLVEAGENT_DATABASE_PASSWORD:?DATABASE_PASSWORD is required}
@@ -149,7 +156,10 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ../docker/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      # NOTE: init-db.sql is intentionally NOT mounted. It carries a stale
+      # schema (UUID ids, no agents.type) that conflicts with the Go store's
+      # own migration chain (pkg/store/postgres), breaking migration 5.
+      # The platform runs all migrations itself at startup.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${RESOLVEAGENT_DATABASE_USER:-resolveagent} -d ${RESOLVEAGENT_DATABASE_DBNAME:-resolveagent}"]
       interval: 10s
@@ -169,17 +179,23 @@ services:
     container_name: resolveagent-redis
     restart: unless-stopped
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    environment:
+      REDIS_PASSWORD: ${RESOLVEAGENT_REDIS_PASSWORD:-}
+    # --requirepass is enabled only when a password is configured
     command: >
-      redis-server
+      sh -c 'REQUIREPASS="";
+      if [ -n "$$REDIS_PASSWORD" ]; then REQUIREPASS="--requirepass $$REDIS_PASSWORD"; fi;
+      exec redis-server
       --maxmemory ${REDIS_MAXMEMORY:-256mb}
       --maxmemory-policy allkeys-lru
       --appendonly yes
       --appendfsync everysec
+      $$REQUIREPASS'
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli $${REDIS_PASSWORD:+-a $$REDIS_PASSWORD} --no-auth-warning ping | grep PONG"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -196,8 +212,8 @@ services:
     container_name: resolveagent-nats
     restart: unless-stopped
     ports:
-      - "${NATS_CLIENT_PORT:-4222}:4222"
-      - "${NATS_MONITOR_PORT:-8222}:8222"
+      - "127.0.0.1:${NATS_CLIENT_PORT:-4222}:4222"
+      - "127.0.0.1:${NATS_MONITOR_PORT:-8222}:8222"
     command: ["--js", "--store_dir", "/data", "-m", "8222"]
     volumes:
       - nats_data:/data

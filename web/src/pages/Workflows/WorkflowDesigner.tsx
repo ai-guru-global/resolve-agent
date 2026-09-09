@@ -85,8 +85,12 @@ function buildFlowData(tree: FaultTree): { nodes: Node[]; edges: Edge[] } {
   for (const gate of tree.gates) {
     const outputDepth = eventDepth.get(gate.output_id) ?? 0;
     const inputDepths = gate.input_ids.map((id) => eventDepth.get(id) ?? 0);
-    const avgInputCol = gate.input_ids.reduce((sum, id) => sum + (eventColumn.get(id) ?? 0), 0) / gate.input_ids.length;
-    const avgDepth = (outputDepth + Math.max(...inputDepths)) / 2;
+    const avgInputCol =
+      gate.input_ids.length > 0
+        ? gate.input_ids.reduce((sum, id) => sum + (eventColumn.get(id) ?? 0), 0) / gate.input_ids.length
+        : 0;
+    const avgDepth =
+      inputDepths.length > 0 ? (outputDepth + Math.max(...inputDepths)) / 2 : outputDepth;
     const siblings = depthGroups.get(outputDepth) ?? [];
     const totalWidth = Math.max(siblings.length, gate.input_ids.length) * COL_WIDTH;
     const startX = -totalWidth / 2;

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 type DiagnoseState = 'idle' | 'capturing' | 'processing' | 'result'
@@ -35,13 +35,25 @@ export default function Diagnose() {
   const [activeStep, setActiveStep] = useState<string | null>(null)
   const [showConfirm, setShowConfirm] = useState(false)
   const [showResult, setShowResult] = useState(false)
+  const timersRef = useRef<ReturnType<typeof setInterval>[]>([])
+
+  useEffect(() => {
+    const timers = timersRef.current
+    return () => {
+      for (const t of timers) {
+        clearInterval(t)
+        clearTimeout(t)
+      }
+    }
+  }, [])
 
   const start = () => {
     setState('capturing')
-    setTimeout(() => {
+    const t = setTimeout(() => {
       setState('processing')
       runProcessing()
     }, 600)
+    timersRef.current.push(t)
   }
 
   const runProcessing = () => {
@@ -68,13 +80,17 @@ export default function Diagnose() {
                 clearInterval(skInt)
                 setActiveStep(null)
                 setState('result')
-                setTimeout(() => setShowResult(true), 200)
+                const t = setTimeout(() => setShowResult(true), 200)
+                timersRef.current.push(t)
               }
             }, 180)
+            timersRef.current.push(skInt)
           }
         }, 180)
+        timersRef.current.push(gemInt)
       }
     }, 180)
+    timersRef.current.push(ocrInt)
   }
 
   const reset = () => {

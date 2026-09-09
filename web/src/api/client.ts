@@ -44,6 +44,7 @@ import {
   DEV_MOCKS_ENABLED,
   DEV_CODE_ANALYSIS_MOCKS_ENABLED,
 } from './mockRuntime';
+import { toast } from 'sonner';
 
 const API_BASE = '/api/v1';
 
@@ -110,7 +111,17 @@ const realApi = {
   listAgents: () => request<{ agents: Agent[]; total: number }>('/agents'),
   getAgent: (id: string) => request<Agent>(`/agents/${id}`),
   createAgent: (data: CreateAgentRequest) =>
-    request<Agent>('/agents', { method: 'POST', body: JSON.stringify(data) }),
+    request<Agent>('/agents', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: data.name,
+        type: data.type,
+        config: {
+          model: data.model,
+          ...(data.system_prompt ? { system_prompt: data.system_prompt } : {}),
+        },
+      }),
+    }),
   deleteAgent: (id: string) =>
     request<void>(`/agents/${id}`, { method: 'DELETE' }),
   getAgentExecutions: (agentId: string) =>
@@ -373,6 +384,9 @@ const loadCodeAnalysisMockMethod: (
     }
   : async () => null;
 
+// 已提示过的 mock 回退方法，避免 toast 刷屏
+const mockFallbackNotified = new Set<string>();
+
 function createProxiedApi(): ApiType {
   const handler: ProxyHandler<ApiType> = {
     get(target, prop: string) {
@@ -397,10 +411,14 @@ function createProxiedApi(): ApiType {
         }
 
         try {
-          return (realFn as ApiMethod)(...args);
+          return await (realFn as ApiMethod)(...args);
         } catch (err) {
           if (typeof legacyMockFn === 'function') {
             console.warn(`[API] ${prop} failed, falling back to mock`, err);
+            if (!mockFallbackNotified.has(prop)) {
+              mockFallbackNotified.add(prop);
+              toast.warning(`接口 ${prop} 请求失败，页面展示的是本地模拟数据`);
+            }
             return (legacyMockFn as ApiMethod)(...args);
           }
           throw err;
@@ -419,9 +437,9 @@ export interface Agent {
   name: string;
   type: string;
   status: string;
-  mode: AgentMode;
-  harness: HarnessConfig;
-  config: Record<string, unknown>;
+  mode?: AgentMode;
+  harness?: HarnessConfig;
+  config?: Record<string, unknown>;
   last_execution_at?: string;
 }
 

@@ -10,6 +10,12 @@
 # ---------------------
 FROM golang:1.25-alpine AS builder
 
+ARG VERSION
+ARG TARGETARCH
+# .git is excluded from the build context, so the commit comes from a build
+# arg (compose passes GIT_COMMIT) instead of git rev-parse.
+ARG GIT_COMMIT=unknown
+
 RUN apk add --no-cache git make ca-certificates tzdata
 
 WORKDIR /build
@@ -27,7 +33,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH:-amd64} \
     go build \
     -ldflags "-s -w \
       -X github.com/ai-guru-global/resolve-agent/pkg/version.Version=${VERSION:-dev} \
-      -X github.com/ai-guru-global/resolve-agent/pkg/version.Commit=$(git rev-parse --short HEAD 2>/dev/null || echo unknown) \
+      -X github.com/ai-guru-global/resolve-agent/pkg/version.Commit=${GIT_COMMIT} \
       -X github.com/ai-guru-global/resolve-agent/pkg/version.BuildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     -o /bin/resolveagent-server \
     ./cmd/resolveagent-server

@@ -51,15 +51,21 @@ ingress:
         - path: /
           pathType: Prefix
 
+# External infrastructure services.
+# NOTE: This chart does NOT bundle PostgreSQL/Redis/NATS subcharts.
+# Deploy them separately (e.g. the bitnami charts) and point the
+# platform at them here. Passwords are injected via the generated Secret.
 postgresql:
-  enabled: true
+  host: postgresql
+  port: 5432
   auth:
     username: resolveagent
     password: resolveagent
     database: resolveagent
 
 redis:
-  enabled: true
+  addr: redis:6379
+  password: ""
 
 nats:
-  enabled: true
+  url: nats://nats:4222

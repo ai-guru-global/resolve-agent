@@ -9,7 +9,7 @@
 # ---------------------
 FROM node:25-alpine AS builder
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10 && pnpm config set registry https://registry.npmmirror.com
 
 WORKDIR /build
 
@@ -41,6 +41,6 @@ COPY deploy/docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-    CMD wget -qO- http://localhost:80/ || exit 1
+    CMD wget -qO- http://127.0.0.1:80/ || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]

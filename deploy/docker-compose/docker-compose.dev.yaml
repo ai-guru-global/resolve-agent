@@ -33,7 +33,7 @@ services:
     volumes:
       - ../../python:/app
       - ../../configs:/etc/resolveagent:ro
-    command: ["uv", "run", "python", "-m", "resolveagent.runtime.server"]
+    command: ["uv", "run", "python", "-m", "resolveagent.runtime"]
     environment:
       RESOLVEAGENT_RUNTIME_HOST: "0.0.0.0"
       RESOLVEAGENT_RUNTIME_PORT: "9091"
@@ -47,7 +47,7 @@ services:
     volumes:
       - ../../web/src:/app/src:ro
     ports:
-      - "5173:5173"
+      - "127.0.0.1:5174:5174"
 
   # ---------------------------------------------------------------------------
   # Additional Development Services
@@ -57,8 +57,8 @@ services:
     image: milvusdb/milvus:v2.4-latest
     container_name: resolveagent-milvus
     ports:
-      - "19530:19530"
-      - "9092:9091"
+      - "127.0.0.1:19530:19530"
+      - "127.0.0.1:9092:9091"
     environment:
       ETCD_USE_EMBED: "true"
       COMMON_STORAGETYPE: local

@@ -5,6 +5,8 @@
 server:
   http_addr: ":8080"
   grpc_addr: ":9090"
+  # Python runtime HTTP address (agent/workflow execution, RAG proxy)
+  runtime_addr: "localhost:9091"
 
 database:
   host: localhost
@@ -17,6 +19,8 @@ database:
 
 redis:
   addr: "localhost:6379"
+  # SECURITY: Set password via environment variable RESOLVEAGENT_REDIS_PASSWORD
+  password: ""
   db: 0
 
 nats:
@@ -46,6 +50,7 @@ gateway:
 
   # Gateway Authentication
   # Higress handles external auth, platform validates forwarded headers
+  # NOTE: 当前未生效 —— 该配置暂无代码读取,gateway auth 中间件未接线(保留待产品决策)
   auth:
     enabled: false
     jwt_secret: ""  # Set via RESOLVEAGENT_GATEWAY_AUTH_JWT_SECRET

@@ -76,42 +76,100 @@ func (c *Checker) Register(name string, check Check) {
 	c.checks[name] = check
 }
 
-// Run executes all registered checks and returns the aggregated response.
-// When a FeedbackEmitter is attached, it also emits signals on status transitions.
+// checkTimeout bounds a single component check so a hung check cannot block
+// the aggregated health response.
+const checkTimeout = 5 * time.Second
+
+// Run executes all registered checks concurrently and returns the aggregated
+// response. Checks are run outside the checker lock, so a hung check cannot
+// block other Run calls and checks may safely call back into the Checker.
+// When a FeedbackEmitter is attached, it also emits signals on status
+// transitions.
 func (c *Checker) Run(ctx context.Context) Response {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mu.RLock()
+	checks := make(map[string]Check, len(c.checks))
+	for name, check := range c.checks {
+		checks[name] = check
+	}
+	emitter := c.emitter
+	c.mu.RUnlock()
+
+	type checkResult struct {
+		name   string
+		health ComponentHealth
+	}
+	results := make(chan checkResult, len(checks))
+	for name, check := range checks {
+		go func(name string, check Check) {
+			checkCtx, cancel := context.WithTimeout(ctx, checkTimeout)
+			defer cancel()
+			results <- checkResult{name, runCheck(checkCtx, check)}
+		}(name, check)
+	}
 
 	resp := Response{
 		Status:     StatusUp,
 		Timestamp:  time.Now().UTC(),
-		Components: make(map[string]ComponentHealth, len(c.checks)),
+		Components: make(map[string]ComponentHealth, len(checks)),
 	}
 
-	for name, check := range c.checks {
-		ch := check(ctx)
-		resp.Components[name] = ch
-		if ch.Status == StatusDown {
+	type transition struct {
+		name   string
+		status Status
+		msg    string
+	}
+	var transitions []transition
+
+	for range checks {
+		r := <-results
+		resp.Components[r.name] = r.health
+		if r.health.Status == StatusDown {
 			resp.Status = StatusDown
-		} else if ch.Status == StatusDegraded && resp.Status != StatusDown {
+		} else if r.health.Status == StatusDegraded && resp.Status != StatusDown {
 			resp.Status = StatusDegraded
 		}
 
-		// Emit feedback signal on status transition.
-		if c.emitter != nil {
-			prev, hadPrev := c.prevStat[name]
-			if !hadPrev || prev != ch.Status {
-				msg := "health status: " + string(ch.Status)
+		// Record feedback signal on status transition.
+		if emitter != nil {
+			c.mu.Lock()
+			prev, hadPrev := c.prevStat[r.name]
+			if !hadPrev || prev != r.health.Status {
+				msg := "health status: " + string(r.health.Status)
 				if hadPrev {
-					msg = string(prev) + " -> " + string(ch.Status)
+					msg = string(prev) + " -> " + string(r.health.Status)
 				}
-				c.emitter.EmitHealthSignal(ctx, name, ch.Status, msg)
+				transitions = append(transitions, transition{r.name, r.health.Status, msg})
 			}
-			c.prevStat[name] = ch.Status
+			c.prevStat[r.name] = r.health.Status
+			c.mu.Unlock()
 		}
 	}
 
+	// Emit signals after releasing the lock so emitters may call back into
+	// the Checker without deadlocking.
+	for _, tr := range transitions {
+		emitter.EmitHealthSignal(ctx, tr.name, tr.status, tr.msg)
+	}
+
 	return resp
+}
+
+// runCheck executes a single check, returning DOWN if the check does not
+// finish before the context deadline.
+func runCheck(ctx context.Context, check Check) ComponentHealth {
+	done := make(chan ComponentHealth, 1)
+	go func() {
+		done <- check(ctx)
+	}()
+	select {
+	case ch := <-done:
+		return ch
+	case <-ctx.Done():
+		return ComponentHealth{
+			Status:  StatusDown,
+			Details: map[string]any{"error": "health check timed out"},
+		}
+	}
 }
 
 // LivenessHandler returns an HTTP handler for /healthz (liveness).

@@ -66,16 +66,31 @@ func (r *InMemoryWorkflowRegistry) Get(_ context.Context, id string) (*WorkflowD
 	return wf, nil
 }
 
-// List returns all workflow definitions; the list options are ignored.
-func (r *InMemoryWorkflowRegistry) List(_ context.Context, _ ListOptions) ([]*WorkflowDefinition, int, error) {
+// List returns workflow definitions, paginated, with the total count.
+func (r *InMemoryWorkflowRegistry) List(_ context.Context, opts ListOptions) ([]*WorkflowDefinition, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
+
+	limit := opts.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+	offset := opts.Offset
 
 	workflows := make([]*WorkflowDefinition, 0, len(r.workflows))
 	for _, w := range r.workflows {
 		workflows = append(workflows, w)
 	}
-	return workflows, len(workflows), nil
+
+	total := len(workflows)
+	if offset >= total {
+		return []*WorkflowDefinition{}, total, nil
+	}
+	end := offset + limit
+	if end > total {
+		end = total
+	}
+	return workflows[offset:end], total, nil
 }
 
 // Update replaces an existing workflow definition and reports an error if

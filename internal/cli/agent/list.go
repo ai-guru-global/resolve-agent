@@ -19,6 +19,8 @@ func newListCmd() *cobra.Command {
 		Aliases: []string{"ls"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			output, _ := cmd.Flags().GetString("output")
+			agentType, _ := cmd.Flags().GetString("type")
+			status, _ := cmd.Flags().GetString("status")
 
 			// Create API client
 			c := client.New()
@@ -29,6 +31,10 @@ func newListCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to list agents: %w", err)
 			}
+
+			// The list API does not support type/status filters; filter client-side.
+			resp.Agents = filterAgents(resp.Agents, agentType, status)
+			resp.Total = len(resp.Agents)
 
 			// Output based on format
 			switch output {
@@ -47,6 +53,23 @@ func newListCmd() *cobra.Command {
 	cmd.Flags().StringP("output", "o", "table", "Output format (table, json, yaml)")
 
 	return cmd
+}
+
+func filterAgents(agents []*client.Agent, agentType, status string) []*client.Agent {
+	if agentType == "" && status == "" {
+		return agents
+	}
+	filtered := make([]*client.Agent, 0, len(agents))
+	for _, a := range agents {
+		if agentType != "" && a.Type != agentType {
+			continue
+		}
+		if status != "" && a.Status != status {
+			continue
+		}
+		filtered = append(filtered, a)
+	}
+	return filtered
 }
 
 func outputTable(agents []*client.Agent) error {

@@ -80,6 +80,18 @@ func createFromFile(path string) (*client.Agent, error) {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 
+	// Accept both a flat agent definition and one wrapped in a top-level
+	// "agent" key.
+	var wrapped struct {
+		Agent *client.Agent `yaml:"agent"`
+	}
+	if err := yaml.Unmarshal(data, &wrapped); err != nil {
+		return nil, fmt.Errorf("failed to parse config file: %w", err)
+	}
+	if wrapped.Agent != nil {
+		return wrapped.Agent, nil
+	}
+
 	var agent client.Agent
 	if err := yaml.Unmarshal(data, &agent); err != nil {
 		return nil, fmt.Errorf("failed to parse config file: %w", err)

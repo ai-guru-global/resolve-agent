@@ -6,13 +6,32 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/spf13/viper"
 )
+
+// APIError is a non-2xx error response from the API.
+type APIError struct {
+	StatusCode int
+	Body       string
+}
+
+func (e *APIError) Error() string {
+	return fmt.Sprintf("API error %d: %s", e.StatusCode, e.Body)
+}
+
+// IsNotFound reports whether err is an API 404 (not found) error.
+func IsNotFound(err error) bool {
+	var apiErr *APIError
+	return errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusNotFound
+}
 
 // Client is the HTTP client for the ResolveAgent API.
 type Client struct {
@@ -55,7 +74,7 @@ func (c *Client) Get(ctx context.Context, path string) ([]byte, error) {
 	}
 
 	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, string(body))
+		return nil, &APIError{StatusCode: resp.StatusCode, Body: string(body)}
 	}
 
 	return body, nil
@@ -95,7 +114,7 @@ func (c *Client) Post(ctx context.Context, path string, data interface{}) ([]byt
 	}
 
 	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, string(respBody))
+		return nil, &APIError{StatusCode: resp.StatusCode, Body: string(respBody)}
 	}
 
 	return respBody, nil
@@ -121,7 +140,7 @@ func (c *Client) Delete(ctx context.Context, path string) ([]byte, error) {
 	}
 
 	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, string(body))
+		return nil, &APIError{StatusCode: resp.StatusCode, Body: string(body)}
 	}
 
 	return body, nil
@@ -246,12 +265,17 @@ type ExecutionLog struct {
 
 // GetAgentLogs retrieves logs for an agent.
 func (c *Client) GetAgentLogs(ctx context.Context, agentID, executionID string, limit int) ([]*ExecutionLog, error) {
-	path := fmt.Sprintf("/agents/%s/logs", agentID)
+	query := url.Values{}
 	if executionID != "" {
-		path = fmt.Sprintf("%s?execution_id=%s", path, executionID)
+		query.Set("execution_id", executionID)
 	}
 	if limit > 0 {
-		path = fmt.Sprintf("%s&limit=%d", path, limit)
+		query.Set("limit", strconv.Itoa(limit))
+	}
+
+	path := fmt.Sprintf("/agents/%s/logs", agentID)
+	if encoded := query.Encode(); encoded != "" {
+		path = fmt.Sprintf("%s?%s", path, encoded)
 	}
 
 	body, err := c.Get(ctx, path)

@@ -68,16 +68,31 @@ func (r *InMemorySkillRegistry) Get(_ context.Context, name string) (*SkillDefin
 	return skill, nil
 }
 
-// List returns all registered skills; the list options are ignored.
-func (r *InMemorySkillRegistry) List(_ context.Context, _ ListOptions) ([]*SkillDefinition, int, error) {
+// List returns registered skills, paginated, with the total count.
+func (r *InMemorySkillRegistry) List(_ context.Context, opts ListOptions) ([]*SkillDefinition, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
+
+	limit := opts.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+	offset := opts.Offset
 
 	skills := make([]*SkillDefinition, 0, len(r.skills))
 	for _, s := range r.skills {
 		skills = append(skills, s)
 	}
-	return skills, len(skills), nil
+
+	total := len(skills)
+	if offset >= total {
+		return []*SkillDefinition{}, total, nil
+	}
+	end := offset + limit
+	if end > total {
+		end = total
+	}
+	return skills[offset:end], total, nil
 }
 
 // Unregister removes the skill definition with the given name.
@@ -89,11 +104,17 @@ func (r *InMemorySkillRegistry) Unregister(_ context.Context, name string) error
 	return nil
 }
 
-// ListByType returns all registered skills of the given type; the list
-// options are ignored.
-func (r *InMemorySkillRegistry) ListByType(_ context.Context, skillType string, _ ListOptions) ([]*SkillDefinition, int, error) {
+// ListByType returns registered skills of the given type, paginated, with the
+// total count.
+func (r *InMemorySkillRegistry) ListByType(_ context.Context, skillType string, opts ListOptions) ([]*SkillDefinition, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
+
+	limit := opts.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+	offset := opts.Offset
 
 	skills := make([]*SkillDefinition, 0)
 	for _, s := range r.skills {
@@ -101,5 +122,14 @@ func (r *InMemorySkillRegistry) ListByType(_ context.Context, skillType string, 
 			skills = append(skills, s)
 		}
 	}
-	return skills, len(skills), nil
+
+	total := len(skills)
+	if offset >= total {
+		return []*SkillDefinition{}, total, nil
+	}
+	end := offset + limit
+	if end > total {
+		end = total
+	}
+	return skills[offset:end], total, nil
 }

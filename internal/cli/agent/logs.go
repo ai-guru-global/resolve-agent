@@ -21,6 +21,10 @@ func newLogsCmd() *cobra.Command {
 			follow, _ := cmd.Flags().GetBool("follow")
 			executionID, _ := cmd.Flags().GetString("execution")
 
+			if follow {
+				return fmt.Errorf("--follow is not yet implemented")
+			}
+
 			// Create API client
 			c := client.New()
 			ctx := context.Background()
@@ -29,11 +33,6 @@ func newLogsCmd() *cobra.Command {
 			logs, err := c.GetAgentLogs(ctx, agentID, executionID, limit)
 			if err != nil {
 				return fmt.Errorf("failed to get logs: %w", err)
-			}
-
-			if follow {
-				// Stream logs
-				return streamLogs(ctx, c, agentID)
 			}
 
 			// Display logs
@@ -67,13 +66,4 @@ func displayLogs(logs []*client.ExecutionLog) error {
 	}
 
 	return w.Flush()
-}
-
-func streamLogs(ctx context.Context, c *client.Client, agentID string) error {
-	fmt.Println("Streaming logs... (Press Ctrl+C to stop)")
-	fmt.Println()
-
-	// This would implement WebSocket or SSE connection
-	// For now, just poll periodically
-	return fmt.Errorf("streaming not yet implemented")
 }

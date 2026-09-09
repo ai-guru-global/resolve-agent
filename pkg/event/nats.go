@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -79,7 +80,7 @@ func (b *NATSBus) createStreams() error {
 	for _, stream := range streams {
 		_, err := b.js.AddStream(&nats.StreamConfig{
 			Name:     stream,
-			Subjects: []string{fmt.Sprintf("%s.*", stream)},
+			Subjects: []string{fmt.Sprintf("%s.>", stream)},
 			MaxAge:   24 * time.Hour,
 			Storage:  nats.FileStorage,
 		})
@@ -96,9 +97,24 @@ func (b *NATSBus) createStreams() error {
 	return nil
 }
 
+// streamSubject maps an event type to its JetStream subject prefix: the first
+// dot-separated segment, uppercased and pluralized, matches the stream name
+// (e.g. "agent.created" publishes under "AGENTS.agent.created").
+func streamSubject(eventType string) string {
+	prefix := eventType
+	if i := strings.IndexByte(prefix, '.'); i >= 0 {
+		prefix = prefix[:i]
+	}
+	prefix = strings.ToUpper(prefix)
+	if !strings.HasSuffix(prefix, "S") {
+		prefix += "S"
+	}
+	return prefix + "." + eventType
+}
+
 // Publish sends an event to NATS.
 func (b *NATSBus) Publish(ctx context.Context, event Event) error {
-	subject := fmt.Sprintf("%s.%s", event.Type, event.Subject)
+	subject := fmt.Sprintf("%s.%s", streamSubject(event.Type), event.Subject)
 
 	// Serialize event data
 	data, err := json.Marshal(event.Data)
@@ -106,9 +122,10 @@ func (b *NATSBus) Publish(ctx context.Context, event Event) error {
 		return fmt.Errorf("failed to marshal event data: %w", err)
 	}
 
-	// Publish with JetStream
-	_, err = b.js.Publish(subject, data)
-	if err != nil {
+	// Publish with JetStream, honoring the caller's context
+	msg := nats.NewMsg(subject)
+	msg.Data = data
+	if _, err := b.js.PublishMsg(msg, nats.Context(ctx)); err != nil {
 		return fmt.Errorf("failed to publish event: %w", err)
 	}
 
@@ -118,7 +135,7 @@ func (b *NATSBus) Publish(ctx context.Context, event Event) error {
 
 // PublishData sends event data directly.
 func (b *NATSBus) PublishData(eventType, subject string, data interface{}) error {
-	fullSubject := fmt.Sprintf("%s.%s", eventType, subject)
+	fullSubject := fmt.Sprintf("%s.%s", streamSubject(eventType), subject)
 
 	payload, err := json.Marshal(data)
 	if err != nil {
@@ -135,7 +152,8 @@ func (b *NATSBus) PublishData(eventType, subject string, data interface{}) error
 
 // Subscribe registers an event handler.
 func (b *NATSBus) Subscribe(ctx context.Context, eventType string, handler func(Event)) error {
-	subject := fmt.Sprintf("%s.*", eventType)
+	subjectPrefix := streamSubject(eventType)
+	subject := fmt.Sprintf("%s.*", subjectPrefix)
 	consumerName := fmt.Sprintf("%s-consumer", eventType)
 
 	sub, err := b.js.Subscribe(subject, func(msg *nats.Msg) {
@@ -149,10 +167,10 @@ func (b *NATSBus) Subscribe(ctx context.Context, eventType string, handler func(
 		}
 
 		// Extract event type and subject from message subject
-		// Subject format: TYPE.ID
+		// Subject format: STREAM.TYPE.ID
 		event := Event{
 			Type:    eventType,
-			Subject: msg.Subject[len(eventType)+1:], // Remove "TYPE." prefix
+			Subject: msg.Subject[len(subjectPrefix)+1:], // Remove "STREAM.TYPE." prefix
 			Data:    data,
 		}
 
@@ -183,7 +201,7 @@ func (b *NATSBus) Subscribe(ctx context.Context, eventType string, handler func(
 
 // SubscribeSync creates a synchronous subscription.
 func (b *NATSBus) SubscribeSync(eventType string) (*nats.Subscription, error) {
-	subject := fmt.Sprintf("%s.*", eventType)
+	subject := fmt.Sprintf("%s.*", streamSubject(eventType))
 	return b.js.SubscribeSync(subject)
 }
 

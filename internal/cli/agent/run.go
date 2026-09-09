@@ -1,8 +1,13 @@
 package agent
 
 import (
+	"bufio"
 	"context"
+	"errors"
 	"fmt"
+	"io"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/ai-guru-global/resolve-agent/internal/cli/client"
@@ -16,6 +21,10 @@ func newRunCmd() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			agentID := args[0]
+
+			if interactive, _ := cmd.Flags().GetBool("interactive"); interactive {
+				return runInteractiveSession(agentID)
+			}
 
 			var message string
 			if len(args) > 1 {
@@ -73,6 +82,52 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringP("message", "m", "", "Message to send to the agent")
 	cmd.Flags().BoolP("stream", "s", false, "Stream response")
 	cmd.Flags().BoolP("wait", "w", true, "Wait for completion")
+	cmd.Flags().BoolP("interactive", "i", false, "Run an interactive chat session")
 
 	return cmd
+}
+
+// runInteractiveSession runs an interactive chat session with the agent.
+func runInteractiveSession(agentID string) error {
+	fmt.Println("Interactive mode. Type 'exit' or 'quit' to end.")
+	fmt.Println()
+
+	c := client.New()
+	ctx := context.Background()
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+		fmt.Print("> ")
+		line, err := reader.ReadString('\n')
+		eof := errors.Is(err, io.EOF)
+		if err != nil && !eof {
+			return fmt.Errorf("failed to read input: %w", err)
+		}
+
+		message := strings.TrimSpace(line)
+		if message == "exit" || message == "quit" {
+			break
+		}
+
+		if message != "" {
+			req := &client.ExecuteRequest{
+				Message: message,
+				Wait:    true,
+			}
+
+			resp, execErr := c.ExecuteAgent(ctx, agentID, req)
+			if execErr != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", execErr)
+			} else {
+				fmt.Println(resp.Content)
+				fmt.Println()
+			}
+		}
+
+		if eof {
+			break // Input stream ended: exit the interactive loop.
+		}
+	}
+
+	return nil
 }

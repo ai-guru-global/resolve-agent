@@ -14,6 +14,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"strings"
 )
 
 // Option configures a Logger.
@@ -103,7 +104,7 @@ func Nop() *slog.Logger {
 }
 
 func parseLevel(s string) slog.Level {
-	switch s {
+	switch strings.ToLower(strings.TrimSpace(s)) {
 	case "debug":
 		return slog.LevelDebug
 	case "warn":

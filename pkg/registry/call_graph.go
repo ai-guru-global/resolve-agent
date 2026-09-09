@@ -288,13 +288,11 @@ func (r *InMemoryCallGraphRegistry) GetSubgraph(_ context.Context, callGraphID, 
 		depth = 5
 	}
 
-	// Build adjacency list from edges
-	adjacency := make(map[string][]string)
-	edgeMap := make(map[string]*CallGraphEdge)
+	// Build adjacency list from edges, keeping parallel edges distinct.
+	adjacency := make(map[string][]*CallGraphEdge)
 	for _, e := range r.edges {
 		if e.CallGraphID == callGraphID {
-			adjacency[e.CallerNodeID] = append(adjacency[e.CallerNodeID], e.CalleeNodeID)
-			edgeMap[e.CallerNodeID+":"+e.CalleeNodeID] = e
+			adjacency[e.CallerNodeID] = append(adjacency[e.CallerNodeID], e)
 		}
 	}
 
@@ -321,17 +319,14 @@ func (r *InMemoryCallGraphRegistry) GetSubgraph(_ context.Context, callGraphID, 
 			continue
 		}
 
-		for _, calleeID := range adjacency[item.nodeID] {
-			key := item.nodeID + ":" + calleeID
-			if edge, ok := edgeMap[key]; ok {
-				resultEdges = append(resultEdges, edge)
-			}
-			if !visited[calleeID] {
-				visited[calleeID] = true
+		for _, edge := range adjacency[item.nodeID] {
+			resultEdges = append(resultEdges, edge)
+			if !visited[edge.CalleeNodeID] {
+				visited[edge.CalleeNodeID] = true
 				queue = append(queue, struct {
 					nodeID string
 					depth  int
-				}{calleeID, item.depth + 1})
+				}{edge.CalleeNodeID, item.depth + 1})
 			}
 		}
 	}

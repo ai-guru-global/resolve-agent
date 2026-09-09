@@ -186,11 +186,18 @@ func (r *InMemoryTroubleshootingSolutionRegistry) Update(_ context.Context, solu
 	return nil
 }
 
-// Delete removes the solution with the given ID.
+// Delete removes the solution with the given ID together with all of its
+// execution records.
 func (r *InMemoryTroubleshootingSolutionRegistry) Delete(_ context.Context, id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	// Cascade delete execution records
+	for eid, e := range r.executions {
+		if e.SolutionID == id {
+			delete(r.executions, eid)
+		}
+	}
 	delete(r.solutions, id)
 	return nil
 }

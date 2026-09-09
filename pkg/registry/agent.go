@@ -71,16 +71,31 @@ func (r *InMemoryAgentRegistry) Get(_ context.Context, id string) (*AgentDefinit
 	return agent, nil
 }
 
-// List returns all agent definitions; the list options are ignored.
-func (r *InMemoryAgentRegistry) List(_ context.Context, _ ListOptions) ([]*AgentDefinition, int, error) {
+// List returns agent definitions, paginated, with the total count.
+func (r *InMemoryAgentRegistry) List(_ context.Context, opts ListOptions) ([]*AgentDefinition, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
+
+	limit := opts.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+	offset := opts.Offset
 
 	agents := make([]*AgentDefinition, 0, len(r.agents))
 	for _, a := range r.agents {
 		agents = append(agents, a)
 	}
-	return agents, len(agents), nil
+
+	total := len(agents)
+	if offset >= total {
+		return []*AgentDefinition{}, total, nil
+	}
+	end := offset + limit
+	if end > total {
+		end = total
+	}
+	return agents[offset:end], total, nil
 }
 
 // Update replaces an existing agent definition and reports an error if absent.

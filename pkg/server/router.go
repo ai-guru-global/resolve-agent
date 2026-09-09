@@ -122,6 +122,7 @@ func (s *Server) registerHTTPRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/traffic/captures", s.handleListTrafficCaptures)
 	mux.HandleFunc("POST /api/v1/traffic/captures", s.handleCreateTrafficCapture)
 	mux.HandleFunc("GET /api/v1/traffic/captures/{id}", s.handleGetTrafficCapture)
+	mux.HandleFunc("PUT /api/v1/traffic/captures/{id}", s.handleUpdateTrafficCapture)
 	mux.HandleFunc("DELETE /api/v1/traffic/captures/{id}", s.handleDeleteTrafficCapture)
 	mux.HandleFunc("POST /api/v1/traffic/captures/{id}/records", s.handleAddTrafficRecords)
 	mux.HandleFunc("GET /api/v1/traffic/captures/{id}/records", s.handleListTrafficRecords)

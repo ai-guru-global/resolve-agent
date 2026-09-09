@@ -105,7 +105,10 @@ func (r *GenericInMemoryRegistry[T]) List(_ context.Context, opts ListOptions) (
 	total := len(all)
 
 	// Apply pagination.
-	if opts.Offset > 0 && opts.Offset < total {
+	if opts.Offset >= total {
+		return []*T{}, total, nil
+	}
+	if opts.Offset > 0 {
 		all = all[opts.Offset:]
 	}
 	if opts.Limit > 0 && opts.Limit < len(all) {

@@ -1,8 +1,9 @@
 -- =============================================================================
--- ResolveAgent - Migration 008: Troubleshooting Solutions
+-- ResolveAgent - Migration 011: Troubleshooting Solutions
 -- =============================================================================
 -- Structured troubleshooting solution knowledge base with four core elements:
 -- problem_symptoms, key_information, troubleshooting_steps, resolution_steps.
+-- Ids are VARCHAR(64), aligned with the Go embedded migration chain.
 -- =============================================================================
 
 SET search_path TO resolveagent, public;
@@ -11,7 +12,7 @@ SET search_path TO resolveagent, public;
 -- Troubleshooting Solutions
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS troubleshooting_solutions (
-    id                   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id                   VARCHAR(64) PRIMARY KEY,
     title                VARCHAR(512) NOT NULL,
     problem_symptoms     TEXT NOT NULL,
     key_information      TEXT NOT NULL,
@@ -26,7 +27,7 @@ CREATE TABLE IF NOT EXISTS troubleshooting_solutions (
     status               VARCHAR(50) NOT NULL DEFAULT 'draft',
     source_uri           VARCHAR(1024),
     rag_collection_id    VARCHAR(255),
-    rag_document_id      UUID,
+    rag_document_id      VARCHAR(64),
     related_skill_names  TEXT[],
     related_workflow_ids TEXT[],
     metadata             JSONB NOT NULL DEFAULT '{}',
@@ -39,8 +40,8 @@ CREATE TABLE IF NOT EXISTS troubleshooting_solutions (
 -- Solution Executions
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS solution_executions (
-    id                   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    solution_id          UUID NOT NULL REFERENCES troubleshooting_solutions(id) ON DELETE CASCADE,
+    id                   VARCHAR(64) PRIMARY KEY,
+    solution_id          VARCHAR(64) NOT NULL REFERENCES troubleshooting_solutions(id) ON DELETE CASCADE,
     executor             VARCHAR(255),
     trigger_context      JSONB DEFAULT '{}',
     status               VARCHAR(50) NOT NULL DEFAULT 'pending',

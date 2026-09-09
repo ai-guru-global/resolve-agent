@@ -1,5 +1,5 @@
 -- =============================================================================
--- ResolveAgent - Migration 008: Rollback Troubleshooting Solutions
+-- ResolveAgent - Migration 011: Rollback Troubleshooting Solutions
 -- =============================================================================
 
 SET search_path TO resolveagent, public;

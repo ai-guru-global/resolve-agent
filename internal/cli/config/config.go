@@ -35,7 +35,22 @@ func newSetCmd() *cobra.Command {
 			key, value := args[0], args[1]
 			viper.Set(key, value)
 			if err := viper.WriteConfig(); err != nil {
-				return fmt.Errorf("writing config: %w", err)
+				if viper.ConfigFileUsed() != "" {
+					return fmt.Errorf("writing config: %w", err)
+				}
+				// No config file on disk yet; create it at the default path
+				// (~/.resolveagent/config.yaml, same location initConfig reads).
+				home, herr := os.UserHomeDir()
+				if herr != nil {
+					return fmt.Errorf("failed to get home directory: %w", herr)
+				}
+				configDir := filepath.Join(home, ".resolveagent")
+				if mkErr := os.MkdirAll(configDir, 0o750); mkErr != nil {
+					return fmt.Errorf("failed to create config directory: %w", mkErr)
+				}
+				if werr := viper.SafeWriteConfigAs(filepath.Join(configDir, "config.yaml")); werr != nil {
+					return fmt.Errorf("writing config: %w (run 'resolveagent config init' first)", werr)
+				}
 			}
 			fmt.Printf("Set %s = %s\n", key, value)
 			return nil

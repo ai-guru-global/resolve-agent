@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/ai-guru-global/resolve-agent/pkg/registry"
 )
@@ -44,6 +45,42 @@ func (s *Server) handleGetTrafficCapture(w http.ResponseWriter, r *http.Request)
 	capture, err := s.trafficCaptureRegistry.Get(ctx, id)
 	if err != nil {
 		writeError(w, http.StatusNotFound, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, capture)
+}
+
+func (s *Server) handleUpdateTrafficCapture(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	id := r.PathValue("id")
+
+	capture, err := s.trafficCaptureRegistry.Get(ctx, id)
+	if err != nil {
+		writeError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	var patch struct {
+		Status  string         `json:"status"`
+		EndTime *time.Time     `json:"end_time"`
+		Summary map[string]any `json:"summary"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&patch); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if patch.Status != "" {
+		capture.Status = patch.Status
+	}
+	if patch.EndTime != nil {
+		capture.EndTime = *patch.EndTime
+	}
+	if patch.Summary != nil {
+		capture.Summary = patch.Summary
+	}
+
+	if err := s.trafficCaptureRegistry.Update(ctx, capture); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	writeJSON(w, http.StatusOK, capture)

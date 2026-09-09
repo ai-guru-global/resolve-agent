@@ -25,7 +25,10 @@ func newRemoveCmd() *cobra.Command {
 			// Get skill info first to confirm
 			_, err := c.GetSkill(ctx, name)
 			if err != nil {
-				return fmt.Errorf("skill not found: %s", name)
+				if client.IsNotFound(err) {
+					return fmt.Errorf("skill not found: %s", name)
+				}
+				return fmt.Errorf("failed to get skill '%s': %w", name, err)
 			}
 
 			if !force {

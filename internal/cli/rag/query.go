@@ -60,8 +60,8 @@ func newQueryCmd() *cobra.Command {
 					fmt.Printf("    Document: %v\n", docID)
 				}
 				content := result.Content
-				if len(content) > 200 {
-					content = content[:200] + "..."
+				if runes := []rune(content); len(runes) > 200 {
+					content = string(runes[:200]) + "..."
 				}
 				fmt.Printf("    Content: %s\n", content)
 				fmt.Println()

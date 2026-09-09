@@ -154,3 +154,97 @@ func TestResponse(t *testing.T) {
 		t.Errorf("expected 1 component, got %d", len(resp.Components))
 	}
 }
+
+func TestRunCheck_Timeout(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+
+	start := time.Now()
+	ch := runCheck(ctx, func(_ context.Context) ComponentHealth {
+		select {} // hung check that ignores its context
+	})
+
+	if ch.Status != StatusDown {
+		t.Errorf("expected DOWN for timed-out check, got %s", ch.Status)
+	}
+	if elapsed := time.Since(start); elapsed > time.Second {
+		t.Errorf("expected timeout near 50ms, took %s", elapsed)
+	}
+}
+
+func TestChecker_Run_Parallel(t *testing.T) {
+	c := NewChecker()
+	for _, name := range []string{"a", "b", "c"} {
+		c.Register(name, func(ctx context.Context) ComponentHealth {
+			time.Sleep(100 * time.Millisecond)
+			return ComponentHealth{Status: StatusUp}
+		})
+	}
+
+	start := time.Now()
+	resp := c.Run(context.Background())
+
+	// Three sequential 100ms checks would take >=300ms; parallel runs in ~100ms.
+	if elapsed := time.Since(start); elapsed >= 250*time.Millisecond {
+		t.Errorf("expected checks to run in parallel, took %s", elapsed)
+	}
+	if resp.Status != StatusUp || len(resp.Components) != 3 {
+		t.Errorf("unexpected response: status=%s components=%d", resp.Status, len(resp.Components))
+	}
+}
+
+func TestChecker_Run_HungCheckDoesNotBlock(t *testing.T) {
+	c := NewChecker()
+	c.Register("hung", func(ctx context.Context) ComponentHealth {
+		select {} // hung check that ignores its context
+	})
+	c.Register("fast", func(ctx context.Context) ComponentHealth {
+		return ComponentHealth{Status: StatusUp}
+	})
+
+	done := make(chan Response, 1)
+	go func() {
+		done <- c.Run(context.Background())
+	}()
+
+	select {
+	case resp := <-done:
+		if resp.Components["hung"].Status != StatusDown {
+			t.Errorf("expected hung component DOWN, got %s", resp.Components["hung"].Status)
+		}
+		if resp.Components["fast"].Status != StatusUp {
+			t.Errorf("expected fast component UP, got %s", resp.Components["fast"].Status)
+		}
+		if resp.Status != StatusDown {
+			t.Errorf("expected overall status DOWN, got %s", resp.Status)
+		}
+	case <-time.After(checkTimeout + 5*time.Second):
+		t.Fatal("Run blocked by hung check")
+	}
+}
+
+func TestChecker_Run_CheckCallsBackIntoChecker(t *testing.T) {
+	c := NewChecker()
+	c.Register("self", func(ctx context.Context) ComponentHealth {
+		// Registering from inside a check must not deadlock.
+		c.Register("late", func(ctx context.Context) ComponentHealth {
+			return ComponentHealth{Status: StatusUp}
+		})
+		return ComponentHealth{Status: StatusUp}
+	})
+
+	done := make(chan Response, 1)
+	go func() {
+		done <- c.Run(context.Background())
+	}()
+
+	select {
+	case resp := <-done:
+		if resp.Status != StatusUp {
+			t.Errorf("expected UP, got %s", resp.Status)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Run deadlocked when check called back into Checker")
+	}
+}
+

@@ -61,7 +61,7 @@ func newRunCmd() *cobra.Command {
 				fmt.Printf("✓ Workflow execution started\n")
 				fmt.Printf("  Execution ID: %s\n", resp.ExecutionID)
 				fmt.Printf("  Status:       %s\n", resp.Status)
-				fmt.Println("\nUse 'resolveagent workflow logs' to check execution status.")
+				fmt.Println("\nCheck execution status in the dashboard ('resolveagent dashboard') or with 'resolveagent workflow list'.")
 			} else {
 				switch resp.Status {
 				case "completed":

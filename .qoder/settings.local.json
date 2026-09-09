@@ -4,7 +4,11 @@
       "Bash(ls /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent/python/tests/unit/ 2>/dev/null; echo \"---\"; ls /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent/python/tests/integration/ 2>/dev/null)",
       "Bash(find /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent/web/src -name \"*.test.*\" -o -name \"*.spec.*\" | head -20)",
       "Bash(ls /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent/docs/zh/ 2>/dev/null; echo \"---\"; ls /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent/docs/ 2>/dev/null)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(echo \"=== Go files ===\" && find cmd internal pkg api -name \"*.go\" 2>/dev/null | wc -l && echo \"=== Go LOC ===\" && find cmd internal pkg api -name \"*.go\" -not -name \"*_test.go\" 2>/dev/null | xargs wc -l 2>/dev/null | tail -1 && echo \"=== Go test files ===\" && find cmd internal pkg api test -name \"*_test.go\" 2>/dev/null | wc -l && echo \"=== Python files ===\" && find python -name \"*.py\" 2>/dev/null | wc -l && echo \"=== Python LOC ===\" && find python -name \"*.py\" 2>/dev/null | xargs wc -l 2>/dev/null | tail -1 && echo \"=== TS/TSX files ===\" && find web/src -name \"*.ts\" -o -name \"*.tsx\" 2>/dev/null | wc -l && echo \"=== Web LOC ===\" && find web/src -name \"*.ts\" -o -name \"*.tsx\" 2>/dev/null | xargs wc -l 2>/dev/null | tail -1 && echo \"=== TODO/FIXME in Go ===\" && grep -rn \"TODO\\\\|FIXME\\\\|XXX\" --include=\"*.go\" cmd internal pkg 2>/dev/null | wc -l)",
+      "Bash(find /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent/python -name \"*.py\" -not -path \"*/.venv/*\" -not -path \"*/venv/*\" -not -path \"*/__pycache__/*\" -exec wc -l {} + | tail -1)",
+      "Bash(find /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent/pkg /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent/cmd -name \"*.go\" 2>/dev/null | xargs wc -l | tail -1)",
+      "Bash(git:*)"
     ]
   }
 }

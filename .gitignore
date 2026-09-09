@@ -117,3 +117,14 @@ deploy/helm/resolveagent/charts/
 # Coverage artifacts
 coverage.out
 coverage.html
+
+# ===== Local runtime / AI tooling =====
+.pids/
+.qoder/repowiki/
+.qoder/settings.local.json
+web/package-lock.json
+
+# 本地工具会话产物（review 截图/问答状态/hallmark）
+.impeccable/review/
+.impeccable/questions/
+.hallmark/

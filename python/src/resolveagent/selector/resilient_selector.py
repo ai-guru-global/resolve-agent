@@ -101,6 +101,7 @@ class ResilientConfig:
     enable_cache_bypass_on_retry: bool = True
     enable_circuit_breaker: bool = True
     fallback_to_code_analysis: bool = True
+    adaptive_weights_enabled: bool = True
 
 
 # ---------------------------------------------------------------------------
@@ -308,6 +309,7 @@ class ResilientSelector:
         self._selector = selector or IntelligentSelector(strategy="hybrid")
         self._config = config or ResilientConfig()
         self._re_enricher = ReEnricher()
+        self._weight_adjuster = AdaptiveWeightAdjuster()
         self._session_counter = 0
 
         # Circuit breakers per route type
@@ -451,6 +453,10 @@ class ResilientSelector:
 
             session.attempts.append(attempt_record)
             tried_routes.add(_canonical_route_type(decision.route_type))
+            if self._config.adaptive_weights_enabled:
+                self._weight_adjuster.record_outcome(
+                    _canonical_route_type(decision.route_type), attempt_record.success
+                )
 
             # Check if executor suggested a rephrase
             if not attempt_record.success and attempt_record.error:
@@ -486,12 +492,16 @@ class ResilientSelector:
             fallback_record = await self._execute_route(fallback_decision, executor, len(session.attempts) + 1)
             fallback_record.latency_ms = (time.monotonic() - attempt_start) * 1000
             session.attempts.append(fallback_record)
+            if self._config.adaptive_weights_enabled:
+                self._weight_adjuster.record_outcome("code_analysis", fallback_record.success)
 
             if fallback_record.success:
                 session.success = True
                 session.final_result = fallback_record.result_summary
                 session.final_route = "code_analysis"
 
+        if self._config.adaptive_weights_enabled:
+            self._weight_adjuster.apply_decay()
         session.total_latency_ms = (time.monotonic() - start_time) * 1000
 
         logger.info(
@@ -645,6 +655,11 @@ class ResilientSelector:
             # All routes tried — return original (will trigger fallback)
             return original
 
+        if self._config.adaptive_weights_enabled:
+            # 权重降序稳定排序：同权重保持 route_priority 原顺序；
+            # 错误分类偏好（下方 prefs）命中时仍最优先覆盖
+            available = sorted(available, key=lambda r: -self._weight_adjuster.get_weight(r))
+
         next_route = available[0]
         prefs = context.get("route_preferences", {})
 
@@ -679,7 +694,7 @@ class ResilientSelector:
 
     def get_session_stats(self) -> dict[str, Any]:
         """Get statistics about all routing sessions."""
-        return {
+        stats: dict[str, Any] = {
             "total_sessions": self._session_counter,
             "config": {
                 "max_retries": self._config.max_retries,
@@ -687,6 +702,9 @@ class ResilientSelector:
                 "route_priority": self._config.route_priority,
             },
         }
+        if self._config.adaptive_weights_enabled:
+            stats["adaptive_weights"] = self._weight_adjuster.get_stats()
+        return stats
 
 
 # ---------------------------------------------------------------------------

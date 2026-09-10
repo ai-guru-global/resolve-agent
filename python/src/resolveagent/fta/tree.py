@@ -75,7 +75,7 @@ class FTAGate:
             # INHIBIT: AND gate with a conditioning event
             return all(input_values)
         elif self.gate_type == GateType.PRIORITY_AND:
-            # PRIORITY_AND: AND with order dependency
+            # PRIORITY_AND: static AND approximation; order semantics live in the Monte Carlo simulation
             return all(input_values)
         return False
 

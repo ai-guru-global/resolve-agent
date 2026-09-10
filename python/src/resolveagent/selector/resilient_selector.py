@@ -298,6 +298,7 @@ class ResilientSelector:
         self,
         selector: IntelligentSelector | None = None,
         config: ResilientConfig | None = None,
+        weight_adjuster: AdaptiveWeightAdjuster | None = None,
     ) -> None:
         """Initialize the Resilient Selector.
 
@@ -305,11 +306,13 @@ class ResilientSelector:
             selector: The underlying IntelligentSelector to use for routing.
                 If None, creates a new one with default settings.
             config: Configuration for retry behavior. Uses defaults if None.
+            weight_adjuster: Adaptive weight adjuster for outcome-driven routing
+                preferences. If None, creates a new one with defaults.
         """
         self._selector = selector or IntelligentSelector(strategy="hybrid")
         self._config = config or ResilientConfig()
         self._re_enricher = ReEnricher()
-        self._weight_adjuster = AdaptiveWeightAdjuster()
+        self._weight_adjuster = weight_adjuster or AdaptiveWeightAdjuster()
         self._session_counter = 0
 
         # Circuit breakers per route type

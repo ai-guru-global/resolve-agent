@@ -3,6 +3,7 @@
 from typing import Any
 
 from resolveagent.selector.resilient_selector import (
+    AdaptiveWeightAdjuster,
     ResilientConfig,
     ResilientSelector,
 )
@@ -100,3 +101,9 @@ async def test_session_stats_expose_weights():
     await selector.route_and_execute("hello", "agent-1", _ok_executor())
     stats = selector.get_session_stats()
     assert stats["adaptive_weights"]["weights"]["skill"] > 1.0
+
+
+def test_weight_adjuster_is_injectable():
+    adjuster = AdaptiveWeightAdjuster()
+    selector = ResilientSelector(weight_adjuster=adjuster)
+    assert selector._weight_adjuster is adjuster

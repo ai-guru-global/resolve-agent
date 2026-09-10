@@ -25,7 +25,7 @@
 | 1 | 00-overview.md | 全局 | core | ~260 | 三语言分层动因、SSOT、事件驱动、能力可组合四层、请求生命周期全景 |
 | 2 | 01-selector.md | selector/ (3880) | core | ~300 | 三阶段路由、规则/LLM/混合策略、Resilient Selector 反馈自适应、决策审计 |
 | 3 | 02-runtime.md | runtime/ (2609) | core | ~240 | MegaAgent 编排引擎：会话管理、路由调用、流式输出、子系统集成 |
-| 4 | 03-fta.md | fta/ (1955) | standard | ~180 | 六门类型语义、最小割集、蒙特卡洛仿真、与 zh 版 fta-engine.md 分工 |
+| 4 | 03-fta.md | fta/ (1955) | standard | ~180 | 五门类型语义、最小割集、蒙特卡洛仿真、与 zh 版 fta-engine.md 分工 |
 | 5 | 04-rag-corpus.md | rag/ (2653) + corpus/ (3727) | core | ~280 | 摄取→嵌入→Milvus→重排链路、三级重排回退、语料双写沉淀 |
 | 6 | 05-skills-hooks.md | skills/ (2735) + hooks/ (529) | core | ~250 | 技能清单/沙箱（CPU/内存限额）/生命周期、Hook 前后置机制 |
 | 7 | 06-memory-planner-toolhub.md | memory.py (583) + planning.py (666) + toolhub.py (624) | standard | ~200 | 三层记忆（TTL+LRU）、REACTIVE+DELIBERATIVE 双模式规划、工具注册与审计 |

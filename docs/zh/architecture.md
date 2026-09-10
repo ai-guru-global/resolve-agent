@@ -103,7 +103,7 @@ Go 注册表系统作为所有服务注册的唯一数据源（Single Source of 
 │         ▼                       ▼                       ▼                  │
 │  ┌─────────────┐         ┌─────────────┐         ┌─────────────┐          │
 │  │ FTA 引擎    │         │ 技能执行器  │         │ RAG 管道    │          │
-│  │ 6种门类型   │         │ 沙箱 + 3内置│         │ 6格式 5策略 │          │
+│  │ 5种门类型   │         │ 沙箱 + 3内置│         │ 6格式 5策略 │          │
 │  └─────────────┘         └─────────────┘         └─────────────┘          │
 │                                 │                                           │
 │                                 ▼                                           │
@@ -413,8 +413,8 @@ class MegaAgent(BaseAgent):
 | 组件 | 说明 |
 |------|------|
 | **FaultTree** | 故障树数据结构，包含事件（FTAEvent）和门（FTAGate） |
-| **FTAGate** | 6 种门类型: AND, OR, NOT, VOTING, INHIBIT, PRIORITY_AND |
-| **FTAEngine** | 分析引擎: `analyze()`, `cut_sets()` (最小割集), `monte_carlo()` (蒙特卡罗模拟) |
+| **FTAGate** | 5 种门类型: AND, OR, VOTING, INHIBIT, PRIORITY_AND |
+| **FTAEngine** | 分析引擎: `execute()` 事件流求值; `analyze()` 组合最小割集（MOCUS）与蒙特卡洛仿真（基础事件需带 probability）|
 | **FTAEvaluator** | 概率评估器，Fussell-Vesely 重要度计算 |
 | **FTASerializer** | 序列化/反序列化，支持 JSON 和 Mermaid 格式 |
 

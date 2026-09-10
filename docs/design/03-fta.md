@@ -4,10 +4,10 @@ depth: standard
 component_score: 0.62
 generated: code-up
 source_commit: "21fdb74"
-summary: 把排查知识建模成布尔故障树，自底向上求值、用 MOCUS 求最小割集定位最可能的根因组合
+summary: 把排查知识建模成布尔故障树，自底向上求值、用 MOCUS 求最小割集定位最可能的根因组合，并支持蒙特卡洛概率仿真
 tags: [fta, fault-tree, mocus, cut-sets, diagnosis]
 created: 2026-09-05
-updated: 2026-09-05
+updated: 2026-09-09
 ---
 
 # FTA 故障树分析引擎 (FTA Engine)
@@ -16,23 +16,23 @@ updated: 2026-09-05
 
 ## 职责
 
-FTA 模块负责三件事：故障树的表示与求值（`tree.py`、`engine.py`）、叶子事件的真值判定（`evaluator.py`）、以及用于根因解释的最小割集计算（`cut_sets.py`）。它被两条链路消费：Selector 路由到 FTA 工作流时由 MegaAgent 执行 [mega.py:332-335](python/src/resolveagent/agent/mega.py#L332-L335)，Dify 集成则直接调用并行评估器 [tools.py:49](python/src/resolveagent/integrations/dify/tools.py#L49)。
+FTA 模块负责四件事：故障树的表示与求值（`tree.py`、`engine.py`）、叶子事件的真值判定（`evaluator.py`）、用于根因解释的最小割集计算（`cut_sets.py`）以及概率仿真（`monte_carlo.py`）。它被两条链路消费：Selector 路由到 FTA 工作流时由 MegaAgent 执行 [mega.py:332-335](python/src/resolveagent/agent/mega.py#L332-L335)，Dify 集成则直接调用并行评估器 [tools.py:49](python/src/resolveagent/integrations/dify/tools.py#L49)。
 
 树本身不是从运行数据自动推导的，而是**从排查文档里解析出来的**：`corpus/fta_parser.py` 从 Markdown 中抽取 mermaid 块构建树、从 JSON 块补充基础事件 [fta_parser.py:76-86](python/src/resolveagent/corpus/fta_parser.py#L76-L86)，也支持 YAML 直接定义 [serializer.py:12-26](python/src/resolveagent/fta/serializer.py#L12-L26)。也就是说，工程师先写故障排查手册，FTA 引擎把手册"可执行化"。
 
 ## 设计原理
 
-### 门类型：代码里是 5 种，文档说 6 种
+### 门类型：5 种，含时序与条件语义
 
-枚举定义了 5 种门：AND、OR、VOTING、INHIBIT、PRIORITY_AND [tree.py:23-27](python/src/resolveagent/fta/tree.py#L23-L27)。但 README 宣称"六种门类型"并包含 NOT [README.md:362-365](README.md#L362-L365)，前端页面同样按 `monte_carlo()` 的口径宣传 [index.tsx:35](web/src/pages/FTAEngine/index.tsx#L35)。代码里没有 NOT 门，也没有 `_monte_carlo_simulation`——这是文档与实现的真实漂移，使用时不要按 README 写代码。
+枚举定义了 5 种门：AND、OR、VOTING、INHIBIT、PRIORITY_AND [tree.py:23-27](python/src/resolveagent/fta/tree.py#L23-L27)。2026-09-09 起文档与实现对齐：README、前端与本文档均不再宣称第六种 NOT 门，蒙特卡洛仿真已在 `fta/monte_carlo.py` 落地。
 
-更关键的一点：INHIBIT 和 PRIORITY_AND 的求值实现与 AND 完全相同——都是 `all(input_values)` [tree.py:72-77](python/src/resolveagent/fta/tree.py#L72-L77)。它们的"语义差异"只存在于建模约定里：INHIBIT 的条件事件被当作一个额外输入挂进 `input_ids`，PRIORITY_AND 的顺序依赖则根本没有实现。测试断言也只覆盖三种门的布尔结果（空输入返回 False、VOTING 按 k-of-n 计数）[test_fta_engine.py:7-24](python/tests/unit/test_fta_engine.py#L7-L24)，没有测试约束顺序语义。若业务真正依赖"必须先 A 后 B"，当前实现保证不了。
+INHIBIT 与 PRIORITY_AND 的确定性求值仍与 AND 相同——`all(input_values)` [tree.py:68-80](python/src/resolveagent/fta/tree.py#L68-L80)。差异语义来自两处：INHIBIT 建模上要求一个 CONDITIONING 事件输入，`FaultTree.validate()` 对缺失条件输入的 INHIBIT 门返回告警 [tree.py:159](python/src/resolveagent/fta/tree.py#L159)；PRIORITY_AND 的顺序依赖在蒙特卡洛仿真中实现——按每个基础事件每轮试验的随机失效次序要求"严格递增"（仅 BASIC 输入参与，属显式记录的简化，见 [monte_carlo.py](python/src/resolveagent/fta/monte_carlo.py) 模块注释）。确定性求值路径中两者仍按 AND 处理，这是当前边界而非缺陷，测试已同时约束布尔结果与时序语义。
 
-空输入一律返回 False [tree.py:63-64](python/src/resolveagent/fta/tree.py#L63-L64)，对应测试 `and_gate([]) is False` [test_fta_engine.py:11](python/tests/unit/test_fta_engine.py#L11)。这是保守取向：输入缺失时不触发任何告警分支。
+空输入一律返回 False [tree.py:65-66](python/src/resolveagent/fta/tree.py#L65-L66)。这是保守取向：输入缺失时不触发任何告警分支。
 
 ### 求值顺序与"顶事件是最后一个门"的隐患
 
-门按 Kahn 拓扑排序自底向上求值 [tree.py:103-137](python/src/resolveagent/fta/tree.py#L103-L137)。环检测失败时回退为"反转原始列表" [tree.py:132-134](python/src/resolveagent/fta/tree.py#L132-L134)。而引擎把"最后一个求值的门"当作顶事件结果 [engine.py:92](python/src/resolveagent/fta/engine.py#L92)（注释原文即 `# Last gate is the top event`）。拓扑序正常时最后一个门确实是顶事件门，但一旦回退到反转序，这个隐式约定就可能把中间门的值当成顶事件结果。这是结构性脆弱点，不是防御性代码。
+门按 Kahn 拓扑排序自底向上求值 [tree.py:105-139](python/src/resolveagent/fta/tree.py#L105-L139)。环检测失败时回退为"反转原始列表" [tree.py:134-136](python/src/resolveagent/fta/tree.py#L134-L136)。而引擎把"最后一个求值的门"当作顶事件结果 [engine.py:118](python/src/resolveagent/fta/engine.py#L118)（注释原文即 `# Last gate is the top event`）。拓扑序正常时最后一个门确实是顶事件门，但一旦回退到反转序，这个隐式约定就可能把中间门的值当成顶事件结果。这是结构性脆弱点，不是防御性代码。
 
 ### 最小割集（MOCUS）的复杂度取舍
 
@@ -43,11 +43,11 @@ FTA 模块负责三件事：故障树的表示与求值（`tree.py`、`engine.py
 
 INHIBIT/PRIORITY_AND 在割集计算里同样按 AND 处理 [cut_sets.py:172-175](python/src/resolveagent/fta/cut_sets.py#L172-L175)；未知门类型按 OR 展开 [cut_sets.py:177-184](python/src/resolveagent/fta/cut_sets.py#L177-L184)——错误配置不会报错，只会静默产出偏多的割集。
 
-### 概率：只有割集乘积近似，没有蒙特卡洛
+### 概率：割集乘积近似 + 蒙特卡洛仿真
 
 割集概率按独立假设做乘积 `P = ∏ P(e)`，缺省概率 0.5 [cut_sets.py:279-284](python/src/resolveagent/fta/cut_sets.py#L279-L284)，再按概率降序排列给出根因重要性 [cut_sets.py:304-310](python/src/resolveagent/fta/cut_sets.py#L304-L310)。
 
-> [!NOTE] 推测：蒙特卡洛仿真只存在于文档与前端宣传中（[README.md:368](README.md#L368)、[architecture.md:417](docs/zh/architecture.md#L417)），`fta/` 目录与全仓源码 grep `monte` 均无实现。依据：`git log -S monte_carlo -- python` 无命中；样本量/收敛条件常量因此不存在于代码中。当前代码用割集概率乘积替代了这一能力。
+蒙特卡洛仿真在 `monte_carlo.py` 实现 [monte_carlo.py:45](python/src/resolveagent/fta/monte_carlo.py#L45)：对每个基础事件按其 `probability` 做 Bernoulli 采样，默认 10,000 轮，输出顶事件失效概率与 Wilson 置信区间（z=1.96 [monte_carlo.py:165](python/src/resolveagent/fta/monte_carlo.py#L165)），固定 seed 可复现。入口两处：`FTAEngine.analyze(tree, runs, seed)` 组合 MOCUS 割集与仿真结果 [engine.py:171](python/src/resolveagent/fta/engine.py#L171)；`execute()` 事件流在全部基础事件都带 probability 时附带 `simulation` 字段 [engine.py:129-139](python/src/resolveagent/fta/engine.py#L129-L139)。
 
 ### 叶子事件的评估协议与 fail-open/fail-safe 不对称
 
@@ -110,16 +110,17 @@ flowchart TD
 → 修复：为每个基础事件补 `evaluator`；确认调用方注入了 skill_executor / llm_provider / rag_pipeline；对确定性事件改用 `static:true/false`。
 
 **症状 4：日志出现 `Failed to persist FTA result`。**
-→ 定位：Go 平台 FTA 客户端写入失败，被 catch 后仅 warning [engine.py:118-119](python/src/resolveagent/fta/engine.py#L118-L119)。分析结论已产出，但控制台/前端看不到历史结果。
-→ 修复：检查 Go 平台连通性与 `document_id` 是否传入（未传则跳过持久化 [engine.py:104](python/src/resolveagent/fta/engine.py#L104)）。
+→ 定位：Go 平台 FTA 客户端写入失败，被 catch 后仅 warning [engine.py:157-158](python/src/resolveagent/fta/engine.py#L157-L158)。分析结论已产出，但控制台/前端看不到历史结果。
+→ 修复：检查 Go 平台连通性与 `document_id` 是否传入（未传则跳过持久化 [engine.py:141-142](python/src/resolveagent/fta/engine.py#L141-L142)）。
 
 ## 已知坑
 
-- README 与前端宣称的"六种门 + NOT + 蒙特卡洛"在代码中不存在 [README.md:362-368](README.md#L362-L368)；以本文与源码为准。
-- 顶事件结果 = "最后一个求值的门"是隐式约定 [engine.py:92](python/src/resolveagent/fta/engine.py#L92)，树有环时拓扑序回退可能让中间门冒充顶事件 [tree.py:132-134](python/src/resolveagent/fta/tree.py#L132-L134)。
+- 顶事件结果 = "最后一个求值的门"是隐式约定 [engine.py:118](python/src/resolveagent/fta/engine.py#L118)，树有环时拓扑序回退可能让中间门冒充顶事件 [tree.py:134-136](python/src/resolveagent/fta/tree.py#L134-L136)。
 
   > [!NOTE] 推测：环回退会让中间门冒充顶事件。依据：回退行为与"取最后求值门"均为代码可见事实，但该组合的实际触发路径无测试或故障记录佐证。
 - 依赖缺失（fail-open True）与执行异常（fail-safe False）默认方向相反 [evaluator.py:76](python/src/resolveagent/fta/evaluator.py#L76)，同一棵树在不同部署形态下结论可能翻转。
 - `prune_threshold` 的"概率剪枝"宣传与实现（OR 短路空操作）不符 [parallel_evaluator.py:337-342](python/src/resolveagent/fta/parallel_evaluator.py#L337-L342)。
 
-*Last updated: 2026-09-05*
+*Last updated: 2026-09-09*
+
+> 2026-09-09: 门类型与蒙特卡洛表述已对齐 fta/monte_carlo.py 实现。

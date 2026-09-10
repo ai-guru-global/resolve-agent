@@ -139,7 +139,7 @@ sequenceDiagram
 | python/src/resolveagent/selector/ | 意图分析 → 上下文增强 → 路由决策的三阶段智能路由 | [01-selector.md](01-selector.md) |
 | python/src/resolveagent/runtime/ | ExecutionEngine 编排 + FastAPI 桥接 Go 平台层 | [02-runtime.md](02-runtime.md) |
 | python/src/resolveagent/agent/ | MegaAgent：自带 Selector 的顶层编排者，分发到各子系统 | [02-runtime.md](02-runtime.md) |
-| python/src/resolveagent/fta/ | 六门类型故障树、最小割集、蒙特卡洛仿真 | [03-fta.md](03-fta.md) |
+| python/src/resolveagent/fta/ | 五门类型故障树、最小割集、蒙特卡洛仿真 | [03-fta.md](03-fta.md) |
 | python/src/resolveagent/rag/ + corpus/ | 检索增强管道 + 外部语料摄取沉淀 | [04-rag-corpus.md](04-rag-corpus.md) |
 | python/src/resolveagent/skills/ + hooks/ | 技能插件体系（沙箱限额）+ 执行前后置钩子 | [05-skills-hooks.md](05-skills-hooks.md) |
 | memory.py / planning.py / toolhub.py | 三层记忆、双模式规划、工具注册 | [06-memory-planner-toolhub.md](06-memory-planner-toolhub.md) |

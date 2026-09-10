@@ -42,11 +42,11 @@
 |------|------|
 | **技术栈** | Go 1.25 平台服务 + Python 3.11+ Agent 运行时 + React 23 页 WebUI + 移动端 |
 | **分析路由** | 4 条业务路径：FTA 故障树推理 / Skill 技能编排 / RAG 检索增强 / 代码分析（+ LLM 直答兜底） |
-| **FTA 引擎** | 6 种门类型（AND/OR/NOT/VOTING/INHIBIT/PRIORITY-AND）+ 最小割集 + 蒙特卡洛仿真 |
+| **FTA 引擎** | 5 种门类型（AND/OR/VOTING/INHIBIT/PRIORITY_AND 时序语义）+ 最小割集 + 蒙特卡洛仿真 |
 | **记忆体系** | 3 层架构：Working（进程内）/ Episodic（Redis TTL）/ Long-term（Milvus/Qdrant LRU） |
 | **数据层** | PostgreSQL 16 表 6 组 / Redis / NATS / Milvus-Qdrant 双后端向量库 |
 | **Registry** | 14 个领域注册表（agent / skill / workflow / rag / fta / solution / memory / traffic…） |
-| **质量工程** | 347 个 Python 单元测试项 + 8 套集成测试 + Go `-race` 测试 + Go E2E（构建标签隔离） |
+| **质量工程** | 370 个 Python 单元测试项 + 8 套集成测试 + Go `-race` 测试 + Go E2E（构建标签隔离） |
 | **工程治理** | golangci-lint 全量治理 / sentinel 错误链 + 防泄漏统一出口 / 单流水线 CI（Go 1.25） |
 | **文档** | 19 篇带 `file:line` 锚点的源码蒸馏设计文档 + 25 篇中文技术文档 + Docusaurus 站点 |
 
@@ -129,7 +129,7 @@ Traditional AI chatbots give a single answer path. ResolveAgent introduces **mul
 |----------------|----------------------|
 | **Multi-path routing** | Every request is analyzed and routed to the best engine: FTA, skill execution, RAG, code analysis, or direct LLM reasoning. |
 | **Resilient routing** | Failures are not dead ends; the selector learns from them, retries with enriched context, and adapts route weights over time. |
-| **Formal fault-tree reasoning** | FTA engine with six gate types, minimal cut sets, and Monte-Carlo simulation for rigorous root-cause analysis. |
+| **Formal fault-tree reasoning** | FTA engine with five gate types (AND/OR/VOTING/INHIBIT/PRIORITY_AND with dynamic ordering semantics), minimal cut sets, and Monte-Carlo simulation with Wilson confidence intervals. |
 | **Knowledge self-reinforcement** | Every resolution enriches skills, RAG documents, and memory, so the platform gets smarter with use. |
 | **Full-chain auditability** | Intent classification, route decisions, evidence solving, and corpus write-back are all logged with context snapshots — replayable and reviewable. |
 | **Production-grade resilience** | Circuit breakers, fallback cascades, structured observability, and OpenTelemetry tracing out of the box. |
@@ -284,8 +284,8 @@ After startup, open the WebUI at **http://localhost:5174** and the Platform API 
 | 5 | **ToolHub** | `toolhub.py` | 工具发现 + Schema 注册 + Capability 映射 + 安全审计 |
 | 6 | **Resilience** | `resilience.py` | CircuitBreaker 三态熔断 + FallbackCascade 多级降级 |
 | 7 | **AgentMessageBus** | `message_bus.py` | Pub/Sub + Request/Response 消息总线 |
-| 8 | **FTA Engine** | `fta/` | 故障树分析：六种门类型 + 最小割集 + 蒙特卡洛仿真 |
-| 9 | **Resilient Selector** | `selector/resilient_selector.py` | 反馈驱动自适应路由：失败重试 + 上下文重增强 + 错误分类路由偏好 |
+| 8 | **FTA Engine** | `fta/` | 故障树分析：五种门类型（PRIORITY_AND 带动态时序语义）+ 最小割集 + 蒙特卡洛仿真 |
+| 9 | **Resilient Selector** | `selector/resilient_selector.py` | 反馈驱动自适应路由：失败重试 + 上下文重增强 + 错误分类路由偏好 + 自适应权重调整 |
 | 10 | **Loop Engineering** | `pkg/feedback/` + `fta/feedback_loop.py` | Observe-Orient-Decide-Act 持续反馈闭环 |
 | 11 | **Circuit Breaker (Go)** | `pkg/circuitbreaker/` | 三态熔断器自愈运维：Closed → Open → HalfOpen → Closed |
 | 12 | **Adaptive Weight Adjuster** | `selector/resilient_selector.py` | 基于反馈的路由权重动态调整 + 时间衰减 + 自动降级 |
@@ -452,14 +452,13 @@ REACTIVE 模式:
 ```python
 # fta/engine.py
 class FTAEngine:
-    """六种门类型 + 最小割集 + 蒙特卡洛仿真"""
+    """五种门类型（AND/OR/VOTING/INHIBIT/PRIORITY_AND）+ 最小割集 + 蒙特卡洛仿真"""
 
-    gates = [AND, OR, NOT, VOTING, INHIBIT, PRIORITY_AND]
-
-    async def analyze(self, tree: FaultTree) -> FTAAnalysisResult:
-        cut_sets = await self._compute_minimal_cut_sets(tree)   # 最小割集
-        prob = await self._monte_carlo_simulation(tree)         # 蒙特卡洛仿真
-        return FTAAnalysisResult(cut_sets=cut_sets, failure_probability=prob)
+# 实际用法：
+result = await engine.analyze(tree)   # MOCUS 最小割集 + 蒙特卡洛仿真
+# result.cut_sets → list[set[str]] 最小割集
+# result.failure_probability → top 事件失效概率（基础事件需设置 probability，
+#   PRIORITY_AND 按每次试验随机失效次序实现时序语义，附 Wilson 置信区间）
 ```
 
 **AIOps 应用流程:** 工单/告警接入 → 故障树建模 → 割集分析定位根因 → 修复建议生成 → 反馈闭环验证
@@ -618,19 +617,17 @@ CLOSED  ◀──[probe ok]──  HALF_OPEN
 ### 12. Adaptive Selector | 自适应权重
 
 ```python
-# selector/resilient_selector.py
-adjuster = AdaptiveWeightAdjuster(default_weight=1.0)
+# selector/resilient_selector.py — 已内置接线，无需手工实例化
+selector = ResilientSelector()  # 内置 AdaptiveWeightAdjuster（adaptive_weights_enabled=True）
 
-# 每次执行后记录结果
-adjuster.record_outcome("skill", success=True, latency_ms=120)
-adjuster.record_outcome("rag", success=False, latency_ms=3500)
+# 每次路由尝试后自动 record_outcome(route_type, success)，会话结束 apply_decay()
+session = await selector.route_and_execute("诊断 503", "ops-agent", executor)
 
-# 时间衰减：权重向中性值 1.0 回归
-adjuster.apply_decay(decay_factor=0.95)
-
-# 获取当前权重
-weights = adjuster.get_weights()
-# → {"skill": 1.15, "rag": 0.85, "fta": 1.02, "code_analysis": 0.98}
+# 备选路由按权重降序稳定排序（同权重保持 route_priority 顺序）；
+# 错误分类路由偏好命中时仍最优先
+stats = selector.get_session_stats()
+weights = stats["adaptive_weights"]["weights"]
+# → {"skill": 1.05, "rag": 0.95, ...}
 ```
 
 ---
@@ -962,7 +959,7 @@ hack/quality-gate.sh
 | `resolveagent_feedback_loop_duration_seconds` | 🔄 反馈循环处理耗时 |
 | `resolveagent_retry_exhausted_total` | 🔄 重试耗尽次数 |
 | `resolveagent_workflow_success_rate` | 🔄 工作流成功率 |
-| `resolveagent_adaptive_selector_weights` | 🔄 自适应选择器权重 (by route_type) |
+| `resolveagent_adaptive_selector_weights` | 🔄 自适应选择器权重（经 ResilientSelector.get_session_stats 暴露，by route_type） |
 
 **链路与日志:**
 - **OpenTelemetry** — 结构化日志带 trace 关联（`pkg/logger/`），OTLP 导出（`RESOLVEAGENT_TELEMETRY_OTLP_ENDPOINT`）
@@ -973,7 +970,7 @@ hack/quality-gate.sh
 
 ## Feature Status
 
-> **v0.3.0** | 核心组件经全面修复与测试加固（Python 347 个单元测试项 + 8 套集成测试）
+> **v0.3.0** | 核心组件经全面修复与测试加固（Python 370 个单元测试项 + 8 套集成测试）
 
 ### 核心引擎
 
@@ -983,7 +980,7 @@ hack/quality-gate.sh
 | Resilient Selector | 🟢 Ready | 失败重试 + 错误分类路由偏好 + 自适应权重 |
 | Hierarchical Memory | 🟢 Ready | 三层记忆（Working/Episodic/Long-term） |
 | Hybrid Planner | 🟢 Ready | 双模式 + LLM 分解 + JSON 容错解析 |
-| FTA Engine | 🟢 Ready | 六门类型 + 最小割集 + 蒙特卡洛仿真 |
+| FTA Engine | 🟢 Ready | 五门类型（含时序语义）+ 最小割集 + 蒙特卡洛仿真 |
 | RAG Pipeline | 🟢 Ready | Milvus / Qdrant 双后端向量检索 |
 | ToolHub & Skills | 🟢 Ready | 技能注册 + 沙箱执行 + 安全审计 |
 | Resilience | 🟢 Ready | CircuitBreaker + FallbackCascade |

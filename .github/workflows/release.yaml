@@ -13,7 +13,8 @@ on:
 env:
   GO_VERSION: "1.25"
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+  # 镜像名与 docker-compose / helm 消费端对齐：ghcr.io/<owner>/resolveagent-<component>
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/resolveagent
 
 jobs:
   release:
@@ -40,7 +41,7 @@ jobs:
         run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
       - name: Build and push ${{ matrix.component }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: deploy/docker/${{ matrix.component }}.Dockerfile
@@ -48,6 +49,16 @@ jobs:
           tags: |
             ${{ env.IMAGE_PREFIX }}-${{ matrix.component }}:${{ steps.tag.outputs.version }}
             ${{ env.IMAGE_PREFIX }}-${{ matrix.component }}:latest
+
+      # 阻断条件收敛：只拦可修复的 CRITICAL/HIGH（ignore-unfixed 排除上游暂无补丁的 CVE），
+      # 避免被无法行动的历史漏洞卡死发布。
+      - name: Trivy scan ${{ matrix.component }}
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.IMAGE_PREFIX }}-${{ matrix.component }}:${{ steps.tag.outputs.version }}
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
 
   helm:
     name: Package Helm Chart

@@ -35,7 +35,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v9
         with:
           # v1.64 pinned: the repo config is v1-schema, which golangci-lint v2.x rejects.
           # install-mode: goinstall so the binary is built by CI's Go 1.25 — the prebuilt

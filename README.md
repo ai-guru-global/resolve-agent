@@ -996,7 +996,7 @@ hack/quality-gate.sh
 | Python Runtime | 🟢 Ready | HTTP + SSE 流式服务（`python -m resolveagent.runtime`） |
 | CLI & TUI | 🟢 Ready | agent/skill/workflow/rag/corpus 子命令 + TUI 控制台 |
 | WebUI | 🟢 Ready | 23 个功能页面（React + Vite + Tailwind）+ 演示模式徽标 |
-| Mobile Web | 🟢 Ready | `mobile/` 移动端适配 |
+| Mobile Web | 🟢 示例 | `examples/mobile-demo/` 移动端示例（独立原型，不随产品演进） |
 | CI/CD | 🟢 Ready | 单一流水线（Go 1.25），覆盖 lint / test / e2e / mobile / docker 阶段 |
 | 部署 | 🟢 Ready | Docker Compose（deps 含外部 etcd）+ Helm + K8s manifests |
 
@@ -1050,7 +1050,6 @@ resolve-agent/
 │   └── runtime/                 # 运行时服务
 ├── web/                         # 🌐 React WebUI (Vite + Tailwind + shadcn/ui)（在线: https://vxxzrdpyfrl6.meoo.fun）
 │   └── src/api/mock/            # 演示数据按域拆分 (ops/rag/skills/workflows/shared)
-├── mobile/                      # 📱 移动端 Web 应用
 ├── benchmarks/wiki-k8s/         # 基准语料（K8s wiki）
 ├── docs-site/                   # 📚 Docusaurus 站点壳（内容引用 docs/）
 ├── docs/                        # 文档 (设计蒸馏/中文文档/归档)
@@ -1073,7 +1072,7 @@ resolve-agent/
 │   └── k8s/                     # K8s manifests
 ├── skills/                      # 技能注册 (intelligent-selector / rule-route)
 │   └── examples/                # 示例技能 (k8s-pod-crash / ticket-handler / consulting-qa / hello-world)
-├── examples/                    # 示例 (quickstart / integrations)
+├── examples/                    # 示例 (quickstart / integrations / mobile-demo)
 ├── integrations/dify/           # Dify 集成
 ├── test/                        # E2E (Go 构建标签) / 集成 / fixtures
 ├── hack/                        # 开发工具 (quality-gate / coverage-report)

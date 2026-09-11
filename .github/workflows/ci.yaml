@@ -175,15 +175,15 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: mobile/package-lock.json
+          cache-dependency-path: examples/mobile-demo/package-lock.json
       - name: Install dependencies
-        working-directory: mobile
+        working-directory: examples/mobile-demo
         run: npm ci
       - name: Type-check
-        working-directory: mobile
+        working-directory: examples/mobile-demo
         run: npx tsc --noEmit
       - name: Build
-        working-directory: mobile
+        working-directory: examples/mobile-demo
         run: npm run build
 
   # ===========================================================================

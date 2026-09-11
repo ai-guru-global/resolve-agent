@@ -157,8 +157,8 @@ flowchart TD
     定位：那是 nginx 的文本探活 [default.conf:23-27](deploy/docker/nginx/default.conf#L23-L27)，只代表静态服务在；后端健康检查是 `/api/v1/health`。
     修复：改用带 `/api` 前缀的路径探测，并确认网关把 `/api` 转给了 platform。
 
-### mobile/ 与 web 的关系
+### examples/mobile-demo/ 与 web 的关系
 
-mobile/ 是第二个独立的 Vite + React SPA（包名 mobile-ai-ops，react-router 6，仅 5 个 tab 页，无 api 层与状态库）[mobile/package.json:1-9](mobile/package.json#L1-L9)、[mobile/src/App.tsx:1-6](mobile/src/App.tsx#L1-L6)，与 web/ 不共享代码；web 内另有一个 /mobile 路由页是展示用页面，两者不是一套东西。
+examples/mobile-demo/（原 mobile/，2026-09 治理收尾时降级为示例）是第二个独立的 Vite + React SPA（包名 mobile-ai-ops，react-router 6，仅 5 个 tab 页，无 api 层与状态库）[examples/mobile-demo/package.json:1-9](examples/mobile-demo/package.json#L1-L9)、[examples/mobile-demo/src/App.tsx:1-6](examples/mobile-demo/src/App.tsx#L1-L6)，与 web/ 不共享代码；web 内另有一个 /mobile 路由页是展示用页面，两者不是一套东西。
 
 *Last updated: 2026-09-05*

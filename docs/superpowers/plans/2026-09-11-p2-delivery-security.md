@@ -68,7 +68,7 @@ Expected: Go `total: 32.2%`；Python `TOTAL ... 43%` / `371 passed`。若与规�
 - [ ] **Step 1.4: 验证 JSON 可解析且键可读**
 
 ```bash
-python3 -c "import json; d=json.load(open('test/fixtures/baseline/coverage-baseline.json')); print(d['minimum_go_coverage'], d['minimum_python_coverage'])"
+python3 -c "import json; d=json.load(open('test/fixtures/baseline/coverage-baseline.json'))['loop_engineering']; print(d['minimum_go_coverage'], d['minimum_python_coverage'])"
 ```
 
 Expected: `32.0 42.0`
@@ -143,9 +143,11 @@ Expected: `371 passed`（无 ModuleNotFoundError）。
 BASELINE_FILE="test/fixtures/baseline/coverage-baseline.json"
 
 baseline_value() {
-    python3 -c "import json; print(json.load(open('$BASELINE_FILE'))['$1'])"
+    python3 -c "import json; print(json.load(open('$BASELINE_FILE'))['loop_engineering']['$1'])"
 }
 ```
+
+（键在 `loop_engineering` 层级下，保留既有文件结构。）
 
 - [ ] **Step 2.4: Go 覆盖率从 informational 改为阻断**
 

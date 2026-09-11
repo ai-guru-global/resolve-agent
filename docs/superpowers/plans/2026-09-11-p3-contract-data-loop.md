@@ -18,7 +18,7 @@
 - Create: `pkg/server/openapi_contract_test.go`
 - 参考（不改）: `pkg/server/router.go`、`api/openapi/v1/resolveagent.yaml`
 
-- [ ] **Step 1.1: 写契约测试**
+- [x] **Step 1.1: 写契约测试**
 
 ```go
 package server
@@ -106,12 +106,12 @@ func TestOpenAPIRouteCountParity(t *testing.T) {
 }
 ```
 
-- [ ] **Step 1.2: 跑测试确认先红**
+- [x] **Step 1.2: 跑测试确认先红**
 
 Run: `cd /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent && go test ./pkg/server/ -run TestOpenAPI -v 2>&1 | tail -20`
 Expected: FAIL——`TestOpenAPICoversAllRoutes` 报大量 "未进 OpenAPI"；`TestOpenAPIHasNoPhantomOperations` 报 `/readyz GET` 幻影与不匹配的 agents/{id}；`TestOpenAPIRouteCountParity` PASS（95）。
 
-- [ ] **Step 1.3: Commit**
+- [x] **Step 1.3: Commit**
 
 ```bash
 cd /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent
@@ -127,7 +127,7 @@ git commit -m "test(api): OpenAPI 契约测试先红——router.go 95 条注册
 - Create: `hack/openapi-routes.sh`
 - Rewrite: `api/openapi/v1/resolveagent.yaml`
 
-- [ ] **Step 2.1: 写枚举脚本（spec 要求的路由清单辅助核对工具）**
+- [x] **Step 2.1: 写枚举脚本（spec 要求的路由清单辅助核对工具）**
 
 ```bash
 #!/usr/bin/env bash
@@ -142,7 +142,7 @@ chmod +x hack/openapi-routes.sh
 bash hack/openapi-routes.sh | wc -l   # 预期 95
 ```
 
-- [ ] **Step 2.2: 重写 resolveagent.yaml**
+- [x] **Step 2.2: 重写 resolveagent.yaml**
 
 结构规则（全部 95 条操作按同一模板产出）：
 - 删除幻影 `/readyz`；`/healthz` 保留；`GET /api/v1/agents/{id}` 保留（这是真实路由）。
@@ -290,17 +290,17 @@ tags 区块补齐（加在既有 tags 之后）：
     description: Service dependency graphs
 ```
 
-- [ ] **Step 2.3: 跑契约测试确认转绿**
+- [x] **Step 2.3: 跑契约测试确认转绿**
 
 Run: `go test ./pkg/server/ -run TestOpenAPI -v 2>&1 | tail -8`
 Expected: 3 个测试全 PASS。若有 "未进 OpenAPI" 残留，逐条对照映射表补块。
 
-- [ ] **Step 2.4: 核对脚本与表一致**
+- [x] **Step 2.4: 核对脚本与表一致**
 
 Run: `bash hack/openapi-routes.sh | sort > /tmp/routes.txt && diff <(grep -c . /tmp/routes.txt | cat) <(echo 95) && echo ROUTES_OK`
 Expected: `ROUTES_OK`。
 
-- [ ] **Step 2.5: Commit**
+- [x] **Step 2.5: Commit**
 
 ```bash
 cd /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent
@@ -315,7 +315,7 @@ git commit -m "docs(api): OpenAPI 补全至 95 条操作与 router 一致——�
 **Files:**
 - Modify: `README.md:248,272,669,1010,1030`（保留 `api/proto/` 文件本体；1162 行为 v0.1.0 历史记录不改）
 
-- [ ] **Step 3.1: 五处精确替换**
+- [x] **Step 3.1: 五处精确替换**
 
 1. L248（ASCII 架构图连线标注，保持框宽）：
    - old: `│                                                      │ HTTP/SSE + gRPC    │`
@@ -340,12 +340,12 @@ git commit -m "docs(api): OpenAPI 补全至 95 条操作与 router 一致——�
    - old: `│   ├── server/                  # HTTP/gRPC 服务 + writeRegistryError 统一错误出口`
    - new: `│   ├── server/                  # HTTP 服务（gRPC 仅健康/反射）+ writeRegistryError 统一错误出口`
 
-- [ ] **Step 3.2: 验证无失实宣传残留**
+- [x] **Step 3.2: 验证无失实宣传残留**
 
 Run: `grep -n "proto\|gRPC" README.md`
 Expected: 仅剩真实存在的引用——L669（已改述为健康/反射）、L1030（已改述）、L1162（v0.1.0 历史记录）、以及 MCP 等第三方链接里不含业务面宣传。`api/proto/` 目录保持原样（`ls api/proto/resolveagent` 有文件）。
 
-- [ ] **Step 3.3: Commit**
+- [x] **Step 3.3: Commit**
 
 ```bash
 cd /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent
@@ -360,7 +360,7 @@ git commit -m "docs(readme): 撤下 proto/gRPC 业务面失实宣传——互联
 **Files:**
 - Modify: `pkg/store/postgres/postgres.go`（migrations 切片末尾追加 version 16）
 
-- [ ] **Step 4.1: 追加迁移块**
+- [x] **Step 4.1: 追加迁移块**
 
 在最后一个 `},`（version 15 的闭括号）之后、切片闭括号 `}` 之前插入：
 
@@ -413,12 +413,12 @@ git commit -m "docs(readme): 撤下 proto/gRPC 业务面失实宣传——互联
 		},
 ```
 
-- [ ] **Step 4.2: 编译验证**
+- [x] **Step 4.2: 编译验证**
 
 Run: `go build ./pkg/store/... && go vet ./pkg/store/...`
 Expected: 无输出（成功）。
 
-- [ ] **Step 4.3: Commit**
+- [x] **Step 4.3: Commit**
 
 ```bash
 cd /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent
@@ -435,7 +435,7 @@ git commit -m "feat(store): 迁移 v16——solutions/solution_executions 表，
 - Modify: `pkg/store/postgres/registry_test.go`（追加测试）
 - 参考: `pkg/registry/solution.go`（接口与内存语义）、`pkg/store/postgres/workflow_store.go`（实现模式）
 
-- [ ] **Step 5.1: 写失败测试**
+- [x] **Step 5.1: 写失败测试**
 
 在 `pkg/store/postgres/registry_test.go` 末尾追加（沿用 mustOpenStore 的 skip-无-DB 模式；"重启不丢数据" 用第二个独立 Store 连接验证）。
 
@@ -446,6 +446,10 @@ func TestPostgresSolutionRegistry(t *testing.T) {
 	store := mustOpenStore(t)
 	r := NewSolutionRegistry(store)
 	ctx := context.Background()
+
+	// 本测试使用固定 ID（sol-*/exec-1），而测试库是有状态的：先清掉前次运行残留。
+	_, _ = store.pool.Exec(ctx, "DELETE FROM solution_executions WHERE solution_id LIKE 'sol-%'")
+	_, _ = store.pool.Exec(ctx, "DELETE FROM solutions WHERE id LIKE 'sol-%'")
 
 	solution := &registry.TroubleshootingSolution{
 		ID:                   "sol-1",
@@ -643,12 +647,12 @@ func mustOpenStore(t *testing.T) *Store {
 }
 ```
 
-- [ ] **Step 5.2: 编译失败确认（NewSolutionRegistry 未定义）**
+- [x] **Step 5.2: 编译失败确认（NewSolutionRegistry 未定义）**
 
 Run: `go vet ./pkg/store/postgres/ 2>&1 | head -5`
 Expected: `undefined: NewSolutionRegistry`。
 
-- [ ] **Step 5.3: 实现 solution_store.go**
+- [x] **Step 5.3: 实现 solution_store.go**
 
 ```go
 package postgres
@@ -833,8 +837,13 @@ func (r *SolutionRegistry) Update(ctx context.Context, solution *registry.Troubl
 }
 
 // Delete removes the solution row and cascades its execution records.
+// solution_executions.solution_id 未声明 FK 级联，需显式两步删除。
 func (r *SolutionRegistry) Delete(ctx context.Context, id string) error {
-	_, err := r.store.pool.Exec(ctx, "DELETE FROM solutions WHERE id = $1", id)
+	_, err := r.store.pool.Exec(ctx, "DELETE FROM solution_executions WHERE solution_id = $1", id)
+	if err != nil {
+		return err
+	}
+	_, err = r.store.pool.Exec(ctx, "DELETE FROM solutions WHERE id = $1", id)
 	return err
 }
 
@@ -987,7 +996,7 @@ func orEmptySlice(s []string) []string {
 }
 ```
 
-- [ ] **Step 5.4: 起本地 Postgres 并跑测试**
+- [x] **Step 5.4: 起本地 Postgres 并跑测试**
 
 ```bash
 docker run --rm -d --name resolveagent-pg3-test -p 5432:5432 \
@@ -998,12 +1007,12 @@ go test ./pkg/store/postgres/ -run TestPostgresSolutionRegistry -v 2>&1 | tail -
 ```
 Expected: PASS（若 5432 被既有实例占用，改用 `-p 15432:5432` 并设 `RESOLVEAGENT_TEST_DSN=postgres://resolveagent:resolveagent@localhost:15432/resolveagent_test?sslmode=disable`）。
 
-- [ ] **Step 5.5: 全量 store 回归**
+- [x] **Step 5.5: 全量 store 回归**
 
 Run: `go test ./pkg/store/... 2>&1 | tail -5`
 Expected: 全 ok。
 
-- [ ] **Step 5.6: Commit**
+- [x] **Step 5.6: Commit**
 
 ```bash
 cd /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent
@@ -1018,7 +1027,7 @@ git commit -m "feat(store): solution registry postgres 实现——sentinel 错�
 **Files:**
 - Modify: `pkg/server/server.go:77-78`
 
-- [ ] **Step 6.1: 替换接线**
+- [x] **Step 6.1: 替换接线**
 
 old:
 ```go
@@ -1030,17 +1039,17 @@ new:
 		s.solutionRegistry = postgres.NewSolutionRegistry(pgStore)
 ```
 
-- [ ] **Step 6.2: 编译 + 服务层回归**
+- [x] **Step 6.2: 编译 + 服务层回归**
 
 Run: `go build ./... && go test ./pkg/server/ 2>&1 | tail -3`
 Expected: 全绿。
 
-- [ ] **Step 6.3: 确认内存实现仍是无 DB 默认**
+- [x] **Step 6.3: 确认内存实现仍是无 DB 默认**
 
 Run: `grep -n "solutionRegistry = " pkg/server/server.go`
 Expected: postgres 分支 1 行 `postgres.NewSolutionRegistry`；else 分支 1 行 `registry.NewInMemoryTroubleshootingSolutionRegistry()`。grep "remains in-memory" 无残留。
 
-- [ ] **Step 6.4: Commit**
+- [x] **Step 6.4: Commit**
 
 ```bash
 cd /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent
@@ -1052,27 +1061,27 @@ git commit -m "feat(server): postgres 后端接线 solutionRegistry——内存�
 
 ### Task 7: 验收
 
-- [ ] **Step 7.1: 契约验收**
+- [x] **Step 7.1: 契约验收**
 
 Run: `go test ./pkg/server/ -run TestOpenAPI -v 2>&1 | tail -6`
 Expected: 3 个契约测试 PASS（路径数与 router 一致的双向断言即 spec 验收标准第 1 条）。
 
-- [ ] **Step 7.2: 持久化验收（spec 第 2 条）**
+- [x] **Step 7.2: 持久化验收（spec 第 2 条）**
 
 Run: `go test ./pkg/store/postgres/ -run TestPostgresSolutionRegistry -v 2>&1 | tail -4`
 Expected: PASS，含独立连接重启持久化断言。测试后清理容器：`docker rm -f resolveagent-pg3-test`。
 
-- [ ] **Step 7.3: README 验收（spec 第 3 条）**
+- [x] **Step 7.3: README 验收（spec 第 3 条）**
 
 Run: `grep -n "HTTP/SSE + gRPC\|Protocol Buffers" README.md; ls api/proto/resolveagent/v1/ | head -3`
 Expected: grep 无输出（宣传已撤）；proto 文件仍在。
 
-- [ ] **Step 7.4: 全量门禁**
+- [x] **Step 7.4: 全量门禁**
 
 Run: `PATH="/Users/allengaller/go/bin:$PATH" bash hack/quality-gate.sh`
 Expected: 10/10 PASS exit 0（新增 solution_store.go 会自然纳入 go-lint/go-test/coverage 口径）。
 
-- [ ] **Step 7.5: 计划勾销收尾**
+- [x] **Step 7.5: 计划勾销收尾**
 
 全部步骤完成后勾销本计划复选框并提交：
 

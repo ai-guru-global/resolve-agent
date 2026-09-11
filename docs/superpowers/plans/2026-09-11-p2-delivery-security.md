@@ -26,7 +26,7 @@
 **Files:**
 - Modify: `test/fixtures/baseline/coverage-baseline.json`
 
-- [ ] **Step 1.1: 确认环境健康（uv sync + 基线回归）**
+- [x] **Step 1.1: 确认环境健康（uv sync + 基线回归）**
 
 ```bash
 cd python && uv sync --all-groups
@@ -35,7 +35,7 @@ uv run pytest tests/unit -q
 
 Expected: `371 passed`（若少于 371，停下排查——不得在红基线上推进）。
 
-- [ ] **Step 1.2: 复测两个覆盖率数值（记录到执行日志）**
+- [x] **Step 1.2: 复测两个覆盖率数值（记录到执行日志）**
 
 ```bash
 cd /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent
@@ -45,7 +45,7 @@ cd python && uv run pytest tests/unit -q --cov=resolveagent --cov-report=term | 
 
 Expected: Go `total: 32.2%`；Python `TOTAL ... 43%` / `371 passed`。若与规划期实测偏差 >2 个百分点，以新值向下取整更新 Step 1.3 中的阈值。
 
-- [ ] **Step 1.3: 写入真实基线**
+- [x] **Step 1.3: 写入真实基线**
 
 将 `test/fixtures/baseline/coverage-baseline.json` 整体替换为：
 
@@ -65,7 +65,7 @@ Expected: Go `total: 32.2%`；Python `TOTAL ... 43%` / `371 passed`。若与规�
 
 （`go_coverage_percent`/`python_coverage_percent` 为实测快照；`minimum_*` 为门禁阈值。若 Step 1.2 复测偏差大，四个数同步更新：快照用实测值，阈值向下取整。）
 
-- [ ] **Step 1.4: 验证 JSON 可解析且键可读**
+- [x] **Step 1.4: 验证 JSON 可解析且键可读**
 
 ```bash
 python3 -c "import json; d=json.load(open('test/fixtures/baseline/coverage-baseline.json'))['loop_engineering']; print(d['minimum_go_coverage'], d['minimum_python_coverage'])"
@@ -73,7 +73,7 @@ python3 -c "import json; d=json.load(open('test/fixtures/baseline/coverage-basel
 
 Expected: `32.0 42.0`
 
-- [ ] **Step 1.5: Commit**
+- [x] **Step 1.5: Commit**
 
 ```bash
 cd /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent
@@ -90,7 +90,7 @@ git commit -m "chore(ci): 覆盖率基线填真实测值——Go 32.2%/Python 42
 - Modify: `python/pyproject.toml`
 - Modify: `.github/workflows/ci.yaml`（quality-gate job 补运行时依赖）
 
-- [ ] **Step 2.1: pyproject 补 pythonpath + 迁移 dev 测试依赖到 dependency-groups**
+- [x] **Step 2.1: pyproject 补 pythonpath + 迁移 dev 测试依赖到 dependency-groups**
 
 `python/pyproject.toml` 三处改动：
 
@@ -127,7 +127,7 @@ dev = [
 ]
 ```
 
-- [ ] **Step 2.2: 验证 uv run pytest 不再需要 PYTHONPATH**
+- [x] **Step 2.2: 验证 uv run pytest 不再需要 PYTHONPATH**
 
 ```bash
 cd python && uv sync --all-groups && uv run pytest tests/unit -q
@@ -135,7 +135,7 @@ cd python && uv sync --all-groups && uv run pytest tests/unit -q
 
 Expected: `371 passed`（无 ModuleNotFoundError）。
 
-- [ ] **Step 2.3: quality-gate.sh 加基线读取助手**
+- [x] **Step 2.3: quality-gate.sh 加基线读取助手**
 
 `hack/quality-gate.sh` 在 `set -euo pipefail` 之后、颜色定义之前插入：
 
@@ -149,7 +149,7 @@ baseline_value() {
 
 （键在 `loop_engineering` 层级下，保留既有文件结构。）
 
-- [ ] **Step 2.4: Go 覆盖率从 informational 改为阻断**
+- [x] **Step 2.4: Go 覆盖率从 informational 改为阻断**
 
 将 `# --- Stage 1: Go ---` 中如下整块（原 77-90 行）：
 
@@ -192,7 +192,7 @@ else
 fi
 ```
 
-- [ ] **Step 2.5: Python 阶段 warn() 改阻断 + 新增覆盖率门禁**
+- [x] **Step 2.5: Python 阶段 warn() 改阻断 + 新增覆盖率门禁**
 
 将 `# --- Stage 2: Python ---` 中 `if command -v uv &> /dev/null; then` 到对应 `fi` 的内部整块（原 99-101 行三个检查）：
 
@@ -226,7 +226,7 @@ fi
         fi
 ```
 
-- [ ] **Step 2.6: Web 阶段 warn() 改 check()**
+- [x] **Step 2.6: Web 阶段 warn() 改 check()**
 
 将 `# --- Stage 3: Web ---` 中的：
 
@@ -242,7 +242,7 @@ fi
     check "web-test" bash -c "cd $WEB_DIR && pnpm test --passWithNoTests"
 ```
 
-- [ ] **Step 2.7: ci.yaml quality-gate job 补 Python/Web 运行时**
+- [x] **Step 2.7: ci.yaml quality-gate job 补 Python/Web 运行时**
 
 `.github/workflows/ci.yaml` 的 `quality-gate:` job，`- uses: actions/setup-go@v5` 及其 `with` 之后、`- name: Run quality gate` 之前插入：
 
@@ -267,7 +267,7 @@ fi
         run: pnpm install --frozen-lockfile
 ```
 
-- [ ] **Step 2.8: 本地全量跑门禁**
+- [x] **Step 2.8: 本地全量跑门禁**
 
 ```bash
 cd /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent && bash hack/quality-gate.sh
@@ -275,7 +275,7 @@ cd /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent && bash hack
 
 Expected: 末尾 `QUALITY GATE PASSED`、`exit 0`；go-coverage 显示 ≥32% 绿、py-test+coverage 显示 ≥42% 绿。（本地 web node_modules 存在，web-lint/web-test 会真实执行；若本地 pnpm 环境异常导致这两项 FAIL，先修 web 环境再继续，不得放宽门禁。）
 
-- [ ] **Step 2.9: 注入坏样本验证阻断（验收要求）**
+- [x] **Step 2.9: 注入坏样本验证阻断（验收要求）**
 
 ```bash
 python3 - <<'EOF'
@@ -295,7 +295,7 @@ Expected: 输出含 `FAIL (coverage ...% < threshold 99.0%)`（go 与 py 各一�
 git checkout -- test/fixtures/baseline/coverage-baseline.json
 ```
 
-- [ ] **Step 2.10: Commit**
+- [x] **Step 2.10: Commit**
 
 ```bash
 git add hack/quality-gate.sh python/pyproject.toml .github/workflows/ci.yaml python/uv.lock
@@ -312,7 +312,7 @@ git commit -m "feat(ci): 质量门禁真实阻断——Go/Python 覆盖率基线
 - Modify: `.github/workflows/ci.yaml`
 - Create: `.github/workflows/codeql.yml`
 
-- [ ] **Step 3.1: ci.yaml 增加 secrets 扫描 job**
+- [x] **Step 3.1: ci.yaml 增加 secrets 扫描 job**
 
 在 `jobs:` 下 `lint-go:` 之前插入（Stage 0，无 needs，最先跑）：
 
@@ -333,7 +333,7 @@ git commit -m "feat(ci): 质量门禁真实阻断——Go/Python 覆盖率基线
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-- [ ] **Step 3.2: 新建 codeql.yml**
+- [x] **Step 3.2: 新建 codeql.yml**
 
 创建 `.github/workflows/codeql.yml`：
 
@@ -374,7 +374,7 @@ jobs:
           category: "/language:${{ matrix.language }}"
 ```
 
-- [ ] **Step 3.3: actionlint 校验全部 workflow**
+- [x] **Step 3.3: actionlint 校验全部 workflow**
 
 ```bash
 cd /Users/allengaller/Documents/GitHub/ai-guru-global/resolve-agent
@@ -383,7 +383,7 @@ go run github.com/rhysd/actionlint/cmd/actionlint@latest .github/workflows/ci.ya
 
 Expected: 无输出、exit 0（首次运行会下载模块）。若网络受限改用 `docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:latest -color`。
 
-- [ ] **Step 3.4: Commit**
+- [x] **Step 3.4: Commit**
 
 ```bash
 git add .github/workflows/ci.yaml .github/workflows/codeql.yml
@@ -400,7 +400,7 @@ git commit -m "feat(ci): 安全扫描进 CI——gitleaks 全历史泄漏扫描 
 
 **背景事实：** compose 与 helm 早已使用 `resolveagent-*` 镜像名；release.yaml 却推 `ghcr.io/<owner>/<repo>-*`（即 `resolve-agent-*`，与消费端脱节），docker-publish.yaml 推的才是 `resolveagent-*` 但与 release 重复触发（同为 tag v*）。合并后以 `resolveagent-*` 为唯一镜像名。
 
-- [ ] **Step 4.1: release.yaml 统一镜像名**
+- [x] **Step 4.1: release.yaml 统一镜像名**
 
 `env:` 块改 `IMAGE_PREFIX`：
 
@@ -411,7 +411,7 @@ env:
   IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/resolveagent
 ```
 
-- [ ] **Step 4.2: build-push-action 升 v7 并加 Trivy 扫描**
+- [x] **Step 4.2: build-push-action 升 v7 并加 Trivy 扫描**
 
 将 release job 的 build-push 步骤替换为（在 `Extract tag` 步骤之后）：
 
@@ -438,13 +438,13 @@ env:
 
 （`ignore-unfixed: true` + `exit-code: "1"`：只有存在可修复的 CRITICAL/HIGH 才阻断发布。）
 
-- [ ] **Step 4.3: 删除 docker-publish.yaml**
+- [x] **Step 4.3: 删除 docker-publish.yaml**
 
 ```bash
 git rm .github/workflows/docker-publish.yaml
 ```
 
-- [ ] **Step 4.4: 验证无旧镜像名残留**
+- [x] **Step 4.4: 验证无旧镜像名残留**
 
 ```bash
 grep -rn "resolve-agent-platform\|resolve-agent-runtime\|resolve-agent-webui" \
@@ -453,7 +453,7 @@ grep -rn "resolve-agent-platform\|resolve-agent-runtime\|resolve-agent-webui" \
 
 Expected: 无输出（docs/archive 中的历史记录不在扫描范围，刻意不改写）。
 
-- [ ] **Step 4.5: actionlint + Commit**
+- [x] **Step 4.5: actionlint + Commit**
 
 ```bash
 go run github.com/rhysd/actionlint/cmd/actionlint@latest .github/workflows/release.yaml
@@ -470,11 +470,11 @@ git commit -m "feat(release): 发布流水线归一——镜像名统一 resolve
 
 **背景事实：** Makefile 明确警告 `scripts/migration` 已废弃且 SQL 与平台内嵌迁移（`pkg/store/postgres`，平台启动时自动执行）不兼容（UUID vs VARCHAR）——e2e.yaml 的 `make migrate-up` + `make seed` 在污染数据库；`sleep 5` 是竞态等待。
 
-- [ ] **Step 5.1: 删除两个迁移/种子步骤**
+- [x] **Step 5.1: 删除两个迁移/种子步骤**
 
 删除 `- name: Apply migrations`（含 env 与 `run: make migrate-up`）和 `- name: Load seed data`（含 env 与 `run: make seed`）两个完整 step 块。
 
-- [ ] **Step 5.2: 服务启动改为 pid 文件 + 健康探针循环**
+- [x] **Step 5.2: 服务启动改为 pid 文件 + 健康探针循环**
 
 将 `- name: Start platform server` 步骤：
 
@@ -511,7 +511,7 @@ git commit -m "feat(release): 发布流水线归一——镜像名统一 resolve
 
 （`/healthz` 已在 `pkg/server/router.go:9` 注册；等待循环与 ci.yaml e2e 阶段同构。）
 
-- [ ] **Step 5.3: 验证废弃调用清零 + actionlint**
+- [x] **Step 5.3: 验证废弃调用清零 + actionlint**
 
 ```bash
 grep -n "migrate-up\|make seed\|sleep 5" .github/workflows/e2e.yaml
@@ -520,7 +520,7 @@ go run github.com/rhysd/actionlint/cmd/actionlint@latest .github/workflows/e2e.y
 
 Expected: grep 无输出；actionlint 无输出。
 
-- [ ] **Step 5.4: Commit**
+- [x] **Step 5.4: Commit**
 
 ```bash
 git add .github/workflows/e2e.yaml
@@ -536,7 +536,7 @@ git commit -m "fix(ci): e2e 工作流修复——移除污染库的废弃 migrat
 - Modify: `deploy/docker/nginx/default.conf`
 - Modify: `deploy/docker-compose/docker-compose.yaml`（webui 端口映射）
 
-- [ ] **Step 6.1: 去掉 pnpm install 掩盖回退**
+- [x] **Step 6.1: 去掉 pnpm install 掩盖回退**
 
 `deploy/docker/webui.Dockerfile` 第 18 行：
 
@@ -550,7 +550,7 @@ RUN pnpm install --frozen-lockfile 2>/dev/null || pnpm install
 RUN pnpm install --frozen-lockfile
 ```
 
-- [ ] **Step 6.2: nginx 基础镜像换非 root 特权端口版**
+- [x] **Step 6.2: nginx 基础镜像换非 root 特权端口版**
 
 Stage 2 的 `FROM nginx:1.29-alpine` 改为：
 
@@ -560,7 +560,7 @@ FROM nginxinc/nginx-unprivileged:1.29-alpine
 
 同文件 `EXPOSE 80` 改为 `EXPOSE 8080`；HEALTHCHECK 中 `http://127.0.0.1:80/` 改为 `http://127.0.0.1:8080/`。
 
-- [ ] **Step 6.3: nginx 配置监听端口同步**
+- [x] **Step 6.3: nginx 配置监听端口同步**
 
 `deploy/docker/nginx/default.conf` 第 7 行 `listen 80;` 改为：
 
@@ -568,7 +568,7 @@ FROM nginxinc/nginx-unprivileged:1.29-alpine
     listen 8080;
 ```
 
-- [ ] **Step 6.4: compose 端口映射同步**
+- [x] **Step 6.4: compose 端口映射同步**
 
 `deploy/docker-compose/docker-compose.yaml` webui 服务第 130 行：
 
@@ -582,7 +582,7 @@ FROM nginxinc/nginx-unprivileged:1.29-alpine
       - "127.0.0.1:${WEBUI_PORT:-3000}:8080"
 ```
 
-- [ ] **Step 6.5: 验证（有 docker 则真实构建）**
+- [x] **Step 6.5: 验证（有 docker 则真实构建）**
 
 ```bash
 docker info > /dev/null 2>&1 && docker build -f deploy/docker/webui.Dockerfile -t resolveagent-webui:p2-check . \
@@ -593,7 +593,7 @@ grep -n "listen" deploy/docker/nginx/default.conf
 
 Expected: grep 回退语句无输出；listen 为 8080。docker 可用时构建成功即通过（构建日志不得出现 lockfile 回退告警）。
 
-- [ ] **Step 6.6: Commit**
+- [x] **Step 6.6: Commit**
 
 ```bash
 git add deploy/docker/webui.Dockerfile deploy/docker/nginx/default.conf deploy/docker-compose/docker-compose.yaml
@@ -606,7 +606,7 @@ git commit -m "fix(deploy): WebUI 镜像严格化——pnpm install 移除掩盖
 
 **Files:** 无新改动（只验证 + 记录）
 
-- [ ] **Step 7.1: 全部 workflow 语法校验**
+- [x] **Step 7.1: 全部 workflow 语法校验**
 
 ```bash
 go run github.com/rhysd/actionlint/cmd/actionlint@latest .github/workflows/*.yaml .github/workflows/*.yml
@@ -614,7 +614,7 @@ go run github.com/rhysd/actionlint/cmd/actionlint@latest .github/workflows/*.yam
 
 Expected: exit 0 无输出。
 
-- [ ] **Step 7.2: 门禁全量绿（阻断模式）**
+- [x] **Step 7.2: 门禁全量绿（阻断模式）**
 
 ```bash
 bash hack/quality-gate.sh && echo "GATE_OK"
@@ -622,11 +622,11 @@ bash hack/quality-gate.sh && echo "GATE_OK"
 
 Expected: `QUALITY GATE PASSED` + `GATE_OK`。
 
-- [ ] **Step 7.3: 注入验证证据齐备（复核 Step 2.9 已留记录）**
+- [x] **Step 7.3: 注入验证证据齐备（复核 Step 2.9 已留记录）**
 
 确认执行日志中有：低阈值注入 → `GATE_EXIT=1` → 还原 → `GATE_OK` 的完整链路。
 
-- [ ] **Step 7.4: 残留扫描**
+- [x] **Step 7.4: 残留扫描**
 
 ```bash
 grep -rn "|| pnpm install" deploy/docker/ ; grep -n "make migrate-up\|make seed\|sleep 5" .github/workflows/e2e.yaml ; \
@@ -636,7 +636,7 @@ git status --short
 
 Expected: 三条 grep 均无输出；git status 干净（仅 `README 2.md` 未跟踪项，历史遗留，不属于本阶段）。
 
-- [ ] **Step 7.5: 向用户报告**
+- [x] **Step 7.5: 向用户报告**
 
 报告内容必须包含：各任务提交哈希、注入验证证据（GATE_EXIT=1）、已知边界——**CI 全绿与 Trivy/CodeQL 实际运行无法本地证明（用户约束不推送），actionlint 已保证语法与结构正确，推送后首跑即验证**；`docker-publish.yaml` 删除后 tag 推送只触发 release.yaml 一条流水线。
 

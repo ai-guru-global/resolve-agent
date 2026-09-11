@@ -9,6 +9,10 @@
 
 set -euo pipefail
 
+# Go 工具链钉在与 CI（GO_VERSION=1.25）一致的版本：覆盖率插桩粒度随 Go 小版本变化
+# （go1.25 对多行签名函数会漏插桩，go1.27 已修复），基线数字必须与度量工具链同源。
+export GOTOOLCHAIN=go1.25.6
+
 BASELINE_FILE="test/fixtures/baseline/coverage-baseline.json"
 
 baseline_value() {

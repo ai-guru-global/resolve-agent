@@ -16,12 +16,12 @@ func newTestAlertEngine() (*AlertEngine, *MetricsCollector, *Aggregator) {
 	return NewAlertEngine(metrics, agg, logger), metrics, agg
 }
 
-func recordSignals(agg *Aggregator, source, event string, n int) {
+func recordSignals(agg *Aggregator, n int) {
 	for i := 0; i < n; i++ {
 		agg.Record(&Signal{
 			ID:        generateID(),
-			Source:    source,
-			Event:     event,
+			Source:    SourceRetry,
+			Event:     EventRetryExhausted,
 			Severity:  SeverityError,
 			Timestamp: time.Now(),
 		})
@@ -46,7 +46,7 @@ func TestAlertEngine_AggregatedStatsCondition(t *testing.T) {
 	})
 
 	// Below threshold: no fire.
-	recordSignals(agg, SourceRetry, EventRetryExhausted, 50)
+	recordSignals(agg, 50)
 	engine.Evaluate(context.Background())
 	mu.Lock()
 	if len(fired) != 0 {
@@ -55,7 +55,7 @@ func TestAlertEngine_AggregatedStatsCondition(t *testing.T) {
 	mu.Unlock()
 
 	// Above threshold: the aggregated metric retry_exhausted_total fires.
-	recordSignals(agg, SourceRetry, EventRetryExhausted, 1)
+	recordSignals(agg, 1)
 	engine.Evaluate(context.Background())
 	mu.Lock()
 	if len(fired) != 1 || fired[0] != "retry_storm" {
@@ -124,7 +124,7 @@ func TestAlertEngine_Cooldown(t *testing.T) {
 		Action:    ActionNotify,
 	})
 
-	recordSignals(agg, SourceRetry, EventRetryExhausted, 2)
+	recordSignals(agg, 2)
 
 	// Condition holds across two evaluations: fires only once.
 	engine.Evaluate(context.Background())
@@ -141,7 +141,7 @@ func TestAlertEngine_Cooldown(t *testing.T) {
 	}
 
 	// Condition holds again: fires again.
-	recordSignals(agg, SourceRetry, EventRetryExhausted, 2)
+	recordSignals(agg, 2)
 	engine.Evaluate(context.Background())
 	if fired != 2 {
 		t.Errorf("expected alert to fire again after reset, got %d", fired)

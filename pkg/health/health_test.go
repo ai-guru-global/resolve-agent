@@ -247,4 +247,3 @@ func TestChecker_Run_CheckCallsBackIntoChecker(t *testing.T) {
 		t.Fatal("Run deadlocked when check called back into Checker")
 	}
 }
-

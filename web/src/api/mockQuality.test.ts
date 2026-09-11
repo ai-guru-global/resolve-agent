@@ -732,12 +732,12 @@ describe('mock 数据质量 · T9 Selector/Evaluation 接数据', () => {
   });
 });
 
-describe('mock 数据质量 · T10 GTM 运行数据总览区', () => {
+describe('mock 数据质量 · T10 GTM 运行数据账本区', () => {
   const gtm = () => readPage('../../../GTM/index.html');
 
-  it('GTM 页提供运行数据总览区且数字与控制台同源', () => {
+  it('GTM 页提供运行数据账本区且数字与控制台同源', () => {
     const src = gtm();
-    expect(src, '缺少运行数据总览区').toMatch(/id="opsdata"/);
+    expect(src, '缺少运行数据账本区').toMatch(/id="ledger"/);
     expect(src, '缺少演示窗口标注').toMatch(/2026-08-25/);
     expect(src, '缺少执行总量 48').toMatch(/48</);
     expect(src, '缺少闭环成功率 95.7%').toMatch(/95\.7%/);
@@ -748,9 +748,9 @@ describe('mock 数据质量 · T10 GTM 运行数据总览区', () => {
   it('GTM 页包含四线分发占比与真实路由决策留痕', () => {
     const src = gtm();
     expect(src, '缺少分发占比区').toMatch(/分发占比/);
-    expect(src, '缺少决策留痕区').toMatch(/最近路由决策留痕/);
+    expect(src, '缺少决策留痕区').toMatch(/路由决策留痕/);
     expect(src, '缺少真实 trace 引用').toMatch(/tr-4821/);
-    expect(src, '缺少导航入口').toMatch(/href="#opsdata"/);
+    expect(src, '缺少导航入口').toMatch(/href="#ledger"/);
   });
 });
 

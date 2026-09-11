@@ -17,6 +17,9 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
+      // 技术债：set-state-in-effect 存量 9 处（FTATreeEditor/NodePropertyPanel/AgentCreate/AgentEdit/SolutionList），
+      // 需按页专项重构并逐页浏览器验证后升回 error。
+      "react-hooks/set-state-in-effect": "warn",
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
     },
   }

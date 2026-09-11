@@ -52,25 +52,28 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Apply migrations
-        env:
-          DATABASE_URL: "postgres://resolveagent:testpassword@localhost:5432/resolveagent?sslmode=disable"
-        run: make migrate-up
-
-      - name: Load seed data
-        env:
-          DATABASE_URL: "postgres://resolveagent:testpassword@localhost:5432/resolveagent?sslmode=disable"
-        run: make seed
-
       - name: Build binaries
         run: make build-go
 
+      # platform 自带迁移（pkg/store/postgres 启动时执行，scripts/migration 为 UUID 旧 schema 已弃用，
+      # 见 Makefile migrate-up/seed 的弃用告警），因此无需预跑 migrate/seed。
       - name: Start platform server
         env:
           RESOLVEAGENT_DATABASE_PASSWORD: testpassword
         run: |
-          ./bin/resolveagent-server &
-          sleep 5
+          ./bin/resolveagent-server > /tmp/server.log 2>&1 &
+          echo $! > /tmp/server.pid
+
+      - name: Wait for platform server
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8080/healthz > /dev/null; then
+              echo "platform ready"; break
+            fi
+            kill -0 "$(cat /tmp/server.pid)" 2>/dev/null || { echo "platform process died:"; cat /tmp/server.log; exit 1; }
+            sleep 2
+          done
+          curl -sf http://localhost:8080/healthz > /dev/null || { echo "platform failed to become ready:"; cat /tmp/server.log; exit 1; }
 
       - name: Run E2E tests
         env:

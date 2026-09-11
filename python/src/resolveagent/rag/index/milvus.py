@@ -100,6 +100,7 @@ class MilvusStore(VectorStore):
                 user=self.user if self.user else None,
                 password=self.password if self.password else None,
                 db_name=self.database,
+                timeout=10,
             )
             self._connected = True
             logger.info(

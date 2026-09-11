@@ -5,6 +5,8 @@ info:
     REST API for the ResolveAgent Mega Agent Platform.
     This API provides endpoints for managing agents, skills, workflows,
     and model routing.
+    The path/method surface of this document is contract-tested against
+    pkg/server/router.go (see pkg/server/openapi_contract_test.go).
   version: "0.3.0"
   license:
     name: Apache 2.0
@@ -18,16 +20,40 @@ servers:
     description: Local development server
 
 tags:
+  - name: Health
+    description: Health and readiness endpoints
+  - name: System
+    description: System information
   - name: Agents
     description: Agent lifecycle management
   - name: Skills
     description: Skill registry and management
   - name: Workflows
     description: Workflow orchestration
+  - name: RAG
+    description: Retrieval-augmented collections and documents
   - name: Models
     description: Model routing and configuration
-  - name: Health
-    description: Health and readiness endpoints
+  - name: Config
+    description: Runtime configuration
+  - name: Hooks
+    description: Lifecycle hooks and executions
+  - name: FTA
+    description: Fault tree analysis documents and results
+  - name: Code Analysis
+    description: Code analysis jobs and findings
+  - name: Corpus
+    description: Corpus import
+  - name: Memory
+    description: Conversation and long-term memory
+  - name: Solutions
+    description: Troubleshooting solutions and executions
+  - name: Call Graphs
+    description: Call graph capture and traversal
+  - name: Traffic Captures
+    description: Traffic capture management
+  - name: Traffic Graphs
+    description: Service dependency graphs
 
 paths:
   /healthz:
@@ -47,16 +73,23 @@ paths:
                     type: string
                     example: "UP"
 
-  /readyz:
+  /api/v1/health:
     get:
       tags: [Health]
-      summary: Readiness probe
-      operationId: getReadiness
+      summary: Health check
+      operationId: getHealth
       responses:
         "200":
-          description: Service is ready
-        "503":
-          description: Service is not ready
+          description: Successful response
+
+  /api/v1/system/info:
+    get:
+      tags: [System]
+      summary: System information
+      operationId: getSystemInfo
+      responses:
+        "200":
+          description: Successful response
 
   /api/v1/agents:
     get:
@@ -72,6 +105,14 @@ paths:
           in: query
           schema:
             type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
       responses:
         "200":
           description: List of agents
@@ -81,6 +122,19 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Agent"
+    post:
+      tags: [Agents]
+      summary: Create agent
+      operationId: createAgent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
 
   /api/v1/agents/{id}:
     get:
@@ -103,6 +157,59 @@ paths:
                 $ref: "#/components/schemas/Agent"
         "404":
           description: Agent not found
+    put:
+      tags: [Agents]
+      summary: Update agent
+      operationId: updateAgent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+    delete:
+      tags: [Agents]
+      summary: Delete agent
+      operationId: deleteAgent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/agents/{id}/execute:
+    post:
+      tags: [Agents]
+      summary: Execute agent
+      operationId: executeAgent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
 
   /api/v1/skills:
     get:
@@ -111,7 +218,48 @@ paths:
       operationId: listSkills
       responses:
         "200":
-          description: List of skills
+          description: Successful response
+    post:
+      tags: [Skills]
+      summary: Register skill
+      operationId: registerSkill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/skills/{name}:
+    get:
+      tags: [Skills]
+      summary: Get skill by name
+      operationId: getSkill
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+    delete:
+      tags: [Skills]
+      summary: Unregister skill
+      operationId: unregisterSkill
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
 
   /api/v1/workflows:
     get:
@@ -120,16 +268,1228 @@ paths:
       operationId: listWorkflows
       responses:
         "200":
-          description: List of workflows
+          description: Successful response
+    post:
+      tags: [Workflows]
+      summary: Create workflow
+      operationId: createWorkflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/workflows/{id}:
+    get:
+      tags: [Workflows]
+      summary: Get workflow by ID
+      operationId: getWorkflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+    put:
+      tags: [Workflows]
+      summary: Update workflow
+      operationId: updateWorkflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+    delete:
+      tags: [Workflows]
+      summary: Delete workflow
+      operationId: deleteWorkflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/workflows/{id}/validate:
+    post:
+      tags: [Workflows]
+      summary: Validate workflow
+      operationId: validateWorkflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/workflows/{id}/execute:
+    post:
+      tags: [Workflows]
+      summary: Execute workflow
+      operationId: executeWorkflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/rag/collections:
+    get:
+      tags: [RAG]
+      summary: List collections
+      operationId: listCollections
+      responses:
+        "200":
+          description: Successful response
+    post:
+      tags: [RAG]
+      summary: Create collection
+      operationId: createCollection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/rag/collections/{id}:
+    delete:
+      tags: [RAG]
+      summary: Delete collection
+      operationId: deleteCollection
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/rag/collections/{id}/ingest:
+    post:
+      tags: [RAG]
+      summary: Ingest documents
+      operationId: ingestDocuments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/rag/collections/{id}/query:
+    post:
+      tags: [RAG]
+      summary: Query collection
+      operationId: queryCollection
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/rag/collections/{id}/documents:
+    get:
+      tags: [RAG]
+      summary: List collection documents
+      operationId: listRAGDocuments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+    post:
+      tags: [RAG]
+      summary: Create document
+      operationId: createRAGDocument
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/rag/documents/{id}:
+    get:
+      tags: [RAG]
+      summary: Get document by ID
+      operationId: getRAGDocument
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+    put:
+      tags: [RAG]
+      summary: Update document
+      operationId: updateRAGDocument
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+    delete:
+      tags: [RAG]
+      summary: Delete document
+      operationId: deleteRAGDocument
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/rag/collections/{id}/ingestions:
+    get:
+      tags: [RAG]
+      summary: List ingestion history
+      operationId: listRAGIngestions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
 
   /api/v1/models:
     get:
       tags: [Models]
       summary: List model routes
-      operationId: listModelRoutes
+      operationId: listModels
       responses:
         "200":
-          description: List of model routes
+          description: Successful response
+    post:
+      tags: [Models]
+      summary: Add model route
+      operationId: addModel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/config:
+    get:
+      tags: [Config]
+      summary: Get runtime config
+      operationId: getConfig
+      responses:
+        "200":
+          description: Successful response
+    put:
+      tags: [Config]
+      summary: Update runtime config
+      operationId: updateConfig
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/hooks:
+    get:
+      tags: [Hooks]
+      summary: List hooks
+      operationId: listHooks
+      responses:
+        "200":
+          description: Successful response
+    post:
+      tags: [Hooks]
+      summary: Create hook
+      operationId: createHook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/hooks/{id}:
+    get:
+      tags: [Hooks]
+      summary: Get hook by ID
+      operationId: getHook
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+    put:
+      tags: [Hooks]
+      summary: Update hook
+      operationId: updateHook
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+    delete:
+      tags: [Hooks]
+      summary: Delete hook
+      operationId: deleteHook
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/hooks/{id}/executions:
+    get:
+      tags: [Hooks]
+      summary: List hook executions
+      operationId: listHookExecutions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/fta/documents:
+    get:
+      tags: [FTA]
+      summary: List FTA documents
+      operationId: listFTADocuments
+      responses:
+        "200":
+          description: Successful response
+    post:
+      tags: [FTA]
+      summary: Create FTA document
+      operationId: createFTADocument
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/fta/documents/{id}:
+    get:
+      tags: [FTA]
+      summary: Get FTA document by ID
+      operationId: getFTADocument
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+    put:
+      tags: [FTA]
+      summary: Update FTA document
+      operationId: updateFTADocument
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+    delete:
+      tags: [FTA]
+      summary: Delete FTA document
+      operationId: deleteFTADocument
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/fta/documents/{id}/results:
+    get:
+      tags: [FTA]
+      summary: List FTA analysis results
+      operationId: listFTAResults
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+    post:
+      tags: [FTA]
+      summary: Create FTA analysis result
+      operationId: createFTAResult
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/analyses:
+    get:
+      tags: [Code Analysis]
+      summary: List code analyses
+      operationId: listAnalyses
+      responses:
+        "200":
+          description: Successful response
+    post:
+      tags: [Code Analysis]
+      summary: Create code analysis
+      operationId: createAnalysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/analyses/{id}:
+    get:
+      tags: [Code Analysis]
+      summary: Get analysis by ID
+      operationId: getAnalysis
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+    put:
+      tags: [Code Analysis]
+      summary: Update analysis
+      operationId: updateAnalysis
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+    delete:
+      tags: [Code Analysis]
+      summary: Delete analysis
+      operationId: deleteAnalysis
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/analyses/{id}/findings:
+    get:
+      tags: [Code Analysis]
+      summary: List findings
+      operationId: listFindings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+    post:
+      tags: [Code Analysis]
+      summary: Add findings
+      operationId: addFindings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/corpus/import:
+    post:
+      tags: [Corpus]
+      summary: Import corpus
+      operationId: importCorpus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/memory/agents/{agent_id}/conversations:
+    get:
+      tags: [Memory]
+      summary: List agent conversations
+      operationId: listConversations
+      parameters:
+        - name: agent_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/memory/conversations/{id}:
+    get:
+      tags: [Memory]
+      summary: Get conversation
+      operationId: getConversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+    delete:
+      tags: [Memory]
+      summary: Delete conversation
+      operationId: deleteConversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/memory/conversations/{id}/messages:
+    post:
+      tags: [Memory]
+      summary: Add message
+      operationId: addMessage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/memory/agents/{agent_id}/long-term:
+    get:
+      tags: [Memory]
+      summary: Search long-term memory
+      operationId: searchLongTermMemory
+      parameters:
+        - name: agent_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: query
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/memory/long-term:
+    post:
+      tags: [Memory]
+      summary: Store long-term memory
+      operationId: storeLongTermMemory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/memory/long-term/{id}:
+    get:
+      tags: [Memory]
+      summary: Get long-term memory
+      operationId: getLongTermMemory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+    put:
+      tags: [Memory]
+      summary: Update long-term memory
+      operationId: updateLongTermMemory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+    delete:
+      tags: [Memory]
+      summary: Delete long-term memory
+      operationId: deleteLongTermMemory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/memory/prune:
+    post:
+      tags: [Memory]
+      summary: Prune memories
+      operationId: pruneMemories
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/solutions:
+    get:
+      tags: [Solutions]
+      summary: List solutions
+      operationId: listSolutions
+      parameters:
+        - name: domain
+          in: query
+          schema:
+            type: string
+        - name: severity
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successful response
+    post:
+      tags: [Solutions]
+      summary: Create solution
+      operationId: createSolution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/solutions/search:
+    post:
+      tags: [Solutions]
+      summary: Search solutions
+      operationId: searchSolutions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                domain:
+                  type: string
+                component:
+                  type: string
+                severity:
+                  type: string
+                status:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+                keyword:
+                  type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/solutions/bulk:
+    post:
+      tags: [Solutions]
+      summary: Bulk create solutions
+      operationId: bulkCreateSolutions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/solutions/{id}:
+    get:
+      tags: [Solutions]
+      summary: Get solution by ID
+      operationId: getSolution
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+    put:
+      tags: [Solutions]
+      summary: Update solution
+      operationId: updateSolution
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+    delete:
+      tags: [Solutions]
+      summary: Delete solution
+      operationId: deleteSolution
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/solutions/{id}/executions:
+    get:
+      tags: [Solutions]
+      summary: List solution executions
+      operationId: listSolutionExecutions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+    post:
+      tags: [Solutions]
+      summary: Record solution execution
+      operationId: recordSolutionExecution
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/call-graphs:
+    get:
+      tags: [Call Graphs]
+      summary: List call graphs
+      operationId: listCallGraphs
+      responses:
+        "200":
+          description: Successful response
+    post:
+      tags: [Call Graphs]
+      summary: Create call graph
+      operationId: createCallGraph
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/call-graphs/{id}:
+    get:
+      tags: [Call Graphs]
+      summary: Get call graph by ID
+      operationId: getCallGraph
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+    delete:
+      tags: [Call Graphs]
+      summary: Delete call graph
+      operationId: deleteCallGraph
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/call-graphs/{id}/nodes:
+    get:
+      tags: [Call Graphs]
+      summary: List graph nodes
+      operationId: listCallGraphNodes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/call-graphs/{id}/edges:
+    get:
+      tags: [Call Graphs]
+      summary: List graph edges
+      operationId: listCallGraphEdges
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/call-graphs/{id}/subgraph:
+    get:
+      tags: [Call Graphs]
+      summary: Get subgraph
+      operationId: getCallGraphSubgraph
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/traffic/captures:
+    get:
+      tags: [Traffic Captures]
+      summary: List traffic captures
+      operationId: listTrafficCaptures
+      responses:
+        "200":
+          description: Successful response
+    post:
+      tags: [Traffic Captures]
+      summary: Create traffic capture
+      operationId: createTrafficCapture
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/traffic/captures/{id}:
+    get:
+      tags: [Traffic Captures]
+      summary: Get capture by ID
+      operationId: getTrafficCapture
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+    put:
+      tags: [Traffic Captures]
+      summary: Update capture
+      operationId: updateTrafficCapture
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+    delete:
+      tags: [Traffic Captures]
+      summary: Delete capture
+      operationId: deleteTrafficCapture
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/traffic/captures/{id}/records:
+    post:
+      tags: [Traffic Captures]
+      summary: Add traffic records
+      operationId: addTrafficRecords
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+    get:
+      tags: [Traffic Captures]
+      summary: List traffic records
+      operationId: listTrafficRecords
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/traffic/graphs:
+    get:
+      tags: [Traffic Graphs]
+      summary: List traffic graphs
+      operationId: listTrafficGraphs
+      responses:
+        "200":
+          description: Successful response
+    post:
+      tags: [Traffic Graphs]
+      summary: Create traffic graph
+      operationId: createTrafficGraph
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/traffic/graphs/{id}:
+    get:
+      tags: [Traffic Graphs]
+      summary: Get graph by ID
+      operationId: getTrafficGraph
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+    put:
+      tags: [Traffic Graphs]
+      summary: Update graph
+      operationId: updateTrafficGraph
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
+    delete:
+      tags: [Traffic Graphs]
+      summary: Delete graph
+      operationId: deleteTrafficGraph
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+
+  /api/v1/traffic/graphs/{id}/analyze:
+    post:
+      tags: [Traffic Graphs]
+      summary: Analyze traffic graph
+      operationId: analyzeTrafficGraph
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Successful response
 
 components:
   schemas:

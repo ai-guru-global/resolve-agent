@@ -554,6 +554,55 @@ func (s *Store) Migrate(ctx context.Context) error {
 				CREATE INDEX IF NOT EXISTS idx_traffic_graphs_status ON traffic_graphs(status)
 			`,
 		},
+		// =====================================================================
+		// Troubleshooting Solution Registry
+		// =====================================================================
+		{
+			version: 16,
+			sql: `
+				CREATE TABLE IF NOT EXISTS solutions (
+					id VARCHAR(64) PRIMARY KEY,
+					title VARCHAR(500) NOT NULL,
+					problem_symptoms TEXT DEFAULT '',
+					key_information TEXT DEFAULT '',
+					troubleshooting_steps TEXT DEFAULT '',
+					resolution_steps TEXT DEFAULT '',
+					domain VARCHAR(100) DEFAULT '',
+					component VARCHAR(255) DEFAULT '',
+					severity VARCHAR(50) DEFAULT '',
+					tags JSONB DEFAULT '[]',
+					search_keywords TEXT DEFAULT '',
+					version INTEGER DEFAULT 1,
+					status VARCHAR(50) DEFAULT 'active',
+					source_uri TEXT DEFAULT '',
+					rag_collection_id VARCHAR(64) DEFAULT '',
+					rag_document_id VARCHAR(64) DEFAULT '',
+					related_skill_names JSONB DEFAULT '[]',
+					related_workflow_ids JSONB DEFAULT '[]',
+					metadata JSONB DEFAULT '{}',
+					created_by VARCHAR(255) DEFAULT '',
+					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+					updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+				);
+				CREATE TABLE IF NOT EXISTS solution_executions (
+					id VARCHAR(64) PRIMARY KEY,
+					solution_id VARCHAR(64) NOT NULL,
+					executor VARCHAR(255) DEFAULT '',
+					trigger_context JSONB DEFAULT '{}',
+					status VARCHAR(50) DEFAULT '',
+					outcome_notes TEXT DEFAULT '',
+					effectiveness_score DOUBLE PRECISION DEFAULT 0,
+					duration_ms INTEGER DEFAULT 0,
+					started_at TIMESTAMP,
+					completed_at TIMESTAMP,
+					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+				);
+				CREATE INDEX IF NOT EXISTS idx_solutions_domain ON solutions(domain);
+				CREATE INDEX IF NOT EXISTS idx_solutions_status ON solutions(status);
+				CREATE INDEX IF NOT EXISTS idx_solutions_severity ON solutions(severity);
+				CREATE INDEX IF NOT EXISTS idx_solution_executions_solution_id ON solution_executions(solution_id)
+			`,
+		},
 	}
 
 	for _, migration := range migrations {

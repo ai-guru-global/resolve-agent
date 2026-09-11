@@ -74,8 +74,7 @@ func New(cfg *config.Config, logger *slog.Logger) (*Server, error) {
 		s.callGraphRegistry = postgres.NewCallGraphRegistry(pgStore)
 		s.trafficCaptureRegistry = postgres.NewTrafficCaptureRegistry(pgStore)
 		s.trafficGraphRegistry = postgres.NewTrafficGraphRegistry(pgStore)
-		// Solution registry remains in-memory until PostgreSQL implementation is added
-		s.solutionRegistry = registry.NewInMemoryTroubleshootingSolutionRegistry()
+		s.solutionRegistry = postgres.NewSolutionRegistry(pgStore)
 		s.runtimeClient = NewRuntimeClient(cfg)
 	} else {
 		logger.Info("Using in-memory backend for registries")

@@ -24,6 +24,20 @@ env:
 
 jobs:
   # ===========================================================================
+  # Stage 0: Security — secret leakage scan (full history)
+  # ===========================================================================
+  security-secrets:
+    name: Secret Scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ===========================================================================
   # Stage 1: Lint Gate
   # ===========================================================================
   lint-go:

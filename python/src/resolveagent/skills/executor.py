@@ -361,7 +361,7 @@ class SkillExecutor:
         )
 
         # Parse outputs from stdout
-        outputs = {}
+        outputs: dict[str, Any] = {}
         if sandbox_result.success:
             stdout = sandbox_result.stdout.strip()
             if stdout:

@@ -40,7 +40,7 @@ webui:
     tag: ""
     pullPolicy: IfNotPresent
   service:
-    port: 80
+    port: 8080
 
 ingress:
   enabled: false

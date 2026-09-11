@@ -11,7 +11,7 @@
 # Services:
 #   - platform:  Go platform service (HTTP:8080, gRPC:9090)
 #   - runtime:   Python agent runtime (gRPC:9091)
-#   - webui:     React web dashboard (HTTP:3000 -> Nginx:80)
+#   - webui:     React web dashboard (HTTP:3000 -> Nginx:8080, 非 root 容器)
 #   - postgres:  PostgreSQL 16 database
 #   - redis:     Redis 7 cache & session store
 #   - nats:      NATS JetStream message bus
@@ -127,7 +127,7 @@ services:
     container_name: resolveagent-webui
     restart: unless-stopped
     ports:
-      - "127.0.0.1:${WEBUI_PORT:-3000}:80"
+      - "127.0.0.1:${WEBUI_PORT:-3000}:8080"
     depends_on:
       platform:
         condition: service_healthy

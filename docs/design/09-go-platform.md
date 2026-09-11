@@ -90,7 +90,7 @@ flowchart TD
     end
 ```
 
-> [!NOTE] 推测：未挂载是"网关先行"策略的过渡态，而非放弃本层鉴权。依据：ADR-002 把统一认证列为网关集成模式之一（[002-gateway-choice.md:79](docs-site/docs/adr/002-gateway-choice.md#L79)）；配置文件同样声明由 Higress 先行认证（[resolveagent.yaml:47-48](configs/resolveagent.yaml#L47-L48)）；但 auth.go 仍完整实现了网关头信任、JWT、API Key 三路兜底，说明本层防御是预留项。
+> [!NOTE] 推测：未挂载是"网关先行"策略的过渡态，而非放弃本层鉴权。依据：ADR-002 把统一认证列为网关集成模式之一（[002-gateway-choice.md:79](docs/adr/002-gateway-choice.md#L79)）；配置文件同样声明由 Higress 先行认证（[resolveagent.yaml:47-48](configs/resolveagent.yaml#L47-L48)）；但 auth.go 仍完整实现了网关头信任、JWT、API Key 三路兜底，说明本层防御是预留项。
 
 ## 错误映射
 
@@ -113,11 +113,11 @@ flowchart TD
 
 ## 关键决策
 
-**为什么 Go 做平台层、Python 做智能层**。ADR-001 的决策表：平台服务用 Go（高并发、云原生生态），Agent 运行时用 Python（AI/ML 生态与 AgentScope），Web 用 TypeScript，见 [001-why-multilang.md:20-27](docs-site/docs/adr/001-why-multilang.md#L20-L27)；结论是"每个组件用最适合的技术，整体收益大于成本"（[001-why-multilang.md:73](docs-site/docs/adr/001-why-multilang.md#L73)）。落到代码上：Go 侧持有全部注册表与 HTTP 门面，Python 侧只做执行引擎。
+**为什么 Go 做平台层、Python 做智能层**。ADR-001 的决策表：平台服务用 Go（高并发、云原生生态），Agent 运行时用 Python（AI/ML 生态与 AgentScope），Web 用 TypeScript，见 [001-why-multilang.md:20-27](docs/adr/001-why-multilang.md#L20-L27)；结论是"每个组件用最适合的技术，整体收益大于成本"（[001-why-multilang.md:73](docs/adr/001-why-multilang.md#L73)）。落到代码上：Go 侧持有全部注册表与 HTTP 门面，Python 侧只做执行引擎。
 
-**网关选 Higress**。ADR-002 对比 Higress/Kong/Envoy/自建后，取其 AI 场景优化（LLM 路由、Token 限流、模型熔断）与 Wasm 扩展能力，见 [002-gateway-choice.md:23-50](docs-site/docs/adr/002-gateway-choice.md#L23-L50)；集成模式声明"Route Sync: Go Registry → Higress"与"LLM Proxy: Python Runtime → Higress → LLM"，见 [002-gateway-choice.md:75-79](docs-site/docs/adr/002-gateway-choice.md#L75-L79)。
+**网关选 Higress**。ADR-002 对比 Higress/Kong/Envoy/自建后，取其 AI 场景优化（LLM 路由、Token 限流、模型熔断）与 Wasm 扩展能力，见 [002-gateway-choice.md:23-50](docs/adr/002-gateway-choice.md#L23-L50)；集成模式声明"Route Sync: Go Registry → Higress"与"LLM Proxy: Python Runtime → Higress → LLM"，见 [002-gateway-choice.md:75-79](docs/adr/002-gateway-choice.md#L75-L79)。
 
-**桥接协议：ADR 说 gRPC，实现走了 HTTP/SSE**。ADR-001 的缓解措施写"使用 gRPC 和 Protocol Buffers"（[001-why-multilang.md:66](docs-site/docs/adr/001-why-multilang.md#L66)），但实际桥接是 HTTP+JSON+SSE（见上文"转发协议"）；Go 侧 gRPC 只剩健康检查，配置里的 `runtime.grpc_addr` 成为遗留键。Python 侧自己的注释也承认 REST 是"gRPC 之外的等价面"，见 [http_server.py:112-113](python/src/resolveagent/runtime/http_server.py#L112-L113)。
+**桥接协议：ADR 说 gRPC，实现走了 HTTP/SSE**。ADR-001 的缓解措施写"使用 gRPC 和 Protocol Buffers"（[001-why-multilang.md:66](docs/adr/001-why-multilang.md#L66)），但实际桥接是 HTTP+JSON+SSE（见上文"转发协议"）；Go 侧 gRPC 只剩健康检查，配置里的 `runtime.grpc_addr` 成为遗留键。Python 侧自己的注释也承认 REST 是"gRPC 之外的等价面"，见 [http_server.py:112-113](python/src/resolveagent/runtime/http_server.py#L112-L113)。
 
 **双后端注册表**。`store.backend` 二选一：postgres 分支先连库再跑迁移，迁移失败直接启动失败（[server.go:53-62](pkg/server/server.go#L53-L62)）；否则 13 类实体全部退化为进程内 map（[server.go:82-95](pkg/server/server.go#L82-L95)）。例外：方案（solution）registry 即使在 postgres 模式下也保持内存实现，见 [server.go:77-78](pkg/server/server.go#L77-L78)。
 

@@ -897,7 +897,7 @@ RESOLVEAGENT_TELEMETRY_OTLP_ENDPOINT=http://localhost:4318
 
 ### Documentation Site
 
-Online documentation site (Docusaurus): [`docs-site/`](docs-site/) —— 涵盖架构（architecture）、API、ADR、运维（ops）、开发指南（dev-guide）与用户指南（user-guide）。
+Online documentation site (Docusaurus): [`docs-site/`](docs-site/) —— 仅站点壳与导航；内容唯一源在 [`docs/`](docs/)（设计蒸馏、中文文档、ADR、API、开发与运维指南）。
 
 ---
 
@@ -1052,7 +1052,7 @@ resolve-agent/
 │   └── src/api/mock/            # 演示数据按域拆分 (ops/rag/skills/workflows/shared)
 ├── mobile/                      # 📱 移动端 Web 应用
 ├── benchmarks/wiki-k8s/         # 基准语料（K8s wiki）
-├── docs-site/                   # 📚 Docusaurus 文档站点
+├── docs-site/                   # 📚 Docusaurus 站点壳（内容引用 docs/）
 ├── docs/                        # 文档 (设计蒸馏/中文文档/归档)
 │   ├── design/                  # 🧬 19 篇带 file:line 锚点的源码蒸馏设计文档
 │   ├── zh/                      # 25 篇中文技术文档

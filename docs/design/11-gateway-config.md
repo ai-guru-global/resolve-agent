@@ -61,7 +61,7 @@ resolveagent.yaml 里有三段内容在 Go 的 Config 结构体里找不到对�
 
 ### Higress 选型与同步语义
 
-选型动因与集成模式记录在 ADR：候选对比 Kong/Envoy/自建后选 Higress，看重 AI 场景优化与 Wasm 扩展 [002-gateway-choice.md:27-30](docs-site/docs/adr/002-gateway-choice.md#L27-L30)；集成模式定为 "Route Sync: Go Registry → Higress" 与 "LLM Proxy: Python Runtime → Higress → LLM Providers" [002-gateway-choice.md:77-79](docs-site/docs/adr/002-gateway-choice.md#L77-L79)。
+选型动因与集成模式记录在 ADR：候选对比 Kong/Envoy/自建后选 Higress，看重 AI 场景优化与 Wasm 扩展 [002-gateway-choice.md:27-30](docs/adr/002-gateway-choice.md#L27-L30)；集成模式定为 "Route Sync: Go Registry → Higress" 与 "LLM Proxy: Python Runtime → Higress → LLM Providers" [002-gateway-choice.md:77-79](docs/adr/002-gateway-choice.md#L77-L79)。
 
 同步的数据与触发时机：
 

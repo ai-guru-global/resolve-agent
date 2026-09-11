@@ -36,13 +36,9 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           editUrl:
-            'https://github.com/ai-guru-global/resolve-agent/tree/main/docs-site/',
+            'https://github.com/ai-guru-global/resolve-agent/tree/main/docs/',
         },
-        blog: {
-          showReadingTime: true,
-          editUrl:
-            'https://github.com/ai-guru-global/resolve-agent/tree/main/docs-site/',
-        },
+        blog: false,
         theme: {
           customCss: './src/css/custom.css',
         },
@@ -77,7 +73,6 @@ const config: Config = {
           position: 'left',
           label: '开发',
         },
-        {to: '/blog', label: '博客', position: 'left'},
         {
           type: 'localeDropdown',
           position: 'right',
@@ -97,11 +92,11 @@ const config: Config = {
           items: [
             {
               label: '快速开始',
-              to: '/docs/user-guide/quickstart',
+              to: '/docs/intro',
             },
             {
               label: '架构设计',
-              to: '/docs/architecture/overview',
+              href: 'https://github.com/ai-guru-global/resolve-agent/blob/main/docs/design/INDEX.md',
             },
             {
               label: 'API 参考',
@@ -125,10 +120,6 @@ const config: Config = {
         {
           title: '更多',
           items: [
-            {
-              label: '博客',
-              to: '/blog',
-            },
             {
               label: 'GitHub',
               href: 'https://github.com/ai-guru-global/resolve-agent',

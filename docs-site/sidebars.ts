@@ -1,26 +1,13 @@
 import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 
+// 内容唯一源在仓库根 docs/；本目录只保留引导 stub，新增内容请写进 docs/。
 const sidebars: SidebarsConfig = {
   tutorialSidebar: [
+    {type: 'doc', label: '文档首页', id: 'intro'},
     {
       type: 'category',
-      label: '用户指南',
-      items: [
-        'user-guide/quickstart',
-        'user-guide/installation',
-        'user-guide/configuration',
-      ],
-    },
-    {
-      type: 'category',
-      label: '架构设计',
-      items: [
-        'architecture/overview',
-        'architecture/intelligent-selector',
-        'architecture/fta-engine',
-        'architecture/rag-pipeline',
-        'architecture/agentscope-higress-integration',
-      ],
+      label: 'API 参考',
+      items: ['api/index'],
     },
     {
       type: 'category',
@@ -30,28 +17,12 @@ const sidebars: SidebarsConfig = {
         'dev-guide/local-dev',
         'dev-guide/contributing',
         'dev-guide/testing',
-        'dev-guide/debugging',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'API 参考',
-      items: [
-        'api/index',
-        'api/rest',
-        'api/grpc',
-        'api/python-sdk',
       ],
     },
     {
       type: 'category',
       label: '运维手册',
-      items: [
-        'ops/index',
-        'ops/deployment',
-        'ops/monitoring',
-        'ops/troubleshooting',
-      ],
+      items: ['ops/index'],
     },
     {
       type: 'category',

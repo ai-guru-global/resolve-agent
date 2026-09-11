@@ -43,8 +43,13 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^26.4.1",
     "@types/react": "^18.3.12",
+<<<<<<< HEAD
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.3.4",
+=======
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^6.0.1",
+>>>>>>> origin/dependabot/npm_and_yarn/web/vitejs/plugin-react-6.0.1
     "autoprefixer": "^10.4.20",
     "eslint": "^9.15.0",
     "eslint-plugin-react-hooks": "^7.0.1",

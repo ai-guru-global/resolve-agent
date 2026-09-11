@@ -27,8 +27,7 @@ class TextChunker:
         # (start 每次回退不小于步进); 其余策略不消费 chunk_overlap, 不校验
         if strategy == "fixed" and not 0 <= chunk_overlap < chunk_size:
             raise ValueError(
-                f"chunk_overlap must satisfy 0 <= chunk_overlap < chunk_size, "
-                f"got chunk_size={chunk_size}, chunk_overlap={chunk_overlap}"
+                f"chunk_overlap must satisfy 0 <= chunk_overlap < chunk_size, got chunk_size={chunk_size}, chunk_overlap={chunk_overlap}"
             )
         self.strategy = strategy
         self.chunk_size = chunk_size

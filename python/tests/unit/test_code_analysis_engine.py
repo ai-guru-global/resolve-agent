@@ -18,12 +18,7 @@ class TestAnalyzeSingle:
             repo_path=str(tmp_path),
             language="python",
             entry_points=["foo"],
-            error_logs=(
-                "Traceback (most recent call last):\n"
-                '  File "main.py", line 2, in foo\n'
-                "    bar()\n"
-                "ZeroDivisionError: division by zero"
-            ),
+            error_logs=('Traceback (most recent call last):\n  File "main.py", line 2, in foo\n    bar()\nZeroDivisionError: division by zero'),
         )
 
         assert result.analysis_id

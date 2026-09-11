@@ -148,17 +148,20 @@ class TestStdioMCPClient:
         client = StdioMCPClient(config)
 
         # Mock subprocess; readline answers the initialize handshake
-        init_response = json.dumps(
-            {
-                "jsonrpc": "2.0",
-                "id": 1,
-                "result": {
-                    "protocolVersion": "2024-11-05",
-                    "capabilities": {},
-                    "serverInfo": {"name": "mock-server", "version": "0.0.1"},
-                },
-            }
-        ).encode() + b"\n"
+        init_response = (
+            json.dumps(
+                {
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "result": {
+                        "protocolVersion": "2024-11-05",
+                        "capabilities": {},
+                        "serverInfo": {"name": "mock-server", "version": "0.0.1"},
+                    },
+                }
+            ).encode()
+            + b"\n"
+        )
         mock_process = MagicMock()
         mock_process.pid = 12345
         mock_process.stdin = MagicMock()
@@ -192,9 +195,8 @@ class TestStdioMCPClient:
         mock_process.stdout = MagicMock()
         mock_process.stdout.readline = AsyncMock(return_value=b"")
 
-        with patch("asyncio.create_subprocess_exec", return_value=mock_process):
-            with pytest.raises(RuntimeError, match="closed stdout"):
-                await client.connect()
+        with patch("asyncio.create_subprocess_exec", return_value=mock_process), pytest.raises(RuntimeError, match="closed stdout"):
+            await client.connect()
         assert client.connected is False
 
     @pytest.mark.asyncio

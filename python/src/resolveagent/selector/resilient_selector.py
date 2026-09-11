@@ -457,9 +457,7 @@ class ResilientSelector:
             session.attempts.append(attempt_record)
             tried_routes.add(_canonical_route_type(decision.route_type))
             if self._config.adaptive_weights_enabled:
-                self._weight_adjuster.record_outcome(
-                    _canonical_route_type(decision.route_type), attempt_record.success
-                )
+                self._weight_adjuster.record_outcome(_canonical_route_type(decision.route_type), attempt_record.success)
 
             # Check if executor suggested a rephrase
             if not attempt_record.success and attempt_record.error:

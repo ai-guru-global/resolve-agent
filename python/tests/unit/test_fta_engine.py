@@ -115,9 +115,7 @@ def _probabilistic_or_tree() -> FaultTree:
             FTAEvent(id="a", name="A", event_type=EventType.BASIC, evaluator="static:false", probability=0.5),
             FTAEvent(id="b", name="B", event_type=EventType.BASIC, evaluator="static:false", probability=0.5),
         ],
-        gates=[
-            FTAGate(id="g1", name="OR", gate_type=GateType.OR, input_ids=["a", "b"], output_id="top")
-        ],
+        gates=[FTAGate(id="g1", name="OR", gate_type=GateType.OR, input_ids=["a", "b"], output_id="top")],
     )
 
 
@@ -140,9 +138,7 @@ async def test_engine_omits_simulation_without_probabilities():
             FTAEvent(id="a", name="A", event_type=EventType.BASIC, evaluator="static:true"),
             FTAEvent(id="b", name="B", event_type=EventType.BASIC, evaluator="static:false"),
         ],
-        gates=[
-            FTAGate(id="g1", name="OR", gate_type=GateType.OR, input_ids=["a", "b"], output_id="top")
-        ],
+        gates=[FTAGate(id="g1", name="OR", gate_type=GateType.OR, input_ids=["a", "b"], output_id="top")],
     )
     events = [event async for event in FTAEngine().execute(tree, {})]
     completed = next(e for e in events if e["type"] == "workflow.completed")
@@ -166,9 +162,7 @@ async def test_analyze_without_probabilities_skips_simulation():
             FTAEvent(id="a", name="A", event_type=EventType.BASIC),
             FTAEvent(id="b", name="B", event_type=EventType.BASIC),
         ],
-        gates=[
-            FTAGate(id="g1", name="OR", gate_type=GateType.OR, input_ids=["a", "b"], output_id="top")
-        ],
+        gates=[FTAGate(id="g1", name="OR", gate_type=GateType.OR, input_ids=["a", "b"], output_id="top")],
     )
     result = await FTAEngine().analyze(tree)
     assert result.cut_sets

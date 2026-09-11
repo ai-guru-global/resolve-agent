@@ -30,9 +30,7 @@ def _tree_with_inhibit(conditioning: bool) -> FaultTree:
         name="t",
         top_event_id="top",
         events=events,
-        gates=[
-            FTAGate(id="g1", name="INH", gate_type=GateType.INHIBIT, input_ids=gate_inputs, output_id="top")
-        ],
+        gates=[FTAGate(id="g1", name="INH", gate_type=GateType.INHIBIT, input_ids=gate_inputs, output_id="top")],
     )
 
 
@@ -98,17 +96,13 @@ def test_same_seed_is_reproducible():
 
 def test_priority_and_requires_input_order():
     # p=1.0 双输入：两事件必然都失效，失效顺序随机 → 恰好一半试验满足 input_ids 顺序
-    result = MonteCarloSimulator().simulate(
-        _two_input_tree(GateType.PRIORITY_AND, 1.0, 1.0), runs=50_000, seed=42
-    )
+    result = MonteCarloSimulator().simulate(_two_input_tree(GateType.PRIORITY_AND, 1.0, 1.0), runs=50_000, seed=42)
     assert abs(result.failure_probability - 0.5) < 0.03
 
 
 def test_priority_and_asymmetric_probability():
     # P(双失效)=0.5 × P(顺序命中)=0.5 → 0.25
-    result = MonteCarloSimulator().simulate(
-        _two_input_tree(GateType.PRIORITY_AND, 1.0, 0.5), runs=50_000, seed=42
-    )
+    result = MonteCarloSimulator().simulate(_two_input_tree(GateType.PRIORITY_AND, 1.0, 0.5), runs=50_000, seed=42)
     assert abs(result.failure_probability - 0.25) < 0.03
 
 

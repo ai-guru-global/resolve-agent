@@ -78,9 +78,7 @@ class SkillExecutor:
         )
 
         # Merge manifest-declared defaults before validation
-        defaults = {
-            p.name: p.default for p in (skill.manifest.parameters or skill.manifest.inputs or []) if p.default is not None
-        }
+        defaults = {p.name: p.default for p in (skill.manifest.parameters or skill.manifest.inputs or []) if p.default is not None}
         if defaults:
             inputs = {**defaults, **inputs}
 

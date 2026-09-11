@@ -76,9 +76,7 @@ class MonteCarloSimulator:
 
         for event in basics:
             if not 0.0 <= event.probability <= 1.0:
-                raise ValueError(
-                    f"probability for '{event.id}' out of range [0, 1]: {event.probability}"
-                )
+                raise ValueError(f"probability for '{event.id}' out of range [0, 1]: {event.probability}")
 
         rng = random.Random(seed)
         failures = 0

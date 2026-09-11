@@ -167,13 +167,8 @@ class FaultTree:
             if gate.gate_type != GateType.INHIBIT:
                 continue
             has_conditioning = any(
-                (event := self.get_event(input_id)) is not None
-                and event.event_type == EventType.CONDITIONING
-                for input_id in gate.input_ids
+                (event := self.get_event(input_id)) is not None and event.event_type == EventType.CONDITIONING for input_id in gate.input_ids
             )
             if not has_conditioning:
-                warnings.append(
-                    f"INHIBIT gate '{gate.id}' has no CONDITIONING event input; "
-                    "treating it as a plain AND gate"
-                )
+                warnings.append(f"INHIBIT gate '{gate.id}' has no CONDITIONING event input; treating it as a plain AND gate")
         return warnings

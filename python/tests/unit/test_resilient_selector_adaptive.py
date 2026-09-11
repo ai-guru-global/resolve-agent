@@ -59,9 +59,7 @@ async def test_failed_route_decreases_weight():
 
 
 async def test_disabled_flag_skips_recording():
-    config = ResilientConfig(
-        adaptive_weights_enabled=False, max_retries=0, fallback_to_code_analysis=False
-    )
+    config = ResilientConfig(adaptive_weights_enabled=False, max_retries=0, fallback_to_code_analysis=False)
     selector = ResilientSelector(selector=StubSelector("skill"), config=config)
     await selector.route_and_execute("hello", "agent-1", _fail_executor())
     assert selector._weight_adjuster.get_all_weights() == {}

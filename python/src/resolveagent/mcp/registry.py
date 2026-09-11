@@ -141,10 +141,7 @@ class MCPRegistry:
                     }
                 if result.get("isError"):
                     content = result.get("content") or []
-                    error_text = (
-                        " ".join(c.get("text", "") for c in content if isinstance(c, dict)).strip()
-                        or "MCP tool returned an error"
-                    )
+                    error_text = " ".join(c.get("text", "") for c in content if isinstance(c, dict)).strip() or "MCP tool returned an error"
                     return {"success": False, "error": error_text, "data": result}
             return {"success": True, "data": result}
         except Exception as e:

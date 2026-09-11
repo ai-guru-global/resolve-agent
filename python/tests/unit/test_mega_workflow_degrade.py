@@ -75,12 +75,8 @@ class TestWorkflowDegradation:
         """A defined workflow producing no content also degrades to direct."""
         agent = MegaAgent(name="test-agent")
         _registry_with_definition(monkeypatch, {"name": "incident-diagnosis", "nodes": [], "edges": []})
-        agent._execute_defined_workflow = AsyncMock(
-            return_value={"role": "assistant", "content": "", "metadata": {}}
-        )
-        agent._execute_direct = AsyncMock(
-            return_value={"role": "assistant", "content": "real answer", "metadata": {}}
-        )
+        agent._execute_defined_workflow = AsyncMock(return_value={"role": "assistant", "content": "", "metadata": {}})
+        agent._execute_direct = AsyncMock(return_value={"role": "assistant", "content": "real answer", "metadata": {}})
 
         result = await agent.reply({"content": "q"}, decision=_workflow_decision())
 
@@ -117,9 +113,7 @@ class TestExternalDecision:
         selector = MagicMock()
         selector.route = AsyncMock(side_effect=AssertionError("selector must not run"))
         agent._selector_instance = selector
-        agent._execute_by_route = AsyncMock(
-            return_value={"role": "assistant", "content": "ok", "metadata": {}}
-        )
+        agent._execute_by_route = AsyncMock(return_value={"role": "assistant", "content": "ok", "metadata": {}})
 
         decision = RouteDecision(route_type="direct", confidence=0.9)
         result = await agent.reply({"content": "hello"}, decision=decision)
@@ -134,9 +128,7 @@ class TestExternalDecision:
         selector = MagicMock()
         selector.route = AsyncMock(return_value=RouteDecision(route_type="direct"))
         agent._selector_instance = selector
-        agent._execute_by_route = AsyncMock(
-            return_value={"role": "assistant", "content": "ok", "metadata": {}}
-        )
+        agent._execute_by_route = AsyncMock(return_value={"role": "assistant", "content": "ok", "metadata": {}})
 
         result = await agent.reply({"content": "hello"})
 
@@ -174,9 +166,7 @@ class TestReplyDepthGuard:
         selector = MagicMock()
         selector.route = AsyncMock(side_effect=AssertionError("selector must not run at max depth"))
         agent._selector_instance = selector
-        agent._execute_direct = AsyncMock(
-            return_value={"role": "assistant", "content": "direct answer", "metadata": {"route_type": "direct"}}
-        )
+        agent._execute_direct = AsyncMock(return_value={"role": "assistant", "content": "direct answer", "metadata": {"route_type": "direct"}})
 
         result = await agent.reply({"content": "q"}, _depth=MAX_REPLY_DEPTH)
 
@@ -216,9 +206,7 @@ class TestReplyDepthGuard:
         selector = MagicMock()
         selector.route = AsyncMock(return_value=_workflow_decision())
         agent._selector_instance = selector
-        agent._execute_direct = AsyncMock(
-            return_value={"role": "assistant", "content": "leaf answer", "metadata": {"route_type": "direct"}}
-        )
+        agent._execute_direct = AsyncMock(return_value={"role": "assistant", "content": "leaf answer", "metadata": {"route_type": "direct"}})
 
         result = await agent.reply({"content": "x"})
 

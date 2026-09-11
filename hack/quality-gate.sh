@@ -9,6 +9,12 @@
 
 set -euo pipefail
 
+BASELINE_FILE="test/fixtures/baseline/coverage-baseline.json"
+
+baseline_value() {
+    python3 -c "import json; print(json.load(open('$BASELINE_FILE'))['loop_engineering']['$1'])"
+}
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -74,19 +80,22 @@ else
     FAIL=$((FAIL+1))
 fi
 
-# Go coverage threshold (non-blocking, informational)
-echo -n "  [go-coverage] "
-if go test -coverprofile=/tmp/gocover.out ./... > /dev/null 2>&1; then
+# Go coverage threshold (blocking, baseline-driven: test/fixtures/baseline/coverage-baseline.json)
+GO_MIN=$(baseline_value "minimum_go_coverage")
+echo -n "  [go-coverage>=${GO_MIN}%] "
+if go test -count=1 -coverprofile=/tmp/gocover.out ./... > /dev/null 2>&1; then
     COVERAGE=$(go tool cover -func=/tmp/gocover.out 2>/dev/null | grep total | awk '{print $3}' | sed 's/%//')
-    if [ -n "$COVERAGE" ]; then
+    if [ -n "$COVERAGE" ] \
+        && python3 -c "import sys; sys.exit(0 if float('$COVERAGE') >= float('$GO_MIN') else 1)"; then
         echo -e "${GREEN}${COVERAGE}%${NC}"
+        PASS=$((PASS+1))
     else
-        echo -e "${YELLOW}N/A${NC}"
-        WARN=$((WARN+1))
+        echo -e "${RED}FAIL (coverage ${COVERAGE:-N/A}% < threshold ${GO_MIN}%)${NC}"
+        FAIL=$((FAIL+1))
     fi
 else
-    echo -e "${YELLOW}SKIP${NC}"
-    WARN=$((WARN+1))
+    echo -e "${RED}FAIL (go test failed)${NC}"
+    FAIL=$((FAIL+1))
 fi
 
 echo ""
@@ -98,7 +107,23 @@ if [ -d "$PYTHON_DIR" ]; then
     if command -v uv &> /dev/null; then
         check "py-ruff" bash -c "cd $PYTHON_DIR && uv run ruff check src/ tests/"
         check "py-format" bash -c "cd $PYTHON_DIR && uv run ruff format --check src/ tests/"
-        warn "py-test" bash -c "cd $PYTHON_DIR && uv run pytest tests/ -q --tb=short"
+
+        # 覆盖率口径 = tests/unit：全量套件（tests/ 含集成类）已由 CI test-python 阶段把关，
+        # 门禁追求快而确定。阈值来自 coverage-baseline.json，只升不降。
+        PY_MIN=$(baseline_value "minimum_python_coverage")
+        echo -n "  [py-test+coverage>=${PY_MIN}%] "
+        PY_OUT=$(cd "$PYTHON_DIR" && uv run pytest tests/unit -q --tb=short --cov=resolveagent --cov-report=term 2>&1)
+        PY_COV=$(echo "$PY_OUT" | grep -E "^TOTAL" | awk '{print $NF}' | sed 's/%//')
+        if echo "$PY_OUT" | grep -qE "^[0-9]+ passed" \
+            && [ -n "$PY_COV" ] \
+            && python3 -c "import sys; sys.exit(0 if float('$PY_COV') >= float('$PY_MIN') else 1)"; then
+            echo -e "${GREEN}${PY_COV}%${NC}"
+            PASS=$((PASS+1))
+        else
+            echo -e "${RED}FAIL (coverage ${PY_COV:-N/A}% < threshold ${PY_MIN}% or tests failed)${NC}"
+            echo "$PY_OUT" | grep -E "FAILED|ERROR" | head -5
+            FAIL=$((FAIL+1))
+        fi
     else
         echo -e "  ${YELLOW}SKIP${NC} (uv not installed)"
         WARN=$((WARN+1))
@@ -113,8 +138,8 @@ echo ""
 echo "==> Web Quality Checks"
 WEB_DIR="web"
 if [ -d "$WEB_DIR" ] && [ -d "$WEB_DIR/node_modules" ]; then
-    warn "web-lint" bash -c "cd $WEB_DIR && pnpm lint"
-    warn "web-test" bash -c "cd $WEB_DIR && pnpm test --passWithNoTests"
+    check "web-lint" bash -c "cd $WEB_DIR && pnpm lint"
+    check "web-test" bash -c "cd $WEB_DIR && pnpm test --passWithNoTests"
 else
     echo -e "  ${YELLOW}SKIP${NC} (web dependencies not installed)"
     WARN=$((WARN+1))

@@ -245,7 +245,7 @@ After startup, open the WebUI at **http://localhost:5174** and the Platform API 
 │  │ CLI/WebUI│    │ AI Gateway   │    │  Registry │ Auth │ Route │ Store │ │
 │  │ Mobile   │    │              │    │  Feedback │ CircuitBreaker       │ │
 │  └──────────┘    └──────────────┘    └──────────────┬──────────────────┘ │
-│                                                      │ HTTP/SSE + gRPC    │
+│                                                      │ HTTP/SSE           │
 │                                                      ▼                    │
 │                            ┌─────────────────────────────────────────┐   │
 │                            │     Agent Runtime (Python)              │   │
@@ -269,7 +269,7 @@ After startup, open the WebUI at **http://localhost:5174** and the Platform API 
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-**三层分工：** Go 平台负责注册表、鉴权、存储与反馈闭环等高并发基础服务；Python 运行时承载 Agent 编排与 AI 引擎（agentscope）；React WebUI 面向运维操作者。三者经 HTTP/SSE + gRPC 互联。
+**三层分工：** Go 平台负责注册表、鉴权、存储与反馈闭环等高并发基础服务；Python 运行时承载 Agent 编排与 AI 引擎（agentscope）；React WebUI 面向运维操作者。三者经 HTTP/SSE 互联。
 
 ---
 
@@ -666,7 +666,7 @@ Startup endpoints:
 | **WebUI** | http://localhost:5174 | React 可视化控制台 |
 | **Platform API** | http://localhost:8080 | Go 平台服务（健康检查 `/api/v1/health`） |
 | **Runtime API** | http://localhost:9091 | Python Agent 运行时（`/health`） |
-| gRPC | localhost:9090 | Platform gRPC 接口 |
+| gRPC | localhost:9090 | Platform gRPC 服务（仅健康检查与反射；业务 API 走 REST） |
 | PostgreSQL | localhost:5432 | 长期记忆 / 业务数据 |
 | Redis | localhost:6379 | 短期记忆 / 缓存 |
 | NATS | localhost:4222 | 消息总线 |
@@ -1007,7 +1007,6 @@ hack/quality-gate.sh
 ```
 resolve-agent/
 ├── api/                          # 协议定义
-│   ├── proto/resolveagent/v1/   # Protocol Buffers
 │   ├── openapi/v1/              # OpenAPI 规范
 │   └── jsonschema/              # JSON Schema
 ├── cmd/
@@ -1027,7 +1026,7 @@ resolve-agent/
 │   ├── logger/                  # OpenTelemetry 关联结构化日志
 │   ├── registry/                # 14 个领域 Registry (agent/skill/rag/fta/solution/traffic…)
 │   ├── retry/                   # 重试机制
-│   ├── server/                  # HTTP/gRPC 服务 + writeRegistryError 统一错误出口
+│   ├── server/                  # HTTP 服务（gRPC 仅健康/反射）+ writeRegistryError 统一错误出口
 │   ├── service/                 # 业务服务层
 │   ├── store/                   # Store 模式抽象 (postgres sentinel 化)
 │   ├── telemetry/               # 监控指标 (Prometheus/OTel)

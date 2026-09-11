@@ -423,8 +423,8 @@ func TestPostgresSolutionRegistry(t *testing.T) {
 	}
 
 	// NotFound（比对 sentinel 常量，理由同上）
-	if _, err := r.Get(ctx, "sol-missing"); !errors.Is(err, errors.ErrNotFound) {
-		t.Fatalf("Get missing should return ErrNotFound, got %v", err)
+	if _, gerr := r.Get(ctx, "sol-missing"); !errors.Is(gerr, errors.ErrNotFound) {
+		t.Fatalf("Get missing should return ErrNotFound, got %v", gerr)
 	}
 
 	// List + status 过滤 + 分页
@@ -436,8 +436,8 @@ func TestPostgresSolutionRegistry(t *testing.T) {
 			Severity:        "low",
 			Status:          "draft",
 		}
-		if err := r.Create(ctx, s); err != nil {
-			t.Fatalf("Create sol-%d failed: %v", i, err)
+		if cerr := r.Create(ctx, s); cerr != nil {
+			t.Fatalf("Create sol-%d failed: %v", i, cerr)
 		}
 	}
 	items, total, err := r.List(ctx, registry.ListOptions{Limit: 2, Offset: 0})
@@ -469,25 +469,25 @@ func TestPostgresSolutionRegistry(t *testing.T) {
 
 	// Update
 	solution.Title = "Pod CrashLoopBackOff 排查（修订）"
-	if err := r.Update(ctx, solution); err != nil {
-		t.Fatalf("Update failed: %v", err)
+	if uerr := r.Update(ctx, solution); uerr != nil {
+		t.Fatalf("Update failed: %v", uerr)
 	}
 	if got, _ := r.Get(ctx, "sol-1"); got.Title != solution.Title {
 		t.Fatal("Update not persisted")
 	}
 	missing := &registry.TroubleshootingSolution{ID: "sol-none", Title: "x"}
-	if err := r.Update(ctx, missing); !errors.Is(err, errors.ErrNotFound) {
-		t.Fatalf("Update missing should ErrNotFound, got %v", err)
+	if uerr := r.Update(ctx, missing); !errors.Is(uerr, errors.ErrNotFound) {
+		t.Fatalf("Update missing should ErrNotFound, got %v", uerr)
 	}
 
 	// RecordExecution + ListExecutions
-	if err := r.RecordExecution(ctx, &registry.SolutionExecution{
+	if rerr := r.RecordExecution(ctx, &registry.SolutionExecution{
 		ID:         "exec-1",
 		SolutionID: "sol-1",
 		Status:     "completed",
 		StartedAt:  time.Now(),
-	}); err != nil {
-		t.Fatalf("RecordExecution failed: %v", err)
+	}); rerr != nil {
+		t.Fatalf("RecordExecution failed: %v", rerr)
 	}
 	execs, total, err := r.ListExecutions(ctx, "sol-1", registry.ListOptions{})
 	if err != nil {
@@ -498,8 +498,8 @@ func TestPostgresSolutionRegistry(t *testing.T) {
 	}
 
 	// Delete 级联清执行记录
-	if err := r.Delete(ctx, "sol-1"); err != nil {
-		t.Fatalf("Delete failed: %v", err)
+	if derr := r.Delete(ctx, "sol-1"); derr != nil {
+		t.Fatalf("Delete failed: %v", derr)
 	}
 	if _, total, _ := r.ListExecutions(ctx, "sol-1", registry.ListOptions{}); total != 0 {
 		t.Fatal("Delete should cascade executions")

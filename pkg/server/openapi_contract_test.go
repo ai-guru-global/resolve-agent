@@ -20,8 +20,9 @@ func routerRoutes(t *testing.T) []string {
 	if err != nil {
 		t.Fatalf("read router.go: %v", err)
 	}
-	var routes []string
-	for _, m := range routeRe.FindAllStringSubmatch(string(src), -1) {
+	matches := routeRe.FindAllStringSubmatch(string(src), -1)
+	routes := make([]string, 0, len(matches))
+	for _, m := range matches {
 		routes = append(routes, m[1]+" "+m[2])
 	}
 	if len(routes) == 0 {

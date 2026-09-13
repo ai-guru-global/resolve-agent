@@ -278,21 +278,21 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Build runtime image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: deploy/docker/runtime.Dockerfile
           push: false
           tags: resolve-agent/runtime:ci
       - name: Build platform image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: deploy/docker/platform.Dockerfile
           push: false
           tags: resolve-agent/platform:ci
       - name: Build webui image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: deploy/docker/webui.Dockerfile

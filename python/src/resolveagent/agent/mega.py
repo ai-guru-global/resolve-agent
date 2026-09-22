@@ -8,8 +8,14 @@ from typing import TYPE_CHECKING, Any, Literal
 from resolveagent.agent.base import BaseAgent
 
 if TYPE_CHECKING:
+    from resolveagent.code_analysis.engine import StaticAnalysisEngine
+    from resolveagent.fta.engine import FTAEngine
+    from resolveagent.llm.provider import LLMProvider
+    from resolveagent.rag.pipeline import RAGPipeline
     from resolveagent.selector.protocol import SelectorProtocol
     from resolveagent.selector.selector import RouteDecision
+    from resolveagent.skills.executor import SkillExecutor
+    from resolveagent.traffic.engine import DynamicAnalysisEngine
 
 logger = logging.getLogger(__name__)
 
@@ -41,12 +47,12 @@ class MegaAgent(BaseAgent):
         self.selector_strategy = selector_strategy
         self.selector_mode: SelectorMode = selector_mode
         self._selector_instance: SelectorProtocol | None = None
-        self._llm_provider = None
-        self._rag_pipeline = None
-        self._skill_executor = None
-        self._fta_engine = None
-        self._static_analysis_engine = None
-        self._dynamic_analysis_engine = None
+        self._llm_provider: LLMProvider | None = None
+        self._rag_pipeline: RAGPipeline | None = None
+        self._skill_executor: SkillExecutor | None = None
+        self._fta_engine: FTAEngine | None = None
+        self._static_analysis_engine: StaticAnalysisEngine | None = None
+        self._dynamic_analysis_engine: DynamicAnalysisEngine | None = None
 
     # ------------------------------------------------------------------
     # Selector factory

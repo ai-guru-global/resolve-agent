@@ -392,7 +392,7 @@ async def test_selector_route_forwards_enrich_and_bypass_flags(server):
 
     mock_selector = MagicMock()
     mock_selector.route = AsyncMock(return_value=RouteDecision(route_type="skill", route_target="web-search", confidence=0.9))
-    server._selectors["hybrid"] = mock_selector
+    server._routing._selectors["hybrid"] = mock_selector
 
     async with AsyncClient(transport=ASGITransport(app=server.app), base_url="http://test") as ac:
         resp = await ac.post(

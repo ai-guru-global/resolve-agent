@@ -14,9 +14,7 @@ async def test_inmemory_hook_client_crud():
     """create/get/update/delete/list round-trips on the in-memory store."""
     client = InMemoryHookClient()
 
-    created = await client.create(
-        {"name": "h1", "hook_type": "pre", "trigger_point": "agent.execute"}
-    )
+    created = await client.create({"name": "h1", "hook_type": "pre", "trigger_point": "agent.execute"})
     hook_id = created["id"]
 
     info = await client.get(hook_id)
@@ -143,7 +141,7 @@ async def test_hook_runner_skip_remaining_short_circuits():
         target_id="agent-1",
         input_data={},
     )
-    results = await runner.run(ctx)
+    await runner.run(ctx)
 
     assert calls == ["short"]
     # modified_data of the last successful pre-hook is applied to input_data

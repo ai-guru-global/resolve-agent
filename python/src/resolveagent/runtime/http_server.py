@@ -156,8 +156,9 @@ class RuntimeHTTPServer:
             self.engine = ExecutionEngine(hook_runner=HookRunner(InMemoryHookClient()))
         self.lifecycle = AgentLifecycleManager()
         self._skill_client: SkillStoreClient | None = None
-        self._rule_strategy: Any = None
-        self._selectors: dict[str, Any] = {}
+        from resolveagent.runtime.routing import RoutingService
+
+        self._routing = RoutingService()
         self.app = self._create_app()
 
     def _create_app(self) -> FastAPI:
@@ -270,53 +271,20 @@ class RuntimeHTTPServer:
             """Route a request through the Intelligent Selector pipeline."""
             t0 = time.perf_counter()
 
-            input_text = payload.input_text
-            if not input_text:
+            if not payload.input_text:
                 raise HTTPException(status_code=400, detail="input is required")
 
-            decision: dict[str, Any] | None = None
-            used_strategy = payload.strategy
-            degraded = False
-            fallback_reason = ""
-
-            if payload.strategy == "rule":
-                from resolveagent.selector.strategies.rule_strategy import RuleStrategy
-
-                if server_self._rule_strategy is None:
-                    server_self._rule_strategy = RuleStrategy()
-                rd = await server_self._rule_strategy.decide(input_text, payload.agent_id, payload.context)
-                decision = rd.__dict__
-
-            else:
-                try:
-                    from resolveagent.selector.selector import IntelligentSelector
-
-                    cache_key = payload.strategy
-                    if cache_key not in server_self._selectors:
-                        server_self._selectors[cache_key] = IntelligentSelector(strategy=payload.strategy)
-                    selector = server_self._selectors[cache_key]
-                    rd = await selector.route(
-                        input_text,
-                        payload.agent_id,
-                        payload.context,
-                        enrich_context=payload.enrich_context,
-                        bypass_cache=payload.bypass_cache,
-                    )
-                    decision = rd.__dict__
-                except Exception as exc:
-                    logger.warning("Selector %s failed, degrading to rule: %s", payload.strategy, exc)
-                    degraded = True
-                    fallback_reason = str(exc)[:200]
-                    used_strategy = "rule"
-
-                    from resolveagent.selector.strategies.rule_strategy import RuleStrategy
-
-                    if server_self._rule_strategy is None:
-                        server_self._rule_strategy = RuleStrategy()
-                    rd = await server_self._rule_strategy.decide(input_text, payload.agent_id, payload.context)
-                    decision = rd.__dict__
+            routed = await server_self._routing.route(
+                payload.input_text,
+                payload.agent_id,
+                payload.context,
+                strategy=payload.strategy,
+                enrich_context=payload.enrich_context,
+                bypass_cache=payload.bypass_cache,
+            )
 
             latency_ms = (time.perf_counter() - t0) * 1000
+            decision = routed.decision
 
             return SelectorRouteResponse(
                 route_type=decision.get("route_type", "direct"),
@@ -325,9 +293,9 @@ class RuntimeHTTPServer:
                 reasoning=decision.get("reasoning", ""),
                 parameters=decision.get("parameters", {}),
                 chain=decision.get("chain", []),
-                strategy=used_strategy,
-                degraded=degraded,
-                fallback_reason=fallback_reason,
+                strategy=routed.strategy,
+                degraded=routed.degraded,
+                fallback_reason=routed.fallback_reason,
                 latency_ms=round(latency_ms, 2),
             )
 
@@ -452,9 +420,7 @@ class RuntimeHTTPServer:
                         {"success": False, "outputs": {}, "error": result.error},
                         status_code=500,
                     )
-                return JSONResponse(
-                    {"success": True, "outputs": result.outputs, "error": None}
-                )
+                return JSONResponse({"success": True, "outputs": result.outputs, "error": None})
 
             except FileNotFoundError as e:
                 raise HTTPException(status_code=404, detail=f"Skill not found: {skill_name}") from e
@@ -765,9 +731,7 @@ class RuntimeHTTPServer:
                 from resolveagent.traffic.report_generator import ReportGenerator
 
                 platform_url = str(body.get("platform_url") or "localhost:8080")
-                graph_client = TrafficGraphClient(
-                    address=platform_url.replace("https://", "").replace("http://", "").rstrip("/")
-                )
+                graph_client = TrafficGraphClient(address=platform_url.replace("https://", "").replace("http://", "").rstrip("/"))
                 graph_info = await graph_client.get(graph_id)
 
                 if not graph_info:

@@ -110,13 +110,14 @@ class RateLimitMiddleware:
         await self.app(scope, receive, send)
 
     @staticmethod
-    def _client_ip(scope) -> str:
+    def _client_ip(scope: dict) -> str:
         """Resolve the client IP, honoring X-Forwarded-For set by platform proxies."""
-        for name, value in scope.get("headers", []):
+        headers: list[tuple[bytes, bytes]] = scope.get("headers", [])
+        for name, value in headers:
             if name.lower() == b"x-forwarded-for":
                 return value.decode("latin-1").split(",")[0].strip()
         # scope["client"] is None for unix sockets and some test transports
-        client = scope.get("client")
+        client: tuple[str, int] | None = scope.get("client")
         return client[0] if client else "unknown"
 
     def _prune_idle_clients(self, now: float) -> None:
@@ -436,26 +437,29 @@ class RuntimeHTTPServer:
             """Execute a skill directly."""
             try:
                 body = await request.json()
-                parameters = body.get("parameters", {})
-                context = body.get("context", {})
+                inputs = body.get("parameters") or body.get("inputs") or {}
+                if not isinstance(inputs, dict):
+                    raise HTTPException(status_code=400, detail="parameters must be an object")
 
                 from resolveagent.skills.executor import SkillExecutor
+                from resolveagent.skills.loader import SkillLoader
 
-                executor = SkillExecutor()
-                result = await executor.execute(
-                    skill_name=skill_name,
-                    parameters=parameters,
-                    context=context,
-                )
+                loaded = SkillLoader().load(skill_name)
+                result = await SkillExecutor().execute(skill=loaded, inputs=inputs)
 
+                if not result.success:
+                    return JSONResponse(
+                        {"success": False, "outputs": {}, "error": result.error},
+                        status_code=500,
+                    )
                 return JSONResponse(
-                    {
-                        "success": result.success,
-                        "output": result.output,
-                        "error": result.error,
-                    }
+                    {"success": True, "outputs": result.outputs, "error": None}
                 )
 
+            except FileNotFoundError as e:
+                raise HTTPException(status_code=404, detail=f"Skill not found: {skill_name}") from e
+            except HTTPException:
+                raise
             except Exception as e:
                 logger.error(f"Skill execution error: {e}")
                 raise HTTPException(status_code=500, detail="Internal server error") from e
@@ -747,7 +751,7 @@ class RuntimeHTTPServer:
                 raise HTTPException(status_code=500, detail="Internal server error") from e
 
         @app.post("/v1/code-analysis/traffic/graphs/{graph_id}/analyze")
-        async def analyze_traffic_graph(graph_id: str, request: Request) -> StreamingResponse:
+        async def analyze_traffic_graph(graph_id: str, request: Request) -> JSONResponse:
             """Trigger LLM analysis on a persisted traffic graph."""
             try:
                 body = await request.json()
@@ -760,7 +764,10 @@ class RuntimeHTTPServer:
                 )
                 from resolveagent.traffic.report_generator import ReportGenerator
 
-                graph_client = TrafficGraphClient(base_url=body.get("platform_url", "http://localhost:8080"))
+                platform_url = str(body.get("platform_url") or "localhost:8080")
+                graph_client = TrafficGraphClient(
+                    address=platform_url.replace("https://", "").replace("http://", "").rstrip("/")
+                )
                 graph_info = await graph_client.get(graph_id)
 
                 if not graph_info:

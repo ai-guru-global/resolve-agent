@@ -452,3 +452,54 @@ async def test_semantic_search_filters_results_in_memory(app, monkeypatch):
         data = resp.json()
         assert data["total"] == 1
         assert data["results"][0]["solution_id"] == "s2"
+
+
+# -----------------------------------------------------------------------
+# Skill execution endpoint
+# -----------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_skill_execute_rule_route(client):
+    """POST /v1/skills/{name}/execute runs the skill and returns outputs."""
+    resp = await client.post(
+        "/v1/skills/rule-route/execute",
+        json={"parameters": {"input_text": "search for Python tutorials online"}},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["success"] is True
+    assert data["error"] is None
+    assert data["outputs"]["route_type"] == "skill"
+    assert data["outputs"]["route_target"] == "web-search"
+
+
+@pytest.mark.asyncio
+async def test_skill_execute_accepts_inputs_alias(client):
+    """Both 'parameters' and 'inputs' field names are accepted."""
+    resp = await client.post(
+        "/v1/skills/rule-route/execute",
+        json={"inputs": {"input_text": "分析这段代码的漏洞"}},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["outputs"]["route_type"] == "code_analysis"
+
+
+@pytest.mark.asyncio
+async def test_skill_execute_unknown_skill_returns_404(client):
+    """POST /v1/skills/{name}/execute with unknown skill returns 404."""
+    resp = await client.post(
+        "/v1/skills/no-such-skill/execute",
+        json={"parameters": {}},
+    )
+    assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_skill_execute_non_dict_parameters_returns_400(client):
+    """POST /v1/skills/{name}/execute with non-object parameters returns 400."""
+    resp = await client.post(
+        "/v1/skills/rule-route/execute",
+        json={"parameters": "not-a-dict"},
+    )
+    assert resp.status_code == 400

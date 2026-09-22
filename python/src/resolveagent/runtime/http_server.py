@@ -147,13 +147,13 @@ class RuntimeHTTPServer:
         self.host = host
         self.port = port
         self.platform_address = platform_address or _get_platform_address()
-        if os.environ.get("RESOLVEAGENT_HOOKS_ENABLED", "").lower() in ("1", "true", "yes"):
+        if os.environ.get("RESOLVEAGENT_HOOKS_DISABLED", "").lower() in ("1", "true", "yes"):
+            self.engine = ExecutionEngine()
+        else:
             from resolveagent.hooks.memory_client import InMemoryHookClient
             from resolveagent.hooks.runner import HookRunner
 
-            self.engine = ExecutionEngine(hook_runner=HookRunner(InMemoryHookClient()))  # type: ignore[arg-type]
-        else:
-            self.engine = ExecutionEngine()
+            self.engine = ExecutionEngine(hook_runner=HookRunner(InMemoryHookClient()))
         self.lifecycle = AgentLifecycleManager()
         self._skill_client: SkillStoreClient | None = None
         self._rule_strategy: Any = None

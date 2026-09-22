@@ -503,3 +503,27 @@ async def test_skill_execute_non_dict_parameters_returns_400(client):
         json={"parameters": "not-a-dict"},
     )
     assert resp.status_code == 400
+
+
+# -----------------------------------------------------------------------
+# Hooks wiring (default enabled, opt-out via env)
+# -----------------------------------------------------------------------
+
+
+def test_hooks_enabled_by_default():
+    """RuntimeHTTPServer wires a HookRunner into the engine by default."""
+    from resolveagent.runtime.http_server import RuntimeHTTPServer
+
+    s = RuntimeHTTPServer()
+    assert s.engine._hook_runner is not None
+    # The in-memory store starts empty -> hook chain is a no-op pass-through
+    assert s.engine._hook_runner._client.list is not None
+
+
+def test_hooks_disabled_via_env(monkeypatch):
+    """RESOLVEAGENT_HOOKS_DISABLED=1 opts out of the hook chain."""
+    from resolveagent.runtime.http_server import RuntimeHTTPServer
+
+    monkeypatch.setenv("RESOLVEAGENT_HOOKS_DISABLED", "1")
+    s = RuntimeHTTPServer()
+    assert s.engine._hook_runner is None

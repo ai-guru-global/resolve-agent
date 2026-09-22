@@ -4,14 +4,34 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, List, Protocol
 
 from resolveagent.hooks.models import HookContext, HookResult
 
 if TYPE_CHECKING:
-    from resolveagent.store.hook_client import HookClient, HookInfo
+    from resolveagent.store.hook_client import HookExecutionInfo, HookInfo
 
 logger = logging.getLogger(__name__)
+
+
+class HookStore(Protocol):
+    """Storage contract for hook definitions.
+
+    Satisfied by ``store.hook_client.HookClient`` (Go platform REST) and
+    ``hooks.memory_client.InMemoryHookClient`` (local/dev).
+    """
+
+    async def create(self, hook: dict[str, Any]) -> dict[str, Any] | None: ...
+
+    async def get(self, hook_id: str) -> HookInfo | None: ...
+
+    async def list(self) -> List[HookInfo]: ...
+
+    async def update(self, hook_id: str, hook: dict[str, Any]) -> dict[str, Any] | None: ...
+
+    async def delete(self, hook_id: str) -> dict[str, Any] | None: ...
+
+    async def list_executions(self, hook_id: str) -> List[HookExecutionInfo]: ...
 
 
 class HookRunner:
@@ -33,7 +53,7 @@ class HookRunner:
         ```
     """
 
-    def __init__(self, hook_client: HookClient) -> None:
+    def __init__(self, hook_client: HookStore) -> None:
         self._client = hook_client
         self._handlers: dict[str, Any] = {}
 
@@ -81,6 +101,14 @@ class HookRunner:
             result.duration_ms = int((time.monotonic() - start) * 1000)
             results.append(result)
 
+            # Apply modified data back to context for chaining — a
+            # short-circuiting hook's payload must land in the context too.
+            if result.success and result.modified_data:
+                if ctx.hook_type == "pre":
+                    ctx.input_data.update(result.modified_data)
+                else:
+                    ctx.output_data.update(result.modified_data)
+
             # Record execution to Go platform
             await self._record_execution(hook, ctx, result)
 
@@ -90,13 +118,6 @@ class HookRunner:
                     extra={"hook_id": hook.id, "hook_name": hook.name},
                 )
                 break
-
-            # Apply modified data back to context for chaining
-            if result.success and result.modified_data:
-                if ctx.hook_type == "pre":
-                    ctx.input_data.update(result.modified_data)
-                else:
-                    ctx.output_data.update(result.modified_data)
 
         return results
 

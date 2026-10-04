@@ -12,7 +12,7 @@
 | pnpm | 最新版 | 前端包管理 |
 | Python | >= 3.11 | Agent 运行时 |
 | uv | 最新版（推荐） | Python 依赖管理（也可用 pip） |
-| psql | PostgreSQL 16 客户端 | 执行数据库迁移和种子数据导入 |
+| psql | PostgreSQL 16 客户端 | 导入种子数据、查看迁移状态与排查数据问题 |
 
 ## 架构概览
 
@@ -120,50 +120,67 @@ RESOLVEAGENT_TELEMETRY_ENABLED=false
 
 ## Step 3: 数据库初始化
 
-> **重要**: 本地开发模式（`start-local.sh deps`）使用的是 `docker-compose.deps.yaml`，PostgreSQL 容器**不会自动执行** `init-db.sql`。必须手动执行迁移脚本。
+> **重要**: 本地开发模式（`start-local.sh deps`）使用的是 `docker-compose.deps.yaml`，PostgreSQL 容器**不会自动执行** `init-db.sql`。表结构由**平台服务启动时自动创建**，不需要手动跑迁移脚本——见 3.1。
 
-### 3.1 执行全量迁移
+### 3.1 表结构：平台启动时自动迁移
 
-```bash
-# 设置数据库连接（与 .env 一致）
-export DATABASE_URL="postgres://resolveagent:resolveagent@localhost:5432/resolveagent?sslmode=disable"
+唯一的权威迁移链内嵌在 Go 平台里（`pkg/store/postgres/postgres.go` 的 `Migrate()`），当 `store.backend: postgres` 时在平台进程启动阶段执行：
 
-# 执行全量迁移（按序号依次执行 001~010 共 11 个 .up.sql 文件）
-make migrate-up
+```go
+// pkg/server/server.go
+if err := pgStore.Migrate(context.Background()); err != nil {
+    _ = pgStore.Close()
+    return nil, fmt.Errorf("failed to migrate postgres: %w", err)
+}
 ```
 
-迁移脚本位于 `scripts/migration/`，包含以下表结构：
+- 已应用版本记录在 `schema_migrations` 表；当前迁移链为 **version 1~16**，在 `public` schema 下创建 23 张业务表（agents、skills、workflows、model_routes、hooks、hook_executions、rag_documents、rag_collections、rag_ingestion_history、fta_documents、fta_analysis_results、code_analyses、code_analysis_findings、memory_short_term、memory_long_term、call_graphs、call_graph_nodes、call_graph_edges、traffic_captures、traffic_records、traffic_graphs、solutions、solution_executions）。
+- 以 PostgreSQL 模式首次启动平台（Step 5）即完成建表，重复启动幂等。
+- 因此本地开发**不需要**执行任何手动迁移命令。
 
-| 迁移文件 | 创建内容 |
-|----------|----------|
-| `001_init.up.sql` | 基础表：agents、skills、workflows、models、audit_log |
-| `002_hooks.up.sql` | Hooks 机制 |
-| `003_rag_documents.up.sql` | RAG 文档存储 |
-| `004_fta_documents.up.sql` | FTA 故障树文档 |
-| `005_code_analysis.up.sql` | 代码分析结果 |
-| `006_memory.up.sql` | Agent 记忆系统 |
-| `007_indexes.up.sql` | 性能索引 |
-| `008_call_graphs.up.sql` | 调用图存储 |
-| `008_troubleshooting_solutions.up.sql` | 排障方案 |
-| `009_traffic_captures.up.sql` | 流量捕获 |
-| `010_traffic_graphs.up.sql` | 流量拓扑图 |
+确认迁移状态：
 
-### 3.2 导入种子数据
+```bash
+export DATABASE_URL="postgres://resolveagent:resolveagent@localhost:5432/resolveagent?sslmode=disable"
+psql "$DATABASE_URL" -c 'SELECT version, applied_at FROM schema_migrations ORDER BY version;'
+```
+
+> **`make migrate-up` / `make migrate-down` 已废弃**（见 `scripts/migration/README.md`）。
+> `scripts/migration/` 下的 SQL 是**另一套不兼容的 schema**：`resolveagent` schema + `UUID` 主键，而 Go 迁移链是 `public` schema + `VARCHAR(64)` 主键。对平台管理的数据库执行它们会与 Go 迁移链冲突，两个 Make 目标现在只会先打印警告。需要改表结构请扩展 Go 迁移链，不要新增 SQL 文件。
+
+### 3.2 导入种子数据（可选）
 
 ```bash
 make seed
 ```
 
-种子数据（`scripts/seed/seed.sql`）会插入：
+种子入口 `scripts/seed/seed.sql` 混合了两套 schema，**在只跑过 Go 迁移链的库上只能部分成功**：
 
-- **3 个 Qwen 模型注册**：qwen-plus、qwen-turbo、qwen-max
-- **1 个默认 Agent**：`default-agent`，使用 qwen-plus 模型，hybrid 选择策略
+| 部分 | 目标 schema | 内容 | 对 Go 迁移链是否可用 |
+|------|------------|------|---------------------|
+| Part 1~6（`seed-agents/skills/workflows/fta/rag.sql`） | `public` | 7 agents、26 skills、42 workflows、11 FTA 故障树、102 RAG 文档（45 个 collection） | ✅ 列结构与 Go DDL 一致 |
+| Part 0（默认模型与 `default-agent`）、Part 7（`seed-solutions.sql`） | `resolveagent` | 6 个模型注册、1 个默认 Agent、8 个排障方案 | ❌ 依赖 `models`、`troubleshooting_solutions` 表与 `agents.display_name` 列，Go 迁移链中均不存在 |
 
-### 3.3 回滚迁移（如需）
+`make seed` 调用 psql 时**没有设置 `ON_ERROR_STOP`**，Part 0 / Part 7 的语句失败后 psql 会继续执行并以退出码 0 返回。也就是说 `make seed` 会在打印 `relation "models" does not exist` 之类错误的同时“成功”完成，Part 1~6 的数据仍然入库。
+
+只想加载 Go schema 部分（推荐）：
 
 ```bash
-make migrate-down
+for f in seed-agents seed-skills seed-workflows seed-fta seed-rag; do
+  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "scripts/seed/$f.sql"
+done
 ```
+
+### 3.3 重置数据库（如需）
+
+Go 迁移链只提供向前迁移，没有回滚目标。本地开发要重来，直接重建库最快：
+
+```bash
+psql "$DATABASE_URL" -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
+./scripts/start-local.sh platform   # 重新启动，平台会自动重建全部表
+```
+
+> 这会删除本地数据库里的**全部**数据，仅限开发环境使用。
 
 ## Step 4: 存储后端配置
 
@@ -300,9 +317,8 @@ tail -f .pids/webui.log
 | `./scripts/start-local.sh status` | 查看服务状态 |
 | `./scripts/start-local.sh stop` | 停止全部服务 |
 | `./scripts/start-local.sh logs` | 查看依赖服务日志 |
-| `make migrate-up` | 执行数据库迁移 |
-| `make migrate-down` | 回滚数据库迁移 |
-| `make seed` | 导入种子数据 |
+| `make seed` | 导入种子数据（仅 Go schema 部分生效，见 Step 3.2） |
+| ~~`make migrate-up`~~ / ~~`make migrate-down`~~ | **已废弃**：表结构由平台启动时自动迁移（见 Step 3.1） |
 | `make build-go` | 重新编译 Go 服务 |
 | `make build-web` | 构建前端生产包 |
 | `make test` | 运行全部测试 |
@@ -327,14 +343,17 @@ docker ps | grep resolveagent-postgres
 psql "postgres://resolveagent:resolveagent@localhost:5432/resolveagent?sslmode=disable" -c "SELECT 1"
 ```
 
-### Migration 执行失败
+### 平台启动时迁移失败
 
-常见原因：PostgreSQL 尚未完全就绪。等待几秒后重试：
+平台启动没有重试机制：`postgres.New()` 或 `Migrate()` 一旦失败，进程直接以 `failed to connect to postgres` / `failed to migrate postgres` 退出。最常见的原因是 PostgreSQL 容器还没就绪。等待其 running 后重启平台：
 
 ```bash
-./scripts/start-local.sh status   # 确认 postgres 为 running
-make migrate-up
+./scripts/start-local.sh status     # 确认 postgres 为 running
+psql "$DATABASE_URL" -c "SELECT 1"  # 手动确认连接可用
+./scripts/start-local.sh platform   # 重启平台，迁移会自动重跑
 ```
+
+迁移是幂等的（逐版本 `CREATE TABLE IF NOT EXISTS` + `schema_migrations` 记录），重启不会破坏已有数据。
 
 ### Python 运行时启动失败
 

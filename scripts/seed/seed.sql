@@ -8,9 +8,9 @@
 --   1. Default models & agent (resolveagent schema)
 --   2. seed-agents.sql      — 7 agents (Go runtime schema)
 --   3. seed-skills.sql      — 26 skills
---   4. seed-workflows.sql   — 39 workflows
+--   4. seed-workflows.sql   — 42 workflows
 --   5. seed-fta.sql         — 11 FTA fault tree documents
---   6. seed-rag.sql         — 87 RAG documents across 45 collections
+--   6. seed-rag.sql         — 102 RAG documents across 45 collections
 --   7. seed-solutions.sql   — 8 troubleshooting solutions (resolveagent schema)
 -- =============================================================================
 

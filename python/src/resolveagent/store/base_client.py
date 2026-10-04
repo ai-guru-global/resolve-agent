@@ -21,18 +21,30 @@ class BaseStoreClient:
         self,
         address: str = "localhost:8080",
         timeout: float = 30.0,
+        transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
-        self._address = address
+        # 地址只接受 host[:port]；调用方误传完整 URL 时剥掉 scheme 与尾斜杠，
+        # 否则会拼出 "http://http://..."（7b72906 在 http_server 调用点修过一次）
+        normalized = address.rstrip("/")
+        for scheme in ("https://", "http://"):
+            if normalized.startswith(scheme):
+                normalized = normalized[len(scheme) :]
+                break
+        self._address = normalized
         self._timeout = timeout
-        self._base_url = f"http://{address}"
+        self._base_url = f"http://{normalized}"
+        self._transport = transport
         self._client: httpx.AsyncClient | None = None
 
     async def connect(self) -> None:
         """Establish HTTP connection."""
-        self._client = httpx.AsyncClient(
-            base_url=self._base_url,
-            timeout=self._timeout,
-        )
+        client_kwargs: dict[str, Any] = {
+            "base_url": self._base_url,
+            "timeout": self._timeout,
+        }
+        if self._transport is not None:
+            client_kwargs["transport"] = self._transport
+        self._client = httpx.AsyncClient(**client_kwargs)
         logger.info("Store client connected", extra={"address": self._address})
 
     async def close(self) -> None:

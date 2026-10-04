@@ -753,11 +753,42 @@ QUALITY GATE PASSED
 2. **push 后在 GitHub Actions 验证 CI 转绿**，然后按 §10.2-1d 的判定表处理 PR：关闭 #31、搁置 #43、先合 #40 再评估 #32、#41 需改 `package.json`。
 3. **用户账号侧操作（不进代码库）**：轮换 `.env` 中的 `XIAOMI_TOKEN_PLAN_API_KEY` 与 `EMBEDDING_API_KEY`。这两个键曾在历史提交中出现过，即使后续提交已移除，**旧提交对象里仍然可读**，只有轮换才能真正失效。此项无法由代码变更替代。
 
-**未处理的已知债务**（不在 §8，建议排期）：
+**未处理的已知债务**（不在 §8，建议排期；其中数项已在 §10.7 追加轮中解决）：
 
-- **§5.1 的占位实现在代码里全部原样保留**。§8 第 2 项选的是方案 (b)——**只修正宣称，不伪造实现**，因此 `planning.py:670-673` 的 `_execute_action`（Plan-and-Execute 的 ReAct 循环仍不执行任何工具）与 `troubleshoot.py:250-260` 的 `_execute_command`（仍返回 `[Command execution placeholder]`）**至今是占位符**，与产品首条原则"证据先行"直接冲突，属最高优先级的真实功能缺口。其余 4 处：`agent/base.py:45`（基类 `reply()` 为 echo）、`registry_client.py:564-582`（`watch_registry` 不产出事件）、`runtime/engine.py:609`（无法按名加载 workflow）、`rag/index/milvus.py:397`（delete-by-expr 不生效）。`api/__init__.py` 的失实 docstring 已由 `24d2e6d` 修正，但该包仍是 27 行空壳。
-- **ARCHITECTURE_IMPROVEMENTS 的 3 项「实现完成，未接线」**（Memory 三层架构、AgentMessageBus、ToolHub）：模块与单测齐备，但 `MegaAgent` / `ContextEnricher` / Skill 执行链里**没有任何生产调用点**，运行时不生效。接线是独立工作量，见该文档 `:168` 的说明。
-- `ci.yaml` 内部 action 版本漂移（C3）、`hack/*.sh` 缺执行位（D4）。
-- §3.2 的测试分布缺口（Python 零测试模块 7 个；Web 12 个测试文件无一测真实后端；6 个 code-analysis 方法永远走 mock）、§5.3 的依赖代差（vite 8 配 vitest 2.x）。
+- ~~§5.1 的占位实现~~ → **§10.7 已解决 2/6**：`planning.py` `_execute_action` 与 `troubleshoot.py` `_execute_command` 已接线（`4a7db02`、`ba90230`）。**仍保留的 4 处占位**：`agent/base.py:45`（基类 `reply()` 为 echo）、`registry_client.py:564-582`（`watch_registry` 不产出事件）、`runtime/engine.py:609`（无法按名加载 workflow）、`rag/index/milvus.py:397`（delete-by-expr 不生效）。`api/__init__.py` 仍是 27 行空壳。
+- **ARCHITECTURE_IMPROVEMENTS 的 3 项「实现完成，未接线」**（Memory 三层架构、AgentMessageBus、ToolHub）：单测缺口已由 §10.7 补齐（`2180915`），该文档 `:168` 的「完整单测覆盖」宣称自此成立；但 `MegaAgent` / `ContextEnricher` / Skill 执行链里**仍无任何生产调用点**，接线是独立工作量。
+- ~~`ci.yaml` 内部 action 版本漂移（C3）、`hack/*.sh` 缺执行位（D4）~~ → **§10.7 已解决**（`ff800a1`、`e19941d`）。
+- §3.2 的测试分布缺口**部分收窄**：Python 零测试模块 7 个中 2 个已覆盖（toolhub、message_bus），其余 5 个与 Web 12 个测试文件无一测真实后端、6 个 code-analysis 方法永远走 mock 等缺口仍在；§5.3 的依赖代差（vite 8 配 vitest 2.x）未动。
 - `pkg/event/nats.go`（可用的 JetStream 总线，零调用方）与 `AgentExecutionServer`（指向不存在的服务）的接线（C6/C7）。
 - **覆盖率棘轮的工具链敏感性**（D1）：Go 阈值 17.0% 对实测 17.1% 只有 0.1pt 余量，且该值随 Go 版本剧变（go1.25 → 17.5%，go1.27 → 32.2%）。**任何 Go minor 升级都必须重新标定基线**，否则棘轮会静默失效（阈值远低于实测 = 门禁形同虚设）。这也是 PR #43（`golang:1.27-alpine`）应搁置的原因。
+
+### 10.7 追加轮：「你可以操作的就修复掉」（2026-10-04）
+
+报告定稿后，用户指示把待办清单里**无需授权即可本地完成**的项修掉。本轮共 6 个提交，全部通过完整门禁（见本节末验证）。
+
+**已修复项与提交**：
+
+| 待办项 | 提交 | 内容 |
+|---|---|---|
+| `hack/*.sh` 缺执行位（D4） | `e19941d` | `hack/coverage-report.sh`、`hack/quality-gate.sh` 100644→100755；`./hack/quality-gate.sh` 此后可直接执行（§10.4 曾因此报 permission denied） |
+| `ci.yaml` action 版本漂移（C3） | `ff800a1` | `setup-node` v4→v6（`test-web`/`test-mobile` 两处）、`setup-python` v5→v6（e2e 一处）；`actionlint` 通过。注：与 dependabot PR #30（setup-python 升级）范围重叠，push 后该 PR 大概率可关 |
+| `planning.py` `_execute_action` 占位 | `4a7db02` | ReAct 循环接入可注入 `tool_executor`（与 `execute_plan` 的 executor 同一注入模式）；未注入时观察结果如实报告 "NOT executed"，**不再伪造成功观察喂回 LLM**。补 `TestReActExecutor` 4 项单测 |
+| `troubleshoot.py` `_execute_command` 占位 | `ba90230` | 命令步骤经注入的 `SandboxExecutor` 以 bash 真实执行，stdout/stderr/return_code 原样进证据；无沙箱时明确降级标注。补 `test_troubleshoot_command.py` 5 项单测（沙箱在 macOS 实机验证通过） |
+| ToolHub / AgentMessageBus 零测试 | `2180915` | 补单测 35 项（382→426），并顺修补测中发现的**两处模块真实缺陷**：① `message_bus.request()` 自结算——请求消息的 correlation_id 触发自己的 pending future，`request()` 永远返回请求自身，请求-响应模式实际不工作；② `toolhub._infer_capabilities` 对 "web_search" 类名字重复入能力索引，`find_tools_by_capability` 返回重名 |
+| README 测试数失实 | `8f6699d` | 实测 426 后同步；发现 `93e408e` 当时漏改 `:49` 特性表（370），与 `:973`（382→426）一并更正 |
+
+**§3.2 ↔ ARCHITECTURE_IMPROVEMENTS:168 矛盾的裁定**：实测 `grep -rn "toolhub\|message_bus" python/tests/` 零命中——§3.2 正确，:168 的「完整单测覆盖」当时失实。处置选择了让宣称**变成事实**（补测试）而非改宣称；`2180915` 落地后两文一致。
+
+**门禁与测试实测**（全部命令本地可复现）：
+
+```
+$ pytest tests/unit -q                     → 426 passed（基线 382，+44）
+$ ruff check . && ruff format --check src/ tests/ → All checks passed!
+$ ./hack/quality-gate.sh                   → Passed 10 / Failed 0 / Warnings 0
+  [py-test+coverage>=42.5%] 47%            ← 覆盖率 43% → 47%
+QUALITY GATE PASSED
+```
+
+两处新模块缺陷均以「先写测试暴露 → 修模块 → 测试锁定行为」的方式处理，非测试迁就实现。`message_bus.py` 的 `_pending_requests` 类型由 `dict[str, Future]` 改为 `dict[str, tuple[Future, str]]`，全仓无其他引用（该模块零调用方），无外部影响面。
+
+**本轮仍未处理**（需授权或属架构级，见 §10.6）：push 与 PR 处置、密钥轮换、其余 4 处占位、三模块生产接线、Web 测试缺口、依赖代差、nats.go / AgentExecutionServer 接线。

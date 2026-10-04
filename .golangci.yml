@@ -1,22 +1,17 @@
+version: "2"
 run:
-  timeout: 5m
   modules-download-mode: readonly
-
+  timeout: 5m
 linters:
+  # v2 默认已启用 errcheck / govet / ineffassign / staticcheck / unused
+  # （gosimple 已并入 staticcheck），故此处只列额外启用的检查器。
   enable:
-    - errcheck
-    - gosimple
-    - govet
-    - ineffassign
-    - staticcheck
-    - unused
     - bodyclose
     - durationcheck
     - errname
     - errorlint
     - exhaustive
     - gocritic
-    - gofumpt
     - gosec
     - misspell
     - nilerr
@@ -27,45 +22,64 @@ linters:
     - unconvert
     - unparam
     - whitespace
-
-linters-settings:
-  govet:
-    enable:
-      - shadow
-  errcheck:
-    check-type-assertions: true
-    # 不再检查 blank 弃置：对不可处置错误（写 ResponseWriter、defer Close、stdout 输出）
-    # 强制检查只会产生虚假处理；可处置错误仍全部真实处理。
-    check-blank: false
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - performance
-      - style
-  revive:
+  settings:
+    errcheck:
+      check-type-assertions: true
+      # 不再检查 blank 弃置：对不可处置错误（写 ResponseWriter、defer Close、stdout 输出）
+      # 强制检查只会产生虚假处理；可处置错误仍全部真实处理。
+      check-blank: false
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+        - style
+    gosec:
+      excludes:
+        - G104 # Duplicated errcheck checks
+    govet:
+      enable:
+        - shadow
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: exported
+        - name: increment-decrement
+        - name: var-naming
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: unexported-return
+        - name: indent-error-flow
+        - name: errorf
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
     rules:
-      - name: blank-imports
-      - name: context-as-argument
-      - name: context-keys-type
-      - name: dot-imports
-      - name: error-return
-      - name: error-strings
-      - name: error-naming
-      - name: exported
-      - name: increment-decrement
-      - name: var-naming
-      - name: package-comments
-      - name: range
-      - name: receiver-naming
-      - name: time-naming
-      - name: unexported-return
-      - name: indent-error-flow
-      - name: errorf
-  gosec:
-    excludes:
-      - G104 # Duplicated errcheck checks
-
+      # httptest.NewRequest 只用于在单测里构造请求，不承载取消/超时语义，
+      # 换成 NewRequestWithContext 只会给每个用例塞一个 context.Background() 噪音。
+      # 生产代码里的同类问题（net.Listen）已用 net.ListenConfig 真实修复。
+      - linters:
+          - noctx
+        path: _test\.go
 issues:
-  exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
+formatters:
+  enable:
+    - gofumpt
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

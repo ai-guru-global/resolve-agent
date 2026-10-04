@@ -1,0 +1,20 @@
+# gitleaks 配置：在官方默认规则集之上，只放行文档示例里的字面占位符。
+#
+# 背景：CI 的 security-secrets 任务全量扫描 168 个提交后报 4 处 curl-auth-header，
+# 命中的“密钥”分别是字符串 YOUR_API_KEY 与 YOUR_JWT_TOKEN —— 它们是
+# docs/api/index.md 里 curl 示例的占位符，不是真实凭据。
+#
+# 这里的放行做了两层收窄，避免掩盖真实泄露：
+#   1. regexTarget = secret 且用 ^...$ 全匹配，真实密钥不可能恰好等于这两个词；
+#   2. paths 限定 Markdown，源码/配置里出现同样字符串仍会告警。
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "API 文档 curl 示例中的字面占位符（YOUR_API_KEY / YOUR_JWT_TOKEN）"
+regexTarget = "secret"
+regexes = [
+    '''^YOUR_API_KEY$''',
+    '''^YOUR_JWT_TOKEN$''',
+]
+paths = ['''\.md$''']

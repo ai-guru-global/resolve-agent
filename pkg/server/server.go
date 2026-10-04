@@ -128,7 +128,7 @@ func (s *Server) Run(ctx context.Context) error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		lis, err := net.Listen("tcp", s.cfg.Server.GRPCAddr)
+		lis, err := (&net.ListenConfig{}).Listen(ctx, "tcp", s.cfg.Server.GRPCAddr)
 		if err != nil {
 			errCh <- fmt.Errorf("gRPC listen: %w", err)
 			return
@@ -143,7 +143,7 @@ func (s *Server) Run(ctx context.Context) error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		lis, err := net.Listen("tcp", s.cfg.Server.HTTPAddr)
+		lis, err := (&net.ListenConfig{}).Listen(ctx, "tcp", s.cfg.Server.HTTPAddr)
 		if err != nil {
 			errCh <- fmt.Errorf("HTTP listen: %w", err)
 			return

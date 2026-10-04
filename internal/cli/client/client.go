@@ -56,8 +56,8 @@ func New() *Client {
 
 // Get performs a GET request.
 func (c *Client) Get(ctx context.Context, path string) ([]byte, error) {
-	url := fmt.Sprintf("%s%s", c.baseURL, path)
-	req, err := http.NewRequestWithContext(ctx, "GET", url, http.NoBody)
+	endpoint := fmt.Sprintf("%s%s", c.baseURL, path)
+	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (c *Client) Get(ctx context.Context, path string) ([]byte, error) {
 
 // Post performs a POST request.
 func (c *Client) Post(ctx context.Context, path string, data interface{}) ([]byte, error) {
-	url := fmt.Sprintf("%s%s", c.baseURL, path)
+	endpoint := fmt.Sprintf("%s%s", c.baseURL, path)
 
 	var body io.Reader
 	if data != nil {
@@ -93,7 +93,7 @@ func (c *Client) Post(ctx context.Context, path string, data interface{}) ([]byt
 		body = bytes.NewReader(jsonData)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", url, body)
+	req, err := http.NewRequestWithContext(ctx, "POST", endpoint, body)
 	if err != nil {
 		return nil, err
 	}
@@ -122,8 +122,8 @@ func (c *Client) Post(ctx context.Context, path string, data interface{}) ([]byt
 
 // Delete performs a DELETE request.
 func (c *Client) Delete(ctx context.Context, path string) ([]byte, error) {
-	url := fmt.Sprintf("%s%s", c.baseURL, path)
-	req, err := http.NewRequestWithContext(ctx, "DELETE", url, http.NoBody)
+	endpoint := fmt.Sprintf("%s%s", c.baseURL, path)
+	req, err := http.NewRequestWithContext(ctx, "DELETE", endpoint, http.NoBody)
 	if err != nil {
 		return nil, err
 	}

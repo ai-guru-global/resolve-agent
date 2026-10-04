@@ -1,4 +1,8 @@
-allowBuilds:
-  esbuild: true
+# web/ 是独立的单包 pnpm 工程（仓库根没有 pnpm-workspace.yaml）。
+# packages 是 pnpm 9 的硬性要求——缺失会直接 "ERROR packages field missing or empty"；
+# pnpm 10+ 允许省略，但显式写上可让 pnpm 9 与 pnpm 11 同时可用。
+# onlyBuiltDependencies 只放这里：pnpm 10+ 已不再读取 package.json 的 "pnpm" 字段。
+packages:
+  - '.'
 onlyBuiltDependencies:
   - esbuild

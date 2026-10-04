@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -16,6 +17,14 @@ import (
 )
 
 // RuntimeClient is an HTTP client for communicating with the Python runtime.
+//
+// 关于 gosec G704（SSRF 污点分析）：本客户端的 scheme/host/port 全部来自
+// NewRuntimeClient 读取的运维配置（cfg.Server.RuntimeAddr，默认 localhost:9091），
+// 调用方无法改写；唯一随请求变化的是 URL 路径里的 agentID / workflowID / skillName，
+// 这些都已过 url.PathEscape（/ ? # @ : 等一律百分号编码），既无法越出路径段也无法
+// 改变目标主机。gosec 的 G704 只追踪“污点值到达出站请求”，不识别 PathEscape /
+// url.JoinPath 等净化手段（两者均已实测仍会告警），故在下方 4 个调用点就地标注
+// #nosec G704，把豁免范围收窄到已复核的行，而不是整包关闭该规则。
 type RuntimeClient struct {
 	baseURL    string
 	httpClient *http.Client
@@ -94,14 +103,14 @@ func (c *RuntimeClient) ExecuteAgent(
 		defer close(resCh)
 		defer close(errs)
 
-		url := fmt.Sprintf("%s/agents/%s/execute", c.baseURL, agentID)
+		endpoint := fmt.Sprintf("%s/agents/%s/execute", c.baseURL, url.PathEscape(agentID))
 		body, err := json.Marshal(req)
 		if err != nil {
 			errs <- fmt.Errorf("marshal request: %w", err)
 			return
 		}
 
-		httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
+		httpReq, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewReader(body)) // #nosec G704 -- 见 RuntimeClient 注释：host 由配置固定，agentID 已 PathEscape
 		if err != nil {
 			errs <- fmt.Errorf("create request: %w", err)
 			return
@@ -110,7 +119,7 @@ func (c *RuntimeClient) ExecuteAgent(
 		httpReq.Header.Set("Accept", "text/event-stream")
 		injectTraceparent(ctx, httpReq)
 
-		resp, err := c.httpClient.Do(httpReq)
+		resp, err := c.httpClient.Do(httpReq) // #nosec G704 -- 同上，httpReq 的目标主机不可由调用方改写
 		if err != nil {
 			errs <- fmt.Errorf("do request: %w", err)
 			return
@@ -175,14 +184,14 @@ func (c *RuntimeClient) ExecuteWorkflow(
 		defer close(resCh)
 		defer close(errs)
 
-		url := fmt.Sprintf("%s/workflows/%s/execute", c.baseURL, workflowID)
+		endpoint := fmt.Sprintf("%s/workflows/%s/execute", c.baseURL, url.PathEscape(workflowID))
 		body, err := json.Marshal(req)
 		if err != nil {
 			errs <- fmt.Errorf("marshal request: %w", err)
 			return
 		}
 
-		httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
+		httpReq, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewReader(body)) // #nosec G704 -- 见 RuntimeClient 注释：host 由配置固定，workflowID 已 PathEscape
 		if err != nil {
 			errs <- fmt.Errorf("create request: %w", err)
 			return
@@ -191,7 +200,7 @@ func (c *RuntimeClient) ExecuteWorkflow(
 		httpReq.Header.Set("Accept", "text/event-stream")
 		injectTraceparent(ctx, httpReq)
 
-		resp, err := c.httpClient.Do(httpReq)
+		resp, err := c.httpClient.Do(httpReq) // #nosec G704 -- 同上，httpReq 的目标主机不可由调用方改写
 		if err != nil {
 			errs <- fmt.Errorf("do request: %w", err)
 			return
@@ -265,13 +274,13 @@ func (c *RuntimeClient) QueryRAG(
 	ctx context.Context,
 	req *RAGQueryRequest,
 ) (*RAGQueryResponse, error) {
-	url := fmt.Sprintf("%s/rag/query", c.baseURL)
+	endpoint := fmt.Sprintf("%s/rag/query", c.baseURL)
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("marshal request: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
@@ -314,13 +323,13 @@ func (c *RuntimeClient) IngestRAG(
 	ctx context.Context,
 	req *RAGIngestRequest,
 ) (*RAGIngestResponse, error) {
-	url := fmt.Sprintf("%s/rag/ingest", c.baseURL)
+	endpoint := fmt.Sprintf("%s/rag/ingest", c.baseURL)
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("marshal request: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
@@ -364,13 +373,13 @@ func (c *RuntimeClient) ExecuteSkill(
 	skillName string,
 	req *SkillExecuteRequest,
 ) (*SkillExecuteResponse, error) {
-	url := fmt.Sprintf("%s/skills/%s/execute", c.baseURL, skillName)
+	endpoint := fmt.Sprintf("%s/skills/%s/execute", c.baseURL, url.PathEscape(skillName))
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("marshal request: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
@@ -424,14 +433,14 @@ func (c *RuntimeClient) ImportCorpus(
 		defer close(resCh)
 		defer close(errs)
 
-		url := fmt.Sprintf("%s/corpus/import", c.baseURL)
+		endpoint := fmt.Sprintf("%s/corpus/import", c.baseURL)
 		body, err := json.Marshal(req)
 		if err != nil {
 			errs <- fmt.Errorf("marshal request: %w", err)
 			return
 		}
 
-		httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
+		httpReq, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewReader(body))
 		if err != nil {
 			errs <- fmt.Errorf("create request: %w", err)
 			return
@@ -491,8 +500,8 @@ func (c *RuntimeClient) ImportCorpus(
 
 // Health checks if the runtime is healthy.
 func (c *RuntimeClient) Health(ctx context.Context) error {
-	url := fmt.Sprintf("%s/health", strings.TrimSuffix(c.baseURL, "/v1"))
-	req, err := http.NewRequestWithContext(ctx, "GET", url, http.NoBody)
+	endpoint := fmt.Sprintf("%s/health", strings.TrimSuffix(c.baseURL, "/v1"))
+	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, http.NoBody)
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)
 	}
@@ -535,13 +544,13 @@ func (c *RuntimeClient) SyncSolutionToRAG(
 	ctx context.Context,
 	req *SolutionSyncRequest,
 ) (*SolutionSyncResponse, error) {
-	url := fmt.Sprintf("%s/solutions/sync-rag", c.baseURL)
+	endpoint := fmt.Sprintf("%s/solutions/sync-rag", c.baseURL)
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("marshal request: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
@@ -593,13 +602,13 @@ func (c *RuntimeClient) SemanticSearchSolutions(
 	ctx context.Context,
 	req *SemanticSearchRequest,
 ) (*SemanticSearchResponse, error) {
-	url := fmt.Sprintf("%s/solutions/semantic-search", c.baseURL)
+	endpoint := fmt.Sprintf("%s/solutions/semantic-search", c.baseURL)
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("marshal request: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}

@@ -4,5 +4,9 @@
 # onlyBuiltDependencies 只放这里：pnpm 10+ 已不再读取 package.json 的 "pnpm" 字段。
 packages:
   - '.'
+# pnpm 11 用 allowBuilds 询问构建脚本许可（pnpm add 会写入占位值，须手动定为 true）；
+# onlyBuiltDependencies 保留以兼容 pnpm 9/10。
+allowBuilds:
+  esbuild: true
 onlyBuiltDependencies:
   - esbuild

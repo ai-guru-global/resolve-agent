@@ -2,6 +2,45 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+---
+
+## 执行状态复核（2026-10-04 回填勾账）
+
+**结论：本计划 9 个 Task 已于 2026-09 全部落地，但当时一个复选框都没勾。** 50 个步骤框长期显示未完成，使这份文档从"实施计划"退化成误导性债务清单。本次逐项比对代码树与 git 历史后回填勾选，并修复复核中发现的 2 处真实残留。
+
+**勾选口径（务必先读）**：勾 = "该步骤的产出在当前代码树中可验证存在"，**不等于** "2026-10-04 重新执行了该步骤"。过程性步骤（Task 2 启停服务、Task 4/5 的"先跑出红灯"）无法重放，其勾选依据是**计划规定的提交信息与实际落地提交逐字吻合 + 产出物存在**双重证据。凡本次实测过的命令，下表标注了实测值。
+
+### 逐 Task 落地证据（实测于 2026-10-04）
+
+| Task | 落地提交 | 复核证据 |
+|---|---|---|
+| 1 自增加固 | `03ed87c` | 旧式 `((x++))` **0** 处；`x=$((x+1))` **14** 处 |
+| 2 本地跑通 e2e | `d30ce69` `1b5e65d` | `d30ce69` 提交信息与计划 Step 6 规定文本逐字吻合（仅前缀多了 E2E_BASE_URL 说明） |
+| 3 重写 ci.yaml | `e21c0b6` | `^name: CI` 与 `^on:` 各 **1** 次；jobs **12** 个（计划 11 + 后加的 `security-secrets`）；**actionlint 今日实跑 → 0 错误** |
+| 4 registry sentinel | `e4eae0a` | `ErrNotFound` **10** 处 / `ErrAlreadyExists` **3** 处；裸 `fmt.Errorf("...not found")` **0** 处；`pkg/registry/sentinel_test.go` 存在（含 `TestSkillErrorsAreSentinelWrapped`） |
+| 5 统一错误出口 | `4bcd9a6` `8ace3bb` + **`acbe18d`（本次补）** | 两种泄漏模式在 `pkg/server/` 下均为 **0**（达成计划 Step 5 期望值） |
+| 6 仓库卫生 | `f7643cb` | `client 2.ts` / `internal/platform` / `test/load` 均**不存在**；README 死链 **0**；`python/README.md` **950** 字节；`e2e.yaml` 与 `release.yaml` 的 `GO_VERSION` 均 **"1.25"** |
+| 7 徽标 + 新鲜度守卫 | `bde3e40` | `web/src/components/DemoModeBadge.tsx` 存在；`mockQuality.test.ts` 中 `DEMO_NOW` 断言 **3** 处 |
+| 8 mock.ts 拆分 | `09b806b` | `web/src/api/mock/` = `ops.ts` `rag.ts` `shared.ts` `skills.ts` `workflows.ts`；`mock.ts` **1023** 行 |
+| 9 全量验证收尾 | **`c1be6a4`（本次补 Step 2b）** | `bash hack/quality-gate.sh` → **Passed 10 / Failed 0 / Warnings 0**，`[go-coverage>=17.0%] 17.1%`、`[py-test+coverage>=42.5%] 43%` |
+
+### 复核发现的 2 处真实残留（本次已修）
+
+1. **Task 5 Step 5 当时并未达标。** 计划要求 `grep -rn "writeError(w, http.StatusInternalServerError, err.Error())" pkg/server/ | wc -l` 为 `0`，复核实测 **11**；另有 **4** 处 `writeError(w, http.StatusNotFound, err.Error())`。15 处全部集中在 `pkg/server/traffic_handlers.go`——Task 5 批量改造时**唯一漏掉的 handler 文件**，且确实包裹 registry 调用（`s.trafficCaptureRegistry.*`、`s.trafficGraphRegistry.*`），不是误报。→ `acbe18d` 改为 `writeRegistryError(w, err, s.logger, scope)`，两种模式实测归 0。该提交同时处置了计划未覆盖的 2 处内部拓扑泄漏：`NewRequestWithContext` 失败（编程级错误，不复用 registry helper 以免语义错位）与 502 的 `"runtime unavailable: %v"`（会把 `runtimeClient.baseURL` 暴露给客户端）。
+2. **Task 9 Step 2b 从未执行。** `hack/quality-gate.sh` 两处覆盖率管道（`:91` Go、`:120` Python）未追加 `|| true`，而 `:10` 是 `set -euo pipefail`。→ `c1be6a4` 修复。同次修了一处**计划未列出、影响更大**的同类隐患：`:119` 的 `PY_OUT=$(... uv run pytest ...)` 是裸赋值，pytest 非零退出（有用例失败）时 `set -e` 会在赋值处终止脚本，使 `:127` 的 `FAIL (... or tests failed)` 分支**永不可达**——门禁最该报告的场景反而崩溃退出。
+
+### 与计划的偏差（产出达成，实现方式不同）
+
+- **`writeRegistryError` 签名与计划不符。** 计划写的是 Server 方法 `func (s *Server) writeRegistryError(w, err, entity string)`；实际是**包级函数** `writeRegistryError(w http.ResponseWriter, err error, logger *slog.Logger, scope string)`（`pkg/server/response.go:25`），第四参是日志 scope 而非实体名，调用方须显式传 `s.logger`。
+- **测试文件名与用例名不符。** 计划要求 `pkg/server/error_response_test.go` 的 `TestWriteRegistryErrorMapping`；实际是 `pkg/server/response_test.go:16` 的 `TestWriteRegistryError`。**`error_response_test.go` 不存在**，勿按计划路径去找。
+- **Task 7 Step 4 挂载位置不符。** 计划要求挂到 `MainLayout.tsx`，实际挂在 `web/src/components/Layout/Header.tsx:6,99`。`Layout/` 下有三个同级文件（`Header.tsx`/`MainLayout.tsx`/`Sidebar.tsx`），只 grep `MainLayout` 会误判成"从未挂载"。
+- **Task 3 Step 1 的产物被后续提交有意取代。** `e21c0b6` 确实把 `platform.Dockerfile` 从 `golang:1.26-alpine` 改成 `1.25-alpine`（已用 `git show` 核实），但 2026-09-11 的 `6c0e0b4`（应用 dependabot 升级）又改回 `1.26-alpine` 并保留至今。属"已完成 → 被取代"，**不是漏做，本次不回退**。遗留不一致待决：构建镜像 Go **1.26**，而 `go.mod` 是 `go 1.25.0`、三个 workflow 均 `GO_VERSION: "1.25"`、quality-gate 钉 `GOTOOLCHAIN=go1.25.6`——是否统一需产品决策（`quality-gate.sh:12-13` 的注释明确说明覆盖率插桩粒度随 Go 小版本变化，基线数字必须与度量工具链同源，同一仓库 go1.25 测得 17.5%、go1.27 测得 32.2%）。
+- **ci.yaml 比计划多 1 个 job**：`security-secrets`（`699ddf9` 后加），共 12 个。
+- **`mock.ts` 比计划预估更小**：计划预计拆后约 1200 行，实际 **1023** 行。
+- **Task 4 的 import 形式导致 grep 陷阱。** `pkg/registry/*.go` 以**非别名**方式导入 `pkg/errors`（包名即 `errors`），因此用 `errpkg.` 模式 grep 会**全部漏检**、得出"sentinel 改造从未做过"的错误结论。后续维护者核查请用裸 token `ErrNotFound` / `ErrAlreadyExists`。
+
+---
+
 **Goal:** 修复整体评估发现的全部 P0/P1 问题与可安全落地的 P2 问题：让 CI 真正可运行（含 e2e）、统一服务端错误处理（不泄漏内部细节）、加固 quality-gate、清理仓库卫生、给演示数据加新鲜度守卫与标识、拆分 mock.ts 数据层。
 
 **Architecture:** 单仓库多语言（Go 平台服务 + Python runtime + React WebUI）。CI 是保障链的根，先修 CI 与 quality-gate；然后沿 "registry 返回 sentinel 错误 → server 统一映射为 HTTP 且不泄漏内部信息" 打通错误闭环；最后做不改变行为的卫生与结构清理。每个任务独立提交，全程 `main` 分支（仓库既有惯例为单分支直接提交）。
@@ -36,12 +75,12 @@
 **Files:**
 - Modify: `hack/quality-gate.sh:27,36,69-75,101,117`（所有 `((PASS++))`、`((FAIL++))`、`((WARN++))`）
 
-- [ ] **Step 1: 确认所有自增点**
+- [x] **Step 1: 确认所有自增点**
 
 Run: `grep -n "((PASS++))\|((FAIL++))\|((WARN++))" hack/quality-gate.sh`
 Expected: 11 处（PASS×3、FAIL×2、WARN×6；含 check/warn 函数内 4 处与各阶段内联 7 处）。注意：所有位置都必须替换——只修函数内 6 处会让脚本在 set -e 下仍于内联位置（如 WARN=0 时的 `((WARN++))`）崩溃。
 
-- [ ] **Step 2: 逐一替换为算术展开形式**
+- [x] **Step 2: 逐一替换为算术展开形式**
 
 每处 `((PASS++))` 改为 `PASS=$((PASS+1))`；`((FAIL++))` → `FAIL=$((FAIL+1))`；`((WARN++))` → `WARN=$((WARN+1))`。例如 `hack/quality-gate.sh:27`：
 
@@ -52,7 +91,7 @@ Expected: 11 处（PASS×3、FAIL×2、WARN×6；含 check/warn 函数内 4 处�
         PASS=$((PASS+1))
 ```
 
-- [ ] **Step 3: 语法与行为验证**
+- [x] **Step 3: 语法与行为验证**
 
 Run: `bash -n hack/quality-gate.sh && echo SYNTAX_OK`
 Expected: `SYNTAX_OK`
@@ -60,7 +99,7 @@ Expected: `SYNTAX_OK`
 Run: `PASS=0; FAIL=0; WARN=0; set -e; PASS=$((PASS+1)); echo alive`
 Expected: `alive`
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add hack/quality-gate.sh
@@ -77,12 +116,12 @@ git commit -m "fix(ci): quality-gate.sh 自增改用算术展开，规避 set -e
 - Modify: `test/e2e/helper_test.go`（如健康检查等待需加长，可选）
 - 无新文件
 
-- [ ] **Step 1: 构建 Go server**
+- [x] **Step 1: 构建 Go server**
 
 Run: `go build -o bin/resolveagent-server ./cmd/resolveagent-server && echo BUILD_OK`
 Expected: `BUILD_OK`
 
-- [ ] **Step 2: 启动 Python runtime 并确认存活**
+- [x] **Step 2: 启动 Python runtime 并确认存活**
 
 ```bash
 cd python && RESOLVEAGENT_RUNTIME_PORT=9091 uv run python -m resolveagent.runtime > /tmp/runtime.log 2>&1 &
@@ -93,7 +132,7 @@ cd python && RESOLVEAGENT_RUNTIME_PORT=9091 uv run python -m resolveagent.runtim
 Run: `curl -sf http://localhost:9091/health && echo RUNTIME_OK || cat /tmp/runtime.log`
 Expected: 返回 200 body + `RUNTIME_OK`。若失败，读 `/tmp/runtime.log` 排查（缺依赖时 `uv sync`），修正命令后重试；最终以验证通过的命令为准，后续 Task 3 使用同一命令。
 
-- [ ] **Step 3: 启动 Go server 并确认健康**
+- [x] **Step 3: 启动 Go server 并确认健康**
 
 ```bash
 ./bin/resolveagent-server > /tmp/server.log 2>&1 &
@@ -102,18 +141,18 @@ Expected: 返回 200 body + `RUNTIME_OK`。若失败，读 `/tmp/runtime.log` �
 Run: `sleep 2 && curl -sf http://localhost:8080/healthz && echo SERVER_OK || cat /tmp/server.log`
 Expected: `{"status":...}` 之类的 200 body + `SERVER_OK`
 
-- [ ] **Step 4: 运行 e2e 全套**
+- [x] **Step 4: 运行 e2e 全套**
 
 Run: `go test ./test/e2e/... -v -timeout 5m 2>&1 | tail -25`
 Expected: 所有子测试 PASS（agent_lifecycle、workflow_execution、feedback_loop）。若 ExecuteAgent 因 LLM 凭证失败，检查 runtime 是否有 mock/offline 提供商配置（`configs/models.yaml`）；把使 e2e 全绿所需的最小 env（如 `RESOLVEAGENT_LLM_PROVIDER=mock` 之类）记录下来，Task 3 的 job 里要带上。若某子测试失败且根因是测试本身过时，修复测试并在 commit message 中说明。
 
-- [ ] **Step 5: 收尾（杀进程、留档）**
+- [x] **Step 5: 收尾（杀进程、留档）**
 
 ```bash
 pkill -f resolveagent-server; pkill -f "resolveagent.runtime"; true
 ```
 
-- [ ] **Step 6: Commit（仅当改了测试/helper）**
+- [x] **Step 6: Commit（仅当改了测试/helper）**
 
 ```bash
 git add test/e2e/
@@ -130,12 +169,12 @@ git commit -m "test(e2e): 本地全绿验证 Go server + Python runtime 启动�
 - Modify: `.github/workflows/ci.yaml`（全量重写，324 行 → 单份合并版）
 - Modify: `deploy/docker/platform.Dockerfile`（builder 基础镜像对齐 go.mod）
 
-- [ ] **Step 1: 对齐 platform.Dockerfile 的 Go builder 版本**
+- [x] **Step 1: 对齐 platform.Dockerfile 的 Go builder 版本**
 
 Run: `grep -n "golang:" deploy/docker/platform.Dockerfile`
 若为 `golang:1.26-alpine` 或其他版本，改为 `golang:1.25-alpine`（与 `go.mod` 的 `go 1.25.0` 一致，消除"未来版本镜像"疑点）。`python:3.14`（runtime）与 `node`/`nginx`（webui）保持不动。
 
-- [ ] **Step 2: 全量重写 .github/workflows/ci.yaml 为以下内容**
+- [x] **Step 2: 全量重写 .github/workflows/ci.yaml 为以下内容**
 
 ```yaml
 # =============================================================================
@@ -431,7 +470,7 @@ jobs:
           echo "Status: PASSED"
 ```
 
-- [ ] **Step 3: 结构自检（无重复顶层键）**
+- [x] **Step 3: 结构自检（无重复顶层键）**
 
 Run: `grep -c "^name: CI" .github/workflows/ci.yaml && grep -c "^on:" .github/workflows/ci.yaml`
 Expected: `1` 和 `1`（各恰好一次）
@@ -439,12 +478,12 @@ Expected: `1` 和 `1`（各恰好一次）
 Run: `python3 -c "import yaml; d=yaml.safe_load(open('.github/workflows/ci.yaml')); print(sorted(d['jobs'].keys()))"`
 Expected: `['build', 'docker-build', 'e2e', 'lint-go', 'lint-python', 'lint-web', 'quality-gate', 'test-go', 'test-mobile', 'test-python', 'test-web']`
 
-- [ ] **Step 4: actionlint 校验**
+- [x] **Step 4: actionlint 校验**
 
 Run: `go install github.com/rhysd/actionlint/cmd/actionlint@latest && "$(go env GOPATH)/bin/actionlint" .github/workflows/ci.yaml`
 Expected: 无输出（0 错误）。若 actionlint 对某个第三方 action 报 unknown 参数类警告，确认是误报后可忽略；结构错误必须修复。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .github/workflows/ci.yaml deploy/docker/platform.Dockerfile
@@ -459,12 +498,12 @@ git commit -m "fix(ci): 合并重复 workflow 为单一流水线，Go 版本对�
 - Modify: `pkg/registry/` 下所有返回裸 `fmt.Errorf` 的实现（以 grep 结果为准，已知至少：`skill.go`、`rag.go`、`template.go`、`rag_document.go`、`fta_document.go`、`workflow.go`）
 - Test: 受影响的现有 `pkg/registry/*_test.go`（如存在断言旧消息文本的用例则同步更新）
 
-- [ ] **Step 1: 列出全部改造点**
+- [x] **Step 1: 列出全部改造点**
 
 Run: `grep -rn 'fmt.Errorf(".*not found")\|fmt.Errorf(".*already exists")\|fmt.Errorf("validation: %w"' pkg/registry/ | wc -l`
 记录数量 N（预计 25-35 处）。
 
-- [ ] **Step 2: 写失败测试（选一个代表文件，如 skill）**
+- [x] **Step 2: 写失败测试（选一个代表文件，如 skill）**
 
 在 `pkg/registry` 已有的 skill 测试文件中追加（若无该测试文件则新建 `pkg/registry/sentinel_test.go`，package 与被测包一致）：
 
@@ -488,12 +527,12 @@ func TestSkillErrorsAreSentinelWrapped(t *testing.T) {
 
 （类型名/构造函数以 `pkg/registry/skill.go` 实际签名为准；import 需要：标准库 `context`、`errors`、`testing`，以及 `errpkg "github.com/ai-guru-global/resolve-agent/pkg/errors"`。）
 
-- [ ] **Step 3: 运行确认失败**
+- [x] **Step 3: 运行确认失败**
 
 Run: `go test ./pkg/registry/ -run TestSkillErrorsAreSentinelWrapped -v`
 Expected: FAIL（sentinel 未包装）
 
-- [ ] **Step 4: 批量改造包装格式**
+- [x] **Step 4: 批量改造包装格式**
 
 统一格式：保留原实体描述、把 sentinel 放尾部 `%w`：
 
@@ -511,17 +550,17 @@ return fmt.Errorf("collection %s: %w", collection.ID, errpkg.ErrAlreadyExists)
 
 对 Step 1 列出的全部 N 处逐一应用；`validation: %w` 保持原样（其上游已带 InvalidArgument 语义的不动）。文件顶部补 import `errpkg "github.com/ai-guru-global/resolve-agent/pkg/errors"`。
 
-- [ ] **Step 5: 运行测试确认通过**
+- [x] **Step 5: 运行测试确认通过**
 
 Run: `go test ./pkg/registry/... -v 2>&1 | tail -5`
 Expected: 全部 PASS
 
-- [ ] **Step 6: 全仓回归**
+- [x] **Step 6: 全仓回归**
 
 Run: `go build ./... && go test ./... 2>&1 | grep -v "^ok\|no test files" | head -10`
 Expected: 无 FAIL 输出（e2e/integration 因无服务自动 skip 属正常）
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add pkg/registry/
@@ -537,7 +576,7 @@ git commit -m "refactor(registry): 错误统一包装 pkg/errors sentinel，打�
 - Modify: `pkg/server/` 全部 22 个 handler 文件中的 registry/store 错误出口
 - Test: `pkg/server/error_response_test.go`（新建）
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 新建 `pkg/server/error_response_test.go`（fake registry 的构造方式先读 `pkg/server/server_test.go` 沿用其既有模式；下面代码按"构造最小 Server + httptest"写）：
 
@@ -603,12 +642,12 @@ func contains(s, sub string) bool { return strings.Contains(s, sub) }
 
 （`Server` 字段名、logger 类型以 `pkg/server/server.go` 实际定义为准；若用 `errors` 包名冲突，测试文件内标准库 import 别名 stderrors 或直接用 `errpkg.As`。）
 
-- [ ] **Step 2: 运行确认编译失败（helper 不存在）**
+- [x] **Step 2: 运行确认编译失败（helper 不存在）**
 
 Run: `go test ./pkg/server/ -run TestWriteRegistryErrorMapping 2>&1 | head -5`
 Expected: 编译错误 `s.writeRegistryError undefined`
 
-- [ ] **Step 3: 在 pkg/server/response.go 实现 helper**
+- [x] **Step 3: 在 pkg/server/response.go 实现 helper**
 
 ```go
 import (
@@ -638,12 +677,12 @@ func (s *Server) writeRegistryError(w http.ResponseWriter, err error, entity str
 }
 ```
 
-- [ ] **Step 4: 运行 Task 5 Step 1 的测试确认通过**
+- [x] **Step 4: 运行 Task 5 Step 1 的测试确认通过**
 
 Run: `go test ./pkg/server/ -run "TestWriteRegistryErrorMapping|TestGetUnknownAgentReturns404" -v 2>&1 | tail -8`
 Expected: 全部 PASS
 
-- [ ] **Step 5: 全量替换 handler 中的裸错误出口**
+- [x] **Step 5: 全量替换 handler 中的裸错误出口**
 
 逐文件把「registry/store/runtime 调用返回的 err 直接写响应」的调用点替换为 `s.writeRegistryError(w, err, "<entity>")`。entity 取该 handler 管理的资源名（agent/skill/workflow/collection/document/FTA tree/...）。替换判定规则：
 
@@ -657,7 +696,7 @@ Run（定位全部改造点）: `grep -rn "err.Error())" pkg/server/*_handlers.g
 Run: `grep -rn "writeError(w, http.StatusInternalServerError, err.Error())" pkg/server/ | wc -l`
 Expected: `0`
 
-- [ ] **Step 6: 回归 + lint**
+- [x] **Step 6: 回归 + lint**
 
 Run: `go build ./... && go test ./... 2>&1 | grep -E "FAIL|panic" | head -5`
 Expected: 无输出
@@ -665,7 +704,7 @@ Expected: 无输出
 Run: `golangci-lint run ./pkg/... 2>&1 | tail -5`
 Expected: 无新增告警
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add pkg/server/
@@ -681,12 +720,12 @@ git commit -m "fix(server): 统一 registry 错误出口，内部错误细节不
 - Modify: `README.md:75`（死链）、`python/README.md`（0 字节 → 写实内容）
 - Modify: `.github/workflows/e2e.yaml`、`.github/workflows/release.yaml`（Task 3 质量审查发现：两者仍钉 `GO_VERSION: "1.23"`，与 go.mod 1.25.0 漂移，依赖 GOTOOLCHAIN 自动下载——改为 "1.25"）
 
-- [ ] **Step 1: 确认 client 2.ts 与 client.ts 无实质差异**
+- [x] **Step 1: 确认 client 2.ts 与 client.ts 无实质差异**
 
 Run: `diff "web/src/api/client 2.ts" web/src/api/client.ts > /tmp/client-diff.txt; wc -l < /tmp/client-diff.txt`
 Expected: 0（完全相同）。若 diff 非空，**停下**阅读差异：若 `client 2.ts` 含有 client.ts 没有的改动，先向用户报告而不是删除。
 
-- [ ] **Step 2: 删除跟踪文件**
+- [x] **Step 2: 删除跟踪文件**
 
 ```bash
 git rm "web/src/api/client 2.ts"
@@ -695,7 +734,7 @@ git rm test/load/.gitkeep
 rmdir internal/platform/agent internal/platform/skill internal/platform/workflow internal/platform test/load 2>/dev/null; true
 ```
 
-- [ ] **Step 3: 确认无引用残留**
+- [x] **Step 3: 确认无引用残留**
 
 Run: `grep -rn "internal/platform\|client 2\|test/load" --include="*.go" --include="*.ts" --include="*.tsx" --include="Makefile" --include="*.yaml" . | grep -v node_modules | grep -v ".venv" | head -5`
 Expected: 无输出
@@ -703,7 +742,7 @@ Expected: 无输出
 Run: `go build ./... && echo GO_OK`
 Expected: `GO_OK`
 
-- [ ] **Step 4: 修复 README 死链**
+- [x] **Step 4: 修复 README 死链**
 
 删除 `README.md:75` 这一行（引用了不存在的 `documentation/COMPREHENSIVE_ASSESSMENT_AND_METHODOLOGY.md`）：
 
@@ -714,7 +753,7 @@ Expected: `GO_OK`
 Run: `grep -rn "documentation/" README.md | head -3`
 Expected: 无输出
 
-- [ ] **Step 5: 补写 python/README.md**
+- [x] **Step 5: 补写 python/README.md**
 
 写入以下内容（基于 python/pyproject.toml 实际事实）：
 
@@ -745,11 +784,11 @@ uv run python -m resolveagent.runtime  # 启动 runtime HTTP 服务（默认 :90
 - `skills/` 运行时技能包
 ```
 
-- [ ] **Step 5b: 对齐兄弟 workflow 的 Go 版本**
+- [x] **Step 5b: 对齐兄弟 workflow 的 Go 版本**
 
 `.github/workflows/e2e.yaml` 与 `.github/workflows/release.yaml` 中 `GO_VERSION: "1.23"` → `"1.25"`（与 ci.yaml、go.mod 一致）。改动后 `"$(go env GOPATH)/bin/actionlint" .github/workflows/e2e.yaml .github/workflows/release.yaml` 校验。
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A README.md python/README.md
@@ -767,7 +806,7 @@ git commit -m "chore: 清理跟踪残留（client 2.ts/占位包/test-load），
 - Create: `web/src/components/DemoModeBadge.tsx`
 - Modify: `web/src/components/Layout/MainLayout.tsx`（header 挂载徽标）
 
-- [ ] **Step 1: 写失败测试（新鲜度守卫）**
+- [x] **Step 1: 写失败测试（新鲜度守卫）**
 
 在 `web/src/api/mockQuality.test.ts` 末尾追加（import 区域补 `import { DEMO_NOW } from '../lib/demoTime';`）：
 
@@ -780,12 +819,12 @@ describe('演示窗口新鲜度守卫', () => {
 });
 ```
 
-- [ ] **Step 2: 运行确认通过（当前锚点 2026-08-31，未过期）**
+- [x] **Step 2: 运行确认通过（当前锚点 2026-08-31，未过期）**
 
 Run: `cd web && pnpm test -- mockQuality 2>&1 | tail -5`
 Expected: PASS（此测试当下应为绿；它的价值在 90 天后自动变红，倒逼整体刷新演示窗口）。若想当场验证守卫有效性，可临时把 `demoTime.ts` 的锚点改成 `2026-01-01` 观察变红，再改回。
 
-- [ ] **Step 3: 创建 DemoModeBadge 组件**
+- [x] **Step 3: 创建 DemoModeBadge 组件**
 
 新建 `web/src/components/DemoModeBadge.tsx`：
 
@@ -810,18 +849,18 @@ export function DemoModeBadge() {
 
 （若 `@/components/ui/badge` 不存在，改用 `<span className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground">` 等价实现。）
 
-- [ ] **Step 4: 挂载到 MainLayout header**
+- [x] **Step 4: 挂载到 MainLayout header**
 
 在 `web/src/components/Layout/MainLayout.tsx` 的顶部 header 右侧控件区（主题切换按钮附近）插入 `<DemoModeBadge />`，并补 import。用真实 DOM 结构定位：读文件后放在与既有 header 控件同级的容器内。
 
-- [ ] **Step 5: 验证**
+- [x] **Step 5: 验证**
 
 Run: `cd web && pnpm build && pnpm lint && pnpm test 2>&1 | tail -6`
 Expected: build/lint/test 全绿
 
 Run: `cd web && pnpm dev &` 后浏览器打开 `http://localhost:5173`，确认 header 出现「演示数据 · 锚点 2026-08-31」徽标、页面无布局错乱；`Ctrl+C` 停止。
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add web/src/api/mockQuality.test.ts web/src/components/DemoModeBadge.tsx web/src/components/Layout/MainLayout.tsx
@@ -838,7 +877,7 @@ git commit -m "feat(web): 演示数据新鲜度守卫测试 + 控制台演示模
 - Create: `web/src/api/mock/shared.ts`、`mock/skills.ts`、`mock/workflows.ts`、`mock/rag.ts`、`mock/ops.ts`
 - Modify: `web/src/api/mock.ts`（删除被搬走的声明，改为 import）
 
-- [ ] **Step 1: 生成精确搬迁清单**
+- [x] **Step 1: 生成精确搬迁清单**
 
 Run: `grep -n "^const \|^function \|^type \|^interface \|^export " web/src/api/mock.ts`
 按行号把顶层声明归类（起始行已知，实际归属以依赖关系为准，用 `grep -n "名字" web/src/api/mock.ts` 查引用）：
@@ -852,14 +891,14 @@ Run: `grep -n "^const \|^function \|^type \|^interface \|^export " web/src/api/m
 
 每个新文件导出其承载的声明（`export const mockSkills ...`），并带上所需的类型 import（从 `mock.ts` 现有 import 头复制所需行）。
 
-- [ ] **Step 2: 逆行号顺序搬迁（防行号漂移）**
+- [x] **Step 2: 逆行号顺序搬迁（防行号漂移）**
 
 从行号最大的声明开始搬（先 2689 行之前的最后一段，最后搬 60 行的 `delay`）。每搬完一个域：
 
 Run: `cd web && pnpm build 2>&1 | tail -3`
 Expected: 编译通过（tsc 会立刻暴露漏掉的 import/导出）。红了就修 import 再继续，**不许带着红色进入下一个域**。
 
-- [ ] **Step 3: 全量验证**
+- [x] **Step 3: 全量验证**
 
 Run: `cd web && pnpm build && pnpm lint && pnpm test 2>&1 | tail -8`
 Expected: 全绿（`mockQuality.test.ts` 的 754 行断言是本次重构的安全网）
@@ -867,7 +906,7 @@ Expected: 全绿（`mockQuality.test.ts` 的 754 行断言是本次重构的安�
 Run: `wc -l web/src/api/mock.ts web/src/api/mock/*.ts`
 Expected: `mock.ts` 显著缩小（预计 <1200 行）；无空文件
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add web/src/api/
@@ -878,7 +917,7 @@ git commit -m "refactor(web): mock 数据按域拆分至 api/mock/，mock.ts 仅
 
 ## Task 9: 全量验证收尾
 
-- [ ] **Step 1: 三语言全量质量检查**
+- [x] **Step 1: 三语言全量质量检查**
 
 ```bash
 golangci-lint run ./... && go test ./... 2>&1 | grep -cE "^ok" 
@@ -889,16 +928,16 @@ cd web && pnpm build && pnpm lint && pnpm test && cd ..
 
 Expected: 全部通过、e2e 与 docker workflow 无结构错误
 
-- [ ] **Step 2: 端到端复跑 e2e（复用 Task 2 验证过的启动方式）**
+- [x] **Step 2: 端到端复跑 e2e（复用 Task 2 验证过的启动方式）**
 
 Run: 按 Task 2 步骤重启 server+runtime 后 `go test ./test/e2e/... -v -tags e2e -count=1 -timeout 5m 2>&1 | tail -6`
 Expected: 全 PASS，且 Task 5 改造后 404/409 语义保持
 
-- [ ] **Step 2b: quality-gate.sh:80 coverage 管道 pipefail 加固（质量审查发现的同失败模式隐患）**
+- [x] **Step 2b: quality-gate.sh:80 coverage 管道 pipefail 加固（质量审查发现的同失败模式隐患）**
 
 `COVERAGE=$(go tool cover ... | grep total | awk ... | sed 's/%//')` 在 pipefail 下若 go tool cover 非零退出或 grep 无匹配会直接杀死脚本。在 `sed 's/%//'` 后追加 `|| true`（line 81 的 `[ -n "$COVERAGE" ]` 已兜底空值）。单独提交：`fix(ci): quality-gate.sh coverage 管道补 || true，规避 pipefail 下 set -e 中断`。
 
-- [ ] **Step 3: 汇报与移交**
+- [x] **Step 3: 汇报与移交**
 
 向用户汇报：全部 commit 列表 + 建议 push 后观察 GitHub Actions 首次全绿运行（CI 修复只有 push 后才能在真实环境闭环验证）。提醒用户自行轮换 `.env` 中的 `XIAOMI_TOKEN_PLAN_API_KEY` 与 `EMBEDDING_API_KEY`（不进代码库，属用户账号操作）。
 

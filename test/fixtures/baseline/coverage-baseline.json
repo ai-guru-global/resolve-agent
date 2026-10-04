@@ -1,11 +1,11 @@
 {
-  "timestamp": "2026-09-11T00:00:00Z",
-  "go_coverage_percent": 17.5,
+  "timestamp": "2026-10-04T00:00:00Z",
+  "go_coverage_percent": 17.1,
   "python_coverage_percent": 42.9,
   "loop_engineering": {
     "description": "Coverage baseline for the test-analyze-improve feedback loop",
     "minimum_go_coverage": 17.0,
-    "minimum_python_coverage": 42.0,
+    "minimum_python_coverage": 42.5,
     "trend_tracking": true
   }
 }

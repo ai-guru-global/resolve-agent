@@ -13,6 +13,7 @@ from resolveagent.planning import (
     Plan,
     PlanningMode,
     PlanStep,
+    ReActExecutor,
 )
 
 
@@ -243,3 +244,79 @@ class TestExecution:
         planner = HybridPlanner()
         result = ExecutionResult(step_id="s1", success=True)
         assert not planner.need_replan(result)
+
+
+class SeqLLM:
+    """LLM stub returning canned responses in order."""
+
+    default_model = "fake-model"
+
+    def __init__(self, *contents: str) -> None:
+        self._contents = list(contents)
+        self.calls = 0
+
+    async def chat(self, messages: Any, model: str) -> FakeLLMResponse:
+        self.calls += 1
+        return FakeLLMResponse(self._contents[min(self.calls - 1, len(self._contents) - 1)])
+
+
+class TestReActExecutor:
+    async def test_no_executor_reports_honestly_and_exhausts_iterations(self) -> None:
+        llm = SeqLLM("需要 搜索 相关信息")
+        executor = ReActExecutor(llm_provider=llm, max_iterations=3)
+
+        result = await executor.execute(goal="查找 pod 崩溃原因")
+
+        assert result["success"] is False
+        assert result["iterations"] == 3
+
+    async def test_no_executor_reports_honest_observation(self) -> None:
+        llm = SeqLLM("先 分析 问题")
+        executor = ReActExecutor(llm_provider=llm, max_iterations=2)
+
+        obs = await executor._execute_action("analyze", "input")
+
+        assert "no tool executor configured" in obs
+        assert "NOT executed" in obs
+
+    async def test_injected_executor_is_called_and_feeds_back(self) -> None:
+        calls: list[tuple[str, str]] = []
+
+        async def tool_executor(action: str, action_input: str) -> str:
+            calls.append((action, action_input))
+            if len(calls) == 1:
+                return "obs-1: pods crashing"
+            return "obs-2: 完成 evidence collected"
+
+        # 第 1 轮决定 search，第 2 轮看到 obs-2 后宣告 finish
+        llm = SeqLLM("先 搜索 线索", "看到证据，任务 完成")
+        executor = ReActExecutor(
+            llm_provider=llm,
+            max_iterations=5,
+            tool_executor=tool_executor,
+        )
+
+        result = await executor.execute(goal="查找 崩溃 原因")
+
+        assert result["success"] is True
+        assert result["iterations"] == 2
+        assert calls == [("search", "查找 崩溃 原因")]
+        # 第 2 轮 _think 基于真实观察结果进行，证明观察确实回流
+        assert llm.calls == 2
+
+    async def test_executor_exception_becomes_honest_observation(self) -> None:
+        async def failing_executor(action: str, action_input: str) -> str:
+            raise RuntimeError("sandbox exploded")
+
+        llm = SeqLLM("执行 一下命令")
+        executor = ReActExecutor(
+            llm_provider=llm,
+            max_iterations=2,
+            tool_executor=failing_executor,
+        )
+
+        obs = await executor._execute_action("execute", "ls")
+        assert obs.startswith("[error] action 'execute' failed: sandbox exploded")
+
+        result = await executor.execute(goal="执行 诊断")
+        assert result["success"] is False

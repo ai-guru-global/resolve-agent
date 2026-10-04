@@ -551,15 +551,21 @@ class ReActExecutor:
     """ReAct (Reasoning + Acting) 执行器.
 
     简单的 ReAct 循环实现，用于 reactive 模式。
+
+    tool_executor: 可选的 `(action, action_input) -> str` 异步可调用，
+    与 execute_plan 的 executor 参数同一注入模式。未注入时动作不会被
+    执行，观察结果将如实报告执行器缺失，而非伪造成功。
     """
 
     def __init__(
         self,
         llm_provider: Any | None = None,
         max_iterations: int = 5,
+        tool_executor: Callable[[str, str], Any] | None = None,
     ) -> None:
         self._llm = llm_provider
         self._max_iterations = max_iterations
+        self._tool_executor = tool_executor
 
     async def execute(
         self,
@@ -592,7 +598,7 @@ class ReActExecutor:
                     "iterations": i + 1,
                 }
 
-            # Execute action (placeholder)
+            # Execute action via the injected tool executor, if any
             observation = await self._execute_action(action, action_input)
 
             history.append(
@@ -668,6 +674,19 @@ History:
         return ("answer", thought)
 
     async def _execute_action(self, action: str, action_input: str) -> str:
-        """执行动作 (placeholder)."""
-        # 实际应该调用相应的工具
-        return f"Action '{action}' executed with input: {action_input[:50]}..."
+        """执行动作，观察结果必须来自真实执行.
+
+        未注入 tool_executor 时如实报告缺失，绝不伪造成功的观察结果——
+        否则 LLM 会基于编造的证据继续推理，违背证据先行原则。
+        """
+        if self._tool_executor is None:
+            return f"[error] no tool executor configured; action '{action}' was NOT executed"
+
+        try:
+            return str(await self._tool_executor(action, action_input))
+        except Exception as e:
+            logger.error(
+                "Tool executor failed",
+                extra={"action": action, "error": str(e)},
+            )
+            return f"[error] action '{action}' failed: {e}"

@@ -4,7 +4,7 @@
 |---|---|
 | 报告日期 | 2026-10-04 |
 | 分析基线 commit | `bc9d946`（2026-09-22，分析当时 `HEAD == origin/main`、工作树干净） |
-| 实施后 HEAD | `0037e7b`——基线之上 **12 个本地提交，尚未 push**，`origin/main` 仍为 `bc9d946` |
+| 实施后 HEAD | 基线之上 **12 个实施提交**（`6492367`..`0037e7b`）+ 本报告自身的沉淀提交，均**尚未 push**；`origin/main` 仍为 `bc9d946` |
 | 版本 | 0.3.0（`VERSION`、`python/pyproject.toml:3`、`web/package.json:4` 三处一致） |
 | 分析方法 | 本地实跑质量门禁与 linter + GitHub Actions 远端日志取证 + 全量代码走查（只读） |
 | 状态 | **实施完成**（§8 的 11 项中 10 项已落地，1d 已评估、待用户授权推送） |
@@ -381,7 +381,7 @@ git ls-files | grep -iE " 2\.|copy|\.orig|\.bak|~$"
 
 ### 10.1 落地总览
 
-基线 `bc9d946` 之上共 **12 个本地提交**（`git log --oneline bc9d946..HEAD`，截至本报告定稿 `origin/main` 仍为 `bc9d946`）：
+基线 `bc9d946` 之上共 **12 个实施提交**（`git log --oneline bc9d946..0037e7b` → 12 条）。本报告自身的沉淀提交在其之后、不计入实施提交，故 `bc9d946..HEAD` 会比下表多 1 条。截至定稿 `origin/main` 仍为 `bc9d946`：
 
 | 提交 | 主题 | 变更规模 | 对应 §8 |
 |---|---|---|---|
@@ -727,7 +727,7 @@ QUALITY GATE PASSED
 
 以下动作会改变**共享远端状态**，且 push 直接违反仓库既有的"不 push"约定，因此**已评估但未执行**：
 
-1. **push 12 个本地提交到 `origin/main`**（`bc9d946` → `0037e7b`）。这是解除 19 个 dependabot PR 阻塞的**唯一前置条件**——三个 CI 根因都已在本地修完，但 `origin/main` 仍是被 dependabot 视为失败基线的 `bc9d946`。
+1. **push 本地全部提交到 `origin/main`**（`bc9d946` → 当前 `HEAD`，即 12 个实施提交 + 本报告）。这是解除 19 个 dependabot PR 阻塞的**唯一前置条件**——三个 CI 根因都已在本地修完，但 `origin/main` 仍是被 dependabot 视为失败基线的 `bc9d946`。
 2. **push 后在 GitHub Actions 验证 CI 转绿**，然后按 §10.2-1d 的判定表处理 PR：关闭 #31、搁置 #43、先合 #40 再评估 #32、#41 需改 `package.json`。
 3. **用户账号侧操作（不进代码库）**：轮换 `.env` 中的 `XIAOMI_TOKEN_PLAN_API_KEY` 与 `EMBEDDING_API_KEY`。这两个键曾在历史提交中出现过，即使后续提交已移除，**旧提交对象里仍然可读**，只有轮换才能真正失效。此项无法由代码变更替代。
 

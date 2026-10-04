@@ -1,27 +1,21 @@
-"""ResolveAgent gRPC API Client Stubs.
+"""Placeholder for buf-generated Python gRPC stubs.
 
-This package contains auto-generated gRPC client stubs for communicating
-with the Go platform services. The stubs are generated from Protocol Buffer
-definitions in api/proto/resolveagent/v1/.
+``tools/buf/buf.gen.yaml`` points the ``protocolbuffers/python`` and
+``grpc/python`` plugins at this directory, while ``.gitignore`` excludes the
+directory outright with no ``!`` exception (line 94) — this file survives only
+because it is already tracked. ``make proto`` (``hack/generate-proto.sh``)
+would populate it, but that has never happened in this repository: ``buf`` is
+not installed in the dev environment, ``pkg/api`` (the Go output of the same
+template) does not exist either, and no ``*_pb2.py`` has ever been generated
+here.
 
-To regenerate:
-    buf generate --template tools/buf/buf.gen.yaml api/proto
+The stubs the runtime actually uses are committed under :mod:`resolveagent.v1`
+and are produced with ``grpc_tools.protoc`` instead — see
+``python/src/resolveagent/v1/__init__.py`` for the exact command.
 
-Modules:
-    - registry_pb2: RegistryService message types
-    - registry_pb2_grpc: RegistryService gRPC stubs
-    - agent_pb2: AgentService message types
-    - agent_pb2_grpc: AgentService gRPC stubs
-    - common_pb2: Common message types
+Do not import from ``resolveagent.api``. ``resolveagent/runtime/server.py``
+still does, inside ``try``/``except ImportError`` blocks that therefore always
+fall through to the HTTP fallback; that path stays dead until it is rewritten
+against ``resolveagent.v1`` (note ``agent.proto`` defines ``AgentService``, not
+the ``AgentExecutionService`` that module expects).
 """
-
-# Note: The actual generated files will be created by buf generate.
-# This __init__.py provides the package structure.
-
-__all__ = [
-    "registry_pb2",
-    "registry_pb2_grpc",
-    "agent_pb2",
-    "agent_pb2_grpc",
-    "common_pb2",
-]

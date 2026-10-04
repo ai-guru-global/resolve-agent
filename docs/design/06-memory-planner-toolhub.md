@@ -66,7 +66,7 @@ updated: 2026-09-05
 
 这附近有两个历史上真踩过的坑，现在都有测试钉住：LLM 返回空步骤列表时必须回退关键词分解，避免产出"空计划直接判完成" [planning.py:195-198](python/src/resolveagent/planning.py#L195-L198)、[test_planning.py:81-95](python/tests/unit/test_planning.py#L81-L95)；replan 产生的新计划 status 是 `pending`，必须重置为 `executing`，否则 while 循环直接退出、重规划永远不执行 [planning.py:529-531](python/src/resolveagent/planning.py#L529-L531)、[test_planning.py:144-174](python/tests/unit/test_planning.py#L144-L174)。LLM 输出的 JSON 提取也有完整容错链（markdown 围栏 → 全文 → 首尾花括号子串）[planning.py:229-247](python/src/resolveagent/planning.py#L229-L247)，因为"LLM 常在 JSON 外包裹围栏"是真实发生过的失败模式 [planning.py:216-218](python/src/resolveagent/planning.py#L216-L218)。
 
-REACTIVE 的另一半 `ReActExecutor` 目前是半成品：`_execute_action` 只返回占位字符串，没有接任何真实工具 [planning.py:663-666](python/src/resolveagent/planning.py#L663-L666)。
+REACTIVE 的另一半 `ReActExecutor` 目前是半成品：`_execute_action` 只返回占位字符串，没有接任何真实工具 [planning.py:670-673](python/src/resolveagent/planning.py#L670-L673)。
 
 ## toolhub.py：注册、发现、安全、审计的统一门面
 
@@ -140,7 +140,7 @@ flowchart TD
 
 - 记忆层无 TTL：长期记忆只进不出，陈旧内容永不清理（见设计原理一节的推测标注）。
 - `_simple_embed` 是演示级哈希嵌入 [memory.py:531-534](python/src/resolveagent/memory.py#L531-L534)，long-term 检索在换真实 embedding 前没有语义能力。
-- `ReActExecutor._execute_action` 是占位实现 [planning.py:663-666](python/src/resolveagent/planning.py#L663-L666)，REACTIVE 模式跑不出真实动作。
+- `ReActExecutor._execute_action` 是占位实现 [planning.py:670-673](python/src/resolveagent/planning.py#L670-L673)，REACTIVE 模式跑不出真实动作。
 - ToolHub 的 `["user"]` 硬编码角色让 SENSITIVE/RESTRICTED 工具形同虚设（见排查指南症状 4）。
 
 *Last updated: 2026-09-05*

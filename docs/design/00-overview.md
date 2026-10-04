@@ -166,9 +166,11 @@ sequenceDiagram
 1. **`runtime.grpc_addr` 是死配置**：[configs/resolveagent.yaml:28-29](configs/resolveagent.yaml#L28-L29) 定义了它，types.go 也有 `RuntimeConfig` 结构 [pkg/config/types.go:71-73](pkg/config/types.go#L71-L73)，但全仓没有任何代码读 `cfg.Runtime`；RuntimeClient 实际读 `server.runtime_addr`，而 resolveagent.yaml 没写它，最终落到硬编码默认值 `localhost:9091` [pkg/server/runtime_client.go:25-29](pkg/server/runtime_client.go#L25-L29)。改 Python 地址要么加 `server.runtime_addr`，要么设 `RESOLVEAGENT_SERVER_RUNTIME_ADDR`。
 2. **solutionRegistry 在 postgres 模式下仍是内存实现**：代码注释自述「remains in-memory until PostgreSQL implementation is added」[pkg/server/server.go:77-78](pkg/server/server.go#L77-L78)，重启即丢工单方案数据。
 3. **runtime.yaml / models.yaml 是「 许愿配置」**：两者当前都无消费方（见配置体系一节），以为改了 `configs/runtime.yaml` 的 `circuit_breaker.failure_threshold` 就生效，实际不会 [configs/runtime.yaml:56-58](configs/runtime.yaml#L56-L58)。
-4. **gRPC 承诺未兑现**：ADR-001 的缓解措施是 gRPC + protobuf [docs/adr/001-why-multilang.md:66](docs/adr/001-why-multilang.md#L66)，实际 `python/src/resolveagent/api` 只有生成的 stub 包 [api/__init__.py:1-3](python/src/resolveagent/api/__init__.py#L1-L3)，链路全走 REST。
+4. **gRPC 只有半边**：ADR-001 的缓解措施是 gRPC + protobuf [docs/adr/001-why-multilang.md:66](docs/adr/001-why-multilang.md#L66)。Python 侧确有已提交的桩包 `python/src/resolveagent/v1/`（由 `grpc_tools.protoc` 生成，见其 `__init__.py` 里的命令），并在设置了 `RESOLVEAGENT_GRPC_PORT` 时额外拉起一个 `SelectorService` shim [runtime/__main__.py:32-41](python/src/resolveagent/runtime/__main__.py#L32-L41)、[runtime/selector_grpc.py:115](python/src/resolveagent/runtime/selector_grpc.py#L115)。**但 Go 平台从不拨号 gRPC**，平台↔运行时链路仍全走 REST，`runtime.grpc_addr` 是死配置（见坑 1）。另有两处残留会误导读者：
+   - `python/src/resolveagent/api/` 只是 buf 输出占位目录，仓库里从未生成过任何 `*_pb2.py`（`tools/buf/buf.gen.yaml:23,27` 仍把 Python 输出指向它，`.gitignore:94` 又忽略该目录内容）；
+   - `runtime/server.py` 的 `AgentExecutionServer` 依赖 `resolveagent.api.agent_pb2_grpc.add_AgentExecutionServiceServicer_to_server`，而 `AgentExecutionService` 在任何 proto 中都不存在（`agent.proto:12` 定义的是 `AgentService`），因此 `import` 必然失败并永久退回 HTTP fallback；该类也没有任何调用方 [runtime/server.py:38](python/src/resolveagent/runtime/server.py#L38)。
 5. **网关转发头未验签**：`X-Auth-User` 存在即信任 [pkg/server/middleware/auth.go:115-117](pkg/server/middleware/auth.go#L115-L117)、[pkg/server/middleware/auth.go:134-151](pkg/server/middleware/auth.go#L134-L151)。平台端口若绕过 Higress 直连，任何人可伪造身份。
 
 > [!NOTE] 推测：网关头直信是「平台只部署在网关之后」的部署假设。依据：[configs/resolveagent.yaml:47-53](configs/resolveagent.yaml#L47-L53) 注释写明「Higress handles external auth, platform validates forwarded headers」，但代码层面没有共享密钥或来源校验来强制这一前提。
 
-*Last updated: 2026-09-05*
+*Last updated: 2026-10-04*

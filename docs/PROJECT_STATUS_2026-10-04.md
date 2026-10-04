@@ -755,7 +755,7 @@ QUALITY GATE PASSED
 
 **未处理的已知债务**（不在 §8，建议排期；其中数项已在 §10.7 追加轮中解决）：
 
-- ~~§5.1 的占位实现~~ → **§10.7 已解决 2/6**：`planning.py` `_execute_action` 与 `troubleshoot.py` `_execute_command` 已接线（`4a7db02`、`ba90230`）。**仍保留的 4 处占位**：`agent/base.py:45`（基类 `reply()` 为 echo）、`registry_client.py:564-582`（`watch_registry` 不产出事件）、`runtime/engine.py:609`（无法按名加载 workflow）、`rag/index/milvus.py:397`（delete-by-expr 不生效）。`api/__init__.py` 仍是 27 行空壳。
+- ~~§5.1 的占位实现~~ → **§10.7 已解决 2 处，§10.9 又解决/收敛 3 处**：`planning.py` `_execute_action`、`troubleshoot.py` `_execute_command`、`agent/base.py` `reply()`、`rag/index/milvus.py` delete-by-filter 均已真实接线；`runtime/engine.py` `execute_workflow` 加诚实门（查无此 id 拒绝执行，树→图转换未实现前如实披露）。**仍开放**：`registry_client.py` `watch_registry`（依赖 Go 服务端尚不存在的 WebSocket/SSE 端点，单侧实现属对空连线伪造，待架构决策）；`api/__init__.py` 仍是 21 行空壳。
 - **ARCHITECTURE_IMPROVEMENTS 的 3 项「实现完成，未接线」**（Memory 三层架构、AgentMessageBus、ToolHub）：单测缺口已由 §10.7 补齐（`2180915`），该文档 `:168` 的「完整单测覆盖」宣称自此成立；但 `MegaAgent` / `ContextEnricher` / Skill 执行链里**仍无任何生产调用点**，接线是独立工作量。
 - ~~`ci.yaml` 内部 action 版本漂移（C3）、`hack/*.sh` 缺执行位（D4）~~ → **§10.7 已解决**（`ff800a1`、`e19941d`）。
 - §3.2 的测试分布缺口**大部分收敛**（§10.7、§10.8）：Python 零测试模块 7 个中 5 个已覆盖（toolhub、message_bus、telemetry、store 客户端、llm 纯逻辑层），余下 2 个属刻意不测——`api/` 为 21 行空壳、`v1/` 为生成桩（仓库 lint/mypy 均排除生成物）；Web 12 个测试文件无一测真实后端、6 个 code-analysis 方法永远走 mock 等缺口仍在；§5.3 的依赖代差（vite 8 配 vitest 2.x）未动。
@@ -807,3 +807,16 @@ QUALITY GATE PASSED
 单测总数：382（基线）→ 426（§10.7）→ **465**（本节）。Python 覆盖率随之上行，阈值 42.5% 余量扩大。
 
 **本节仍未处理**（需授权或属架构级）：push 与 PR 处置、密钥轮换、其余 4 处占位、三模块生产接线、Web 测试缺口、依赖代差、nats.go / AgentExecutionServer 接线。
+
+### 10.9 追加轮三：剩余占位逐个裁定（2026-10-04）
+
+「继续推进」下对 §10.6 遗留的 4 处占位逐一评估，3 处真实修复、1 处判定为**本地不可诚实修复**并说明原因。3 个提交，门禁 10/0/0，单测 465→**480**。
+
+| 占位点 | 裁定 | 提交 | 说明 |
+|---|---|---|---|
+| `agent/base.py` `reply()` echo | **已修复** | `2ea3879` | 注入 `llm_provider` 走真实 chat；未注入时回声带 `[echo: no LLM provider configured]` 标注。顺带发现 `MegaAgent.__init__` 会覆盖继承的 `_llm_provider`，删除覆盖使注入贯通到其惰性创建路径（`MegaAgent.reply` 自身是完整覆盖，不受基类回声影响） |
+| `rag/index/milvus.py` delete-by-filter | **已修复** | `e1496de` | 原占位宣称 "MilvusClient 不支持按过滤删除"——实测 pymilvus `delete` 签名本就接受 `filter=`，**宣称过时**。复用既有带注入防护的 `_build_filter_expression`，真实下发过滤删除并返回 SDK `delete_count`。真实 Milvus 端到端行为属集成范畴，本地无实例未验证 |
+| `runtime/engine.py` `execute_workflow` | **诚实门** | `0f47a08` | 关键发现：Go 端 `WorkflowDefinition` 存的是 **FTA 故障树（`Tree`）**，与 engine 执行的 nodes/edges 图**不同构**——"按注册定义执行"在树→图转换实现前无法诚实达成。现 registry 在场时先核对：查无此 id → `workflow.not_found` 事件并终止（不再对任意 id 伪造执行）；查到但为树 → 流中 `definition_pending` 明示后才走开发回退 |
+| `registry_client.py` `watch_registry` | **本地不可修，维持** | — | 真实实现需要 Go 服务端提供 WebSocket/SSE 变更流端点，**该端点不存在**。客户端单侧实现等于对空连线伪造。待服务端补端点后接线 |
+
+**本轮方法论**：占位的"修复"不以代码动过为准，而以**每个执行路径的输出都讲真话**为准——能真实实现的实现（BaseAgent、milvus），不能实现的把伪造变成披露（engine），依赖外部不存在的就不做（watch_registry）。

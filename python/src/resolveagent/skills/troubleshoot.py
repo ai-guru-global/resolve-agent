@@ -62,9 +62,11 @@ class TroubleshootingEngine:
         self,
         skill_executor: Any | None = None,
         llm_provider: Any | None = None,
+        sandbox_executor: Any | None = None,
     ) -> None:
         self._skill_executor = skill_executor
         self._llm_provider = llm_provider
+        self._sandbox_executor = sandbox_executor
         self._skill_loader: Any | None = None
 
     def _get_skill_loader(self) -> Any:
@@ -251,13 +253,35 @@ class TroubleshootingEngine:
         step: TroubleshootingStep,
         context: TroubleshootingContext,
     ) -> tuple[str, list[DiagnosticEvidence]]:
-        """Execute a step by running a command (placeholder for sandbox)."""
-        # In production this would use the SandboxExecutor
-        output = f"[Command execution placeholder] {step.command}"
+        """Execute a step by running its command in the sandbox.
+
+        Sandbox results (stdout/stderr/return code) are reported verbatim as
+        evidence; a missing sandbox is reported explicitly instead of being
+        papered over.
+        """
+        if self._sandbox_executor is None:
+            output = f"[command NOT executed: sandbox unavailable] {step.command}"
+            evidence = [
+                DiagnosticEvidence(
+                    source=f"command:{step.id}",
+                    content=f"Command: {step.command}\n{output}",
+                )
+            ]
+            return output, evidence
+
+        result = await self._sandbox_executor.execute(step.command, language="bash")
+
+        if result.success:
+            output = result.stdout
+        elif result.stderr:
+            output = f"[command failed rc={result.return_code}] stdout={result.stdout!r} stderr={result.stderr!r}"
+        else:
+            output = f"[command failed rc={result.return_code}] {result.error or result.stdout!r}"
+
         evidence = [
             DiagnosticEvidence(
                 source=f"command:{step.id}",
-                content=f"Command: {step.command}\n{output}",
+                content=(f"Command: {step.command}\nreturn_code: {result.return_code}\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"),
             )
         ]
         return output, evidence

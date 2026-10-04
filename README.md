@@ -46,7 +46,7 @@
 | **记忆体系** | 3 层架构：Working（进程内）/ Episodic（Redis TTL）/ Long-term（Milvus/Qdrant LRU） |
 | **数据层** | PostgreSQL 16 表 6 组 / Redis / NATS / Milvus-Qdrant 双后端向量库 |
 | **Registry** | 14 个领域注册表（agent / skill / workflow / rag / fta / solution / memory / traffic…） |
-| **质量工程** | 370 个 Python 单元测试项 + 8 套集成测试 + Go `-race` 测试 + Go E2E（构建标签隔离） |
+| **质量工程** | 426 个 Python 单元测试项 + 8 套集成测试 + Go `-race` 测试 + Go E2E（构建标签隔离） |
 | **工程治理** | golangci-lint 全量治理 / sentinel 错误链 + 防泄漏统一出口 / 单流水线 CI（Go 1.25） |
 | **文档** | 19 篇带 `file:line` 锚点的源码蒸馏设计文档 + 25 篇中文技术文档 + Docusaurus 站点 |
 
@@ -970,7 +970,7 @@ hack/quality-gate.sh
 
 ## Feature Status
 
-> **v0.3.0** | 核心组件经全面修复与测试加固（Python 382 个单元测试项 + 8 套集成测试）
+> **v0.3.0** | 核心组件经全面修复与测试加固（Python 426 个单元测试项 + 8 套集成测试）
 
 ### 核心引擎
 

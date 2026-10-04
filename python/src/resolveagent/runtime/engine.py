@@ -606,9 +606,33 @@ class ExecutionEngine:
         }
 
         try:
-            # Load workflow from registry (placeholder - use registry_client in production)
-            # For now, create a simple workflow execution
             from resolveagent.fta.workflow import Workflow, WorkflowNode
+
+            # registry 在场时先核对工作流真实存在；registry 存的是 FTA 故障树
+            # （WorkflowDefinition.Tree），与 nodes/edges 图不同构，树→图转换
+            # 未实现前不能假装按注册定义执行
+            if self._registry_client is not None:
+                registry_info = await self._registry_client.get_workflow(workflow_id)
+                if registry_info is None:
+                    yield {
+                        "type": "event",
+                        "event": {
+                            "type": "workflow.not_found",
+                            "message": f"Workflow '{workflow_id}' not found in registry; not executing",
+                            "data": {"execution_id": execution_id, "workflow_id": workflow_id},
+                        },
+                    }
+                    return
+                yield {
+                    "type": "event",
+                    "event": {
+                        "type": "workflow.definition_pending",
+                        "message": (
+                            "Registry stores a fault tree, not a node graph; tree-to-graph conversion is pending, running development fallback"
+                        ),
+                        "data": {"execution_id": execution_id, "workflow_id": workflow_id},
+                    },
+                }
 
             workflow = Workflow(
                 id=workflow_id,

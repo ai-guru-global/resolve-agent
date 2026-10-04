@@ -4,7 +4,7 @@
 |---|---|
 | 报告日期 | 2026-10-04 |
 | 分析基线 commit | `bc9d946`（2026-09-22，分析当时 `HEAD == origin/main`、工作树干净） |
-| 实施后 HEAD | 基线之上 **12 个实施提交**（`6492367`..`0037e7b`）+ 本报告自身的沉淀提交，均**尚未 push**；`origin/main` 仍为 `bc9d946` |
+| 实施后 HEAD | 基线之上 **12 个实施提交**（`6492367`..`0037e7b`）+ 本报告自身的沉淀与修订提交，均**尚未 push**；`origin/main` 仍为 `bc9d946` |
 | 版本 | 0.3.0（`VERSION`、`python/pyproject.toml:3`、`web/package.json:4` 三处一致） |
 | 分析方法 | 本地实跑质量门禁与 linter + GitHub Actions 远端日志取证 + 全量代码走查（只读） |
 | 状态 | **实施完成**（§8 的 11 项中 10 项已落地，1d 已评估、待用户授权推送） |
@@ -381,7 +381,7 @@ git ls-files | grep -iE " 2\.|copy|\.orig|\.bak|~$"
 
 ### 10.1 落地总览
 
-基线 `bc9d946` 之上共 **12 个实施提交**（`git log --oneline bc9d946..0037e7b` → 12 条）。本报告自身的沉淀提交在其之后、不计入实施提交，故 `bc9d946..HEAD` 会比下表多 1 条。截至定稿 `origin/main` 仍为 `bc9d946`：
+基线 `bc9d946` 之上共 **12 个实施提交**（`git log --oneline bc9d946..0037e7b` → 12 条）。本报告自身的沉淀与后续修订提交在其之后、不计入实施提交，故 `bc9d946..HEAD` 的条数多于下表。截至定稿 `origin/main` 仍为 `bc9d946`：
 
 | 提交 | 主题 | 变更规模 | 对应 §8 |
 |---|---|---|---|
@@ -465,7 +465,7 @@ docker run --rm -v "$PWD:/repo" \
 | #33 #34 #35 #37 #38 | otel/sdk/metric、otel/trace、otelhttp、grpc 1.80→1.83.2、otlptracegrpc | Go minor bump，可本地 `go build && go test` 验证 |
 | #27 #28 #29 #30 #42 #44 #45 | build-push-action、action-gh-release、setup-buildx-action、setup-python、nginx-unprivileged、alpine、node | 适用，push 后应自动转绿 |
 
-**为何停在这里**：解除阻塞需要 push 这 12 个提交到 `origin/main`，以及 close #31 / merge 若干 PR。这三类都是**改变共享远端状态**的操作，且 push 直接违反仓库既有的"不 push"约定，**必须用户显式授权**。见 §10.6。
+**为何停在这里**：解除阻塞需要把这些本地提交 push 到 `origin/main`，以及 close #31 / merge 若干 PR。这三类都是**改变共享远端状态**的操作，且 push 直接违反仓库既有的"不 push"约定，**必须用户显式授权**。见 §10.6。
 
 #### 2 对齐宣称与实现 —— `24d2e6d`（选方案 b）
 

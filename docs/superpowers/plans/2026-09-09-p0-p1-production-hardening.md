@@ -2,6 +2,62 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+## 执行状态复核（2026-10-04 回填勾账）
+
+**结论：本计划 12 个 Task 已于 2026-09 全部落地，但 58 个步骤框当时一个都没勾。** 本次逐项复核后回填为 58/58。计划自身提交为 `f90bf68`，其前置 spec 为 `c8d7153`。
+
+**勾选口径（重要）：** 勾选表示「该步骤规定的结果今日在工作树中可验证存在」，**不表示**「今日重新执行了该步骤」。P0 各 Task 是纯 git 分组提交，其判定依据是「规定的提交信息与实际落地提交吻合 + 规定的文件增删状态吻合」；P1 各 Task 的判定依据是逐个符号与行号的实测。下表 14 个提交哈希均以 `git cat-file -e` 确认存在。
+
+### 逐 Task 落地证据（2026-10-04 实测）
+
+| Task | 标题 | 结论 | 落地证据 |
+|---|---|---|---|
+| 0 | 预检环境 | 已完成（历史） | `python/.venv/bin/python` 存在；提交顺序 `c8d7153 docs(spec)` → `f90bf68 docs(plan)` → P0 各提交，与计划前置假设一致 |
+| 1 | P0-1 文档/集成收尾 | 已完成 | `ac22392`；`PLAN.md`、`CODE_QUALITY_REPORT_2026-04-20.md`、`PROJECT_STATUS_EVALUATION.md`、`docs/adr/.gitkeep`、`internal/runtime/` 逐个 `-e` 判定均为 gone |
+| 2 | P0-2 Go/迁移收尾 | 已完成 | `dacbcac`；新增 `pkg/event/nats_test.go`、`pkg/feedback/alerts_test.go`、`scripts/migration/README.md` |
+| 3 | P0-3 Python 收尾 | 已完成 | `8cd4a98`；规定的 7 个新增测试文件均在位 |
+| 4 | P0-4 前端/GTM/部署 | 已完成 | `d1ef0c8`（63 files，−8577 行）；`vibe_images/`、`web/package-lock.json` 已删；`GTM/tokens.css`、`deploy/helm/resolveagent/templates/secret.yaml` 存在 |
+| 5 | P0-5 工具产物治理 | 已完成 | `d369bc8`；`.gitignore:127-130` 恰为规定的注释 + 3 条规则（`.impeccable/review/`、`.impeccable/questions/`、`.hallmark/`） |
+| 6 | `FTAEvent.probability` | 已完成 | `623e769`；`fta/tree.py:41 probability: float \| None = None` |
+| 7 | `FaultTree.validate()` | 已完成 | `80de663`；`fta/tree.py:159 def validate(self) -> list[str]` |
+| 8 | `MonteCarloSimulator` | 已完成 | `36f6195`；`fta/monte_carlo.py` 170 行，`simulate` :45、`_priority_order_ok` :157、`_wilson_interval` :163 |
+| 9 | `FTAEngine` 集成 | 已完成 | `6b48dc8`；`fta/engine.py`：`FTAAnalysisResult` :24、`failure_probability` :33、`self._simulator` :49、`async def analyze` :171、`compute_minimal_cut_sets` :181、`simulate` 调用点 :133/:185 |
+| 10 | `AdaptiveWeightAdjuster` 接线 | 已完成（含 1 次补修） | `aaceb6f` + `9d27a43`；`resilient_selector.py`：`adaptive_weights_enabled` :104、`record_outcome` :459-460 / :496-497、`apply_decay` :504-505、注入式 `_weight_adjuster` :315 |
+| 11 | README/docs 对齐 | 当时部分完成，本次补齐 | `458c3c5` 覆盖 README 与 `docs/design/03-fta.md`；但 `web/src/pages/Architecture/index.tsx`（7 处）与 `docs/zh/architecture.md:18` 漏扫，已由 `93e408e` 补齐（见下节） |
+| 12 | P1 全量验收 | 已完成（今日复跑） | `pytest tests/unit -q` → **382 passed**；`go build ./...` exit 0；`go test ./pkg/...` 全绿；`ruff check .` → All checks passed（需 `93e408e` 修掉 UP032 后才真正全绿） |
+
+### 复跑验收命令：3 处与计划 `Expected:` 不符
+
+| Step | 命令 | 计划期望 | 2026-09 实测 | 2026-10-04 处置 |
+|---|---|---|---|---|
+| 11.6 | README 单测计数 | — | README:973 写 370，`--collect-only` 实为 382 | **已修**：`93e408e` 改为 382。计划自己建议的 `560+` 是错的；370 在 `458c3c5` 当时准确，之后提交（含 `9d27a43`）净增 12 |
+| 11.8 | `grep -rn "六种门" README.md docs/ \| wc -l` | `0` | 7 | **仍为 7，且 `Expected: 0` 按字面不可能达成**：其中 6 处是本计划文档自身（:1051/:1063/:1133/:1135/:1141）与其 spec（:81）的自指引用。唯一真实残留是 `docs/archive/session-reports/COMPREHENSIVE_ASSESSMENT_AND_METHODOLOGY.md:49`——归档历史报告，按归档完整性**不改**，在此登记为已知残留 |
+| 12.2 | `cd python && ruff check .` | 无告警 | 1 error：`UP032` @ `python/skills/rule-route/rule_route.py:281` | **已修**：`93e408e` 改为 f-string，现 All checks passed。该告警由 `3e13e65`（2026-09-02）引入，**早于本计划**，非任何 Task 造成；`pyproject.toml:54` 只排除 `src/resolveagent/v1`，故 `skills/` 一直在扫描范围内 |
+
+### 计划范围外发现、本次一并修复的失实项（`93e408e`）
+
+`GateType` 实际只有 **5 种**（`fta/tree.py:20-27`：AND / OR / VOTING / INHIBIT / PRIORITY_AND），从来没有 NOT 门。但直到本次复核，仍有 8 处宣称「六种门 + NOT」：`web/src/pages/Architecture/index.tsx` 的 :65 / :123 / :485 / :932 / :1055 / :1213 / :1214，以及 `docs/zh/architecture.md:18`。
+
+后果是 `docs/design/03-fta.md:27` 那句已提交的「README、前端与本文档均不再宣称第六种 NOT 门」**在提交当时即为假**。根因：Step 11.7 规定的扫描面只有 `docs/zh/` 与 `docs/design/`，**不含 `web/src/`**——前端页面文案是最容易漏的一路宣称面。现已全部改为五种门，该句转真；`npx tsc --noEmit` 与 `eslint` 均 exit 0。
+
+`gotchas.md` 按其日志惯例追加 2026-10-04 段落记录此教训（含「2026-09-05 那条『无 monte_carlo 实现』已过期」的更正），**不回改历史条目**，以保留取证价值。
+
+### 已知残留登记（刻意不改，附理由）
+
+全仓复核后，仍有两处 tracked 文件保留「六种门」表述，均**刻意不改**：
+
+1. `docs/archive/session-reports/COMPREHENSIVE_ASSESSMENT_AND_METHODOLOGY.md:49` — 归档的历史评估报告（`958b5e9` 移入 archive）。归档的价值在于「当时怎么认为」，回改即销毁取证链。这也是 Step 11.8 `Expected: 0` 无法达成的第二个原因。
+2. `.zread/wiki/versions/2026-04-21-000030/*.md`（36 个 tracked 文件）— zread 技能生成的**带日期版本快照** wiki，非手写文档，正确处置是**重新生成**而非手改。且它的「六种」是另一套口径：`12-liu-chong-men-...md:138` 把 FTA Markdown 解析器为无显式门定义的中间节点自动合成的**隐式 OR 门**算作第六种，与本次清除的「NOT 门」不是同一个失实项。快照目录下另有 `.zread/wiki/current` 指针，手改单个 version 目录会与生成器状态不一致。
+
+### 偏差（结果达成但路径与计划不同）
+
+1. **Task 1 / Step 1.1**：`README 2.md` 并未在 `ac22392` 中删除，一直活到 **`2c75950`（2026-10-04）** 才随「删除两份陈旧副本」一并清掉。结果达成，晚约一个月、换了提交。
+2. **Task 2**：迁移 008→011 在 git 中记录为 **rename**（R082 / R090），而非 Files 清单暗示的 delete + add。
+3. **Task 5**：`.gitignore` 实增 **11 行**而非规定的 4 行，另含 `.pids/`、`.qoder/repowiki/`、`.qoder/settings.local.json`、`web/package-lock.json`——把用户既有未提交编辑一并 folded in。
+4. **Task 8**：`_evaluate_gate` 对 `INHIBIT` / `PRIORITY_AND` 按 `all(inputs)` + 独立 rank 检查处理（符合规定）；但 spec 要求的「静态近似」注释最终落在 `tree.py:78`（经 `9d27a43`），不在 Task 8 内。
+5. **Task 10**：`ResilientSelector.__init__` 签名与计划不符——改为可注入 `weight_adjuster: AdaptiveWeightAdjuster | None = None`，并 `self._weight_adjuster = weight_adjuster or AdaptiveWeightAdjuster()`（`resilient_selector.py:301,315`），由 `9d27a43` 引入，使测试无需戳私有属性。`AdaptiveWeightAdjuster` 在同文件 `:716`，真实签名是 `record_outcome(route_type, success)`——**没有 `latency_ms` 参数**，反证 README 旧示例才是失实的一方。
+6. **Task 11**：README 行号全部漂移（计划 ~87 / 194 / 360 / 525 / 933 / 702 → 实际 132 / 287 / 455 / 621 / 962 / 973）；`:132` 额外加了「Wilson confidence intervals」；对齐脚注只加到 `docs/design/03-fta.md:126`，**未加到同样提及门数量的 `docs/design/00-overview.md:142`**。
+
 **Goal:** 收尾工作区全部未提交变更形成干净基线（P0），随后补齐三处"宣传与代码不符"——FTA 蒙特卡洛仿真、INHIBIT/PRIORITY_AND 门语义、AdaptiveWeightAdjuster 接线——并让 README 与代码一致（P1）。
 
 **Architecture:** P0 是纯 git 分组提交，不改内容。P1 全部在 Python 运行时：`FTAEvent` 加概率字段 → `FaultTree.validate()` 门语义校验 → 新建 `fta/monte_carlo.py` 仿真器 → `FTAEngine` 集成（execute 注入仿真 + analyze 组合割集）→ `ResilientSelector` 接线权重调整器 → README/docs 同步。静态布尔求值路径完全不动。
@@ -28,12 +84,12 @@
 
 **Files:** 无修改。
 
-- [ ] **Step 0.1: 确认 venv 存在**
+- [x] **Step 0.1: 确认 venv 存在**
 
 Run: `test -x python/.venv/bin/python && echo "venv ok" || echo "MISSING"`
 Expected: `venv ok`。若 MISSING：运行 `./scripts/start-local.sh runtime`（耗时数分钟属正常），完成后复验。
 
-- [ ] **Step 0.2: 确认当前基线状态**
+- [x] **Step 0.2: 确认当前基线状态**
 
 Run: `git status --short | wc -l && git log --oneline -3`
 Expected: 约 172 行变更（文档归档第一部分已在 b1f930b 提交）、最近提交含 `docs(spec): 生产化推进四阶段设计…`。
@@ -45,14 +101,14 @@ Expected: 约 172 行变更（文档归档第一部分已在 b1f930b 提交）�
 - Delete: `docs/adr/.gitkeep`、`CODE_QUALITY_REPORT_2026-04-20.md`、`PLAN.md`、`PROJECT_STATUS_EVALUATION.md`、`documentation/` 下 6 个已跟踪报告
 - Add: `docs/design/`（19 篇设计蒸馏文档）、`documentation/BUG_AUDIT_AND_FIX_REPORT_2026-09-07.md`、`documentation/WIKI_K8S_BENCHMARK_DESIGN.md`、`integrations/dify/`（新图标/main.py 等）
 
-- [ ] **Step 1.1: 处理疑似垃圾文件 `README 2.md`**
+- [x] **Step 1.1: 处理疑似垃圾文件 `README 2.md`**
 
 Run: `diff -q README.md "README 2.md"; echo "exit=$?"`
 Expected: `Files README.md and README 2.md differ` 或 `exit=0`（完全相同）。
 - 若 exit=0（纯重复副本）：`rm "README 2.md"`
 - 若不同：保留不动，在最终报告中向用户说明，不纳入提交。
 
-- [ ] **Step 1.2: 分组暂存并核对**
+- [x] **Step 1.2: 分组暂存并核对**
 
 ```bash
 git add README.md docs/zh/INDEX.md docs-site/sidebars.ts \
@@ -63,13 +119,13 @@ git diff --cached --stat | tail -5
 ```
 Expected: 暂存统计以删除的 6 份 documentation 报告、docs/design/ 新增结尾，无意外文件混入。
 
-- [ ] **Step 1.3: 提交**
+- [x] **Step 1.3: 提交**
 
 ```bash
 git commit -m "docs: 归档重组收尾（第二部分）——设计蒸馏文档、gotchas、Dify 集成与示例 README"
 ```
 
-- [ ] **Step 1.4: 验证**
+- [x] **Step 1.4: 验证**
 
 Run: `git status --short | grep -c '^ M\|^ D\|^??' || true`
 Expected: 计数明显减少（约剩 120 项）。
@@ -81,7 +137,7 @@ Expected: 计数明显减少（约剩 120 项）。
 - Delete: `internal/runtime/doc.go`、`scripts/migration/008_troubleshooting_solutions.*.sql`
 - Add: `pkg/event/nats_test.go`、`pkg/feedback/alerts_test.go`、`scripts/migration/011_troubleshooting_solutions.*.sql`、`scripts/migration/README.md`
 
-- [ ] **Step 2.1: 暂存并核对**
+- [x] **Step 2.1: 暂存并核对**
 
 ```bash
 git add internal/ pkg/ scripts/migration/
@@ -89,7 +145,7 @@ git diff --cached --stat | tail -5
 ```
 Expected: 暂存覆盖 internal/pkg 全部 Go 改动与迁移脚本 008→011 重编号，无 web/python 文件混入。
 
-- [ ] **Step 2.2: 提交**
+- [x] **Step 2.2: 提交**
 
 ```bash
 git commit -m "chore(go): 收尾未提交改动——CLI/registry/server 调整、迁移 008→011、新增 nats/alerts 测试"
@@ -101,7 +157,7 @@ git commit -m "chore(go): 收尾未提交改动——CLI/registry/server 调整�
 - Modify: `python/src/resolveagent/**`（agent/code_analysis/corpus/fta/mcp/memory/planning/rag/runtime/selector/skills/traffic 等）、`python/tests/**` 已跟踪测试
 - Add: `python/tests/unit/test_code_analysis_engine.py`、`test_file_ops.py`、`test_fta_evaluator.py`、`test_mcp_registry.py`、`test_mega_workflow_degrade.py`、`test_skill_executor_defaults.py`、`test_traffic.py`
 
-- [ ] **Step 3.1: 暂存并核对**
+- [x] **Step 3.1: 暂存并核对**
 
 ```bash
 git add python/
@@ -109,13 +165,13 @@ git diff --cached --stat | tail -5
 ```
 Expected: 仅 python/ 下文件。
 
-- [ ] **Step 3.2: 提交**
+- [x] **Step 3.2: 提交**
 
 ```bash
 git commit -m "chore(python): 收尾未提交改动与新增单元测试"
 ```
 
-- [ ] **Step 3.3: 提交后回归（确保基线是绿的）**
+- [x] **Step 3.3: 提交后回归（确保基线是绿的）**
 
 Run: `cd python && PYTHONPATH=src .venv/bin/python -m pytest tests/unit -q 2>&1 | tail -3`
 Expected: 全部通过（如出现失败，先修复再进入 P1——基线必须绿）。
@@ -127,7 +183,7 @@ Expected: 全部通过（如出现失败，先修复再进入 P1——基线必�
 - Delete: `web/package-lock.json`、`vibe_images/*.png`（5 张，已迁至 GTM/assets）
 - Add: `GTM/tokens.css`、`deploy/helm/resolveagent/templates/secret.yaml`、`web/src/assets/`、`benchmarks/`、`code-up.yaml`
 
-- [ ] **Step 4.1: 暂存并核对**
+- [x] **Step 4.1: 暂存并核对**
 
 ```bash
 git add web/ mobile/ GTM/ deploy/ configs/resolveagent.yaml Makefile \
@@ -136,7 +192,7 @@ git diff --cached --stat | tail -5
 ```
 Expected: vibe_images 5 张删除 + GTM 资源新增成对出现；无 docs/python 文件混入。
 
-- [ ] **Step 4.2: 提交**
+- [x] **Step 4.2: 提交**
 
 ```bash
 git commit -m "chore: 前端/移动端/GTM/部署与构建配置收尾（vibe_images 并入 GTM/assets）"
@@ -148,7 +204,7 @@ git commit -m "chore: 前端/移动端/GTM/部署与构建配置收尾（vibe_im
 - Modify: `.gitignore`（已含用户改动，追加两行）、`.impeccable/mocks/decision/payload.json`
 - Add: `.impeccable/mocks/decision/comp-*.png|*.prompt.txt`（6 个）
 
-- [ ] **Step 5.1: 追加 .gitignore 忽略规则**
+- [x] **Step 5.1: 追加 .gitignore 忽略规则**
 
 在 `.gitignore` 末尾追加（保留已有内容不动）：
 
@@ -160,7 +216,7 @@ git commit -m "chore: 前端/移动端/GTM/部署与构建配置收尾（vibe_im
 .hallmark/
 ```
 
-- [ ] **Step 5.2: 暂存并提交**
+- [x] **Step 5.2: 暂存并提交**
 
 ```bash
 git add .gitignore .impeccable/mocks/ .qoder/settings.local.json
@@ -168,7 +224,7 @@ git diff --cached --stat
 git commit -m "chore: 忽略本地工具会话产物，收尾已跟踪工具配置"
 ```
 
-- [ ] **Step 5.3: P0 验收**
+- [x] **Step 5.3: P0 验收**
 
 Run: `git status --short`
 Expected: 输出为空（基线干净）。若 `.impeccable/review/` 等仍显示，确认 Step 5.1 的规则已写入。
@@ -183,7 +239,7 @@ Expected: 输出为空（基线干净）。若 `.impeccable/review/` 等仍显�
 - Modify: `python/src/resolveagent/fta/tree.py`（`FTAEvent`，约 line 30-40）
 - Test: `python/tests/unit/test_fta_monte_carlo.py`（新建）
 
-- [ ] **Step 6.1: 写失败测试**
+- [x] **Step 6.1: 写失败测试**
 
 创建 `python/tests/unit/test_fta_monte_carlo.py`：
 
@@ -206,12 +262,12 @@ def test_fta_event_probability_accepts_value():
     assert event.probability == 0.3
 ```
 
-- [ ] **Step 6.2: 运行确认失败**
+- [x] **Step 6.2: 运行确认失败**
 
 Run: `cd python && PYTHONPATH=src .venv/bin/python -m pytest tests/unit/test_fta_monte_carlo.py -v`
 Expected: FAIL/ERROR — `ImportError: cannot import name 'MonteCarloSimulator'`（模块尚不存在）。
 
-- [ ] **Step 6.3: 最小实现**
+- [x] **Step 6.3: 最小实现**
 
 `python/src/resolveagent/fta/tree.py` 的 `FTAEvent` 中，在 `value: bool | None = None` 之后加一行：
 
@@ -232,12 +288,12 @@ class MonteCarloSimulator:
     """Monte Carlo estimator for the top-event probability of a fault tree."""
 ```
 
-- [ ] **Step 6.4: 运行确认通过**
+- [x] **Step 6.4: 运行确认通过**
 
 Run: `cd python && PYTHONPATH=src .venv/bin/python -m pytest tests/unit/test_fta_monte_carlo.py -v`
 Expected: 2 passed。
 
-- [ ] **Step 6.5: 提交**
+- [x] **Step 6.5: 提交**
 
 ```bash
 git add python/src/resolveagent/fta/tree.py python/src/resolveagent/fta/monte_carlo.py python/tests/unit/test_fta_monte_carlo.py
@@ -250,7 +306,7 @@ git commit -m "feat(fta): FTAEvent 增加 probability 概率字段"
 - Modify: `python/src/resolveagent/fta/tree.py`（`FaultTree` 类末尾，约 line 138 后）
 - Test: `python/tests/unit/test_fta_monte_carlo.py`（追加）
 
-- [ ] **Step 7.1: 写失败测试（追加到 test_fta_monte_carlo.py）**
+- [x] **Step 7.1: 写失败测试（追加到 test_fta_monte_carlo.py）**
 
 ```python
 def _tree_with_inhibit(conditioning: bool) -> FaultTree:
@@ -283,12 +339,12 @@ def test_validate_inhibit_without_conditioning_event_warns():
     assert "g1" in warnings[0]
 ```
 
-- [ ] **Step 7.2: 运行确认失败**
+- [x] **Step 7.2: 运行确认失败**
 
 Run: `cd python && PYTHONPATH=src .venv/bin/python -m pytest tests/unit/test_fta_monte_carlo.py -v -k validate`
 Expected: FAIL — `AttributeError: 'FaultTree' object has no attribute 'validate'`。
 
-- [ ] **Step 7.3: 实现**
+- [x] **Step 7.3: 实现**
 
 `python/src/resolveagent/fta/tree.py` 的 `FaultTree` 类内、`get_input_values` 方法之后追加：
 
@@ -317,12 +373,12 @@ Expected: FAIL — `AttributeError: 'FaultTree' object has no attribute 'validat
         return warnings
 ```
 
-- [ ] **Step 7.4: 运行确认通过**
+- [x] **Step 7.4: 运行确认通过**
 
 Run: `cd python && PYTHONPATH=src .venv/bin/python -m pytest tests/unit/test_fta_monte_carlo.py -v`
 Expected: 4 passed。
 
-- [ ] **Step 7.5: 提交**
+- [x] **Step 7.5: 提交**
 
 ```bash
 git add python/src/resolveagent/fta/tree.py python/tests/unit/test_fta_monte_carlo.py
@@ -335,7 +391,7 @@ git commit -m "feat(fta): FaultTree.validate 校验 INHIBIT 缺失 conditioning 
 - Modify: `python/src/resolveagent/fta/monte_carlo.py`（替换 Task 6 的占位）
 - Test: `python/tests/unit/test_fta_monte_carlo.py`（追加）
 
-- [ ] **Step 8.1: 写失败测试（追加）**
+- [x] **Step 8.1: 写失败测试（追加）**
 
 ```python
 def _two_input_tree(gate_type: GateType, p_a: float, p_b: float, **gate_kwargs) -> FaultTree:
@@ -422,12 +478,12 @@ def test_out_of_range_probability_raises():
         MonteCarloSimulator().simulate(_two_input_tree(GateType.OR, 1.5, 0.5))
 ```
 
-- [ ] **Step 8.2: 运行确认失败**
+- [x] **Step 8.2: 运行确认失败**
 
 Run: `cd python && PYTHONPATH=src .venv/bin/python -m pytest tests/unit/test_fta_monte_carlo.py -v -k "analytic or reproducible or priority or confidence or raises"`
 Expected: FAIL/ERROR — `simulate` 不存在。
 
-- [ ] **Step 8.3: 完整实现（替换 monte_carlo.py 全部内容）**
+- [x] **Step 8.3: 完整实现（替换 monte_carlo.py 全部内容）**
 
 ```python
 """Monte Carlo simulation for fault trees.
@@ -602,17 +658,17 @@ class MonteCarloSimulator:
 
 注意 `_resolve_input` 的 `gate_by_output` 参数类型注解写成 `dict[str, object]` 会过不了 mypy 语义，直接写 `dict[str, "FTAGate"]`：文件顶部加 `from typing import TYPE_CHECKING` + `if TYPE_CHECKING: from resolveagent.fta.tree import FTAGate`，注解用 `dict[str, "FTAGate"]`。
 
-- [ ] **Step 8.4: 运行确认通过**
+- [x] **Step 8.4: 运行确认通过**
 
 Run: `cd python && PYTHONPATH=src .venv/bin/python -m pytest tests/unit/test_fta_monte_carlo.py -v`
 Expected: 13 passed。
 
-- [ ] **Step 8.5: lint**
+- [x] **Step 8.5: lint**
 
 Run: `cd python && ruff check src/resolveagent/fta/monte_carlo.py tests/unit/test_fta_monte_carlo.py`
 Expected: 无告警。
 
-- [ ] **Step 8.6: 提交**
+- [x] **Step 8.6: 提交**
 
 ```bash
 git add python/src/resolveagent/fta/monte_carlo.py python/tests/unit/test_fta_monte_carlo.py
@@ -625,7 +681,7 @@ git commit -m "feat(fta): 蒙特卡洛仿真器——Bernoulli 采样、动态�
 - Modify: `python/src/resolveagent/fta/engine.py`
 - Test: `python/tests/unit/test_fta_engine.py`（追加）
 
-- [ ] **Step 9.1: 写失败测试（追加到 test_fta_engine.py）**
+- [x] **Step 9.1: 写失败测试（追加到 test_fta_engine.py）**
 
 文件顶部 import 区补充：
 
@@ -706,12 +762,12 @@ async def test_analyze_without_probabilities_skips_simulation():
     assert result.failure_probability is None
 ```
 
-- [ ] **Step 9.2: 运行确认失败**
+- [x] **Step 9.2: 运行确认失败**
 
 Run: `cd python && PYTHONPATH=src .venv/bin/python -m pytest tests/unit/test_fta_engine.py -v`
 Expected: 新增 4 个测试 FAIL/ERROR（`analyze` 不存在、`simulation` 键不存在）。
 
-- [ ] **Step 9.3: 实现 engine.py**
+- [x] **Step 9.3: 实现 engine.py**
 
 1) import 区（`from typing import ...` 之前）加：
 
@@ -812,17 +868,17 @@ class FTAAnalysisResult:
 
 注意：engine.py 中 `FaultTree` 目前在 `TYPE_CHECKING` 下导入；`analyze` 仅做类型注解使用，保持 TYPE_CHECKING 导入即可，无需改为运行时导入。
 
-- [ ] **Step 9.4: 运行确认通过（含既有测试无回归）**
+- [x] **Step 9.4: 运行确认通过（含既有测试无回归）**
 
 Run: `cd python && PYTHONPATH=src .venv/bin/python -m pytest tests/unit/test_fta_engine.py tests/unit/test_fta_monte_carlo.py tests/unit/test_fta_parser.py -v`
 Expected: 全部通过。
 
-- [ ] **Step 9.5: lint**
+- [x] **Step 9.5: lint**
 
 Run: `cd python && ruff check src/resolveagent/fta/engine.py`
 Expected: 无告警。
 
-- [ ] **Step 9.6: 提交**
+- [x] **Step 9.6: 提交**
 
 ```bash
 git add python/src/resolveagent/fta/engine.py python/tests/unit/test_fta_engine.py
@@ -835,7 +891,7 @@ git commit -m "feat(fta): FTAEngine 集成蒙特卡洛——execute 注入 simul
 - Modify: `python/src/resolveagent/selector/resilient_selector.py`（`ResilientConfig` line ~94、`__init__` line ~310、`_route_and_execute_core` line ~449/488/495、`_force_alternative_route` line ~642、`get_session_stats` line ~680）
 - Test: `python/tests/unit/test_resilient_selector_adaptive.py`（新建）
 
-- [ ] **Step 10.1: 写失败测试（新建文件）**
+- [x] **Step 10.1: 写失败测试（新建文件）**
 
 ```python
 """Unit tests for AdaptiveWeightAdjuster wiring in ResilientSelector."""
@@ -942,12 +998,12 @@ async def test_session_stats_expose_weights():
     assert stats["adaptive_weights"]["weights"]["skill"] > 1.0
 ```
 
-- [ ] **Step 10.2: 运行确认失败**
+- [x] **Step 10.2: 运行确认失败**
 
 Run: `cd python && PYTHONPATH=src .venv/bin/python -m pytest tests/unit/test_resilient_selector_adaptive.py -v`
 Expected: FAIL — `TypeError: ResilientConfig.__init__() got an unexpected keyword argument 'adaptive_weights_enabled'`（及 `_weight_adjuster` 属性不存在）。
 
-- [ ] **Step 10.3: 实现**
+- [x] **Step 10.3: 实现**
 
 1) `ResilientConfig`（line ~94）追加字段：
 
@@ -1011,17 +1067,17 @@ Expected: FAIL — `TypeError: ResilientConfig.__init__() got an unexpected keyw
         return stats
 ```
 
-- [ ] **Step 10.4: 运行确认通过（含既有 selector 测试无回归）**
+- [x] **Step 10.4: 运行确认通过（含既有 selector 测试无回归）**
 
 Run: `cd python && PYTHONPATH=src .venv/bin/python -m pytest tests/unit/test_resilient_selector_adaptive.py tests/unit/test_selector.py tests/unit/test_selector_complete.py tests/unit/test_mega_selector_modes.py -v`
 Expected: 全部通过。
 
-- [ ] **Step 10.5: lint**
+- [x] **Step 10.5: lint**
 
 Run: `cd python && ruff check src/resolveagent/selector/resilient_selector.py tests/unit/test_resilient_selector_adaptive.py`
 Expected: 无告警。
 
-- [ ] **Step 10.6: 提交**
+- [x] **Step 10.6: 提交**
 
 ```bash
 git add python/src/resolveagent/selector/resilient_selector.py python/tests/unit/test_resilient_selector_adaptive.py
@@ -1033,7 +1089,7 @@ git commit -m "feat(selector): 接线 AdaptiveWeightAdjuster——会话级 reco
 **Files:**
 - Modify: `README.md`（4 处）、`docs/zh/` 下含失实表述的文档
 
-- [ ] **Step 11.1: 修正 README 差异化表格（约 line 87）**
+- [x] **Step 11.1: 修正 README 差异化表格（约 line 87）**
 
 把：
 ```
@@ -1044,7 +1100,7 @@ git commit -m "feat(selector): 接线 AdaptiveWeightAdjuster——会话级 reco
 | **Formal fault-tree reasoning** | FTA engine with five gate types (AND/OR/VOTING/INHIBIT/PRIORITY_AND), minimal cut sets, and Monte-Carlo simulation with dynamic ordering semantics for PRIORITY_AND. |
 ```
 
-- [ ] **Step 11.2: 修正"十二大亮点"表第 8 行（约 line 194）**
+- [x] **Step 11.2: 修正"十二大亮点"表第 8 行（约 line 194）**
 
 把：
 ```
@@ -1055,7 +1111,7 @@ git commit -m "feat(selector): 接线 AdaptiveWeightAdjuster——会话级 reco
 | 8 | **FTA Engine** | `fta/` | 故障树分析：五种门类型（PRIORITY_AND 带动态时序语义）+ 最小割集 + 蒙特卡洛仿真 |
 ```
 
-- [ ] **Step 11.3: 修正 FTA 深潜代码示例（约 line 360-370）**
+- [x] **Step 11.3: 修正 FTA 深潜代码示例（约 line 360-370）**
 
 把代码块：
 ```python
@@ -1081,7 +1137,7 @@ result = await engine.analyze(tree)   # MOCUS 最小割集 + 蒙特卡洛仿真
 # result.failure_probability → top 事件失效概率（基础事件需设置 probability）
 ```
 
-- [ ] **Step 11.4: 修正"Adaptive Selector"节示例（约 line 525-541）**
+- [x] **Step 11.4: 修正"Adaptive Selector"节示例（约 line 525-541）**
 
 把示例代码：
 ```python
@@ -1112,7 +1168,7 @@ weights = stats["adaptive_weights"]["weights"]
 # → {"skill": 1.05, "rag": 0.95, ...}
 ```
 
-- [ ] **Step 11.5: 更新 Metrics 表（约 line 933）**
+- [x] **Step 11.5: 更新 Metrics 表（约 line 933）**
 
 把：
 ```
@@ -1123,12 +1179,12 @@ weights = stats["adaptive_weights"]["weights"]
 | `resolveagent_adaptive_selector_weights` | 🔄 自适应选择器权重（经 ResilientSelector.get_session_stats 暴露，by route_type） |
 ```
 
-- [ ] **Step 11.6: 更新 Feature Status 测试计数（约 line 702）**
+- [x] **Step 11.6: 更新 Feature Status 测试计数（约 line 702）**
 
 Run: `cd python && PYTHONPATH=src .venv/bin/python -m pytest tests/unit --collect-only -q | tail -1`
 用输出中的真实用例数替换 `> **v0.3.0** | 核心组件经全面修复与测试加固（Python 测试 432+ 用例全绿）` 中的 `432+`（改为新计数取整，如 `560+`）。
 
-- [ ] **Step 11.7: 排查并修正中文文档同源失实表述**
+- [x] **Step 11.7: 排查并修正中文文档同源失实表述**
 
 Run: `grep -rn "六种门\|蒙特卡洛" docs/zh/ docs/design/ --include="*.md" | head -20`
 对每处命中：
@@ -1136,12 +1192,12 @@ Run: `grep -rn "六种门\|蒙特卡洛" docs/zh/ docs/design/ --include="*.md" 
 - 声称"蒙特卡洛仿真"处 → 核对与 `fta/monte_carlo.py` 实现一致（Bernoulli 采样 + PRIORITY_AND 时序 + Wilson 区间）；若该文档此前描述了不存在的 API（如 `gates = [AND, OR, NOT, ...]`），同步修正为实际 API。
 设计蒸馏文档（docs/design/）frontmatter 带 source_commit 锚点，修正后在文末追加一行 `> 2026-09-09: 门类型与蒙特卡洛表述已对齐 fta/monte_carlo.py 实现。`
 
-- [ ] **Step 11.8: 验证无残留失实表述**
+- [x] **Step 11.8: 验证无残留失实表述**
 
 Run: `grep -rn "六种门" README.md docs/ | wc -l`
 Expected: `0`。
 
-- [ ] **Step 11.9: 提交**
+- [x] **Step 11.9: 提交**
 
 ```bash
 git add README.md docs/
@@ -1150,22 +1206,22 @@ git commit -m "docs: README/中文文档与 FTA 蒙特卡洛、门语义、自�
 
 ### Task 12: P1 全量验收
 
-- [ ] **Step 12.1: Python 全量单测**
+- [x] **Step 12.1: Python 全量单测**
 
 Run: `cd python && PYTHONPATH=src .venv/bin/python -m pytest tests/unit -q 2>&1 | tail -3`
 Expected: 全部通过。
 
-- [ ] **Step 12.2: Python lint**
+- [x] **Step 12.2: Python lint**
 
 Run: `cd python && ruff check .`
 Expected: 无告警。
 
-- [ ] **Step 12.3: Go 侧无回归抽查（P1 未触碰 Go，快速确认）**
+- [x] **Step 12.3: Go 侧无回归抽查（P1 未触碰 Go，快速确认）**
 
 Run: `go build ./... && go test ./pkg/... 2>&1 | tail -5`
 Expected: 编译通过、测试通过。
 
-- [ ] **Step 12.4: 对照 spec 验收清单核对**
+- [x] **Step 12.4: 对照 spec 验收清单核对**
 
 打开 `docs/superpowers/specs/2026-09-09-production-hardening-design.md` 第 4.1–4.6 节逐条核对：
 - FTAEvent.probability 存在 ✓（Task 6）
@@ -1175,7 +1231,7 @@ Expected: 编译通过、测试通过。
 - 权重接线含开关、稳定排序、get_session_stats ✓（Task 10）
 - README/docs 一致 ✓（Task 11）
 
-- [ ] **Step 12.5: 收尾提交（如有零星修正）**
+- [x] **Step 12.5: 收尾提交（如有零星修正）**
 
 Run: `git status --short`
 若有未提交文件，归入相应提交；预期为空。P1 完成，可进入 P2（另行出计划）。

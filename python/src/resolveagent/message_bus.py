@@ -95,7 +95,8 @@ class AgentMessageBus:
 
     def __init__(self, enable_logging: bool = True) -> None:
         self._subscriptions: dict[str, list[Subscription]] = defaultdict(list)
-        self._pending_requests: dict[str, asyncio.Future[AgentMessage]] = {}
+        # correlation_id -> (future, 请求消息 id)；投递时跳过请求自身，避免请求被当成自己的响应
+        self._pending_requests: dict[str, tuple[asyncio.Future[AgentMessage], str]] = {}
         self._enable_logging = enable_logging
 
         # 消息队列
@@ -180,10 +181,10 @@ class AgentMessageBus:
                     },
                 )
 
-        # 处理请求-响应模式
+        # 处理请求-响应模式（请求自身不结算自己的 future）
         if message.correlation_id and message.correlation_id in self._pending_requests:
-            future = self._pending_requests.pop(message.correlation_id)
-            if not future.done():
+            future, request_id = self._pending_requests[message.correlation_id]
+            if message.id != request_id and not future.done():
                 future.set_result(message)
 
     async def subscribe(
@@ -282,7 +283,7 @@ class AgentMessageBus:
 
         # 创建 Future 等待响应
         future: asyncio.Future[AgentMessage] = asyncio.Future()
-        self._pending_requests[correlation_id] = future
+        self._pending_requests[correlation_id] = (future, message.id)
 
         # 订阅响应 (reply_to 频道)
         reply_channel = message.reply_to or f"{sender}.reply"

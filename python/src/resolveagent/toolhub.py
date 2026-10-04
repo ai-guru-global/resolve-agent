@@ -454,7 +454,8 @@ class DiscoveryService:
             if kw in name_lower:
                 found.append(cap)
 
-        return found if found else [ToolCapability.UNKNOWN]
+        # 同名关键词可能命中同一能力（如 "web_search" 命中 search 与 web），去重保序
+        return list(dict.fromkeys(found)) if found else [ToolCapability.UNKNOWN]
 
     def _str_to_capability(self, s: str) -> ToolCapability:
         """字符串转能力枚举."""

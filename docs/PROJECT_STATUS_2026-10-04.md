@@ -758,7 +758,7 @@ QUALITY GATE PASSED
 - ~~§5.1 的占位实现~~ → **§10.7 已解决 2 处，§10.9 又解决/收敛 3 处**：`planning.py` `_execute_action`、`troubleshoot.py` `_execute_command`、`agent/base.py` `reply()`、`rag/index/milvus.py` delete-by-filter 均已真实接线；`runtime/engine.py` `execute_workflow` 加诚实门（查无此 id 拒绝执行，树→图转换未实现前如实披露）。**仍开放**：`registry_client.py` `watch_registry`（依赖 Go 服务端尚不存在的 WebSocket/SSE 端点，单侧实现属对空连线伪造，待架构决策）；`api/__init__.py` 仍是 21 行空壳。
 - **ARCHITECTURE_IMPROVEMENTS 的 3 项「实现完成，未接线」**（Memory 三层架构、AgentMessageBus、ToolHub）：单测缺口已由 §10.7 补齐（`2180915`），该文档 `:168` 的「完整单测覆盖」宣称自此成立；但 `MegaAgent` / `ContextEnricher` / Skill 执行链里**仍无任何生产调用点**，接线是独立工作量。
 - ~~`ci.yaml` 内部 action 版本漂移（C3）、`hack/*.sh` 缺执行位（D4）~~ → **§10.7 已解决**（`ff800a1`、`e19941d`）。
-- §3.2 的测试分布缺口**大部分收敛**（§10.7、§10.8）：Python 零测试模块 7 个中 5 个已覆盖（toolhub、message_bus、telemetry、store 客户端、llm 纯逻辑层），余下 2 个属刻意不测——`api/` 为 21 行空壳、`v1/` 为生成桩（仓库 lint/mypy 均排除生成物）；Web 12 个测试文件无一测真实后端、6 个 code-analysis 方法永远走 mock 等缺口仍在；§5.3 的依赖代差（vite 8 配 vitest 2.x）未动。
+- §3.2 的测试分布缺口**大部分收敛**（§10.7、§10.8）：Python 零测试模块 7 个中 5 个已覆盖（toolhub、message_bus、telemetry、store 客户端、llm 纯逻辑层），余下 2 个属刻意不测——`api/` 为 21 行空壳、`v1/` 为生成桩（仓库 lint/mypy 均排除生成物）；Web 12 个测试文件无一测真实后端、6 个 code-analysis 方法永远走 mock 等缺口仍在；~~§5.3 的依赖代差（vite 8 配 vitest 2.x）~~ → **§10.10 已解决**（vitest 升至 5.0.3）。
 - `pkg/event/nats.go`（可用的 JetStream 总线，零调用方）与 `AgentExecutionServer`（指向不存在的服务）的接线（C6/C7）。
 - **覆盖率棘轮的工具链敏感性**（D1）：Go 阈值 17.0% 对实测 17.1% 只有 0.1pt 余量，且该值随 Go 版本剧变（go1.25 → 17.5%，go1.27 → 32.2%）。**任何 Go minor 升级都必须重新标定基线**，否则棘轮会静默失效（阈值远低于实测 = 门禁形同虚设）。这也是 PR #43（`golang:1.27-alpine`）应搁置的原因。
 
@@ -820,3 +820,20 @@ QUALITY GATE PASSED
 | `registry_client.py` `watch_registry` | **本地不可修，维持** | — | 真实实现需要 Go 服务端提供 WebSocket/SSE 变更流端点，**该端点不存在**。客户端单侧实现等于对空连线伪造。待服务端补端点后接线 |
 
 **本轮方法论**：占位的"修复"不以代码动过为准，而以**每个执行路径的输出都讲真话**为准——能真实实现的实现（BaseAgent、milvus），不能实现的把伪造变成披露（engine），依赖外部不存在的就不做（watch_registry）。
+
+### 10.10 追加轮四：依赖代差消除（2026-10-04）
+
+§5.3 记录的「vite 8 配 vitest 2.x」跨三个大版本的依赖代差已解决（`b39fea9`）：vitest 2.1.9 → **5.0.3**，其官方 peerDeps 明确支持 `vite ^6.4 || ^7 || ^8`。
+
+**验证**（升级前后逐项对照）：
+
+| 检查 | 结果 |
+|---|---|
+| `pnpm test` | 12 文件 **113 项全过**，与升级前一致（静态 109 个 `it/test` 块，`it.each` 展开后 113——**无静默丢测**） |
+| `pnpm build` | 1.23s 成功 |
+| `pnpm lint` | 0 errors（13 warnings 为既有存量，非本次引入） |
+| 完整门禁 | 10 Passed / 0 Failed / 0 Warnings |
+
+**升级过程中发现并修复的附带缺陷**：`pnpm add` 会向 `web/pnpm-workspace.yaml` 写入占位垃圾值 `allowBuilds: esbuild: set this to true or false`（pnpm 11 的构建许可询问机制）——该值若被提交，CI 的 `pnpm install --frozen-lockfile` 会直接失败。已定为 `allowBuilds: esbuild: true` 并保留 `onlyBuiltDependencies` 兼容 pnpm 9/10；CI 与本地同为 pnpm 11.6.0，键名被正常识别。
+
+**至此 §10.6 债务清单中所有本地可操作项已全部关闭**。剩余项均需授权（push/PR/密钥）或属架构决策（三模块生产接线、watch_registry 服务端端点、Web 真实后端测试、nats.go/AgentExecutionServer 接线）。

@@ -22,11 +22,13 @@ class BaseAgent:
         name: str,
         model_id: str | None = None,
         system_prompt: str = "",
+        llm_provider: Any | None = None,
         **kwargs: Any,
     ) -> None:
         self.name = name
         self.model_id = model_id
         self.system_prompt = system_prompt
+        self._llm_provider = llm_provider
         self._config = kwargs
         self._memory: list[dict[str, Any]] = []
 
@@ -35,18 +37,28 @@ class BaseAgent:
     async def reply(self, message: dict[str, Any]) -> dict[str, Any]:
         """Process a message and generate a reply.
 
-        Args:
-            message: Input message with 'role' and 'content' fields.
-
-        Returns:
-            Response message dict.
+        With an injected ``llm_provider`` the reply comes from a real chat
+        completion; without one the response is an explicitly labelled echo
+        so callers can tell the difference.
         """
-        # NOTE: Full LLM integration requires AgentScope>=1.0 and a configured provider.
-        #       This is a placeholder echo response for development/testing.
-        return {
-            "role": "assistant",
-            "content": f"[{self.name}] Received: {message.get('content', '')}",
-        }
+        if self._llm_provider is None:
+            return {
+                "role": "assistant",
+                "content": (f"[{self.name}] [echo: no LLM provider configured] {message.get('content', '')}"),
+            }
+
+        from resolveagent.llm.provider import ChatMessage
+
+        response = await self._llm_provider.chat(
+            messages=[
+                ChatMessage(
+                    role=message.get("role", "user"),
+                    content=str(message.get("content", "")),
+                )
+            ],
+            model=self.model_id,
+        )
+        return {"role": "assistant", "content": response.content}
 
     def add_memory(self, message: dict[str, Any]) -> None:
         """Add a message to agent memory."""

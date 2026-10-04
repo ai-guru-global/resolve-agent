@@ -10,7 +10,6 @@ from resolveagent.agent.base import BaseAgent
 if TYPE_CHECKING:
     from resolveagent.code_analysis.engine import StaticAnalysisEngine
     from resolveagent.fta.engine import FTAEngine
-    from resolveagent.llm.provider import LLMProvider
     from resolveagent.rag.pipeline import RAGPipeline
     from resolveagent.selector.protocol import SelectorProtocol
     from resolveagent.selector.selector import RouteDecision
@@ -47,7 +46,8 @@ class MegaAgent(BaseAgent):
         self.selector_strategy = selector_strategy
         self.selector_mode: SelectorMode = selector_mode
         self._selector_instance: SelectorProtocol | None = None
-        self._llm_provider: LLMProvider | None = None
+        # _llm_provider 由 BaseAgent.__init__ 设为 None；此处不覆盖，
+        # 使经构造参数注入的 provider 可贯通到 _get_llm_provider
         self._rag_pipeline: RAGPipeline | None = None
         self._skill_executor: SkillExecutor | None = None
         self._fta_engine: FTAEngine | None = None

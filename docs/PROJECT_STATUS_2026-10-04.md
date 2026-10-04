@@ -758,7 +758,7 @@ QUALITY GATE PASSED
 - ~~§5.1 的占位实现~~ → **§10.7 已解决 2/6**：`planning.py` `_execute_action` 与 `troubleshoot.py` `_execute_command` 已接线（`4a7db02`、`ba90230`）。**仍保留的 4 处占位**：`agent/base.py:45`（基类 `reply()` 为 echo）、`registry_client.py:564-582`（`watch_registry` 不产出事件）、`runtime/engine.py:609`（无法按名加载 workflow）、`rag/index/milvus.py:397`（delete-by-expr 不生效）。`api/__init__.py` 仍是 27 行空壳。
 - **ARCHITECTURE_IMPROVEMENTS 的 3 项「实现完成，未接线」**（Memory 三层架构、AgentMessageBus、ToolHub）：单测缺口已由 §10.7 补齐（`2180915`），该文档 `:168` 的「完整单测覆盖」宣称自此成立；但 `MegaAgent` / `ContextEnricher` / Skill 执行链里**仍无任何生产调用点**，接线是独立工作量。
 - ~~`ci.yaml` 内部 action 版本漂移（C3）、`hack/*.sh` 缺执行位（D4）~~ → **§10.7 已解决**（`ff800a1`、`e19941d`）。
-- §3.2 的测试分布缺口**部分收窄**：Python 零测试模块 7 个中 2 个已覆盖（toolhub、message_bus），其余 5 个与 Web 12 个测试文件无一测真实后端、6 个 code-analysis 方法永远走 mock 等缺口仍在；§5.3 的依赖代差（vite 8 配 vitest 2.x）未动。
+- §3.2 的测试分布缺口**大部分收敛**（§10.7、§10.8）：Python 零测试模块 7 个中 5 个已覆盖（toolhub、message_bus、telemetry、store 客户端、llm 纯逻辑层），余下 2 个属刻意不测——`api/` 为 21 行空壳、`v1/` 为生成桩（仓库 lint/mypy 均排除生成物）；Web 12 个测试文件无一测真实后端、6 个 code-analysis 方法永远走 mock 等缺口仍在；§5.3 的依赖代差（vite 8 配 vitest 2.x）未动。
 - `pkg/event/nats.go`（可用的 JetStream 总线，零调用方）与 `AgentExecutionServer`（指向不存在的服务）的接线（C6/C7）。
 - **覆盖率棘轮的工具链敏感性**（D1）：Go 阈值 17.0% 对实测 17.1% 只有 0.1pt 余量，且该值随 Go 版本剧变（go1.25 → 17.5%，go1.27 → 32.2%）。**任何 Go minor 升级都必须重新标定基线**，否则棘轮会静默失效（阈值远低于实测 = 门禁形同虚设）。这也是 PR #43（`golang:1.27-alpine`）应搁置的原因。
 
@@ -792,3 +792,18 @@ QUALITY GATE PASSED
 两处新模块缺陷均以「先写测试暴露 → 修模块 → 测试锁定行为」的方式处理，非测试迁就实现。`message_bus.py` 的 `_pending_requests` 类型由 `dict[str, Future]` 改为 `dict[str, tuple[Future, str]]`，全仓无其他引用（该模块零调用方），无外部影响面。
 
 **本轮仍未处理**（需授权或属架构级，见 §10.6）：push 与 PR 处置、密钥轮换、其余 4 处占位、三模块生产接线、Web 测试缺口、依赖代差、nats.go / AgentExecutionServer 接线。
+
+### 10.8 追加轮二：零测试模块继续收敛（2026-10-04）
+
+用户指示「继续推进」后，把 §3.2 清单里剩余可本地补测的模块全部覆盖，2 个提交，门禁 10/0/0。
+
+| 模块 | 提交 | 内容 |
+|---|---|---|
+| `store/` 客户端 | `a7c76da` | 18 项离线单测（`httpx.MockTransport`，零网络）。顺带两处小改动：`BaseStoreClient` 新增 `transport` 注入点；**地址规范化下沉为客户端不变量**（剥 scheme 与尾斜杠）——`7b72906` 曾在 `http_server` 调用点修过 `http://http://...` 拼接缺陷，现调用方再误传完整 URL 也不会复发，3 组参数化回归锁定 |
+| `llm/` + `telemetry/` | `b03199d` | 21 项单测：provider 抽象契约与 pydantic 模型、`ModelRegistry` 工厂分发（kimi/mimo 默认 base_url 锁定、未知 provider 回落）、openai_compat 初始化行为；tracing 初始化/降级/shutdown 全路径（模块全局经 fixture 隔离） |
+
+**§3.2 零测试模块清单最终裁定**：7 项中 5 项已覆盖（toolhub、message_bus、telemetry、store、llm）；`api/` 为 21 行空壳、`v1/` 为生成桩（仓库 lint/mypy 均排除生成物），**刻意不测**——待 `api/` 有真实内容时随实现补测。
+
+单测总数：382（基线）→ 426（§10.7）→ **465**（本节）。Python 覆盖率随之上行，阈值 42.5% 余量扩大。
+
+**本节仍未处理**（需授权或属架构级）：push 与 PR 处置、密钥轮换、其余 4 处占位、三模块生产接线、Web 测试缺口、依赖代差、nats.go / AgentExecutionServer 接线。

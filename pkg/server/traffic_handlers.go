@@ -16,7 +16,7 @@ func (s *Server) handleListTrafficCaptures(w http.ResponseWriter, _ *http.Reques
 	ctx := context.Background()
 	captures, total, err := s.trafficCaptureRegistry.List(ctx, registry.ListOptions{Limit: 100})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "list traffic captures")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"captures": captures, "total": total})
@@ -33,7 +33,7 @@ func (s *Server) handleCreateTrafficCapture(w http.ResponseWriter, r *http.Reque
 		capture.ID = generateID()
 	}
 	if err := s.trafficCaptureRegistry.Create(ctx, &capture); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "create traffic capture")
 		return
 	}
 	writeJSON(w, http.StatusCreated, capture)
@@ -44,7 +44,7 @@ func (s *Server) handleGetTrafficCapture(w http.ResponseWriter, r *http.Request)
 	id := r.PathValue("id")
 	capture, err := s.trafficCaptureRegistry.Get(ctx, id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "get traffic capture")
 		return
 	}
 	writeJSON(w, http.StatusOK, capture)
@@ -56,7 +56,7 @@ func (s *Server) handleUpdateTrafficCapture(w http.ResponseWriter, r *http.Reque
 
 	capture, err := s.trafficCaptureRegistry.Get(ctx, id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "get traffic capture")
 		return
 	}
 
@@ -80,7 +80,7 @@ func (s *Server) handleUpdateTrafficCapture(w http.ResponseWriter, r *http.Reque
 	}
 
 	if err := s.trafficCaptureRegistry.Update(ctx, capture); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "update traffic capture")
 		return
 	}
 	writeJSON(w, http.StatusOK, capture)
@@ -90,7 +90,7 @@ func (s *Server) handleDeleteTrafficCapture(w http.ResponseWriter, r *http.Reque
 	ctx := context.Background()
 	id := r.PathValue("id")
 	if err := s.trafficCaptureRegistry.Delete(ctx, id); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "delete traffic capture")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"deleted": id})
@@ -114,7 +114,7 @@ func (s *Server) handleAddTrafficRecords(w http.ResponseWriter, r *http.Request)
 		}
 	}
 	if err := s.trafficCaptureRegistry.AddRecords(ctx, body.Records); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "add traffic records")
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"added": len(body.Records)})
@@ -125,7 +125,7 @@ func (s *Server) handleListTrafficRecords(w http.ResponseWriter, r *http.Request
 	captureID := r.PathValue("id")
 	records, total, err := s.trafficCaptureRegistry.ListRecords(ctx, captureID, registry.ListOptions{Limit: 500})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "list traffic records")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"records": records, "total": total})
@@ -137,7 +137,7 @@ func (s *Server) handleListTrafficGraphs(w http.ResponseWriter, _ *http.Request)
 	ctx := context.Background()
 	graphs, total, err := s.trafficGraphRegistry.List(ctx, registry.ListOptions{Limit: 100})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "list traffic graphs")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"graphs": graphs, "total": total})
@@ -154,7 +154,7 @@ func (s *Server) handleCreateTrafficGraph(w http.ResponseWriter, r *http.Request
 		graph.ID = generateID()
 	}
 	if err := s.trafficGraphRegistry.Create(ctx, &graph); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "create traffic graph")
 		return
 	}
 	writeJSON(w, http.StatusCreated, graph)
@@ -165,7 +165,7 @@ func (s *Server) handleGetTrafficGraph(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	graph, err := s.trafficGraphRegistry.Get(ctx, id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "get traffic graph")
 		return
 	}
 	writeJSON(w, http.StatusOK, graph)
@@ -175,7 +175,7 @@ func (s *Server) handleDeleteTrafficGraph(w http.ResponseWriter, r *http.Request
 	ctx := context.Background()
 	id := r.PathValue("id")
 	if err := s.trafficGraphRegistry.Delete(ctx, id); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "delete traffic graph")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"deleted": id})
@@ -187,7 +187,7 @@ func (s *Server) handleAnalyzeTrafficGraph(w http.ResponseWriter, r *http.Reques
 
 	graph, err := s.trafficGraphRegistry.Get(ctx, id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		writeRegistryError(w, err, s.logger, "get traffic graph")
 		return
 	}
 
@@ -203,14 +203,16 @@ func (s *Server) handleAnalyzeTrafficGraph(w http.ResponseWriter, r *http.Reques
 	runtimeURL := fmt.Sprintf("%s/traffic/report", s.runtimeClient.baseURL)
 	httpReq, err := http.NewRequestWithContext(ctx, "POST", runtimeURL, bytes.NewReader(bodyBytes))
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		s.logger.Error("build traffic analysis request", "error", err)
+		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
 
 	resp, err := s.runtimeClient.httpClient.Do(httpReq)
 	if err != nil {
-		writeError(w, http.StatusBadGateway, fmt.Sprintf("runtime unavailable: %v", err))
+		s.logger.Error("traffic analysis upstream call failed", "error", err)
+		writeError(w, http.StatusBadGateway, "runtime unavailable")
 		return
 	}
 	defer func() { _ = resp.Body.Close() }()
@@ -230,7 +232,7 @@ func (s *Server) handleUpdateTrafficGraph(w http.ResponseWriter, r *http.Request
 	}
 	graph.ID = id
 	if err := s.trafficGraphRegistry.Update(ctx, &graph); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeRegistryError(w, err, s.logger, "update traffic graph")
 		return
 	}
 	writeJSON(w, http.StatusOK, graph)

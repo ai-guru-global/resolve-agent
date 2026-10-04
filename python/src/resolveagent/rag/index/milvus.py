@@ -372,7 +372,7 @@ class MilvusStore(VectorStore):
         Args:
             collection_name: Target collection.
             ids: List of IDs to delete.
-            filters: Metadata filters for deletion.
+            filters: Metadata filters for deletion, e.g. ``{"env": "prod"}``.
 
         Returns:
             Number of deleted entries.
@@ -385,18 +385,27 @@ class MilvusStore(VectorStore):
         try:
             if ids:
                 # Delete by IDs
-                self._client.delete(
+                result = self._client.delete(
                     collection_name=collection_name,
                     ids=ids,
                 )
-                logger.info(f"Deleted {len(ids)} entries from {collection_name}")
-                return len(ids)
+                deleted = int(result.get("delete_count", len(ids))) if isinstance(result, dict) else len(ids)
+                logger.info(f"Deleted {deleted} entries from {collection_name}")
+                return deleted
 
-            elif filters:
-                # Delete by filter (not directly supported in MilvusClient, use expr)
-                # This is a placeholder - actual implementation would use delete with expr
-                logger.warning(f"Delete by filter not yet implemented for {collection_name}")
-                return 0
+            if filters:
+                # MilvusClient.delete accepts a filter expression
+                expr = _build_filter_expression(filters)
+                result = self._client.delete(
+                    collection_name=collection_name,
+                    filter=expr,
+                )
+                deleted = int(result.get("delete_count", 0)) if isinstance(result, dict) else 0
+                logger.info(
+                    f"Deleted {deleted} entries from {collection_name} by filter",
+                    extra={"filter": expr},
+                )
+                return deleted
 
             return 0
 

@@ -88,7 +88,7 @@ fi
 GO_MIN=$(baseline_value "minimum_go_coverage")
 echo -n "  [go-coverage>=${GO_MIN}%] "
 if go test -count=1 -coverprofile=/tmp/gocover.out ./... > /dev/null 2>&1; then
-    COVERAGE=$(go tool cover -func=/tmp/gocover.out 2>/dev/null | grep total | awk '{print $3}' | sed 's/%//')
+    COVERAGE=$(go tool cover -func=/tmp/gocover.out 2>/dev/null | grep total | awk '{print $3}' | sed 's/%//' || true)
     if [ -n "$COVERAGE" ] \
         && python3 -c "import sys; sys.exit(0 if float('$COVERAGE') >= float('$GO_MIN') else 1)"; then
         echo -e "${GREEN}${COVERAGE}%${NC}"
@@ -116,8 +116,10 @@ if [ -d "$PYTHON_DIR" ]; then
         # 门禁追求快而确定。阈值来自 coverage-baseline.json，只升不降。
         PY_MIN=$(baseline_value "minimum_python_coverage")
         echo -n "  [py-test+coverage>=${PY_MIN}%] "
-        PY_OUT=$(cd "$PYTHON_DIR" && uv run pytest tests/unit -q --tb=short --cov=resolveagent --cov-report=term 2>&1)
-        PY_COV=$(echo "$PY_OUT" | grep -E "^TOTAL" | awk '{print $NF}' | sed 's/%//')
+        # || true：pytest 非零退出（有用例失败）不能让 set -e 直接杀死脚本，
+        # 否则下面 else 分支的 "tests failed" 报告永远不可达。
+        PY_OUT=$(cd "$PYTHON_DIR" && uv run pytest tests/unit -q --tb=short --cov=resolveagent --cov-report=term 2>&1 || true)
+        PY_COV=$(echo "$PY_OUT" | grep -E "^TOTAL" | awk '{print $NF}' | sed 's/%//' || true)
         if echo "$PY_OUT" | grep -qE "^[0-9]+ passed" \
             && [ -n "$PY_COV" ] \
             && python3 -c "import sys; sys.exit(0 if float('$PY_COV') >= float('$PY_MIN') else 1)"; then

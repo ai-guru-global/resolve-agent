@@ -62,7 +62,7 @@ const subDocs: DocSection[] = [
     id: 'fta-engine',
     title: 'FTA 引擎',
     icon: GitBranch,
-    description: '故障树分析引擎，支持 AND/OR/NOT/VOTING 等门类型与蒙特卡洛仿真',
+    description: '故障树分析引擎，支持 AND/OR/VOTING/INHIBIT/PRIORITY_AND 五种门类型与蒙特卡洛仿真',
     href: '/architecture/fta-engine',
   },
   {
@@ -120,7 +120,7 @@ const innovations = [
   },
   {
     title: 'FTA 故障树分析',
-    description: '复杂多步骤故障诊断，支持 AND/OR/NOT/VOTING/INHIBIT/PRIORITY_AND 六种门类型，最小割集计算与蒙特卡罗仿真',
+    description: '复杂多步骤故障诊断，支持 AND/OR/VOTING/INHIBIT/PRIORITY_AND 五种门类型，最小割集计算与蒙特卡罗仿真',
     icon: GitBranch,
     color: 'text-purple-400',
     bgColor: 'bg-purple-500/10 border-purple-500/20',
@@ -482,7 +482,7 @@ function CoordDiagram() {
         <rect x={60} y={294} width={160} height={72} rx="12" fill={COLORS.beige} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
         <text x={140} y={318} textAnchor="middle" fill={COLORS.text} fontSize="12" fontWeight="600">FTA Engine</text>
         <text x={140} y={335} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">Fault Tree Analysis</text>
-        <text x={140} y={350} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">AND/OR/NOT/VOTING Gates</text>
+        <text x={140} y={350} textAnchor="middle" fill={COLORS.textSecondary} fontSize="10">AND/OR/VOTING Gates</text>
 
         {/* Skills */}
         <rect x={260} y={294} width={160} height={72} rx="12" fill={COLORS.green} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
@@ -929,7 +929,7 @@ function FtaAIOpsFlowDiagram() {
 
         <rect x={210} y={56} width={160} height={64} rx="10" fill={COLORS.green} stroke={COLORS.stroke} strokeWidth="2" filter="url(#shadow-soft)" />
         <text x={290} y={78} textAnchor="middle" fill={COLORS.text} fontSize="11" fontWeight="600">② 建树分析</text>
-        <text x={290} y={96} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">AND/OR/NOT/VOTING</text>
+        <text x={290} y={96} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">AND/OR/VOTING</text>
         <text x={290} y={110} textAnchor="middle" fill={COLORS.textSecondary} fontSize="9">故障树构造</text>
 
         <Arrow x1={370} y1={88} x2={400} y2={88} />
@@ -1052,7 +1052,7 @@ export default function ArchitecturePage() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="rounded-md bg-amber-500/5 border border-amber-500/20 p-3">
               <p className="text-xs font-medium text-amber-600 dark:text-amber-400 mb-1">FTA Engine</p>
-              <p className="text-xs text-muted-foreground">故障树分析，支持 AND/OR/NOT/VOTING/INHIBIT/PRIORITY_AND 门类型，最小割集计算，蒙特卡洛仿真</p>
+              <p className="text-xs text-muted-foreground">故障树分析，支持 AND/OR/VOTING/INHIBIT/PRIORITY_AND 五种门类型，最小割集计算，蒙特卡洛仿真</p>
             </div>
             <div className="rounded-md bg-emerald-500/5 border border-emerald-500/20 p-3">
               <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mb-1">Skills System</p>
@@ -1210,8 +1210,8 @@ export default function ArchitecturePage() {
           <FtaAIOpsFlowDiagram />
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="rounded-md bg-amber-500/5 border border-amber-500/20 p-3">
-              <p className="text-xs font-medium text-amber-600 dark:text-amber-400 mb-1">六种门类型</p>
-              <p className="text-xs text-muted-foreground">AND / OR / NOT / VOTING / INHIBIT / PRIORITY_AND，支持因果、时序与优先级语义</p>
+              <p className="text-xs font-medium text-amber-600 dark:text-amber-400 mb-1">五种门类型</p>
+              <p className="text-xs text-muted-foreground">AND / OR / VOTING / INHIBIT / PRIORITY_AND，支持因果、时序与优先级语义</p>
             </div>
             <div className="rounded-md bg-emerald-500/5 border border-emerald-500/20 p-3">
               <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mb-1">定量分析</p>

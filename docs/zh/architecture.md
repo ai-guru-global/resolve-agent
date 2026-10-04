@@ -15,7 +15,7 @@ ResolveAgent 的设计遵循以下核心原则：
 ### 2. 可组合的能力层
 
 系统将能力分为四个可组合的层次：
-- **FTA 工作流**：复杂的多步骤决策流程，支持 AND/OR/NOT/VOTING/INHIBIT/PRIORITY_AND 门类型
+- **FTA 工作流**：复杂的多步骤决策流程，支持 AND/OR/VOTING/INHIBIT/PRIORITY_AND 五种门类型
 - **技能（Skills）**：原子化的功能单元，沙箱执行（10s CPU、512MB 内存限制）
 - **RAG 管道**：知识检索与增强，三级重排序（cross-encoder / LLM / Jaccard+MMR 回退）
 - **代码分析（Code Analysis）**：静态分析（AST 调用图 + 错误解析 + 方案生成）与动态分析（混合流量采集 + 服务依赖图 + LLM 报告），RAG 双写沉淀

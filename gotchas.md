@@ -24,3 +24,9 @@
 ## 2026-09-06 · code-up
 
 - Go↔Python 的 gRPC `RegistryService` 是死代码：proto（api/proto/v1）与 Go 实现（pkg/service/registry_service.go）齐备，但全仓 grep 无任何 `RegisterRegistryServiceServer` 注册点；Python 实际经 store/ 的 REST 客户端（BaseStoreClient → http://localhost:8080）消费事实源，gRPC 只用于 Go→Python 反方向的 AgentExecutionService。动 Go↔Python 契约前先 grep 注册点，别按 README/文档宣称的 gRPC 链路理解系统；若未来接线，docs/design/10 篇「Python 侧消费面」结论需回改。
+
+## 2026-10-04 · 现状复核
+
+- 上文 2026-09-05 那条「无 monte_carlo 实现」已过期：`python/src/resolveagent/fta/monte_carlo.py`（`36f6195`）落地，`FTAEngine.analyze()` 已接入（`6b48dc8`）。门类型仍以 `fta/tree.py:20 GateType` 为准 = **5 种**（AND/OR/VOTING/INHIBIT/PRIORITY_AND），从来就没有 NOT。
+- 「宣称与实现对不上」这类缺陷不会只在 README 里：本次仍在 `web/src/pages/Architecture/index.tsx`（7 处）与 `docs/zh/architecture.md:18` 找到「六种门 + NOT」的旧宣称，而 2026-09-09 的对齐任务只扫了 `docs/zh/` 与 `docs/design/` 的部分文件，还在 `docs/design/03-fta.md:27` 写下了「前端不再宣称 NOT 门」这句当时为假的话。**核对宣称面时必须把 `web/src/` 一起 grep**，前端页面文案是最容易漏的一路。
+- `gotchas.md` 是按日期归档的日志，条目记录的是「当天为真」的事实。发现过期条目应像本条一样**追加新日期段落更正**，不要回改历史条目——否则日志就失去了取证价值。

@@ -278,7 +278,7 @@ def main():
             "route_type": "direct",
             "route_target": "",
             "confidence": 0.0,
-            "reasoning": "portable rule route failed: {}".format(str(exc)[:200]),
+            "reasoning": f"portable rule route failed: {str(exc)[:200]}",
             "parameters": {"error": str(exc)[:200], "strategy": "rule", "portable": True},
             "chain": [],
         }

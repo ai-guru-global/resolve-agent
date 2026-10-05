@@ -46,7 +46,7 @@
 | **记忆体系** | 3 层架构：Working（进程内）/ Episodic（Redis TTL）/ Long-term（Milvus/Qdrant LRU） |
 | **数据层** | PostgreSQL 16 表 6 组 / Redis / NATS / Milvus-Qdrant 双后端向量库 |
 | **Registry** | 14 个领域注册表（agent / skill / workflow / rag / fta / solution / memory / traffic…） |
-| **质量工程** | 426 个 Python 单元测试项 + 8 套集成测试 + Go `-race` 测试 + Go E2E（构建标签隔离） |
+| **质量工程** | 480 个 Python 单元测试项 + 8 套集成测试 + Go `-race` 测试 + Go E2E（构建标签隔离） |
 | **工程治理** | golangci-lint 全量治理 / sentinel 错误链 + 防泄漏统一出口 / 单流水线 CI（Go 1.25） |
 | **文档** | 19 篇带 `file:line` 锚点的源码蒸馏设计文档 + 25 篇中文技术文档 + Docusaurus 站点 |
 
@@ -190,6 +190,28 @@ ResolveAgent is built for SREs, platform engineers, and operations teams who nee
 - **Knowledge-base Q&A** — RAG over runbooks, post-mortems, codebases, and call-chain corpora.
 - **Code-level diagnosis** — Static analysis, call-graph traversal, and solution document generation.
 - **Ticket triage and summarization** — Automatic classification, routing, and structured summarization.
+
+### 客户使用场景 Case
+
+以下场景全部基于**已接线可用**的能力（真实端点/页面），可按 Quick Start 启动后直接复现。
+
+**Case 1 · K8s 告警值班响应（SRE）**
+告警触发后，值班工程师在 WebUI Playground（或 `POST /v1/agents/{id}/execute`）提交事件描述。MegaAgent 经智能选择器自动路由：命中场景技能时，排查引擎按 manifest 定义的步骤流执行——命令步骤在沙箱中真实运行（如 `kubectl get pods`），stdout/stderr 原样进入诊断证据；最终产出**四要素结构化解法**（症状 / 关键信息 / 排查步骤 / 解决步骤），一键沉淀到 Solutions 知识库，下次同类告警直接语义检索复用。
+
+**Case 2 · 故障根因量化分析（稳定性团队）**
+在 FTAEngine 页面构建故障树（支持 AND / OR / VOTING / INHIBIT / PRIORITY_AND 五种门类型，含时序与优先级语义），引擎计算**最小割集**定位最脆弱路径，蒙特卡洛仿真给出顶事件失效概率与 Wilson 置信区间。分析结果持久化到 `/api/v1/fta/documents/{id}/results`，作为架构评审与容量决策的量化依据。
+
+**Case 3 · 运维知识库问答（技术支持 / 新人上手）**
+用 `POST /v1/corpus/import` 把 runbook、复盘报告、代码仓库批量导入 RAG（Milvus/Qdrant 向量库，自动分块入库）；支持团队在 RAG 页面或 `POST /v1/rag/query` 自然语言提问，检索命中带出处引用。排查产出的解法经 `/v1/solutions/sync-rag` 回写知识库，形成「用得越多、答得越准」的语料飞轮。
+
+**Case 4 · 代码级诊断（研发团队）**
+`POST /v1/code-analysis/static` 对目标服务做静态分析与错误诊断，`/v1/code-analysis/errors/parse` 解析报错堆栈；调用链图谱（call-graphs nodes/edges/subgraph）与流量分析（`/v1/code-analysis/traffic`）交叉定位可疑变更；对持久化的流量图可再触发 `/v1/code-analysis/traffic/graphs/{id}/analyze` 生成 LLM 分析报告。
+
+**Case 5 · 工单分诊与摘要（工单运营）**
+TicketSummary 页面对入站工单自动分类、路由与结构化摘要，把「读工单」从分钟级压到秒级；摘要与分类结果可回写客户工单系统。
+
+**Case 6 · 集成进客户已有平台（平台工程）**
+三条集成路径：**REST API**（Go 平台 ~100 条路由 + Python 运行时 14 个端点，含 SSE 流式）、**gRPC SelectorService**（把智能路由作为共享服务嵌入自有调度链）、**MCP 适配器**（把 ResolveAgent 能力暴露为 Model Context Protocol 工具，供 Claude/通义等 Agent 直接调用）；另有 Dify / LangGraph 集成适配层。售前 POC 可用 WebUI 演示模式（mock 数据驱动，无需后端）先行体验。
 
 ---
 
@@ -970,7 +992,7 @@ hack/quality-gate.sh
 
 ## Feature Status
 
-> **v0.3.0** | 核心组件经全面修复与测试加固（Python 426 个单元测试项 + 8 套集成测试）
+> **v0.3.0** | 核心组件经全面修复与测试加固（Python 480 个单元测试项 + 8 套集成测试 + Web 113 项，门禁 10/10 全绿）
 
 ### 核心引擎
 
@@ -978,11 +1000,12 @@ hack/quality-gate.sh
 |------|------|------|
 | Intelligent Selector | 🟢 Ready | 三阶段元路由 + rule/llm/hybrid 策略 |
 | Resilient Selector | 🟢 Ready | 失败重试 + 错误分类路由偏好 + 自适应权重 |
-| Hierarchical Memory | 🟢 Ready | 三层记忆（Working/Episodic/Long-term） |
+| Hierarchical Memory | 🟡 库就绪 | 三层记忆（Working/Episodic/Long-term）实现+单测齐备，**待接入生产调用链** |
 | Hybrid Planner | 🟢 Ready | 双模式 + LLM 分解 + JSON 容错解析 |
 | FTA Engine | 🟢 Ready | 五门类型（含时序语义）+ 最小割集 + 蒙特卡洛仿真 |
 | RAG Pipeline | 🟢 Ready | Milvus / Qdrant 双后端向量检索 |
-| ToolHub & Skills | 🟢 Ready | 技能注册 + 沙箱执行 + 安全审计 |
+| Skill System | 🟢 Ready | 技能注册 + 沙箱执行（bash/python/js）+ 场景排查引擎 |
+| ToolHub | 🟡 库就绪 | 工具发现/注册/安全策略实现+单测齐备，**待接入生产调用链** |
 | Resilience | 🟢 Ready | CircuitBreaker + FallbackCascade |
 | Loop Engineering | 🟢 Ready | Go 反馈闭环 + Python 工作流反馈 |
 | LLM Providers | 🟢 Ready | Qwen / 文心 / 智谱 / Higress / OpenAI 兼容（Kimi、MiMo Token Plan） |
@@ -999,6 +1022,23 @@ hack/quality-gate.sh
 | Mobile Web | 🟢 示例 | `examples/mobile-demo/` 移动端示例（独立原型，不随产品演进） |
 | CI/CD | 🟢 Ready | 单一流水线（Go 1.25），覆盖 lint / test / e2e / mobile / docker 阶段 |
 | 部署 | 🟢 Ready | Docker Compose（deps 含外部 etcd）+ Helm + K8s manifests |
+
+### 已知待办（截至 2026-10-05，经代码实测裁定）
+
+完整依据与逐项验证命令见 [docs/PROJECT_STATUS_2026-10-04.md](docs/PROJECT_STATUS_2026-10-04.md) §10.6–§10.10。
+
+| 待办 | 类型 | 说明 |
+|------|------|------|
+| Memory / ToolHub / AgentMessageBus 生产接线 | 架构 | 三模块实现+单测齐备（能力库），但 `MegaAgent` / `ContextEnricher` / Skill 执行链中无调用点，运行时不生效 |
+| `watch_registry` 实时变更流 | 架构 | 需 Go 服务端先提供 WebSocket/SSE 变更端点（尚不存在），客户端单侧实现无意义 |
+| workflow 按注册定义执行 | 架构 | registry 存 FTA 故障树（`Tree`），与执行引擎的 nodes/edges 图不同构；树→图转换未实现前，执行流会如实披露 `definition_pending` 后走开发回退 |
+| `resolveagent.api` 包 | 功能 | 21 行空壳，待 REST 客户端能力落地 |
+| Web code-analysis 6 方法接真实后端 | 功能 | 前端目前永远走 mock 数据 |
+| `pkg/event/nats.go` / `AgentExecutionServer` 接线 | 架构 | NATS JetStream 总线可用但零调用方；后者指向不存在的服务（刻意保留待 v0.5.0 分布式阶段） |
+| Milvus delete-by-filter 端到端验证 | 验证 | 代码已落地并有单测（fake client），对真实 Milvus 实例的集成验证待环境 |
+| Go 覆盖率阈值重标定 | 流程 | 阈值 17.0% 对实测 17.1% 仅 0.1pt 余量，且随 Go 工具链版本剧变（go1.25→17.5%，go1.27→32.2%）；**任何 Go minor 升级必须重标基线** |
+
+> 已关闭项（2026-10-04/05 四轮修复）：ReAct/troubleshoot/BaseAgent/Milvus-delete 四处占位真实接线、engine 诚实门、零测试模块补测（382→480）、CI 三根因、脚本执行位、action 版本漂移、vitest 2→5 对齐 vite 8。
 
 ---
 

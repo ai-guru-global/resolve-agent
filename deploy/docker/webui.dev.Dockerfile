@@ -1,7 +1,7 @@
 # =============================================================================
 # ResolveAgent WebUI - Development Dockerfile (Vite Dev Server)
 # =============================================================================
-FROM node:25-alpine
+FROM node:26-alpine
 
 RUN npm install -g pnpm
 

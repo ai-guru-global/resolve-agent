@@ -24,7 +24,7 @@ RUN pnpm build
 # ---------------------
 # Stage 2: Nginx Runtime (non-root, unprivileged)
 # ---------------------
-FROM nginxinc/nginx-unprivileged:1.29-alpine
+FROM nginxinc/nginx-unprivileged:1.31-alpine
 
 LABEL maintainer="AI Guru Global <dev@resolveagent.io>"
 LABEL org.opencontainers.image.title="ResolveAgent WebUI"

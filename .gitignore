@@ -146,3 +146,7 @@ docs/PROJECT_STATUS_*.md
 docs/ARCHITECTURE_IMPROVEMENTS_*.md
 docs/competitive-analysis-*.md
 docs/enterprise-requirements.md
+
+# Docusaurus 构建缓存与产物
+docs-site/.docusaurus/
+docs-site/build/

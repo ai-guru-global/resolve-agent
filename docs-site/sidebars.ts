@@ -28,8 +28,8 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: '架构决策',
       items: [
-        'adr/001-why-multilang',
-        'adr/002-gateway-choice',
+        'adr/why-multilang',
+        'adr/gateway-choice',
       ],
     },
   ],

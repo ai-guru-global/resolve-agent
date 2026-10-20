@@ -18,13 +18,11 @@ const config: Config = {
 
   i18n: {
     defaultLocale: 'zh',
-    locales: ['zh', 'en'],
+    // en locale 待 i18n/ 翻译目录建立后启用（当前无 en 内容，构建会失败）
+    locales: ['zh'],
     localeConfigs: {
       zh: {
         label: '简体中文',
-      },
-      en: {
-        label: 'English',
       },
     },
   },
@@ -36,7 +34,7 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           editUrl:
-            'https://github.com/ai-guru-global/resolve-agent/tree/main/docs/',
+            'https://github.com/ai-guru-global/resolve-agent/tree/main/docs-site/docs/',
         },
         blog: false,
         theme: {
@@ -100,7 +98,7 @@ const config: Config = {
             },
             {
               label: 'API 参考',
-              to: '/docs/api/index',
+              to: '/docs/api',
             },
           ],
         },
@@ -110,10 +108,6 @@ const config: Config = {
             {
               label: 'GitHub Discussions',
               href: 'https://github.com/ai-guru-global/resolve-agent/discussions',
-            },
-            {
-              label: 'Slack',
-              href: 'https://resolveagent.slack.com',
             },
           ],
         },

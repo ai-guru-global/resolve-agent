@@ -435,6 +435,25 @@ models:
     base_url: "https://api.openai.com/v1"
 ```
 
+### OpenAI 兼容 Provider 接入（Kimi / MiMo Token Plan）
+
+经 OpenAI 兼容层接入其他厂商模型时，设置以下环境变量即可：
+
+```bash
+# Kimi（Moonshot）
+KIMI_API_KEY=your-kimi-key
+LLM_BASE_URL=https://api.moonshot.cn/v1
+LLM_DEFAULT_MODEL=kimi-k2.5-turbo-preview
+
+# 小米 MiMo Token Plan（可选，按 base_url 自动路由，与 Kimi 互不干扰）
+LLM_BASE_URL=https://token-plan-cn.xiaomimimo.com/v1   # 区域端点: cn / sgp / ams
+LLM_DEFAULT_MODEL=mimo-v2.5-pro
+XIAOMI_TOKEN_PLAN_API_KEY=tp-xxxx
+```
+
+> ⚠️ Kimi K2.5 等模型调用需在 `configs/models.yaml` / provider 配置中**禁用 thinking 模式**，
+> 详见 [Kimi K2.5 集成规范](agentscope-higress-integration.md)。
+
 ### 嵌入模型配置
 
 ```yaml

@@ -17,16 +17,10 @@
 </p>
 
 <p align="center">
-  🗺️ <a href="https://gjbs6uhxeute.meoo.fun"><strong>GTM 策略中枢 · 在线演示（GTM Strategy Hub）</strong></a>
-  ｜ 🖥️ <a href="https://vxxzrdpyfrl6.meoo.fun"><strong>产品页 · 在线演示（Product Demo）</strong></a>
-</p>
-
-<p align="center">
   <a href="https://github.com/ai-guru-global/resolve-agent/releases"><img src="https://img.shields.io/github/v/release/ai-guru-global/resolve-agent?style=flat-square" alt="Release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square" alt="License"></a>
   <a href="https://github.com/ai-guru-global/resolve-agent/actions"><img src="https://img.shields.io/github/actions/workflow/status/ai-guru-global/resolve-agent/ci.yaml?branch=main&style=flat-square" alt="CI Status"></a>
   <a href="https://github.com/ai-guru-global/resolve-agent/issues"><img src="https://img.shields.io/github/issues/ai-guru-global/resolve-agent?style=flat-square" alt="Issues"></a>
-  <a href="https://github.com/ai-guru-global/resolve-agent/pulls"><img src="https://img.shields.io/github/issues-pr/ai-guru-global/resolve-agent?style=flat-square" alt="Pull Requests"></a>
   <a href="https://github.com/ai-guru-global/resolve-agent/stargazers"><img src="https://img.shields.io/github/stars/ai-guru-global/resolve-agent?style=flat-square" alt="Stars"></a>
   <a href="https://github.com/ai-guru-global/resolve-agent/graphs/contributors"><img src="https://img.shields.io/github/contributors/ai-guru-global/resolve-agent?style=flat-square" alt="Contributors"></a>
   <a href="https://goreportcard.com/report/github.com/ai-guru-global/resolve-agent"><img src="https://img.shields.io/badge/Go-1.25-00ADD8.svg?style=flat-square&logo=go" alt="Go"></a>
@@ -40,48 +34,14 @@
 
 | 维度 | 数据 |
 |------|------|
-| **技术栈** | Go 1.25 平台服务 + Python 3.11+ Agent 运行时 + React 23 页 WebUI + 移动端 |
+| **技术栈** | Go 1.25 平台服务 + Python 3.11+ Agent 运行时 + React WebUI（23 页）+ 移动端示例 |
 | **分析路由** | 4 条业务路径：FTA 故障树推理 / Skill 技能编排 / RAG 检索增强 / 代码分析（+ LLM 直答兜底） |
 | **FTA 引擎** | 5 种门类型（AND/OR/VOTING/INHIBIT/PRIORITY_AND 时序语义）+ 最小割集 + 蒙特卡洛仿真 |
 | **记忆体系** | 3 层架构：Working（进程内）/ Episodic（Redis TTL）/ Long-term（Milvus/Qdrant LRU） |
 | **数据层** | PostgreSQL 16 表 6 组 / Redis / NATS / Milvus-Qdrant 双后端向量库 |
-| **Registry** | 14 个领域注册表（agent / skill / workflow / rag / fta / solution / memory / traffic…） |
-| **质量工程** | 480 个 Python 单元测试项 + 8 套集成测试 + Go `-race` 测试 + Go E2E（构建标签隔离） |
-| **工程治理** | golangci-lint 全量治理 / sentinel 错误链 + 防泄漏统一出口 / 单流水线 CI（Go 1.25） |
-| **文档** | 19 篇带 `file:line` 锚点的源码蒸馏设计文档 + 25 篇中文技术文档 + Docusaurus 站点 |
+| **质量工程** | 480+ Python 单元测试项 + 8 套集成测试 + Go `-race` 测试 + Go E2E + OpenAPI 契约测试 |
 
----
-
-## 📋 Table of Contents
-
-- [What is ResolveAgent?](#what-is-resolveagent)
-- [Why ResolveAgent?](#why-resolveagent)
-- [How It Works: 一条告警的旅程](#how-it-works-一条告警的旅程)
-- [Core Concepts](#core-concepts)
-- [Use Cases](#use-cases)
-- [GTM Strategy Hub](#gtm-strategy-hub)
-- [Quick Start in 60 Seconds](#quick-start-in-60-seconds)
-- [Architecture Overview](#architecture-overview)
-- [Twelve Architecture Highlights](#twelve-architecture-highlights)
-- [Architecture Deep Dive](#architecture-deep-dive)
-- [Quick Start (Detailed)](#quick-start-detailed)
-- [CLI](#cli)
-- [WebUI](#webui)
-- [Configuration](#configuration)
-- [Documentation](#documentation)
-- [Testing](#testing)
-- [Observability](#observability)
-- [Feature Status](#feature-status)
-- [Project Structure](#project-structure)
-- [Deployment](#deployment)
-- [Troubleshooting](#troubleshooting)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [Security](#security)
-- [Community & Support](#community--support)
-- [Citation](#citation)
-- [Acknowledgments](#acknowledgments)
-- [License](#license)
+📖 代码级架构讲解见 [Architecture Deep Dive](docs/architecture-deep-dive.md)，功能就绪状态见 [Feature Status](docs/feature-status.md)。
 
 ---
 
@@ -90,8 +50,6 @@
 **ResolveAgent** is a production-grade **AIOps Mega-Agent platform** built on **2026 Agent Engineering** best practices. It automates the entire troubleshooting and resolution lifecycle: from ticket ingestion and intent routing, through knowledge retrieval and fault-tree analysis (FTA), to remediation execution and feedback closure.
 
 ResolveAgent is designed for teams running complex distributed systems who need to compress the time from **alert → root cause → fix** from hours to minutes, while continuously capturing tribal knowledge into reusable skills and RAG corpora.
-
-> 📖 Full methodology and competitive assessment: [COMPREHENSIVE_ASSESSMENT_AND_METHODOLOGY.md](docs/archive/session-reports/COMPREHENSIVE_ASSESSMENT_AND_METHODOLOGY.md)
 
 ### 核心闭环 | The Resolution Flywheel
 
@@ -164,22 +122,6 @@ Traditional AI chatbots give a single answer path. ResolveAgent introduces **mul
 
 ---
 
-## Core Concepts
-
-| 概念 | 说明 |
-|------|------|
-| **Route / RouteType** | 路由路径类型：`fta`（故障树推理）、`skill`（技能编排）、`knowledge`（RAG 检索）、`code_analysis`（代码分析）、`reasoning`（LLM 直答） |
-| **IntelligentSelector** | 三阶段元路由器：意图分析 → 上下文增强 → 路由决策，支持 rule / llm / hybrid 三种策略 |
-| **ResilientSelector** | 反馈驱动弹性路由：失败重试 + 错误分类路由偏好 + 上下文重增强 |
-| **MegaAgent** | 顶层编排层：将 Selector、Planner、Memory、Skill、Hook 组装为可降级的完整 Agent（见 [选择器适配器](docs/zh/selector-adapters.md)） |
-| **FTA / 最小割集** | 形式化故障树：门类型组合表达故障传播逻辑，最小割集给出导致顶事件的最小根因组合 |
-| **Skill** | 插件化专家技能（如 `k8s-pod-crash`）：manifest 描述 + 沙箱执行 + 生命周期管理 |
-| **Corpus 语料** | 排查知识资产：RAG 文档、调用链语料、技能沉淀，支撑"越用越准"的飞轮 |
-| **Hierarchical Memory** | 三层记忆：Working（会话内滚动窗口）/ Episodic（Redis TTL）/ Long-term（向量库 LRU） |
-| **Loop Engineering** | 持续反馈闭环：信号收集 → 聚合 → 决策 → 执行，覆盖健康度/重试/工作流/熔断器 |
-
----
-
 ## Use Cases
 
 ResolveAgent is built for SREs, platform engineers, and operations teams who need reliable, evidence-based incident resolution:
@@ -191,52 +133,23 @@ ResolveAgent is built for SREs, platform engineers, and operations teams who nee
 - **Code-level diagnosis** — Static analysis, call-graph traversal, and solution document generation.
 - **Ticket triage and summarization** — Automatic classification, routing, and structured summarization.
 
-### 客户使用场景 Case
+以下场景全部基于**已接线可用**的能力（真实端点/页面），可按 Quick Start 启动后直接复现：
 
-以下场景全部基于**已接线可用**的能力（真实端点/页面），可按 Quick Start 启动后直接复现。
+**Case 1 · K8s 告警值班响应（SRE）** — 告警触发后，值班工程师在 WebUI Playground（或 `POST /v1/agents/{id}/execute`）提交事件描述。MegaAgent 经智能选择器自动路由：命中场景技能时，排查引擎按 manifest 定义的步骤流执行——命令步骤在沙箱中真实运行（如 `kubectl get pods`），stdout/stderr 原样进入诊断证据；最终产出**四要素结构化解法**（症状 / 关键信息 / 排查步骤 / 解决步骤），一键沉淀到 Solutions 知识库，下次同类告警直接语义检索复用。
 
-**Case 1 · K8s 告警值班响应（SRE）**
-告警触发后，值班工程师在 WebUI Playground（或 `POST /v1/agents/{id}/execute`）提交事件描述。MegaAgent 经智能选择器自动路由：命中场景技能时，排查引擎按 manifest 定义的步骤流执行——命令步骤在沙箱中真实运行（如 `kubectl get pods`），stdout/stderr 原样进入诊断证据；最终产出**四要素结构化解法**（症状 / 关键信息 / 排查步骤 / 解决步骤），一键沉淀到 Solutions 知识库，下次同类告警直接语义检索复用。
+**Case 2 · 故障根因量化分析（稳定性团队）** — 在 FTAEngine 页面构建故障树（五种门类型，含时序与优先级语义），引擎计算**最小割集**定位最脆弱路径，蒙特卡洛仿真给出顶事件失效概率与 Wilson 置信区间。分析结果持久化到 `/api/v1/fta/documents/{id}/results`，作为架构评审与容量决策的量化依据。
 
-**Case 2 · 故障根因量化分析（稳定性团队）**
-在 FTAEngine 页面构建故障树（支持 AND / OR / VOTING / INHIBIT / PRIORITY_AND 五种门类型，含时序与优先级语义），引擎计算**最小割集**定位最脆弱路径，蒙特卡洛仿真给出顶事件失效概率与 Wilson 置信区间。分析结果持久化到 `/api/v1/fta/documents/{id}/results`，作为架构评审与容量决策的量化依据。
+**Case 3 · 运维知识库问答（技术支持 / 新人上手）** — 用 `POST /v1/corpus/import` 把 runbook、复盘报告、代码仓库批量导入 RAG（Milvus/Qdrant 向量库，自动分块入库）；团队在 RAG 页面或 `POST /v1/rag/query` 自然语言提问，检索命中带出处引用。排查产出的解法经 `/v1/solutions/sync-rag` 回写知识库，形成「用得越多、答得越准」的语料飞轮。
 
-**Case 3 · 运维知识库问答（技术支持 / 新人上手）**
-用 `POST /v1/corpus/import` 把 runbook、复盘报告、代码仓库批量导入 RAG（Milvus/Qdrant 向量库，自动分块入库）；支持团队在 RAG 页面或 `POST /v1/rag/query` 自然语言提问，检索命中带出处引用。排查产出的解法经 `/v1/solutions/sync-rag` 回写知识库，形成「用得越多、答得越准」的语料飞轮。
+**Case 4 · 代码级诊断（研发团队）** — `POST /v1/code-analysis/static` 对目标服务做静态分析与错误诊断，`/v1/code-analysis/errors/parse` 解析报错堆栈；调用链图谱（call-graphs nodes/edges/subgraph）与流量分析交叉定位可疑变更；对持久化的流量图可再触发 `/v1/code-analysis/traffic/graphs/{id}/analyze` 生成 LLM 分析报告。
 
-**Case 4 · 代码级诊断（研发团队）**
-`POST /v1/code-analysis/static` 对目标服务做静态分析与错误诊断，`/v1/code-analysis/errors/parse` 解析报错堆栈；调用链图谱（call-graphs nodes/edges/subgraph）与流量分析（`/v1/code-analysis/traffic`）交叉定位可疑变更；对持久化的流量图可再触发 `/v1/code-analysis/traffic/graphs/{id}/analyze` 生成 LLM 分析报告。
+**Case 5 · 工单分诊与摘要（工单运营）** — TicketSummary 页面对入站工单自动分类、路由与结构化摘要，把「读工单」从分钟级压到秒级；摘要与分类结果可回写客户工单系统。
 
-**Case 5 · 工单分诊与摘要（工单运营）**
-TicketSummary 页面对入站工单自动分类、路由与结构化摘要，把「读工单」从分钟级压到秒级；摘要与分类结果可回写客户工单系统。
-
-**Case 6 · 集成进客户已有平台（平台工程）**
-三条集成路径：**REST API**（Go 平台 ~100 条路由 + Python 运行时 14 个端点，含 SSE 流式）、**gRPC SelectorService**（把智能路由作为共享服务嵌入自有调度链）、**MCP 适配器**（把 ResolveAgent 能力暴露为 Model Context Protocol 工具，供 Claude/通义等 Agent 直接调用）；另有 Dify / LangGraph 集成适配层。售前 POC 可用 WebUI 演示模式（mock 数据驱动，无需后端）先行体验。
+**Case 6 · 集成进已有平台（平台工程）** — 三条集成路径：**REST API**（Go 平台 ~100 条路由 + Python 运行时 14 个端点，含 SSE 流式）、**gRPC SelectorService**（把智能路由作为共享服务嵌入自有调度链）、**MCP 适配器**（把 ResolveAgent 能力暴露为 Model Context Protocol 工具，供 Claude/通义等 Agent 直接调用）；另有 Dify / LangGraph 集成适配层。无后端环境时可用 WebUI 演示模式（mock 数据驱动）先行体验。
 
 ---
 
-## GTM Strategy Hub
-
-**ResolveAgent GTM 策略中枢** 已上线：<https://gjbs6uhxeute.meoo.fun>
-
-面向决策者与售前场景的企业级策略展示页，以「调度枢纽 / 终点站是根因」为叙事主线。单文件静态实现、零依赖，也可直接离线打开 [GTM/index.html](GTM/index.html)：
-
-- **路由发车板（Route Departures）** — 翻牌式信息板实时呈现告警事件的智能路由分发
-- **调度总图（Metro Map）** — 告警入口枢纽分岔四条分析线路：FTA 故障树推理 / RAG 检索增强 / Skill 技能编排 / 代码分析，直达「根因」终点站，附可交互的意图调度模拟器
-- **运行数据总览（Ops Data Overview）** — 工作流执行、闭环成功率、路由决策、工单闭环、语料规模六项指标与四线分发占比，全部取自产品控制台同一套演示数据源，并附最近路由决策留痕表
-- **可审计会话（Auditable Session）** — 意图分类、路径分发、证据求解、语料写回全部以终端留痕，可回放、可复盘
-- **事件回放与语料飞轮** — 一次告警四路并行回放；排查结果沉淀语料，用得越多排查越准
-- **GTM 战略线路规划图** — 目标客户画像（ICP）与里程碑的线路化呈现
-
-页面以浅色「日间调度大厅」为默认视觉，终端窗与雷达屏保留深色作为控制室仪器的对比锚点。导航、首屏与页脚均可一键进入**产品页在线演示**：<https://vxxzrdpyfrl6.meoo.fun>（浏览器端 mock 数据驱动，无需本地后端）。
-
-`GTM/assets/design-variants/` 保留五套设计变体稿（调度发车板 / 经典标准 / 挑战者风格等），记录视觉方向的演进过程。
-
-页面设计契约（企业级视觉纪律：无 glow、无装饰性动效、仪器语法）见 [GTM/DESIGN.md](GTM/DESIGN.md)。
-
----
-
-## Quick Start in 60 Seconds
+## Quick Start
 
 ```bash
 # 1. Clone the repository
@@ -244,6 +157,7 @@ git clone https://github.com/ai-guru-global/resolve-agent.git
 cd resolve-agent
 
 # 2. Start the entire stack with one command
+#    (deps containers + Go platform + Python runtime + WebUI)
 ./scripts/start-local.sh all
 
 # 3. Check service health
@@ -252,7 +166,70 @@ cd resolve-agent
 
 After startup, open the WebUI at **http://localhost:5174** and the Platform API at **http://localhost:8080/api/v1/health**.
 
-> ⚠️ First run of `./scripts/start-local.sh runtime` automatically creates `python/.venv` and installs dependencies (`.[rag]`); this may take a few minutes.
+> ⚠️ First run of `start-local.sh runtime` automatically creates `python/.venv` and installs dependencies (`.[rag]`); this may take a few minutes.
+
+### Environment Requirements
+
+| Dependency | Version | 说明 |
+|------------|---------|------|
+| Go | >= 1.25 | go.mod 锁定 1.25.0 |
+| Python | >= 3.11 | 运行时（开发环境已验证 3.14） |
+| Node.js | >= 20 | WebUI 开发（已验证 v22） |
+| Docker | >= 20.10 | 依赖服务容器化 |
+| Make | latest | 构建工具链 |
+| uv | 推荐 | Python 依赖管理（无则回退 pip） |
+
+### Startup endpoints
+
+| 服务 | 地址 | 说明 |
+|------|------|------|
+| **WebUI** | http://localhost:5174 | React 可视化控制台 |
+| **Platform API** | http://localhost:8080 | Go 平台服务（健康检查 `/api/v1/health`） |
+| **Runtime API** | http://localhost:9091 | Python Agent 运行时（`/health`） |
+| gRPC | localhost:9090 | Platform gRPC 服务（仅健康检查与反射；业务 API 走 REST） |
+| PostgreSQL | localhost:5432 | 长期记忆 / 业务数据 |
+| Redis | localhost:6379 | 短期记忆 / 缓存 |
+| NATS | localhost:4222 | 消息总线 |
+| Milvus | localhost:19530 | RAG 向量存储 |
+
+### Step-by-Step & Makefile
+
+```bash
+./scripts/start-local.sh deps      # 仅启动依赖容器 (PostgreSQL / Redis / NATS / Milvus / etcd)
+./scripts/start-local.sh platform  # 仅启动 Go 平台服务（自动编译）
+./scripts/start-local.sh runtime   # 仅启动 Python Agent 运行时（自动重建 venv）
+./scripts/start-local.sh web       # 仅启动 WebUI 开发服务器
+./scripts/start-local.sh stop | restart | logs web | doctor
+
+make setup-dev        # 初始化开发环境（依赖 + Git Hooks）
+make build            # 构建 Go / Python / WebUI
+make compose-up       # Docker Compose 全栈启动
+make test             # 全量测试（Go + Python + WebUI）
+make lint             # 全语言 lint 门禁（Go/Python/Web/Proto）
+```
+
+### Python Agent Example
+
+```python
+from resolveagent.selector.selector import IntelligentSelector
+from resolveagent.memory import HierarchicalMemory
+from resolveagent.planning import HybridPlanner, PlanningMode
+
+selector = IntelligentSelector(strategy="hybrid")
+memory = HierarchicalMemory(session_id="session-1")
+planner = HybridPlanner()
+
+decision = await selector.route(input_text="分析代码中的安全漏洞", agent_id="my-agent")
+# → RouteDecision(route_type="code_analysis", confidence=0.85)
+
+plan = await planner.create_plan(goal="诊断 API 500 错误", mode=PlanningMode.DELIBERATIVE)
+# → Plan(steps=[Step(gather_info), Step(diagnose), Step(fix)])
+
+memory.add("user", "我想部署到 k8s", importance=0.8)
+recent = memory.get_recent(limit=10)
+```
+
+遇到启动问题？见 [Troubleshooting](docs/troubleshooting.md)。
 
 ---
 
@@ -266,7 +243,7 @@ After startup, open the WebUI at **http://localhost:5174** and the Platform API 
 │  │  Client  │───▶│   Higress    │───▶│     Platform (Go)               │ │
 │  │ CLI/WebUI│    │ AI Gateway   │    │  Registry │ Auth │ Route │ Store │ │
 │  │ Mobile   │    │              │    │  Feedback │ CircuitBreaker       │ │
-│  └──────────┘    └──────────────┘    └──────────────┬──────────────────┘ │
+│  └──────────┘    └──────────────┘    └────────────┬──────────────────┘ │
 │                                                      │ HTTP/SSE           │
 │                                                      ▼                    │
 │                            ┌─────────────────────────────────────────┐   │
@@ -293,9 +270,7 @@ After startup, open the WebUI at **http://localhost:5174** and the Platform API 
 
 **三层分工：** Go 平台负责注册表、鉴权、存储与反馈闭环等高并发基础服务；Python 运行时承载 Agent 编排与 AI 引擎（agentscope）；React WebUI 面向运维操作者。三者经 HTTP/SSE 互联。
 
----
-
-## Twelve Architecture Highlights
+### Twelve Architecture Highlights
 
 | # | 特性 | 模块 | 说明 |
 |---|------|------|------|
@@ -306,467 +281,13 @@ After startup, open the WebUI at **http://localhost:5174** and the Platform API 
 | 5 | **ToolHub** | `toolhub.py` | 工具发现 + Schema 注册 + Capability 映射 + 安全审计 |
 | 6 | **Resilience** | `resilience.py` | CircuitBreaker 三态熔断 + FallbackCascade 多级降级 |
 | 7 | **AgentMessageBus** | `message_bus.py` | Pub/Sub + Request/Response 消息总线 |
-| 8 | **FTA Engine** | `fta/` | 故障树分析：五种门类型（PRIORITY_AND 带动态时序语义）+ 最小割集 + 蒙特卡洛仿真 |
-| 9 | **Resilient Selector** | `selector/resilient_selector.py` | 反馈驱动自适应路由：失败重试 + 上下文重增强 + 错误分类路由偏好 + 自适应权重调整 |
+| 8 | **FTA Engine** | `fta/` | 五种门类型（PRIORITY_AND 带动态时序语义）+ 最小割集 + 蒙特卡洛仿真 |
+| 9 | **Resilient Selector** | `selector/resilient_selector.py` | 反馈驱动自适应路由：失败重试 + 上下文重增强 + 错误分类路由偏好 |
 | 10 | **Loop Engineering** | `pkg/feedback/` + `fta/feedback_loop.py` | Observe-Orient-Decide-Act 持续反馈闭环 |
 | 11 | **Circuit Breaker (Go)** | `pkg/circuitbreaker/` | 三态熔断器自愈运维：Closed → Open → HalfOpen → Closed |
 | 12 | **Adaptive Weight Adjuster** | `selector/resilient_selector.py` | 基于反馈的路由权重动态调整 + 时间衰减 + 自动降级 |
 
-> 📖 完整方法论与对标评估见 [COMPREHENSIVE_ASSESSMENT_AND_METHODOLOGY.md](docs/archive/session-reports/COMPREHENSIVE_ASSESSMENT_AND_METHODOLOGY.md)
-
----
-
-## Architecture Deep Dive
-
-> 以下代码路径均相对 `python/src/resolveagent/` 目录。
-
-### 1. Intelligent Selector | 智能选择器
-
-```python
-# selector/selector.py
-class IntelligentSelector:
-    """三层路由架构"""
-    async def route(input_text, agent_id, context):
-        # 1. Intent Analysis - 意图分类
-        intent = await intent_analyzer.classify(input_text)
-
-        # 2. Context Enrichment - 上下文增强
-        enriched = await context_enricher.enrich(input_text, agent_id, context)
-        #   - 记忆查询 (MemoryClient)
-        #   - 偏好推断 (_infer_user_preferences)
-        #   - 代码检测 (_analyze_code_context)
-
-        # 3. Route Decision - 路由决策
-        decision = await route_decider.decide(
-            intent_type=intent.type,
-            confidence=intent.confidence,
-            context=enriched,
-        )
-
-        # 4. Audit Logging - 审计记录
-        await audit_logger.log(decision, enriched, latency_ms)
-
-        return decision
-```
-
-**路由策略:**
-- `rule` — 快速精确模式（规则匹配）
-- `llm` — LLM 智能分类
-- `hybrid` — 规则优先 + LLM 回退（推荐）
-
-### 2. Resilient Selector | 弹性自适应路由
-
-```python
-# selector/resilient_selector.py
-class ResilientSelector:
-    """反馈驱动自适应路由，带优雅降级"""
-
-    MAX_RETRIES = 3
-
-    async def route_and_execute(self, input_text, agent_id, executor):
-        tried_routes = set()
-        for attempt in range(self.MAX_RETRIES + 1):
-            # 1. 上下文增强（首次全量，后续增量 + 失败上下文）
-            ctx = await self._enrich(input_text, agent_id, attempt, tried_routes)
-
-            # 2. 路由决策（排除已尝试路径）
-            decision = await self._selector.route(input_text, agent_id, context=ctx)
-
-            # 3. 执行
-            result = await executor(decision)
-            if result.success:
-                return result
-
-            # 4. 记录失败，为下一次决策提供上下文
-            tried_routes.add(decision.route_type)
-            ctx["last_failure"] = {"route": decision.route_type, "error": result.error}
-
-        # 最终兜底
-        return await self._fallback(input_text, agent_id)
-```
-
-**错误分类路由偏好**（本次工程强化）：
-
-| 失败类型 | 路由偏好 |
-|---------|---------|
-| `resource_missing` → RAG 失败 | 偏好 `reasoning`（LLM 推理兜底） |
-| `resource_missing` → Skill 失败 | 偏好 `knowledge`（知识库检索） |
-| FTA 任意失败（未试过 code_analysis） | 偏好 `code_analysis` |
-| 其他 | 按权重依次尝试剩余路径 |
-
-**核心思想:** 每一次失败都不是浪费，而是为下一次路由决策提供更丰富的上下文。
-
-### 3. Decision Audit Logger | 决策审计
-
-```python
-# selector/audit.py
-@dataclass
-class AuditRecord:
-    timestamp: str
-    decision_type: str      # fta/skill/rag/direct/code_analysis
-    confidence: float
-    reasoning: str
-    context_snapshot: dict  # skills_count, code_issues, etc.
-    latency_ms: float
-```
-
-**特性:**
-- 异步写入，不阻塞主流程
-- 支持持久化到 Go Platform Store
-- 完整的上下文快照（可回溯路由依据）
-
-### 4. Hierarchical Memory | 分层记忆
-
-```python
-# memory.py
-class HierarchicalMemory:
-    """三层记忆架构"""
-
-    # Layer 1: Working Memory (进程内, 滚动窗口)
-    working = WorkingMemory(max_size=20)
-
-    # Layer 2: Episodic Memory (Redis, TTL 过期)
-    episodic = EpisodicMemoryClient(redis_url="redis://localhost:6379")
-
-    # Layer 3: Long-term Memory (Milvus/Qdrant 向量库, LRU 逐出)
-    long_term = LongTermMemoryClient(collection="long_term_memory")
-```
-
-**记忆流动:**
-```
-User Message → Working Memory (实时)
-             → Episodic Memory (session 压缩)
-             → Long-term Memory (importance > 0.7)
-```
-
-### 5. Hybrid Planner | 混合规划器
-
-```python
-# planning.py
-class PlanningMode(Enum):
-    REACTIVE = "reactive"          # 快速响应
-    DELIBERATIVE = "deliberative"  # 深思熟虑
-
-class HybridPlanner:
-    async def create_plan(goal, mode):
-        if mode == REACTIVE:
-            # 单步 ReAct 循环
-            return Plan(steps=[...])
-        # DELIBERATIVE: LLM 分解目标 → 多步骤（失败时 Replan，最多 3 次）
-        return await self._llm_decompose_plan(goal)
-```
-
-**执行流程:**
-```
-DELIBERATIVE 模式:
-  1. LLM 分解目标 → 子步骤 (JSON 三级容错解析)
-  2. 执行每步骤 → 监控状态
-  3. 失败时触发 Replan
-  4. 最多重试 3 次
-
-REACTIVE 模式:
-  1. 直接 ReAct 循环
-  2. Thought → Action → Observation
-```
-
-### 6. FTA Engine | 故障树分析引擎
-
-```python
-# fta/engine.py
-class FTAEngine:
-    """五种门类型（AND/OR/VOTING/INHIBIT/PRIORITY_AND）+ 最小割集 + 蒙特卡洛仿真"""
-
-# 实际用法：
-result = await engine.analyze(tree)   # MOCUS 最小割集 + 蒙特卡洛仿真
-# result.cut_sets → list[set[str]] 最小割集
-# result.failure_probability → top 事件失效概率（基础事件需设置 probability，
-#   PRIORITY_AND 按每次试验随机失效次序实现时序语义，附 Wilson 置信区间）
-```
-
-**AIOps 应用流程:** 工单/告警接入 → 故障树建模 → 割集分析定位根因 → 修复建议生成 → 反馈闭环验证
-
-### 7. ToolHub | 工具中心
-
-```python
-# toolhub.py
-class ToolHub:
-    """工具统一管理"""
-
-    registry = SchemaRegistry()      # Schema 版本管理
-    capability_map = CapabilityMap()  # 能力索引
-    security = SecurityPolicy()       # 权限控制
-
-    async def execute(tool_name, parameters):
-        if not security.can_use(tool_name, user_roles):
-            return {"success": False, "error": "Access denied"}
-
-        handler = discovery.get_handler(tool_name)
-        result = await handler(**parameters)
-
-        security.audit(tool_name, user_id, "execute", success)
-        return result
-```
-
-**技能系统能力:**
-| 能力 | 说明 |
-|------|------|
-| `WEB_SEARCH` | 网页搜索 |
-| `CODE_EXECUTION` | 沙箱代码执行 |
-| `CODE_ANALYSIS` | 代码分析 |
-| `TROUBLESHOOT` | 故障排查 |
-| `SOLUTION` | 解决方案生成 |
-
-### 8. Resilience | 弹性模式
-
-```python
-# resilience.py
-class CircuitBreaker:
-    """熔断器保护下游服务 (asyncio.Lock 并发安全)"""
-
-    failure_threshold = 5     # 连续失败阈值
-    reset_timeout = 30.0      # 重置超时
-    half_open_max_calls = 3   # 半开探测上限
-
-    # States: CLOSED → OPEN → HALF_OPEN → CLOSED
-    # 提供 reset() 手动重置 与 get_state_info() 可观测快照
-
-class FallbackCascade:
-    """多级降级策略, 返回结构化 FallbackResult"""
-
-    async def execute(*strategies):
-        for strategy in strategies:
-            try:
-                return await strategy()
-            except Exception:
-                continue  # 尝试下一个
-        return FallbackResult(success=False, message="No fallback strategies provided")
-```
-
-**降级路径:**
-```
-MCP Tool → Native Skill → LLM Direct → Cached Response
-```
-
-### 9. AgentMessageBus | 消息总线
-
-```python
-# message_bus.py
-class AgentMessageBus:
-    """订阅-发布消息总线"""
-
-    async def subscribe(agent_id, channel, callback):
-        """订阅频道"""
-
-    async def publish(message: AgentMessage):
-        """发布消息"""
-
-    async def request(sender, channel, content, timeout):
-        """请求-响应模式 (带 correlation_id)"""
-```
-
-### 10. Loop Engineering | 循环工程
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                     Loop Engineering 闭环                            │
-├─────────────────────────────────────────────────────────────────────┤
-│  Observe          Orient           Decide           Act             │
-│  ┌─────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐   │
-│  │ Health  │     │Aggregator│     │  Alert   │     │ Circuit  │   │
-│  │ Retry   │────▶│ (滑动    │────▶│  Engine  │────▶│ Breaker  │   │
-│  │ Workflow│     │  窗口)   │     │ (规则)   │     │ Adaptive │   │
-│  │ Telemetry│    │          │     │          │     │ Weight   │   │
-│  └─────────┘     └──────────┘     └──────────┘     └──────────┘   │
-│                                                     │             │
-│  ┌─────────────────────────────────────────────────▼──────────┐   │
-│  │              Feedback Dispatch                             │   │
-│  │         Log │ Webhook │ NATS                               │   │
-│  └────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-**三大支柱:**
-
-| 支柱 | 说明 | 实现 |
-|------|------|------|
-| **持续反馈循环** | 信号收集 → 聚合 → 分发闭环 | `pkg/feedback/` (Go) + `fta/feedback_loop.py` (Python) |
-| **自愈运维** | 三态熔断器保护下游，自动恢复 | `pkg/circuitbreaker/` |
-| **自适应行为** | 基于反馈的路由权重动态调整 + 时间衰减 | `AdaptiveWeightAdjuster` |
-
-```go
-// Go: 发射反馈信号
-collector.Emit(ctx, feedback.FeedbackSignal{
-    Source:   feedback.SourceHealth,
-    Event:    feedback.EventHealthDegraded,
-    Severity: feedback.SeverityWarn,
-    Message:  "Service health degraded",
-})
-
-// Python: FTA 工作流反馈循环
-loop = FeedbackLoop(history_window=100)
-suggestions = loop.record(metrics)
-// → [ImprovementSuggestion(target="selector", priority="high", ...)]
-```
-
-> 📖 详见 [Loop Engineering 文档](docs/zh/loop-engineering.md)
-
-### 11. Circuit Breaker (Go) | 三态熔断器
-
-```go
-// pkg/circuitbreaker/breaker.go
-breaker := circuitbreaker.New(circuitbreaker.Config{
-    Name:             "downstream-api",
-    FailureThreshold: 5,
-    RecoveryTimeout:  30 * time.Second,
-    HalfOpenMaxCalls: 3,
-    Observer:         feedbackObserver,  // 状态变化 → 反馈信号
-})
-
-err := breaker.Execute(ctx, func(ctx context.Context) error {
-    return callDownstreamAPI(ctx, request)
-})
-```
-
-**状态机:**
-```
-CLOSED  ──[failures >= 5]──▶  OPEN
-  ▲                            │
-  │                    [30s timeout]
-  │                            ▼
-CLOSED  ◀──[probe ok]──  HALF_OPEN
-```
-
-### 12. Adaptive Selector | 自适应权重
-
-```python
-# selector/resilient_selector.py — 已内置接线，无需手工实例化
-selector = ResilientSelector()  # 内置 AdaptiveWeightAdjuster（adaptive_weights_enabled=True）
-
-# 每次路由尝试后自动 record_outcome(route_type, success)，会话结束 apply_decay()
-session = await selector.route_and_execute("诊断 503", "ops-agent", executor)
-
-# 备选路由按权重降序稳定排序（同权重保持 route_priority 顺序）；
-# 错误分类路由偏好命中时仍最优先
-stats = selector.get_session_stats()
-weights = stats["adaptive_weights"]["weights"]
-# → {"skill": 1.05, "rag": 0.95, ...}
-```
-
----
-
-## Quick Start (Detailed)
-
-### Environment Requirements
-
-| Dependency | Version | 说明 |
-|------------|---------|------|
-| Go | >= 1.25 | go.mod 锁定 1.25.0 |
-| Python | >= 3.11 | 运行时（开发环境已验证 3.14） |
-| Node.js | >= 20 | WebUI 开发（已验证 v22） |
-| Docker | >= 20.10 | 依赖服务容器化 |
-| Make | latest | 构建工具链 |
-| uv | 推荐 | Python 依赖管理（无则回退 pip） |
-
-### One-Command Startup (Recommended)
-
-```bash
-# 1. 克隆仓库
-git clone https://github.com/ai-guru-global/resolve-agent.git
-cd resolve-agent
-
-# 2. 一键启动全部服务（依赖容器 + Go 平台 + Python 运行时 + WebUI）
-./scripts/start-local.sh all
-
-# 3. 查看状态
-./scripts/start-local.sh status
-```
-
-Startup endpoints:
-
-| 服务 | 地址 | 说明 |
-|------|------|------|
-| **WebUI** | http://localhost:5174 | React 可视化控制台 |
-| **Platform API** | http://localhost:8080 | Go 平台服务（健康检查 `/api/v1/health`） |
-| **Runtime API** | http://localhost:9091 | Python Agent 运行时（`/health`） |
-| gRPC | localhost:9090 | Platform gRPC 服务（仅健康检查与反射；业务 API 走 REST） |
-| PostgreSQL | localhost:5432 | 长期记忆 / 业务数据 |
-| Redis | localhost:6379 | 短期记忆 / 缓存 |
-| NATS | localhost:4222 | 消息总线 |
-| Milvus | localhost:19530 | RAG 向量存储 |
-
-### Step-by-Step Startup
-
-```bash
-# 仅启动依赖容器 (PostgreSQL / Redis / NATS / Milvus / etcd)
-./scripts/start-local.sh deps
-
-# 仅启动 Go 平台服务（自动编译）
-./scripts/start-local.sh platform
-
-# 仅启动 Python Agent 运行时（自动重建 venv）
-./scripts/start-local.sh runtime
-
-# 仅启动 WebUI 开发服务器
-./scripts/start-local.sh web
-
-# 其他子命令
-./scripts/start-local.sh stop      # 停止全部（含依赖容器）
-./scripts/start-local.sh restart   # 重启全部
-./scripts/start-local.sh logs web  # 查看日志 (platform/runtime/webui/deps)
-./scripts/start-local.sh doctor    # 环境诊断
-```
-
-> ⚠️ 首次启动 `start-local.sh runtime` 会自动创建 `python/.venv` 并安装依赖（`.[rag]`），耗时数分钟属正常现象。
-
-### Alternative Startup (Makefile)
-
-```bash
-make setup-dev        # 初始化开发环境（依赖 + Git Hooks）
-make compose-deps     # 启动依赖容器
-make build            # 构建 Go / Python / WebUI
-make compose-up       # Docker Compose 全栈启动
-
-# 测试与质量
-make test             # 全量测试（Go + Python + WebUI）
-make test-e2e         # Go E2E 测试（构建标签隔离）
-make test-integration # 集成测试
-make lint             # 全语言 lint 门禁（Go/Python/Web/Proto）
-
-# 数据库
-make migrate-up       # 应用数据库迁移（需 DATABASE_URL）
-make seed             # 加载种子数据
-```
-
-### Python Agent Example
-
-```python
-from resolveagent.selector.selector import IntelligentSelector
-from resolveagent.memory import HierarchicalMemory
-from resolveagent.planning import HybridPlanner, PlanningMode
-
-# 初始化
-selector = IntelligentSelector(strategy="hybrid")
-memory = HierarchicalMemory(session_id="session-1")
-planner = HybridPlanner()
-
-# 路由请求
-decision = await selector.route(
-    input_text="分析代码中的安全漏洞",
-    agent_id="my-agent",
-)
-# → RouteDecision(route_type="code_analysis", confidence=0.85)
-
-# 规划执行 (Deliberative 模式)
-plan = await planner.create_plan(
-    goal="诊断 API 500 错误",
-    mode=PlanningMode.DELIBERATIVE,
-)
-# → Plan(steps=[Step(gather_info), Step(diagnose), Step(fix)])
-
-# 记忆管理
-memory.add("user", "我想部署到 k8s", importance=0.8)
-recent = memory.get_recent(limit=10)
-```
+> 📖 逐模块代码级讲解见 [Architecture Deep Dive](docs/architecture-deep-dive.md)。
 
 ---
 
@@ -775,23 +296,11 @@ recent = memory.get_recent(limit=10)
 `resolveagent` 命令行工具（Go 实现，位于 `internal/cli/` + `cmd/resolveagent-cli/`），覆盖平台全部核心操作，并提供交互式 TUI 控制台（`internal/tui/`）：
 
 ```bash
-# Agent 管理
-resolveagent agent create|list|describe|run|update|delete|logs
-
-# 技能管理
-resolveagent skill list|info|install|test|remove|init
-
-# 工作流管理
-resolveagent workflow create|list ...
-
-# RAG 与语料
-resolveagent rag ...        # 文档 / 集合管理
-resolveagent corpus ...     # 语料导入
-
-# 其他
-resolveagent config ...     # 配置管理
-resolveagent serve          # 本地服务模式
-resolveagent dashboard      # TUI 交互式控制台
+resolveagent agent create|list|describe|run|update|delete|logs   # Agent 管理
+resolveagent skill list|info|install|test|remove|init           # 技能管理
+resolveagent workflow create|list ...                           # 工作流管理
+resolveagent rag ... / corpus ...                               # RAG 与语料
+resolveagent config ... / serve / dashboard                     # 配置 / 本地服务 / TUI
 ```
 
 > 📖 完整命令参考见 [CLI 参考](docs/zh/cli-reference.md)。
@@ -800,74 +309,35 @@ resolveagent dashboard      # TUI 交互式控制台
 
 ## WebUI
 
-访问 **http://localhost:5174** 查看可视化控制台，包含 23 个功能页面：
+访问 **http://localhost:5174** 查看可视化控制台（23 个功能页面）：Dashboard / Playground（Agent 多轮对话）/ Selector 路由可视化 / FTAEngine 故障树编辑器 / Workflows / Agents / Skills / RAG / CodeAnalysis（调用链图谱）/ TicketSummary / Solutions / Monitoring / Traces / Database / Settings 等。
 
-- **Home / Dashboard** — 平台总览与执行模式
-- **Architecture** — 四层架构叙事
-- **Playground** — 与 Agent 多轮对话（Kimi K2.5 等模型）
-- **Selector / SelectorAdapters** — 智能路由决策可视化 + 自适应权重 + 适配器
-- **FTAEngine** — 故障树编辑器与仿真
-- **Workflows** — 工作流编排
-- **Agents** — Agent 管理与配置
-- **Skills** — 技能系统管理
-- **RAG** — 知识库与向量检索
-- **CodeAnalysis** — 代码分析（调用链图谱 + K8s 源码语料）
-- **TicketSummary** — 工单总结业务场景
-- **Solutions** — 解决方案（过滤器 + 新建/编辑表单 + 溯源信息）
-- **Monitoring / Traces** — 监控指标与链路追踪
-- **Database / DatabaseSchema** — 数据管理与 Schema
-- **AgentScopeHigress** — 网关集成演示
-- **Demo / Evaluation** — 演示与评估
-- **Settings** — 系统设置
-- **Mobile** — 移动端预览
-
-**演示数据体系（无后端也可完整体验）:**
-
-- **后端自动检测** — 优先连接真实 Platform API，不可用时自动回落到浏览器端 mock 数据，并显示**演示模式标识徽标**
-- **Mock 数据按域拆分** — `web/src/api/mock/`（ops / rag / skills / workflows / shared 五个域模块），`mock.ts` 仅保留编排层
-- **数据新鲜度守卫** — 演示数据带新鲜度测试（`bde3e40`），防止演示数据随时间推移变成"假旧"
-- **同源原则** — GTM 策略中枢的运行数据与产品控制台取自同一套演示数据源
+**演示模式：** 后端不可用时自动回落到浏览器端 mock 数据（按域拆分于 `web/src/api/mock/`），并显示**演示模式标识徽标**；演示数据带新鲜度测试，防止随时间推移变成"假旧"。
 
 ---
 
 ## Configuration
 
-### Environment Variables (.env)
-
-平台与运行时配置统一使用 `RESOLVEAGENT_*` 前缀（参考 `.env.example`）:
+平台与运行时配置统一使用 `RESOLVEAGENT_*` 前缀（完整清单见 [`.env.example`](.env.example) 与 [配置指南](docs/zh/configuration.md)）:
 
 ```bash
 # 服务地址
 RESOLVEAGENT_HTTP_ADDR=:8080
 RESOLVEAGENT_GRPC_ADDR=:9090
-RESOLVEAGENT_LOG_LEVEL=info
 
 # 数据层
 DATABASE_URL=postgres://resolveagent:resolveagent@localhost:5432/resolveagent?sslmode=disable
 RESOLVEAGENT_REDIS_ADDR=localhost:6379
 RESOLVEAGENT_NATS_URL=nats://localhost:4222
 
-# LLM (多 Provider)
+# LLM (多 Provider：Qwen / 文心 / 智谱 / Kimi / MiMo 等 OpenAI 兼容接入)
 RESOLVEAGENT_LLM_QWEN_API_KEY=your-qwen-key
-RESOLVEAGENT_LLM_WENXIN_API_KEY=your-wenxin-key
-RESOLVEAGENT_LLM_ZHIPU_API_KEY=your-zhipu-key
-KIMI_API_KEY=your-kimi-key          # 经 OpenAI 兼容层接入
-LLM_BASE_URL=https://api.moonshot.cn/v1
-LLM_DEFAULT_MODEL=kimi-k2.5-turbo-preview
-# 小米 MiMo Token Plan (可选): 切到 MiMo 时 LLM_BASE_URL/LLM_DEFAULT_MODEL 改为:
-#   LLM_BASE_URL=https://token-plan-cn.xiaomimimo.com/v1 (区域端点: cn/sgp/ams)
-#   LLM_DEFAULT_MODEL=mimo-v2.5-pro
-#   XIAOMI_TOKEN_PLAN_API_KEY=tp-xxxx (按 base_url 自动路由, 与 Kimi 互不干扰)
+KIMI_API_KEY=your-kimi-key
 
 # 网关与可观测性
 RESOLVEAGENT_GATEWAY_ENABLED=true
 RESOLVEAGENT_TELEMETRY_ENABLED=true
 RESOLVEAGENT_TELEMETRY_OTLP_ENDPOINT=http://localhost:4318
 ```
-
-> ⚠️ Kimi K2.5 等模型调用需在 `configs/models.yaml` / provider 配置中**禁用 thinking 模式**，详见 [Kimi K2.5 集成规范](docs/zh/agentscope-higress-integration.md) 与 [configuration.md](docs/zh/configuration.md)。
-
-### Configuration Files
 
 | 文件 | 说明 |
 |------|------|
@@ -880,110 +350,37 @@ RESOLVEAGENT_TELEMETRY_OTLP_ENDPOINT=http://localhost:4318
 
 ## Documentation
 
-### Chinese Documentation (docs/zh/)
-
-> 全部使用向文档统一维护于 `docs/zh/`（25 篇），总览见 [INDEX](docs/zh/INDEX.md)。
-
-| 文档 | 说明 |
+| 类别 | 入口 |
 |------|------|
-| [快速开始](docs/zh/quickstart.md) | 5 分钟启动第一个智能 Agent |
-| [本地部署](docs/zh/local-deployment.md) | 本地开发环境搭建 |
-| [架构详解](docs/zh/architecture.md) | 三语言分层架构与数据流 |
-| [智能选择器](docs/zh/intelligent-selector.md) | 路由机制与策略 |
-| [选择器适配器](docs/zh/selector-adapters.md) | SelectorProtocol / Hook / Skill 适配器与 MegaAgent 集成 |
-| [弹性选择器评估](docs/zh/resilient-selector-evaluation.md) | Resilient Selector 设计评估 |
-| [Loop Engineering](docs/zh/loop-engineering.md) | 循环工程方法论 |
-| [FTA 引擎](docs/zh/fta-engine.md) | 故障树分析引擎 |
-| [RAG 管道](docs/zh/rag-pipeline.md) | 检索增强生成（BGE 嵌入 → Milvus → 重排序） |
-| [技能系统](docs/zh/skill-system.md) | 技能注册与沙箱 |
-| [数据库 Schema](docs/zh/database-schema.md) | PostgreSQL 16 表 6 组设计与迁移策略 |
-| [工单总结 Agent](docs/zh/ticket-summary-agent.md) | 核心业务场景设计 |
-| [配置指南](docs/zh/configuration.md) | 环境变量与配置详解 |
-| [CLI 参考](docs/zh/cli-reference.md) | 命令行接口 |
-| [最佳实践](docs/zh/best-practices.md) | 生产最佳实践 |
-| [部署指南](docs/zh/deployment.md) | Docker/Helm/K8s 部署 |
-
-### Design Docs (docs/design/)
-
-带 `file:line` 锚点的源码蒸馏设计文档（00–18 共 19 篇，按 core / standard / shallow 三档组织），基于 commit `21fdb74`：
-
-| 文档 | 说明 |
-|------|------|
-| [设计文档索引](docs/design/INDEX.md) | 19 篇设计文档的导航入口与推荐阅读顺序 |
-| [系统总览](docs/design/00-overview.md) | 三层架构分工、进程入口、端到端数据流 |
-| [智能路由器](docs/design/01-selector.md) | Selector 三段式元路由与弹性循环 |
-| [执行引擎](docs/design/02-runtime.md) | Runtime 引擎的状态机与编排决策 |
-
-> [!TIP]
-> 其余 15 篇（FTA / RAG / 技能 / Go 平台 / Registry / 语料导入 / CLI / 流量分析 / 前端等）从 [INDEX](docs/design/INDEX.md) 进入。各篇结论均可按 frontmatter 里的 `source_commit` 逐条回溯源码验证。
-
-### Documentation Site
-
-Online documentation site (Docusaurus): [`docs-site/`](docs-site/) —— 仅站点壳与导航；内容唯一源在 [`docs/`](docs/)（设计蒸馏、中文文档、ADR、API、开发与运维指南）。
+| 架构深潜（代码级） | [docs/architecture-deep-dive.md](docs/architecture-deep-dive.md) |
+| 功能状态与已知待办 | [docs/feature-status.md](docs/feature-status.md) |
+| 中文技术文档（25 篇） | [docs/zh/INDEX.md](docs/zh/INDEX.md) — 快速开始 / 架构详解 / 智能选择器 / FTA 引擎 / RAG 管道 / 技能系统 / 数据库 Schema / 配置指南 / CLI 参考 / 部署指南… |
+| 源码蒸馏设计文档（19 篇，带 `file:line` 锚点） | [docs/design/INDEX.md](docs/design/INDEX.md) |
+| 疑难排查 | [docs/troubleshooting.md](docs/troubleshooting.md) |
+| 文档站点（Docusaurus） | [`docs-site/`](docs-site/) —— 仅站点壳与导航；内容唯一源在 `docs/` |
 
 ---
 
 ## Testing
 
 ```bash
-# 全量测试（Go + Python + WebUI 并行）
-make test
-
-# Python 单元测试（347 个测试项，含熔断器/降级/记忆/规划/选择器/技能）
-cd python && PYTHONPATH=src .venv/bin/python -m pytest tests/unit/ -v
-
-# Python 集成测试（Dify 插件 / FTA 并行 / HTTP 服务 / MCP 适配器 / 弹性选择器等 8 套）
-cd python && PYTHONPATH=src .venv/bin/python -m pytest tests/integration/ -v
-
-# Go 测试（-race + 覆盖率）
-go test -race -coverprofile=coverage.out ./...
-
-# Go E2E 测试（构建标签隔离，支持 E2E_BASE_URL 覆盖服务地址）
-make test-e2e
-#   覆盖: agent lifecycle / workflow execution / feedback loop
-
-# WebUI 测试（Vitest，含演示数据新鲜度守卫）
-cd web && pnpm run test
-
-# 质量门禁（lint + test + coverage）
-make lint
-hack/quality-gate.sh
+make test        # 全量测试（Go + Python + WebUI 并行）
+make test-e2e    # Go E2E 测试（构建标签隔离，支持 E2E_BASE_URL 覆盖）
+make lint        # 全语言 lint 门禁
+hack/quality-gate.sh   # 质量门禁（lint + test + coverage）
 ```
 
-**测试覆盖亮点**（`python/tests/unit/`）:
-- `test_resilience.py` — 熔断器三态机、50 并发失败、降级级联
-- `test_memory.py` — 三层记忆、TTL 过期、LRU 逐出
-- `test_planning.py` — 双模式规划、JSON 容错解析、Replan
-- `test_resilient_selector.py`（集成） — 弹性路由重试与错误分类偏好
-- `test_mega_selector_modes.py` / `test_mega_workflow_degrade.py` — MegaAgent 编排模式与降级
-
-**质量工程实践:**
-- **Go lint 全量治理** — golangci-lint（钉 v1.64）覆盖 revive / errcheck / gofumpt / gocritic / errorlint / govet / gosec / unparam / nilerr / staticcheck / exhaustive 等规则，全部清零或显式注明理由
-- **sentinel 错误链** — registry / store 裸错误统一为 `pkg/errors` sentinel 链式包装，测试先行
-- **防泄漏错误出口** — `writeRegistryError` 统一映射 sentinel → HTTP 状态码，未知错误码只走通用 500，不回显内部消息
+- **Python** — 480+ 单元测试项 + 8 套集成测试（Dify 插件 / FTA 并行 / HTTP 服务 / MCP 适配器 / 弹性选择器等）
+- **Go** — `-race` + 覆盖率；E2E 覆盖 agent lifecycle / workflow execution / feedback loop
+- **Web** — Vitest 113 项（含演示数据新鲜度守卫）
+- **契约** — 以 `router.go` 的 95 条路由注册为唯一事实源的 OpenAPI 契约测试
+- **工程治理** — golangci-lint 全量规则清零或显式注明理由；sentinel 错误链 + 防泄漏统一错误出口
 
 ---
 
 ## Observability
 
-**指标（Prometheus）:**
-
-| 指标 | 说明 |
-|------|------|
-| `resolveagent_selector_decisions_total` | 路由决策总数 |
-| `resolveagent_selector_cache_hit_rate` | 缓存命中率 |
-| `resolveagent_audit_records_total` | 审计记录数 |
-| `resolveagent_memory_promotions_total` | 记忆沉淀数 |
-| `resolveagent_planner_replans_total` | Replan 次数 |
-| `resolveagent_toolhub_executions_total` | 工具执行数 |
-| `resolveagent_circuit_breaker_state` | 熔断器状态 (0=closed, 1=open, 2=half_open) |
-| `resolveagent_feedback_signals_total` | 🔄 反馈信号总数 (by source, event) |
-| `resolveagent_feedback_loop_duration_seconds` | 🔄 反馈循环处理耗时 |
-| `resolveagent_retry_exhausted_total` | 🔄 重试耗尽次数 |
-| `resolveagent_workflow_success_rate` | 🔄 工作流成功率 |
-| `resolveagent_adaptive_selector_weights` | 🔄 自适应选择器权重（经 ResilientSelector.get_session_stats 暴露，by route_type） |
-
-**链路与日志:**
+- **Prometheus 指标** — `resolveagent_selector_decisions_total` / `resolveagent_audit_records_total` / `resolveagent_circuit_breaker_state` / `resolveagent_feedback_signals_total` / `resolveagent_adaptive_selector_weights` 等（`pkg/telemetry/`）
 - **OpenTelemetry** — 结构化日志带 trace 关联（`pkg/logger/`），OTLP 导出（`RESOLVEAGENT_TELEMETRY_OTLP_ENDPOINT`）
 - **健康检查** — liveness / readiness 端点（`pkg/health/`）：Platform `/api/v1/health`，Runtime `/health`
 - **审计追踪** — Selector 决策审计（异步落库）+ ToolHub 执行审计 + 熔断器状态变化经反馈 Observer 采集
@@ -992,53 +389,7 @@ hack/quality-gate.sh
 
 ## Feature Status
 
-> **v0.3.0** | 核心组件经全面修复与测试加固（Python 480 个单元测试项 + 8 套集成测试 + Web 113 项，门禁 10/10 全绿）
-
-### 核心引擎
-
-| 引擎 | 状态 | 说明 |
-|------|------|------|
-| Intelligent Selector | 🟢 Ready | 三阶段元路由 + rule/llm/hybrid 策略 |
-| Resilient Selector | 🟢 Ready | 失败重试 + 错误分类路由偏好 + 自适应权重 |
-| Hierarchical Memory | 🟡 库就绪 | 三层记忆（Working/Episodic/Long-term）实现+单测齐备，**待接入生产调用链** |
-| Hybrid Planner | 🟢 Ready | 双模式 + LLM 分解 + JSON 容错解析 |
-| FTA Engine | 🟢 Ready | 五门类型（含时序语义）+ 最小割集 + 蒙特卡洛仿真 |
-| RAG Pipeline | 🟢 Ready | Milvus / Qdrant 双后端向量检索 |
-| Skill System | 🟢 Ready | 技能注册 + 沙箱执行（bash/python/js）+ 场景排查引擎 |
-| ToolHub | 🟡 库就绪 | 工具发现/注册/安全策略实现+单测齐备，**待接入生产调用链** |
-| Resilience | 🟢 Ready | CircuitBreaker + FallbackCascade |
-| Loop Engineering | 🟢 Ready | Go 反馈闭环 + Python 工作流反馈 |
-| LLM Providers | 🟢 Ready | Qwen / 文心 / 智谱 / Higress / OpenAI 兼容（Kimi、MiMo Token Plan） |
-| MCP Adapter | 🟢 Ready | Model Context Protocol |
-
-### 基础设施
-
-| 组件 | 状态 | 说明 |
-|------|------|------|
-| Go Platform | 🟢 Ready | Registry / Auth / Route / Store / Feedback + sentinel 错误链防泄漏 |
-| Python Runtime | 🟢 Ready | HTTP + SSE 流式服务（`python -m resolveagent.runtime`） |
-| CLI & TUI | 🟢 Ready | agent/skill/workflow/rag/corpus 子命令 + TUI 控制台 |
-| WebUI | 🟢 Ready | 23 个功能页面（React + Vite + Tailwind）+ 演示模式徽标 |
-| Mobile Web | 🟢 示例 | `examples/mobile-demo/` 移动端示例（独立原型，不随产品演进） |
-| CI/CD | 🟢 Ready | 单一流水线（Go 1.25），覆盖 lint / test / e2e / mobile / docker 阶段 |
-| 部署 | 🟢 Ready | Docker Compose（deps 含外部 etcd）+ Helm + K8s manifests |
-
-### 已知待办（截至 2026-10-05，经代码实测裁定）
-
-完整依据与逐项验证命令见 [docs/PROJECT_STATUS_2026-10-04.md](docs/PROJECT_STATUS_2026-10-04.md) §10.6–§10.10。
-
-| 待办 | 类型 | 说明 |
-|------|------|------|
-| Memory / ToolHub / AgentMessageBus 生产接线 | 架构 | 三模块实现+单测齐备（能力库），但 `MegaAgent` / `ContextEnricher` / Skill 执行链中无调用点，运行时不生效 |
-| `watch_registry` 实时变更流 | 架构 | 需 Go 服务端先提供 WebSocket/SSE 变更端点（尚不存在），客户端单侧实现无意义 |
-| workflow 按注册定义执行 | 架构 | registry 存 FTA 故障树（`Tree`），与执行引擎的 nodes/edges 图不同构；树→图转换未实现前，执行流会如实披露 `definition_pending` 后走开发回退 |
-| `resolveagent.api` 包 | 功能 | 21 行空壳，待 REST 客户端能力落地 |
-| Web code-analysis 6 方法接真实后端 | 功能 | 前端目前永远走 mock 数据 |
-| `pkg/event/nats.go` / `AgentExecutionServer` 接线 | 架构 | NATS JetStream 总线可用但零调用方；后者指向不存在的服务（刻意保留待 v0.5.0 分布式阶段） |
-| Milvus delete-by-filter 端到端验证 | 验证 | 代码已落地并有单测（fake client），对真实 Milvus 实例的集成验证待环境 |
-| Go 覆盖率阈值重标定 | 流程 | 阈值 17.0% 对实测 17.1% 仅 0.1pt 余量，且随 Go 工具链版本剧变（go1.25→17.5%，go1.27→32.2%）；**任何 Go minor 升级必须重标基线** |
-
-> 已关闭项（2026-10-04/05 四轮修复）：ReAct/troubleshoot/BaseAgent/Milvus-delete 四处占位真实接线、engine 诚实门、零测试模块补测（382→480）、CI 三根因、脚本执行位、action 版本漂移、vitest 2→5 对齐 vite 8。
+核心引擎与基础设施的就绪状态、以及经代码实测裁定的已知待办，统一维护在 [docs/feature-status.md](docs/feature-status.md)。
 
 ---
 
@@ -1046,9 +397,7 @@ hack/quality-gate.sh
 
 ```
 resolve-agent/
-├── api/                          # 协议定义
-│   ├── openapi/v1/              # OpenAPI 规范
-│   └── jsonschema/              # JSON Schema
+├── api/                          # 协议定义 (OpenAPI / JSON Schema / proto)
 ├── cmd/
 │   ├── resolveagent-cli/        # CLI 应用入口
 │   └── resolveagent-server/     # Platform Server 入口
@@ -1057,66 +406,30 @@ resolve-agent/
 │   └── tui/                     # 交互式 TUI 控制台
 ├── pkg/                         # Go 平台服务
 │   ├── circuitbreaker/          # 🔄 三态熔断器
-│   ├── config/                  # 配置加载 (Viper)
-│   ├── errors/                  # sentinel 错误链
-│   ├── event/                   # 事件体系
+│   ├── config/  errors/  event/ # 配置 / sentinel 错误链 / 事件体系
 │   ├── feedback/                # 🔄 反馈循环 (Collector/RingBuffer/Aggregator)
-│   ├── gateway/                 # Higress 网关集成
-│   ├── health/                  # 健康检查 (liveness/readiness)
-│   ├── logger/                  # OpenTelemetry 关联结构化日志
+│   ├── gateway/  health/  logger/
 │   ├── registry/                # 14 个领域 Registry (agent/skill/rag/fta/solution/traffic…)
-│   ├── retry/                   # 重试机制
-│   ├── server/                  # HTTP 服务（gRPC 仅健康/反射）+ writeRegistryError 统一错误出口
-│   ├── service/                 # 业务服务层
-│   ├── store/                   # Store 模式抽象 (postgres sentinel 化)
-│   ├── telemetry/               # 监控指标 (Prometheus/OTel)
-│   └── version/                 # 版本信息
+│   ├── retry/  server/  service/  store/  telemetry/  version/
 ├── python/src/resolveagent/
 │   ├── selector/                # 🧠 智能选择器 (意图/上下文/路由/审计/弹性)
-│   ├── memory.py                # 💾 分层记忆
-│   ├── planning.py              # 🌳 混合规划器
-│   ├── toolhub.py               # 🔧 工具中心
-│   ├── resilience.py            # 🛡️ 弹性模式
-│   ├── message_bus.py           # 📡 消息总线
+│   ├── memory.py  planning.py  toolhub.py  resilience.py  message_bus.py
 │   ├── fta/                     # 🔍 FTA 引擎 + 反馈循环 + 回归验证
 │   ├── rag/                     # RAG 管道 (Milvus/Qdrant 双后端)
-│   ├── skills/                  # 技能系统 (manifest/executor/sandbox)
-│   ├── llm/                     # LLM Provider 体系
-│   ├── mcp/                     # MCP 适配器
-│   ├── hooks/                   # 生命周期钩子
-│   ├── code_analysis/           # 代码分析
-│   ├── docsync/                 # 文档同步
-│   ├── agent/                   # Agent 定义
-│   └── runtime/                 # 运行时服务
-├── web/                         # 🌐 React WebUI (Vite + Tailwind + shadcn/ui)（在线: https://vxxzrdpyfrl6.meoo.fun）
-│   └── src/api/mock/            # 演示数据按域拆分 (ops/rag/skills/workflows/shared)
+│   ├── skills/  llm/  mcp/  hooks/  code_analysis/  docsync/  agent/  runtime/
+├── web/                         # 🌐 React WebUI (Vite + Tailwind + shadcn/ui)
 ├── benchmarks/wiki-k8s/         # 基准语料（K8s wiki）
+├── docs/                        # 文档 (架构深潜/功能状态/设计蒸馏/中文文档)
 ├── docs-site/                   # 📚 Docusaurus 站点壳（内容引用 docs/）
-├── docs/                        # 文档 (设计蒸馏/中文文档/归档)
-│   ├── design/                  # 🧬 19 篇带 file:line 锚点的源码蒸馏设计文档
-│   ├── zh/                      # 25 篇中文技术文档
-│   └── archive/                 # 历史会话记录与评估报告归档
-├── GTM/                         # 🗺️ GTM 策略中枢静态页（在线: https://gjbs6uhxeute.meoo.fun）
-│   └── assets/design-variants/  # 设计变体稿存档
-├── configs/                     # 运行配置
-│   ├── resolveagent.yaml        # 平台配置
-│   ├── runtime.yaml             # 运行时配置
-│   ├── models.yaml              # 模型配置
-│   └── examples/                # 配置示例 (agent/skill/FTA workflow)
-├── scripts/                     # 开发运维脚本
-│   └── start-local.sh           # 🚀 本地一键启动 (all/deps/platform/runtime/web/status/...)
-├── deploy/                      # 部署配置
-│   ├── docker/                  # Dockerfile (platform/runtime/webui) + nginx
-│   ├── docker-compose/          # Compose (deps 含外部 etcd / 全栈)
-│   ├── helm/                    # Helm Chart
-│   └── k8s/                     # K8s manifests
-├── skills/                      # 技能注册 (intelligent-selector / rule-route)
-│   └── examples/                # 示例技能 (k8s-pod-crash / ticket-handler / consulting-qa / hello-world)
+├── configs/                     # 运行配置 (resolveagent/runtime/models + examples)
+├── scripts/                     # 开发运维脚本 (start-local.sh 一键启动)
+├── deploy/                      # 部署配置 (docker / docker-compose / helm / k8s)
+├── skills/                      # 技能注册 + 示例技能 (k8s-pod-crash / ticket-handler…)
 ├── examples/                    # 示例 (quickstart / integrations / mobile-demo)
 ├── integrations/dify/           # Dify 集成
 ├── test/                        # E2E (Go 构建标签) / 集成 / fixtures
 ├── hack/                        # 开发工具 (quality-gate / coverage-report)
-└── .github/workflows/           # CI/CD (ci / e2e / release / docker-publish)
+└── .github/workflows/           # CI/CD (ci / e2e / release / codeql)
 ```
 
 ---
@@ -1124,84 +437,29 @@ resolve-agent/
 ## Deployment
 
 ```bash
-# 构建镜像 (platform / runtime / webui)
-make docker
-
-# Docker Compose 全栈
-make compose-up
-
-# Helm 部署
-make helm-install
-
-# 数据库迁移与种子数据
-make migrate-up
-make seed
+make docker          # 构建镜像 (platform / runtime / webui)
+make compose-up      # Docker Compose 全栈
+make helm-install    # Helm 部署
+make migrate-up      # 数据库迁移
+make seed            # 种子数据
 ```
 
-生产部署推荐使用 `deploy/helm/resolveagent/`（含健康检查、资源限制、HPA 配置），详见 [部署指南](docs/zh/deployment.md)。
-
----
-
-## Troubleshooting
-
-> 以下为本仓库实战验证过的本地启动问题与修复方案。
-
-### 1. `status` / `stop` 输出为空且退出码 1
-
-**根因**: `set -euo pipefail` 下 `lsof | head -1` 在端口空闲时（lsof 返回 1）导致命令替换赋值直接退出脚本。
-
-**修复**: `scripts/start-local.sh` 的 `get_port_pid()` 已加 `|| true`。如遇旧版本，同步该修复即可。
-
-### 2. Milvus 容器崩溃（SIGSEGV panic）
-
-**根因**: Milvus standalone 的**嵌入式 etcd** 在 macOS Docker Desktop（Apple Silicon）上必然触发 `etcd.InitEtcdServer` nil pointer panic（[milvus-io/milvus#31925](https://github.com/milvus-io/milvus/issues/31925) 同类问题）。
-
-**修复**: `deploy/docker-compose/docker-compose.deps.yaml` 已改用**外部 etcd 容器**（`quay.io/coreos/etcd:v3.5.16`），Milvus 配置 `ETCD_USE_EMBED=false` + `ETCD_ENDPOINTS=etcd:2379`（官方推荐的 standalone 部署方式）。
-
-### 3. Docker Hub 镜像拉取超时（国内网络）
-
-**现象**: `docker compose up` 报 `failed to resolve reference ... context deadline exceeded`。
-
-**方案**: 使用加速镜像源拉取后重打官方 tag（零侵入）:
-
-```bash
-docker pull docker.1ms.run/library/postgres:16-alpine
-docker tag docker.1ms.run/library/postgres:16-alpine postgres:16-alpine
-# 大镜像（如 Milvus）如过慢可换 docker.m.daocloud.io 重拉（已下载层自动复用）
-```
-
-### 4. `pnpm dev` 崩溃（供应链策略校验超时）
-
-**根因**: pnpm 11+ 在每次 run 前联网校验 lockfile 供应链策略（483 entries），网络慢时直接崩溃。
-
-**修复**: `web/.npmrc` 已写入 `verify-deps-before-run=false`（项目级配置）。
-
-### 5. `uv pip install` 卡死无输出
-
-**方案**: 指定国内镜像源重装:
-
-```bash
-cd python
-UV_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple uv pip install --python .venv/bin/python -e ".[rag]"
-```
-
-### 6. WebUI 端口冲突
-
-**约定**: WebUI 固定运行在 **5174** 端口（`web/vite.config.ts` 与 `scripts/start-local.sh` 已统一），避免与 3000/5173 等其他项目冲突。如需修改，两处需同步变更。
+生产部署推荐使用 `deploy/helm/resolveagent/`（含健康检查、资源限制），详见 [部署指南](docs/zh/deployment.md)。
 
 ---
 
 ## Roadmap
 
-Our public roadmap is tracked in [ROADMAP.md](ROADMAP.md) and on [GitHub Issues](https://github.com/ai-guru-global/resolve-agent/issues).
+完整路线图（唯一权威副本）见 [ROADMAP.md](ROADMAP.md)，实时状态见 [GitHub Issues](https://github.com/ai-guru-global/resolve-agent/issues)。
 
 | Version | Theme | Highlights |
 |---------|-------|------------|
 | v0.1.0 ✅ | Foundation | Go platform (gRPC + REST), Python runtime, FTA engine, Intelligent Selector, RAG, WebUI, CLI, Docker Compose, Helm. |
-| v0.2.0 ✅ | Hardening | DB migrations, unified error handling, OpenTelemetry logging, health checks, integration tests, retry with backoff.（负载基准进行中：`benchmarks/`） |
-| v0.3.0 🔨 | WebUI & DevEx | Mock-data auto-detection + 域拆分与新鲜度守卫, project cleanup, deployment unification, examples & scaffolding.（OpenAPI 自动生成规划中） |
-| v0.4.0 | Ecosystem | Skill marketplace, plugin SDK, multi-tenancy, RBAC, audit dashboard. |
-| v0.5.0 | Scale | Horizontal agent runtime, distributed workflows, NATS JetStream, advanced RAG. |
+| v0.2.0 ✅ | Hardening | DB migrations, unified error handling, OpenTelemetry logging, health checks, integration tests, retry with backoff. |
+| v0.3.0 ✅ | Quality & Foundation | CI/CD, unified versioning, router refactoring (2160 行 → 15 个域文件), PostgreSQL Registry 持久化, MCP adapter. |
+| v0.4.0 ✅ | Core Capability | FTA 并行求值, 多语言代码分析 (tree-sitter), LangGraph 集成, Dify 插件, 语料导入链路. |
+| v0.5.0 🔜 | Enterprise Readiness | Multi-tenant, RBAC, comprehensive audit logging, SSO (OIDC/SAML), data encryption, compliance. |
+| v0.6.0 | Ecosystem & Scale | Skill marketplace, plugin SDK, horizontal agent runtime, distributed workflows, NATS JetStream, advanced RAG. |
 
 Long-term vision: multi-cloud and edge deployment, visual workflow designer, AI-powered observability and self-healing.
 

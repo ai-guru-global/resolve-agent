@@ -33,7 +33,7 @@ This document outlines the high-level roadmap for the ResolveAgent project.
 - [x] Retry with exponential backoff (`pkg/retry/`)
 - [ ] Load testing benchmarks（`test/load/` 尚未建立）
 
-## v0.3.0 — Quality & Foundation (Current)
+## v0.3.0 — Quality & Foundation
 
 - [x] CI/CD workflow with GitHub Actions
 - [x] Unified version management across all modules
@@ -47,7 +47,7 @@ This document outlines the high-level roadmap for the ResolveAgent project.
 - [x] PostgreSQL Registry persistence layer
 - [x] MCP (Model Context Protocol) adapter
 
-## v0.4.0 — Core Capability Strengthening (Phase 1)
+## v0.4.0 — Core Capability Strengthening (Phase 1, Released 2026-10)
 
 **Focus: FTA + Code Diagnosis dual core, ecosystem integration**
 

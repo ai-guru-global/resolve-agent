@@ -7,9 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> 覆盖 2026-04-08 至 2026-10-04 的 160 次提交。仓库自 `[0.3.0]` 之后未打过任何 git tag，
-> `VERSION` 仍为 `0.3.0`，故本段暂记为 Unreleased；下一次发版时再切分为具体版本号。
-> 本节由 git log 逐条归纳回填，只记录能在提交或代码中找到证据的变更。
+## [0.4.0] - 2026-10-20
+
+> 覆盖 2026-04-08 至 2026-10-04 的 160 次提交，由 git log 逐条归纳回填，
+> 只记录能在提交或代码中找到证据的变更。本版本为项目第一个 git tag 发布。
 
 ### Added
 
@@ -25,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **FTA 概率模型** — `FTAEvent` 新增 `probability` 字段；`FaultTree.validate` 校验 `INHIBIT` 门缺失 conditioning 输入
 - **Selector 自适应权重** — `AdaptiveWeightAdjuster` 接线至选择链：会话级 `record_outcome` / `decay`，备选路由按权重降序稳定排序
 - **Agent 核心模块落地** — `memory.py`（三层记忆）、`message_bus.py`（Agent 消息总线）、`planning.py`（混合规划器）、`toolhub.py`（能力发现与安全策略）、`resilience.py`（熔断与降级级联）、`selector/audit.py`（决策审计）、`selector/resilient_selector.py`。
-  > 注：截至本次回填，仅 `CircuitBreaker` 与 `DecisionAuditLogger` 在 `python/src/` 内有生产调用点，其余模块只有单测覆盖、尚未接线，逐项证据见 `docs/ARCHITECTURE_IMPROVEMENTS_2026.md` 的「实施状态复核（2026-10-04）」小节。
+  > 注：截至本次回填，仅 `CircuitBreaker` 与 `DecisionAuditLogger` 在 `python/src/` 内有生产调用点，其余模块只有单测覆盖、尚未接线。
 - **生命周期 Hook 链默认启用** — `HookStore` 协议化；短路钩子的 `modified_data` 现在会回写 ctx；可用 `RESOLVEAGENT_HOOKS_DISABLED` 关闭
 - **gRPC SelectorService shim** — routing 逻辑抽取为共享 `RoutingService`，proto 桩生成物入 `resolveagent.v1`（lint/mypy 已排除），设置 `RESOLVEAGENT_GRPC_PORT` 时可选双栈启动
 - **Solution Registry 落 Postgres** — 迁移 v16 新增 `solutions` / `solution_executions` 表；store 层 Postgres 实现（sentinel 错误同构、`tags`/`metadata` JSONB 回读、独立连接验证重启不丢数据）；server 层接线，内存实现保留为无 DB 时的默认

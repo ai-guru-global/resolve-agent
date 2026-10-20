@@ -1,6 +1,6 @@
 [project]
 name = "resolveagent"
-version = "0.3.0"
+version = "0.4.0"
 description = "ResolveAgent Runtime - Mega Agent Platform"
 readme = "README.md"
 license = {text = "Apache-2.0"}

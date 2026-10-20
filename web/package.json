@@ -1,7 +1,9 @@
 {
   "name": "resolveagent-webui",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
+  "description": "ResolveAgent WebUI — K8s 故障诊断智能体平台的控制台",
+  "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

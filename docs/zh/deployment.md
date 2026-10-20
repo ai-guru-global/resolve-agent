@@ -308,40 +308,6 @@ helm rollback resolveagent 1 -n resolveagent
 helm uninstall resolveagent -n resolveagent
 ```
 
-### 使用 Kustomize
-
-适用于需要更多定制化的场景。
-
-```bash
-# 部署到开发环境
-kubectl apply -k deploy/k8s/overlays/development
-
-# 部署到生产环境
-kubectl apply -k deploy/k8s/overlays/production
-```
-
-#### Kustomization 结构
-
-```
-deploy/k8s/
-├── base/
-│   ├── kustomization.yaml
-│   ├── namespace.yaml
-│   ├── platform-deployment.yaml
-│   ├── platform-service.yaml
-│   ├── runtime-deployment.yaml
-│   ├── runtime-service.yaml
-│   └── configmap.yaml
-└── overlays/
-    ├── development/
-    │   ├── kustomization.yaml
-    │   └── patches/
-    └── production/
-        ├── kustomization.yaml
-        ├── patches/
-        └── secrets/
-```
-
 ---
 
 ## 生产环境配置

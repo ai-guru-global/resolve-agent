@@ -423,7 +423,7 @@ resolve-agent/
 ├── docs-site/                   # 📚 Docusaurus 站点壳（内容引用 docs/）
 ├── configs/                     # 运行配置 (resolveagent/runtime/models + examples)
 ├── scripts/                     # 开发运维脚本 (start-local.sh 一键启动)
-├── deploy/                      # 部署配置 (docker / docker-compose / helm / k8s)
+├── deploy/                      # 部署配置 (docker / docker-compose / helm)
 ├── skills/                      # 技能注册 + 示例技能 (k8s-pod-crash / ticket-handler…)
 ├── examples/                    # 示例 (quickstart / integrations / mobile-demo)
 ├── integrations/dify/           # Dify 集成

@@ -38,3 +38,12 @@ app.kubernetes.io/name: {{ include "resolveagent.name" . }}-runtime
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/component: runtime
 {{- end }}
+
+{{/*
+Selector labels for webui
+*/}}
+{{- define "resolveagent.webui.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "resolveagent.name" . }}-webui
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: webui
+{{- end }}

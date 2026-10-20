@@ -55,6 +55,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **开源发布就绪整改** — 移除 738+ 内部文件追踪（AI 工具产物/GTM/内部状态报告，本地保留）；README 由 1281 行精简重写（临时域名与 GTM 内容出库，架构深潜/功能状态/疑难排查移入 docs/，Roadmap 与 ROADMAP.md 对齐）；LICENSE 附录版权行落定（Copyright 2024-2026 AI Guru Global）；CHANGELOG 移至根目录；双份 CONTRIBUTING 合并为单一事实源；MAINTAINERS 与 GOVERNANCE 口径统一
+- **docs-site 首次可构建并入 CI** — 补 lockfile（override webpackbar ^7 修复 webpack 5.112 兼容）、editUrl 修正、i18n 收敛 zh 单语言、sidebar ADR id 修正、footer 死链修复；CI 新增 docs-site job
+- **Helm chart 补 webui workload** — 新增 webui Deployment/Service 模板与资源默认值；移除名不副实的 `deploy/k8s`（仅含一个 Namespace 资源，文档所引 overlays 从未存在），K8s 部署统一走 Helm
+- **版本落定 0.4.0** — VERSION / pyproject / web package.json / docs-site 四处同步，项目首个 git tag
 - **CI 流水线合并** — 重复 workflow 合并为单一 `.github/workflows/ci.yaml`，Go 版本对齐 1.25，新增 e2e / mobile / docker 阶段
 - **golangci-lint 治理** — errcheck 全量修复（可处置错误真实处理，不可处置错误显式弃置）；revive 全量修复（补包注释与导出符号文档，消除命名 stutter）；gofumpt 统一格式；gocritic / errorlint / govet / gosec / unparam / nilerr / unused / staticcheck 判断性修复（真实处理或注明理由）
 - **错误体系收敛** — registry 裸错误统一为 `pkg/errors` sentinel 链式包装，helpers 补 `Cause`（TDD 先行）；新增统一出口 `writeRegistryError`，sentinel 映射 HTTP 状态、内部错误只记日志；postgres store 错误同构 sentinel 化

@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "resolveagent.name" . }}-webui
+  labels:
+    {{- include "resolveagent.labels" . | nindent 4 }}
+    {{- include "resolveagent.webui.selectorLabels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.webui.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "resolveagent.webui.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "resolveagent.webui.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: webui
+          image: "{{ .Values.webui.image.repository }}:{{ .Values.webui.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.webui.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.webui.service.port }}
+              name: http
+          resources:
+            {{- toYaml .Values.webui.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5

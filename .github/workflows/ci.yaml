@@ -105,6 +105,23 @@ jobs:
         working-directory: web
         run: pnpm lint
 
+  docs-site:
+    name: Docs Site Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+      - name: Install dependencies
+        working-directory: docs-site
+        run: npm ci
+      - name: Build docs site
+        working-directory: docs-site
+        run: npm run build
+
   # ===========================================================================
   # Stage 2: Unit Tests
   # ===========================================================================

@@ -120,11 +120,29 @@ coverage.html
 
 # ===== Local runtime / AI tooling =====
 .pids/
-.qoder/repowiki/
-.qoder/settings.local.json
 web/package-lock.json
-
-# 本地工具会话产物（review 截图/问答状态/hallmark）
-.impeccable/review/
-.impeccable/questions/
 .hallmark/
+
+# AI IDE/助手本地产物（不随仓库分发）
+.qoder/
+.zread/
+.claude/
+.agents/
+.trae/
+.windsurf/
+.codebuddy/
+.comate/
+.impeccable/
+
+# 内部工作文档（GTM/产品内部定位/勘误日志/工具配置/备份）
+GTM/
+gotchas.md
+PRODUCT.md
+code-up.yaml
+.golangci.bck.yml
+docs/archive/
+docs/superpowers/
+docs/PROJECT_STATUS_*.md
+docs/ARCHITECTURE_IMPROVEMENTS_*.md
+docs/competitive-analysis-*.md
+docs/enterprise-requirements.md

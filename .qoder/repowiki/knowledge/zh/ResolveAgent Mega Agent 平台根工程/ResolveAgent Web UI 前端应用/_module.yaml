@@ -1,9 +1,0 @@
-schema_version: 1
-module_path: web_ui
-title: ResolveAgent Web UI 前端应用
-scope:
-    - web/
-source_files: []
-depends_on: []
-related_to:
-    - path: mobile_app

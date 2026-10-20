@@ -1,8 +1,0 @@
-schema_version: 1
-module_path: python_runtime/traffic
-title: 动态流量分析引擎
-scope:
-    - python/src/resolveagent/traffic/
-source_files: []
-depends_on: []
-related_to: []

@@ -1,12 +1,13 @@
 # Maintainers
 
-This file lists the maintainers of the ResolveAgent project.
+This file lists the maintainers of the ResolveAgent project. Governance model
+and decision-making process are defined in [.github/GOVERNANCE.md](.github/GOVERNANCE.md).
 
 ## Core Maintainers
 
-| Name | GitHub | Area |
-|------|--------|------|
-| AI Guru Global Team | [@ai-guru-global](https://github.com/ai-guru-global) | Overall |
+| Name | GitHub | Affiliation | Area |
+|------|--------|-------------|------|
+| Allen Galler | [@allengaller](https://github.com/allengaller) | AI Guru Global | Lead Maintainer · Overall |
 
 ## Component Owners
 
@@ -20,5 +21,6 @@ This file lists the maintainers of the ResolveAgent project.
 
 ## Becoming a Maintainer
 
-See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for details on the contribution
-process and how to become a maintainer.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details on the contribution
+process, and [.github/GOVERNANCE.md](.github/GOVERNANCE.md) for the
+maintainer nomination criteria.

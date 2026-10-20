@@ -1,23 +1,28 @@
-# Contributing to Resolve Agent
+# Contributing to ResolveAgent
 
-Thank you for your interest in contributing to Resolve Agent! This document
+Thank you for your interest in contributing to ResolveAgent! This document
 provides guidelines and instructions to make the contribution process smooth
 and effective.
 
-Please read and follow our [Code of Conduct](./CODE_OF_CONDUCT.md) before
+Please read and follow our [Code of Conduct](.github/CODE_OF_CONDUCT.md) before
 participating.
+
+## Reporting Issues
+
+- Use the [GitHub issue tracker](https://github.com/ai-guru-global/resolve-agent/issues) to report bugs or suggest features.
+- Before creating a new issue, search existing issues to avoid duplicates.
+- Use the provided issue templates when available.
 
 ## Prerequisites
 
-Ensure the following tools are installed on your system:
-
 | Tool    | Version | Purpose                    |
 |---------|---------|----------------------------|
-| Go      | 1.22+   | Backend services           |
-| Python  | 3.11+   | AI/ML and scripting        |
+| Go      | 1.25+   | Platform services (go.mod 锁定 1.25.0) |
+| Python  | 3.11+   | AI/ML runtime              |
 | Node.js | 20+     | Frontend (React)           |
 | pnpm    | latest  | Node package manager       |
 | uv      | latest  | Python package manager     |
+| Buf     | latest  | Protocol Buffer management |
 | Docker  | latest  | Dependency services        |
 | Make    | latest  | Build orchestration        |
 
@@ -41,10 +46,12 @@ make compose-deps
 resolve-agent/
 ├── cmd/          # Go application entrypoints (CLI, servers)
 ├── pkg/          # Shared Go libraries and business logic
+├── internal/     # CLI & TUI implementations
 ├── python/       # Python AI/ML services and utilities
 ├── web/          # React frontend (TypeScript)
+├── api/          # OpenAPI / JSON Schema / proto definitions
 ├── deploy/       # Deployment configs (Docker, K8s, Helm)
-├── docs/         # Documentation (bilingual zh/en)
+├── docs/         # Documentation (design docs, zh guides)
 └── Makefile      # Build, test, and lint orchestration
 ```
 
@@ -105,6 +112,7 @@ make test           # Run all tests
 make test-go        # Run Go tests
 make test-python    # Run Python tests
 make test-web       # Run frontend tests
+make test-e2e       # Go E2E tests (build-tag isolated)
 ```
 
 Ensure all tests pass locally before submitting a pull request.
@@ -131,26 +139,41 @@ make fmt            # Auto-format all code
 
 ### Go
 
-- Format with `gofmt` (enforced by linter).
-- Lint with `golangci-lint`.
-- Use structured logging via `log/slog` — avoid `fmt.Println` for logs.
-- Write table-driven tests where appropriate.
+- Follow [Effective Go](https://go.dev/doc/effective_go) guidelines.
+- Format with `gofumpt`; lint with `golangci-lint` (配置见 `.golangci.yml`).
+- All exported functions must have documentation comments.
+- Use structured logging with `slog` — avoid `fmt.Println` for logs.
+- Propagate context through function signatures.
 - Handle all errors explicitly; do not discard with `_`.
+- Write table-driven tests where appropriate.
 
 ### Python
 
-- Format with `ruff format`.
-- Lint with `ruff check`.
+- Format with `ruff format`; lint with `ruff check`; follow PEP 8.
 - Type-check with `mypy` — **type hints are required** on all public functions.
+- Use Pydantic models for data structures.
 - Use `uv` for dependency management.
 - Write docstrings for public modules, classes, and functions.
 
 ### TypeScript / React
 
-- Lint with **ESLint** (config in `web/.eslintrc`).
-- Format with **Prettier**.
-- Use functional components and hooks.
-- Prefer TypeScript interfaces over `type` for object shapes.
+- Use strict TypeScript configuration (`web/tsconfig.json`, `strict: true`).
+- Lint with **ESLint**; format with **Prettier**.
+- Use functional components and hooks exclusively.
+
+### Protocol Buffers
+
+- Follow the [Buf style guide](https://buf.build/docs/best-practices/style-guide).
+- Use `buf lint` to validate proto files.
+
+## RFC Process
+
+For significant architectural changes, we use an RFC (Request for Comments) process:
+
+1. Copy `docs/rfcs/0001-template.md` to a new file.
+2. Fill in the RFC template with your proposal.
+3. Submit as a PR for community discussion.
+4. RFCs are accepted by maintainer consensus.
 
 ## Documentation
 
@@ -166,8 +189,8 @@ Place documentation under `docs/` following the existing directory structure.
 
 ## License
 
-By contributing to Resolve Agent, you agree that your contributions will be
-licensed under the [Apache License 2.0](./LICENSE).
+By contributing to ResolveAgent, you agree that your contributions will be
+licensed under the [Apache License 2.0](LICENSE).
 
 ---
 

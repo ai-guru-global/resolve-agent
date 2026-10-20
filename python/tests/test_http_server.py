@@ -105,6 +105,36 @@ async def test_rag_query_missing_body(app):
 
 
 @pytest.mark.asyncio
+async def test_rag_delete_collection_drops_vectors(app, monkeypatch):
+    """DELETE /v1/rag/collections/{id} drops the vector collection."""
+    from resolveagent.rag.index import milvus as milvus_module
+
+    dropped: list[str] = []
+
+    class _FakeStore:
+        async def connect(self):
+            return None
+
+        async def disconnect(self):
+            return None
+
+        async def delete_collection(self, collection_name):
+            dropped.append(collection_name)
+            return True
+
+    monkeypatch.setattr(milvus_module, "MilvusStore", _FakeStore)
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        resp = await ac.delete("/v1/rag/collections/col-123")
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["success"] is True
+    assert data["collection_id"] == "col-123"
+    assert dropped == ["col-123"]
+
+
+@pytest.mark.asyncio
 async def test_solution_semantic_search_empty_query(app):
     """POST /v1/solutions/semantic-search with empty query returns 400."""
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:

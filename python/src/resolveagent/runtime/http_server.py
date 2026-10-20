@@ -399,6 +399,39 @@ class RuntimeHTTPServer:
                 logger.error(f"RAG ingest error: {e}")
                 raise HTTPException(status_code=500, detail="Internal server error") from e
 
+        # RAG collection deletion (vector store side)
+        @app.delete("/v1/rag/collections/{collection_id}")
+        async def rag_delete_collection(collection_id: str) -> JSONResponse:
+            """Drop a RAG collection from the vector store.
+
+            Mirrors the backend selection of RAGPipeline: milvus by default,
+            qdrant via RAG_VECTOR_BACKEND.
+            """
+            try:
+                backend = os.getenv("RAG_VECTOR_BACKEND", "milvus")
+                if backend == "qdrant":
+                    from resolveagent.rag.index.qdrant import QdrantStore
+
+                    store = QdrantStore()
+                else:
+                    from resolveagent.rag.index.milvus import MilvusStore
+
+                    store = MilvusStore()
+
+                await store.connect()
+                try:
+                    deleted = await store.delete_collection(collection_id)
+                finally:
+                    await store.disconnect()
+
+                return JSONResponse(
+                    {"success": bool(deleted), "collection_id": collection_id}
+                )
+
+            except Exception as e:
+                logger.error(f"RAG collection delete error: {e}")
+                raise HTTPException(status_code=500, detail="Internal server error") from e
+
         # Skill execution
         @app.post("/v1/skills/{skill_name}/execute")
         async def execute_skill(skill_name: str, request: Request) -> JSONResponse:

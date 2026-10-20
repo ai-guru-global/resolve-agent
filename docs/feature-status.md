@@ -42,7 +42,6 @@
 | `resolveagent.api` 包 | 功能 | 21 行空壳，待 REST 客户端能力落地 |
 | Web code-analysis 6 方法接真实后端 | 功能 | 前端目前永远走 mock 数据 |
 | `pkg/event/nats.go` / `AgentExecutionServer` 接线 | 架构 | NATS JetStream 总线可用但零调用方；后者指向不存在的服务（刻意保留待 v0.6.0 分布式阶段） |
-| RAG collection 删除联动向量库 | 功能 | Go 平台删除 collection 时仅清 registry 记录，Python 向量库侧的 gRPC 清理调用未接线 |
 | Milvus delete-by-filter 端到端验证 | 验证 | 代码已落地并有单测（fake client），对真实 Milvus 实例的集成验证待环境 |
 | Go 覆盖率阈值重标定 | 流程 | 阈值 17.0% 对实测 17.1% 仅 0.1pt 余量，且随 Go 工具链版本剧变（go1.25→17.5%，go1.27→32.2%）；**任何 Go minor 升级必须重标基线** |
 

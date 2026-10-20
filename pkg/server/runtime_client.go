@@ -354,6 +354,30 @@ func (c *RuntimeClient) IngestRAG(
 	return &result, nil
 }
 
+// DeleteRAGCollection drops a collection's vectors in the Python runtime.
+// A non-200 response returns an error; a missing collection is not distinguished
+// from other failures (callers treat this call as best-effort cleanup).
+func (c *RuntimeClient) DeleteRAGCollection(ctx context.Context, collectionID string) error {
+	endpoint := fmt.Sprintf("%s/rag/collections/%s", c.baseURL, url.PathEscape(collectionID))
+	httpReq, err := http.NewRequestWithContext(ctx, "DELETE", endpoint, http.NoBody) // #nosec G704 -- 见 RuntimeClient 注释：host 由配置固定，collectionID 已 PathEscape
+	if err != nil {
+		return fmt.Errorf("create request: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(httpReq) // #nosec G704 -- 同上，httpReq 的目标主机不可由调用方改写
+	if err != nil {
+		return fmt.Errorf("do request: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("unexpected status: %d, body: %s", resp.StatusCode, string(body))
+	}
+
+	return nil
+}
+
 // SkillExecuteRequest is the request body for skill execution.
 type SkillExecuteRequest struct {
 	Parameters map[string]interface{} `json:"parameters"`

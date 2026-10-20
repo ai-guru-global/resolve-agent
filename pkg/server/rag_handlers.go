@@ -19,8 +19,8 @@ func (s *Server) handleListCollections(w http.ResponseWriter, r *http.Request) {
 	limit := 100
 	offset := 0
 
-	// Forward to Python runtime via gRPC (placeholder)
-	// For now, return sample collections from registry if available
+	// Collections are listed from the registry; vector contents live in the
+	// Python RAG runtime and are created lazily on first ingest.
 	collections := []map[string]any{}
 
 	// Try to get from RAG registry if available
@@ -110,8 +110,8 @@ func (s *Server) handleCreateCollection(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
-		// NOTE: Vector store creation is handled by the Python RAG runtime.
-		//       gRPC integration with the Python runtime is planned for v0.4.0.
+		// NOTE: the vector store collection is created lazily by the Python
+		// RAG runtime on first ingest (see RAGPipeline._index_chunks).
 
 		writeJSON(w, http.StatusCreated, map[string]any{
 			"id":              collection.ID,
@@ -147,14 +147,19 @@ func (s *Server) handleDeleteCollection(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
+		// Best-effort vector store cleanup via the Python runtime. The registry
+		// delete below remains the source of truth; a failed vector cleanup is
+		// logged instead of silently orphaning vectors.
+		if err := s.runtimeClient.DeleteRAGCollection(ctx, id); err != nil {
+			s.logger.Warn("vector store cleanup failed; vectors may be orphaned",
+				"collection_id", id, "error", err)
+		}
+
 		// Delete from registry
 		if err := s.ragRegistry.Delete(ctx, id); err != nil {
 			writeRegistryError(w, err, s.logger, "delete collection")
 			return
 		}
-
-		// Forward to Python runtime for vector store deletion
-		// TODO: Call Python RAG service via gRPC
 
 		writeJSON(w, http.StatusOK, map[string]string{
 			"message": "collection deleted",

@@ -68,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **RAG collection 删除残留** — Go 平台删除 collection 此前只清 registry 记录、向量库数据残留；新增 Python 运行时 `DELETE /v1/rag/collections/{id}` 端点（Milvus/Qdrant `delete_collection`），Go `RuntimeClient.DeleteRAGCollection` 尽力转发（runtime 不可达时告警并继续，不阻断 registry 删除）
 - **三个长期红灯的 CI 门禁** — golangci-lint 由 `go install .../v2/cmd/golangci-lint@v1.64`（v2 模块路径配 v1 版本号，无法解析）迁至 v2 action；pnpm workspace 配置收敛为单一来源（修 `ERROR packages field missing or empty`）；gitleaks 由需要 `GITLEAKS_LICENSE` 的第三方 action 改为官方镜像 `docker run`
 - **运行时缺陷** — skill execute 端点旧签名调用、`TrafficGraphClient` 地址拼接、三处类型错误（补 4 个端点测试）
 - **信息泄漏** — `writeRegistryError` 对未知错误码不再回显原始消息，统一走通用 500 防泄漏路径

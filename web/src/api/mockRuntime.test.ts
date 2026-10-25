@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   areDevMocksEnabled,
-  shouldUseCodeAnalysisMocks,
+  shouldForceCodeAnalysisMocks,
 } from './mockRuntime';
 
 describe('mock runtime switches', () => {
@@ -43,21 +43,38 @@ describe('mock runtime switches', () => {
     ).toBe(false);
   });
 
-  it('keeps code analysis mocks off when real API is forced', () => {
+  it('forces code-analysis mocks only for backend-less static demo deploys', () => {
+    // 开发态默认走真实端点（后端不在时经统一回退路径落 mock）
     expect(
-      shouldUseCodeAnalysisMocks({
+      shouldForceCodeAnalysisMocks({
         dev: true,
-        mockDisabled: false,
+      }),
+    ).toBe(false);
+
+    // 静态演示部署（无后端）抢先 mock
+    expect(
+      shouldForceCodeAnalysisMocks({
+        dev: false,
+        mockFallback: true,
+      }),
+    ).toBe(true);
+
+    // 显式强制真实端点优先于演示部署
+    expect(
+      shouldForceCodeAnalysisMocks({
+        dev: false,
+        mockFallback: true,
         forceRealCodeAnalysis: true,
       }),
     ).toBe(false);
 
+    // 全局禁用 mock 时不得抢先
     expect(
-      shouldUseCodeAnalysisMocks({
-        dev: true,
-        mockDisabled: false,
-        forceRealCodeAnalysis: false,
+      shouldForceCodeAnalysisMocks({
+        dev: false,
+        mockFallback: true,
+        mockDisabled: true,
       }),
-    ).toBe(true);
+    ).toBe(false);
   });
 });

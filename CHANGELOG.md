@@ -72,6 +72,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Web code-analysis 六方法接真实后端** — call-graphs / traffic graphs 此前被开发开关强制 mock（后端在线也走假数据）；现默认走真实端点（经真实服务冒烟验证），mock 收敛为两种回退：无后端静态演示部署抢先启用、后端不可用/请求失败时统一回退并 toast 提示
+- **Web 演示数据窗口整体前移** — 704 处时间戳由 2026-08 窗口平移至 2026-10（锚点 `DEMO_NOW` → 2026-10-20），发布时点演示数据保持新鲜；mock `systemInfo` 版本对齐 0.4.0（此前虚标 0.6.0）
 - **RAG collection 删除残留** — Go 平台删除 collection 此前只清 registry 记录、向量库数据残留；新增 Python 运行时 `DELETE /v1/rag/collections/{id}` 端点（Milvus/Qdrant `delete_collection`），Go `RuntimeClient.DeleteRAGCollection` 尽力转发（runtime 不可达时告警并继续，不阻断 registry 删除）
 - **三个长期红灯的 CI 门禁** — golangci-lint 由 `go install .../v2/cmd/golangci-lint@v1.64`（v2 模块路径配 v1 版本号，无法解析）迁至 v2 action；pnpm workspace 配置收敛为单一来源（修 `ERROR packages field missing or empty`）；gitleaks 由需要 `GITLEAKS_LICENSE` 的第三方 action 改为官方镜像 `docker run`
 - **运行时缺陷** — skill execute 端点旧签名调用、`TrafficGraphClient` 地址拼接、三处类型错误（补 4 个端点测试）

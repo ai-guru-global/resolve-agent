@@ -42,7 +42,7 @@ import type {
 } from '../types';
 import {
   DEV_MOCKS_ENABLED,
-  DEV_CODE_ANALYSIS_MOCKS_ENABLED,
+  CODE_ANALYSIS_FORCE_MOCK,
 } from './mockRuntime';
 import { toast } from 'sonner';
 
@@ -355,7 +355,7 @@ const loadCodeAnalysisMockMethod: (
   methodName: ApiMethodName,
 ) => Promise<ApiMethod | null> = DEV_MOCKS_ENABLED
   ? async (methodName) => {
-      if (!DEV_CODE_ANALYSIS_MOCKS_ENABLED || !CODE_ANALYSIS_MOCK_METHODS.has(methodName)) {
+      if (!CODE_ANALYSIS_MOCK_METHODS.has(methodName)) {
         return null;
       }
 
@@ -384,6 +384,19 @@ const loadCodeAnalysisMockMethod: (
     }
   : async () => null;
 
+// 统一回退查找：code-analysis 六方法优先，其次 legacy mock 模块。
+// 仅用于「后端不可用」与「真实请求失败」两条回退路径。
+const loadFallbackMockMethod = async (
+  methodName: ApiMethodName,
+): Promise<ApiMethod | null> => {
+  const codeAnalysisMockFn = await loadCodeAnalysisMockMethod(methodName);
+  if (codeAnalysisMockFn) return codeAnalysisMockFn;
+
+  const legacyMockApi = await loadLegacyMockApi();
+  const legacyMockFn = legacyMockApi?.[methodName];
+  return typeof legacyMockFn === 'function' ? (legacyMockFn as ApiMethod) : null;
+};
+
 // 已提示过的 mock 回退方法，避免 toast 刷屏
 const mockFallbackNotified = new Set<string>();
 
@@ -395,31 +408,30 @@ function createProxiedApi(): ApiType {
       if (typeof realFn !== 'function') return realFn;
 
       return async (...args: unknown[]) => {
-        const codeAnalysisMockFn = await loadCodeAnalysisMockMethod(methodName);
-        if (codeAnalysisMockFn) {
-          return codeAnalysisMockFn(...args);
+        // 静态演示部署（无后端）抢先使用 code-analysis mock，免去健康探测
+        if (CODE_ANALYSIS_FORCE_MOCK) {
+          const caMockFn = await loadCodeAnalysisMockMethod(methodName);
+          if (caMockFn) return caMockFn(...args);
         }
 
-        const legacyMockApi = await loadLegacyMockApi();
-        const legacyMockFn = legacyMockApi?.[methodName];
-
-        if (typeof legacyMockFn === 'function') {
+        const fallbackFn = await loadFallbackMockMethod(methodName);
+        if (fallbackFn) {
           const isUp = await checkBackend();
           if (!isUp) {
-            return (legacyMockFn as ApiMethod)(...args);
+            return fallbackFn(...args);
           }
         }
 
         try {
           return await (realFn as ApiMethod)(...args);
         } catch (err) {
-          if (typeof legacyMockFn === 'function') {
+          if (fallbackFn) {
             console.warn(`[API] ${prop} failed, falling back to mock`, err);
             if (!mockFallbackNotified.has(prop)) {
               mockFallbackNotified.add(prop);
               toast.warning(`接口 ${prop} 请求失败，页面展示的是本地模拟数据`);
             }
-            return (legacyMockFn as ApiMethod)(...args);
+            return fallbackFn(...args);
           }
           throw err;
         }

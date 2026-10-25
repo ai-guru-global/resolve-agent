@@ -21,12 +21,12 @@ describe('mock 数据质量 · Traces', () => {
     }
   });
 
-  it('时间戳统一收敛在 2026-08-25 ~ 08-31 演示窗口', async () => {
+  it('时间戳统一收敛在 2026-10-14 ~ 10-20 演示窗口', async () => {
     const { traces } = await mockApi.getTraces();
     expect(traces.length).toBeGreaterThan(0);
     for (const t of traces) {
-      expect(t.timestamp >= '2026-08-25', `${t.id} 时间戳过早: ${t.timestamp}`).toBe(true);
-      expect(t.timestamp < '2026-09-01', `${t.id} 时间戳过晚: ${t.timestamp}`).toBe(true);
+      expect(t.timestamp >= '2026-10-14', `${t.id} 时间戳过早: ${t.timestamp}`).toBe(true);
+      expect(t.timestamp < '2026-10-21', `${t.id} 时间戳过晚: ${t.timestamp}`).toBe(true);
     }
   });
 
@@ -51,7 +51,7 @@ describe('mock 数据质量 · Traces', () => {
 });
 
 describe('mock 数据质量 · Monitoring', () => {
-  it('getMonitoringOverview 五组数据完整、时间线统一 2026-08', async () => {
+  it('getMonitoringOverview 五组数据完整、时间线落在演示窗口内', async () => {
     const ov = await mockApi.getMonitoringOverview();
     expect(ov.alerts.length).toBeGreaterThanOrEqual(5);
     expect(ov.system_metrics.length).toBe(6);
@@ -64,7 +64,7 @@ describe('mock 数据质量 · Monitoring', () => {
       ...ov.circuit_breakers.map((c) => c.last_state_change),
     ];
     for (const s of stamps) {
-      expect(s.startsWith('2026-08'), `时间线未统一: ${s}`).toBe(true);
+      expect(s >= '2026-09-01' && s < '2026-10-21', `时间线越界: ${s}`).toBe(true);
     }
   });
 
@@ -126,31 +126,34 @@ describe('mock 数据质量 · Dashboard', () => {
     expect(m.execution_trend_24h).toHaveLength(24);
   });
 
-  it('Agent 概览最后执行时间统一 2026-08 且与停用 Agent 告警口径一致', async () => {
+  it('Agent 概览最后执行时间统一在演示窗口且与停用 Agent 告警口径一致', async () => {
     const { agents } = await mockApi.getAgentOverviews();
     expect(agents.length).toBeGreaterThanOrEqual(7);
     for (const a of agents) {
-      expect(a.last_execution_at.startsWith('2026-08'), `${a.id} 最后执行时间未统一: ${a.last_execution_at}`).toBe(true);
+      expect(
+        a.last_execution_at >= '2026-09-19' && a.last_execution_at < '2026-10-21',
+        `${a.id} 最后执行时间越界: ${a.last_execution_at}`,
+      ).toBe(true);
       expect(a.memory_mb).toBeGreaterThanOrEqual(0);
     }
-    // alert-006 文案为相对口径「空闲超过 48 小时」，演示"现在"约 2026-08-31，与 2026-08-29T14:20 的最后执行时间一致
+    // alert-006 文案为相对口径「空闲超过 48 小时」，演示"现在"约 2026-10-20，与 2026-10-18T14:20 的最后执行时间一致
     const stopped = agents.find((a) => a.id === 'agent-custom-005');
-    expect(stopped?.last_execution_at).toBe('2026-08-29T14:20:00Z');
+    expect(stopped?.last_execution_at).toBe('2026-10-18T14:20:00Z');
   });
 
   it('活动事件时间戳收敛演示窗口（长期停用类事件除外）', async () => {
     const { events } = await mockApi.getActivityEvents();
     for (const e of events) {
       if (e.event_type === 'status_change') continue;
-      expect(e.timestamp >= '2026-08-25', `${e.id} 过早: ${e.timestamp}`).toBe(true);
-      expect(e.timestamp < '2026-09-01', `${e.id} 过晚: ${e.timestamp}`).toBe(true);
+      expect(e.timestamp >= '2026-10-14', `${e.id} 过早: ${e.timestamp}`).toBe(true);
+      expect(e.timestamp < '2026-10-21', `${e.id} 过晚: ${e.timestamp}`).toBe(true);
     }
   });
 
   it('平台状态 last_sync_at 落在演示窗口内', async () => {
     const s = await mockApi.getPlatformStatus();
-    expect(s.last_sync_at >= '2026-08-25').toBe(true);
-    expect(s.last_sync_at < '2026-09-01').toBe(true);
+    expect(s.last_sync_at >= '2026-10-14').toBe(true);
+    expect(s.last_sync_at < '2026-10-21').toBe(true);
   });
 
   it('执行统计 P99/平均耗时与路由置信度字段可用于渲染', async () => {
@@ -243,7 +246,7 @@ describe('mock 数据质量 · Monitoring', () => {
     const overview = await mockApi.getMonitoringOverview();
     expect(overview.total).toBe(overview.alerts.length);
     for (const f of overview.feedback_signals) {
-      expect(f.last_seen.startsWith('2026-08-31'), `反馈信号时间越界: ${f.last_seen}`).toBe(true);
+      expect(f.last_seen.startsWith('2026-10-20'), `反馈信号时间越界: ${f.last_seen}`).toBe(true);
     }
   });
 });
@@ -293,7 +296,7 @@ describe('mock 数据质量 · ExecutionDetail 深度差异化', () => {
     expect(types.has('pre_execution'), '缺少 pre_execution 钩子').toBe(true);
     expect(types.has('post_execution'), '缺少 post_execution 钩子').toBe(true);
     for (const h of d.hook_logs) {
-      expect(h.timestamp >= '2026-08-25' && h.timestamp < '2026-09-01', `hook 时间越界: ${h.timestamp}`).toBe(true);
+      expect(h.timestamp >= '2026-10-14' && h.timestamp < '2026-10-21', `hook 时间越界: ${h.timestamp}`).toBe(true);
       expect(h.timestamp >= d.created_at, `hook 早于执行开始: ${h.timestamp}`).toBe(true);
     }
   });
@@ -305,12 +308,12 @@ describe('mock 数据质量 · ExecutionDetail 深度差异化', () => {
     expect(ok.hook_logs.some((h) => h.hook_type === 'on_error'), '成功执行不应有 on_error').toBe(false);
   });
 
-  it('全部执行与运行状态时间统一到演示窗口 2026-08-25~31', async () => {
+  it('全部执行与运行状态时间统一到演示窗口 2026-10-14~20', async () => {
     for (const agentId of ['agent-mega-001', 'agent-fta-002', 'agent-rag-003', 'agent-skill-004', 'agent-fta-007']) {
       const { executions } = await mockApi.getAgentExecutions(agentId);
       expect(executions.length, `${agentId} 无执行记录`).toBeGreaterThan(0);
       for (const e of executions) {
-        expect(e.created_at >= '2026-08-25' && e.created_at < '2026-09-01', `${e.id} 执行时间越界: ${e.created_at}`).toBe(true);
+        expect(e.created_at >= '2026-10-14' && e.created_at < '2026-10-21', `${e.id} 执行时间越界: ${e.created_at}`).toBe(true);
       }
       const status = await mockApi.getAgentStatus(agentId);
       const latest = executions.map((e) => e.created_at).sort().slice(-1)[0];
@@ -329,7 +332,7 @@ describe('mock 数据质量 · ExecutionDetail 深度差异化', () => {
     const d = await mockApi.getAgentExecutionDetail('agent-fta-002', 'aexec-005');
     expect(d.memory_context.length).toBeGreaterThan(0);
     for (const m of d.memory_context) {
-      expect(m.created_at >= '2026-08-25', `记忆上下文时间越界: ${m.created_at}`).toBe(true);
+      expect(m.created_at >= '2026-10-14', `记忆上下文时间越界: ${m.created_at}`).toBe(true);
     }
   });
 
@@ -399,7 +402,7 @@ describe('mock 数据质量 · Solutions 过滤、溯源与执行记录', () => 
         expect(e.duration_ms, `${e.id} duration 异常`).toBeGreaterThan(0);
         expect(e.outcome_notes.length, `${e.id} 缺少 outcome_notes`).toBeGreaterThan(0);
         expect(
-          e.created_at >= '2026-08-25' && e.created_at < '2026-09-01',
+          e.created_at >= '2026-10-14' && e.created_at < '2026-10-21',
           `${e.id} 执行时间越界: ${e.created_at}`,
         ).toBe(true);
       }
@@ -492,7 +495,7 @@ describe('mock 数据质量 · Skills 状态真值与引用反查', () => {
       ).toBe(true);
     }
     expect(
-      detail.last_executed >= '2026-08-25' && detail.last_executed < '2026-09-01',
+      detail.last_executed >= '2026-10-14' && detail.last_executed < '2026-10-21',
       `last_executed 越出演示窗口: ${detail.last_executed}`,
     ).toBe(true);
   });
@@ -524,7 +527,7 @@ describe('mock 数据质量 · T6 Agents 域打通', () => {
         `${a.id} 缺少 last_execution_at`,
       ).toBeTruthy();
       expect(
-        a.last_execution_at! >= '2026-08-25' && a.last_execution_at! < '2026-09-01',
+        a.last_execution_at! >= '2026-10-14' && a.last_execution_at! < '2026-10-21',
         `${a.id} last_execution_at 越出演示窗口: ${a.last_execution_at}`,
       ).toBe(true);
     }
@@ -601,11 +604,11 @@ describe('mock 数据质量 · T6 Agents 域打通', () => {
 });
 
 describe('mock 数据质量 · T7 Workflow/RAG 时间字段与详情展开', () => {
-  it('工作流执行记录统一落在演示窗口（2026-08-25~31）', async () => {
+  it('工作流执行记录统一落在演示窗口（2026-10-14~20）', async () => {
     const { executions } = await mockApi.listWorkflowExecutions();
     expect(executions.length).toBeGreaterThanOrEqual(30);
     for (const e of executions) {
-      expect(e.started_at, `执行 ${e.id} 开始时间越界: ${e.started_at}`).toMatch(/2026-08-(2[5-9]|3[01])/);
+      expect(e.started_at, `执行 ${e.id} 开始时间越界: ${e.started_at}`).toMatch(/2026-10-(1[4-9]|20)/);
       if (e.status === 'completed' || e.status === 'failed') {
         expect(e.completed_at, `执行 ${e.id}（${e.status}）缺少结束时间`).not.toBeNull();
         if (e.completed_at) {
@@ -622,7 +625,7 @@ describe('mock 数据质量 · T7 Workflow/RAG 时间字段与详情展开', () 
       // archived 工作流的 last_executed 保留归档前旧时间是合理存量语义
       if (w.last_executed && w.status !== 'archived') {
         expect(w.last_executed, `工作流 ${w.id} 最后执行时间越界: ${w.last_executed}`).toMatch(
-          /2026-08-(2[5-9]|3[01])/,
+          /2026-10-(1[4-9]|20)/,
         );
       }
       expect(new Date(w.updated_at).getTime()).toBeGreaterThanOrEqual(new Date(w.created_at).getTime());
@@ -677,7 +680,7 @@ describe('mock 数据质量 · T8 TicketSummary 接真数据', () => {
       expect(t.created_at, `工单 ${t.id} created_at 不是 ISO 绝对时间戳: ${t.created_at}`).toMatch(
         /^2026-\d{2}-\d{2}T/,
       );
-      expect(t.created_at, `工单 ${t.id} created_at 越界: ${t.created_at}`).toMatch(/2026-08-(2[5-9]|3[01])/);
+      expect(t.created_at, `工单 ${t.id} created_at 越界: ${t.created_at}`).toMatch(/2026-10-(1[4-9]|20)/);
     }
     const idSet = new Set(tickets.map((t) => t.id));
     expect(idSet.size, '工单 ID 存在重复').toBe(tickets.length);
@@ -712,7 +715,7 @@ describe('mock 数据质量 · T9 Selector/Evaluation 接数据', () => {
     const strategySet = new Set(traces.map((t) => t.strategy));
     expect(strategySet.size, '策略覆盖不足').toBeGreaterThanOrEqual(3);
     for (const t of traces) {
-      expect(t.timestamp, `trace ${t.id} 时间越界: ${t.timestamp}`).toMatch(/2026-08-(2[5-9]|3[01])/);
+      expect(t.timestamp, `trace ${t.id} 时间越界: ${t.timestamp}`).toMatch(/2026-10-(1[4-9]|20)/);
       expect(t.corpus_matches.length >= 0 && t.enriched_skills.length >= 0).toBe(true);
     }
   }, 15000);

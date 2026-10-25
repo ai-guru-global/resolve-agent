@@ -1,4 +1,4 @@
-export const DEMO_NOW = '2026-08-31T10:30:00Z';
+export const DEMO_NOW = '2026-10-20T10:30:00Z';
 
 export function formatTimeAgo(isoString: string, now: string = DEMO_NOW): string {
   const diffMs = new Date(now).getTime() - new Date(isoString).getTime();

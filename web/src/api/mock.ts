@@ -82,7 +82,7 @@ let mockAgents: Agent[] = [
       model: 'qwen-max',
       max_tokens: 4096,
       temperature: 0.3,
-      created_at: '2026-07-01T08:00:00Z',
+      created_at: '2026-08-20T08:00:00Z',
     },
   },
   {
@@ -108,7 +108,7 @@ let mockAgents: Agent[] = [
       fault_tree_id: 'ft-k8s-node-notready',
       auto_execute: true,
       max_depth: 5,
-      created_at: '2026-07-05T10:30:00Z',
+      created_at: '2026-08-24T10:30:00Z',
     },
   },
   {
@@ -133,7 +133,7 @@ let mockAgents: Agent[] = [
       collection_id: 'col-ops-kb-001',
       top_k: 5,
       similarity_threshold: 0.72,
-      created_at: '2026-07-10T14:00:00Z',
+      created_at: '2026-08-29T14:00:00Z',
     },
   },
   {
@@ -157,7 +157,7 @@ let mockAgents: Agent[] = [
     config: {
       model: 'qwen-plus',
       auto_assign: true,
-      created_at: '2026-07-12T09:00:00Z',
+      created_at: '2026-08-31T09:00:00Z',
     },
   },
   {
@@ -180,7 +180,7 @@ let mockAgents: Agent[] = [
     config: {
       model: 'qwen-turbo',
       data_source: 'prometheus',
-      created_at: '2026-07-15T11:00:00Z',
+      created_at: '2026-09-03T11:00:00Z',
     },
   },
   {
@@ -205,7 +205,7 @@ let mockAgents: Agent[] = [
     config: {
       model: 'qwen-max',
       risk_threshold: 0.6,
-      created_at: '2026-07-18T16:00:00Z',
+      created_at: '2026-09-06T16:00:00Z',
     },
   },
   {
@@ -229,7 +229,7 @@ let mockAgents: Agent[] = [
       model: 'qwen-plus',
       fault_tree_id: 'ft-rds-replication-lag',
       check_interval_seconds: 60,
-      created_at: '2026-07-20T13:00:00Z',
+      created_at: '2026-09-08T13:00:00Z',
     },
   },
 ];
@@ -448,9 +448,10 @@ export const mockApi = {
   systemInfo: async () => {
     await randomDelay();
     return {
-      version: '0.6.0',
-      commit: 'a3f7c2e',
-      build_date: '2026-08-07T10:00:00Z',
+      // 与仓库发布版本对齐（VERSION / pyproject / package.json）
+      version: '0.4.0',
+      commit: '834be57',
+      build_date: '2026-10-20T10:00:00Z',
     };
   },
 
@@ -672,9 +673,9 @@ export const mockApi = {
   listConversations: async (agentId: string) => {
     await randomDelay();
     const conversations: Conversation[] = [
-      { id: 'conv-001', agent_id: agentId, user_id: 'user-zhangming', message_count: 12, created_at: '2026-08-08T09:00:00Z', updated_at: '2026-08-08T09:12:00Z' },
-      { id: 'conv-002', agent_id: agentId, user_id: 'user-liqiang', message_count: 8, created_at: '2026-08-07T14:00:00Z', updated_at: '2026-08-07T14:30:00Z' },
-      { id: 'conv-003', agent_id: agentId, user_id: 'user-wangfang', message_count: 5, created_at: '2026-08-06T10:00:00Z', updated_at: '2026-08-06T10:15:00Z' },
+      { id: 'conv-001', agent_id: agentId, user_id: 'user-zhangming', message_count: 12, created_at: '2026-09-27T09:00:00Z', updated_at: '2026-09-27T09:12:00Z' },
+      { id: 'conv-002', agent_id: agentId, user_id: 'user-liqiang', message_count: 8, created_at: '2026-09-26T14:00:00Z', updated_at: '2026-09-26T14:30:00Z' },
+      { id: 'conv-003', agent_id: agentId, user_id: 'user-wangfang', message_count: 5, created_at: '2026-09-25T10:00:00Z', updated_at: '2026-09-25T10:15:00Z' },
     ];
     return { conversations, total: conversations.length };
   },
@@ -682,11 +683,11 @@ export const mockApi = {
   getConversation: async (_conversationId: string) => {
     await randomDelay();
     const messages: ConversationMessage[] = [
-      { id: 'msg-001', conversation_id: _conversationId, role: 'system', content: '你是一个专注于阿里云 ACK 容器服务的运维助手。', token_count: 45, sequence: 0, created_at: '2026-08-08T09:00:00Z' },
-      { id: 'msg-002', conversation_id: _conversationId, role: 'user', content: 'ACK 集群 cn-hangzhou-prod 有节点 NotReady，帮我排查一下', token_count: 32, sequence: 1, created_at: '2026-08-08T09:01:00Z' },
-      { id: 'msg-003', conversation_id: _conversationId, role: 'assistant', content: '好的，我来检查集群状态。发现节点 cn-hz-03 处于 NotReady 状态，原因是 kubelet 心跳超时。正在进一步分析网络策略...', token_count: 68, sequence: 2, created_at: '2026-08-08T09:01:30Z' },
-      { id: 'msg-004', conversation_id: _conversationId, role: 'user', content: '是不是最近有人改了 NetworkPolicy？', token_count: 18, sequence: 3, created_at: '2026-08-08T09:02:00Z' },
-      { id: 'msg-005', conversation_id: _conversationId, role: 'assistant', content: '确认了，变更单 CHG-2024-0156 在 10:23 修改了 calico NetworkPolicy，误将 kubelet 10250 端口的入方向流量 deny 掉了。建议恢复该规则。', token_count: 85, sequence: 4, created_at: '2026-08-08T09:02:30Z' },
+      { id: 'msg-001', conversation_id: _conversationId, role: 'system', content: '你是一个专注于阿里云 ACK 容器服务的运维助手。', token_count: 45, sequence: 0, created_at: '2026-09-27T09:00:00Z' },
+      { id: 'msg-002', conversation_id: _conversationId, role: 'user', content: 'ACK 集群 cn-hangzhou-prod 有节点 NotReady，帮我排查一下', token_count: 32, sequence: 1, created_at: '2026-09-27T09:01:00Z' },
+      { id: 'msg-003', conversation_id: _conversationId, role: 'assistant', content: '好的，我来检查集群状态。发现节点 cn-hz-03 处于 NotReady 状态，原因是 kubelet 心跳超时。正在进一步分析网络策略...', token_count: 68, sequence: 2, created_at: '2026-09-27T09:01:30Z' },
+      { id: 'msg-004', conversation_id: _conversationId, role: 'user', content: '是不是最近有人改了 NetworkPolicy？', token_count: 18, sequence: 3, created_at: '2026-09-27T09:02:00Z' },
+      { id: 'msg-005', conversation_id: _conversationId, role: 'assistant', content: '确认了，变更单 CHG-2024-0156 在 10:23 修改了 calico NetworkPolicy，误将 kubelet 10250 端口的入方向流量 deny 掉了。建议恢复该规则。', token_count: 85, sequence: 4, created_at: '2026-09-27T09:02:30Z' },
     ];
     return { messages, total: messages.length };
   },
@@ -698,10 +699,10 @@ export const mockApi = {
   searchLongTermMemory: async (agentId: string) => {
     await randomDelay();
     const all: LongTermMemory[] = [
-      { id: 'ltm-001', agent_id: agentId, user_id: 'user-zhangming', memory_type: 'pattern', content: 'NetworkPolicy 变更是导致节点 NotReady 的常见原因，应优先检查最近的 calico 规则变更', importance: 0.92, access_count: 15, metadata: {}, created_at: '2026-07-15T10:00:00Z', updated_at: '2026-08-08T09:12:00Z', expires_at: null },
-      { id: 'ltm-002', agent_id: agentId, user_id: 'user-liqiang', memory_type: 'fact', content: '集群 cn-hangzhou-prod 使用 Flannel VXLAN 网络模式，非 Calico', importance: 0.78, access_count: 8, metadata: {}, created_at: '2026-07-20T14:00:00Z', updated_at: '2026-08-05T11:00:00Z', expires_at: null },
-      { id: 'ltm-003', agent_id: agentId, user_id: 'user-wangfang', memory_type: 'summary', content: '用户 wangfang 主要关注 RDS 相关问题，偏好简洁的排查步骤而非详细分析', importance: 0.65, access_count: 4, metadata: {}, created_at: '2026-08-01T09:00:00Z', updated_at: '2026-08-06T10:15:00Z', expires_at: '2026-07-01T00:00:00Z' },
-      { id: 'ltm-004', agent_id: agentId, user_id: 'system', memory_type: 'skill_learned', content: '对于内存 OOM 问题，检查 /proc/meminfo 和 dmesg 日志比查看 Prometheus 指标更高效', importance: 0.85, access_count: 22, metadata: {}, created_at: '2026-07-10T08:00:00Z', updated_at: '2026-08-07T16:00:00Z', expires_at: null },
+      { id: 'ltm-001', agent_id: agentId, user_id: 'user-zhangming', memory_type: 'pattern', content: 'NetworkPolicy 变更是导致节点 NotReady 的常见原因，应优先检查最近的 calico 规则变更', importance: 0.92, access_count: 15, metadata: {}, created_at: '2026-09-03T10:00:00Z', updated_at: '2026-09-27T09:12:00Z', expires_at: null },
+      { id: 'ltm-002', agent_id: agentId, user_id: 'user-liqiang', memory_type: 'fact', content: '集群 cn-hangzhou-prod 使用 Flannel VXLAN 网络模式，非 Calico', importance: 0.78, access_count: 8, metadata: {}, created_at: '2026-09-08T14:00:00Z', updated_at: '2026-09-24T11:00:00Z', expires_at: null },
+      { id: 'ltm-003', agent_id: agentId, user_id: 'user-wangfang', memory_type: 'summary', content: '用户 wangfang 主要关注 RDS 相关问题，偏好简洁的排查步骤而非详细分析', importance: 0.65, access_count: 4, metadata: {}, created_at: '2026-09-20T09:00:00Z', updated_at: '2026-09-25T10:15:00Z', expires_at: '2026-08-20T00:00:00Z' },
+      { id: 'ltm-004', agent_id: agentId, user_id: 'system', memory_type: 'skill_learned', content: '对于内存 OOM 问题，检查 /proc/meminfo 和 dmesg 日志比查看 Prometheus 指标更高效', importance: 0.85, access_count: 22, metadata: {}, created_at: '2026-08-29T08:00:00Z', updated_at: '2026-09-26T16:00:00Z', expires_at: null },
     ];
     const memories = all.filter((m) => !deletedLtmIds.has(m.id));
     return { memories, total: memories.length };
@@ -764,9 +765,9 @@ export const mockApi = {
         ],
         percentiles: { p50: 920, p75: 1480, p90: 2680, p95: 5340, p99: 14720 },
         errors: [
-          { error_type: 'API Server 连接超时', count: 6, last_seen: '2026-08-31T08:12:00Z' },
-          { error_type: 'LLM 推理超时', count: 4, last_seen: '2026-08-30T22:10:00Z' },
-          { error_type: '技能执行失败', count: 3, last_seen: '2026-08-30T14:00:00Z' },
+          { error_type: 'API Server 连接超时', count: 6, last_seen: '2026-10-20T08:12:00Z' },
+          { error_type: 'LLM 推理超时', count: 4, last_seen: '2026-10-19T22:10:00Z' },
+          { error_type: '技能执行失败', count: 3, last_seen: '2026-10-19T14:00:00Z' },
         ],
         routes: [
           { route_type: 'fta', count: 186, percentage: 34, avg_confidence: 0.87 },
@@ -787,9 +788,9 @@ export const mockApi = {
         ],
         percentiles: { p50: 8400, p75: 12600, p90: 18900, p95: 23400, p99: 31200 },
         errors: [
-          { error_type: '证据收集超时', count: 4, last_seen: '2026-08-30T14:45:00Z' },
-          { error_type: '故障树节点执行失败', count: 2, last_seen: '2026-08-29T21:19:00Z' },
-          { error_type: 'API Server 连接超时', count: 2, last_seen: '2026-08-28T09:30:00Z' },
+          { error_type: '证据收集超时', count: 4, last_seen: '2026-10-19T14:45:00Z' },
+          { error_type: '故障树节点执行失败', count: 2, last_seen: '2026-10-18T21:19:00Z' },
+          { error_type: 'API Server 连接超时', count: 2, last_seen: '2026-10-17T09:30:00Z' },
         ],
         routes: [
           { route_type: 'fta', count: 41, percentage: 93, avg_confidence: 0.88 },
@@ -807,8 +808,8 @@ export const mockApi = {
         ],
         percentiles: { p50: 1640, p75: 2210, p90: 3180, p95: 4260, p99: 6840 },
         errors: [
-          { error_type: 'Embedding 服务超时', count: 3, last_seen: '2026-08-30T15:26:00Z' },
-          { error_type: '向量库检索超时', count: 2, last_seen: '2026-08-29T11:40:00Z' },
+          { error_type: 'Embedding 服务超时', count: 3, last_seen: '2026-10-19T15:26:00Z' },
+          { error_type: '向量库检索超时', count: 2, last_seen: '2026-10-18T11:40:00Z' },
         ],
         routes: [
           { route_type: 'rag', count: 148, percentage: 96, avg_confidence: 0.91 },
@@ -826,9 +827,9 @@ export const mockApi = {
         ],
         percentiles: { p50: 2680, p75: 3940, p90: 6120, p95: 9480, p99: 18600 },
         errors: [
-          { error_type: '外部 Webhook 熔断', count: 5, last_seen: '2026-08-31T09:45:00Z' },
-          { error_type: '工单网关限流', count: 4, last_seen: '2026-08-31T09:47:00Z' },
-          { error_type: '技能执行超时', count: 2, last_seen: '2026-08-30T16:20:00Z' },
+          { error_type: '外部 Webhook 熔断', count: 5, last_seen: '2026-10-20T09:45:00Z' },
+          { error_type: '工单网关限流', count: 4, last_seen: '2026-10-20T09:47:00Z' },
+          { error_type: '技能执行超时', count: 2, last_seen: '2026-10-19T16:20:00Z' },
         ],
         routes: [
           { route_type: 'skill', count: 61, percentage: 91, avg_confidence: 0.92 },
@@ -846,7 +847,7 @@ export const mockApi = {
         ],
         percentiles: { p50: 1120, p75: 1680, p90: 2740, p95: 3920, p99: 8100 },
         errors: [
-          { error_type: '数据源连接失败', count: 1, last_seen: '2026-08-27T10:15:00Z' },
+          { error_type: '数据源连接失败', count: 1, last_seen: '2026-10-16T10:15:00Z' },
         ],
         routes: [
           { route_type: 'rag', count: 12, percentage: 63, avg_confidence: 0.88 },
@@ -900,7 +901,7 @@ export const mockApi = {
         { name: '运行时进程', category: 'runtime', status: isError ? 'warning' : 'pass', message: isError ? '进程频繁重启' : '进程运行正常', detail: null },
         { name: '内存使用', category: 'runtime', status: (status?.memory_mb ?? 0) > 800 ? 'warning' : 'pass', message: `当前内存 ${status?.memory_mb ?? 0} MB`, detail: null },
         { name: 'Skills 可用性', category: 'config', status: 'pass', message: `所有 ${agent?.harness?.skills.length ?? 0} 个 Skills 可用`, detail: null },
-        { name: 'Tools 可达性', category: 'config', status: isError ? 'fail' : 'pass', message: isError ? 'change-management-api 连接失败' : '所有 Tools 连接正常', detail: isError ? '连续 37 次调用超时，最后成功时间 2026-08-07T18:00:00Z' : null },
+        { name: 'Tools 可达性', category: 'config', status: isError ? 'fail' : 'pass', message: isError ? 'change-management-api 连接失败' : '所有 Tools 连接正常', detail: isError ? '连续 37 次调用超时，最后成功时间 2026-09-26T18:00:00Z' : null },
         { name: 'LLM 端点', category: 'connectivity', status: 'pass', message: `模型 ${agent?.config?.model ?? '未知'} 可用`, detail: null },
         { name: '向量库连接', category: 'connectivity', status: 'pass', message: 'Milvus 连接正常', detail: null },
         { name: '成功率', category: 'performance', status: (status?.success_rate ?? 1) < 0.8 ? 'fail' : 'pass', message: `当前成功率 ${((status?.success_rate ?? 0) * 100).toFixed(1)}%`, detail: (status?.success_rate ?? 1) < 0.8 ? '低于 80% 阈值' : null },
@@ -922,9 +923,9 @@ export const mockApi = {
   getAgentDeploymentVersions: async (_agentId: string) => {
     await randomDelay();
     const versions: DeploymentVersion[] = [
-      { version: 'v0.9.3', deployed_at: '2026-08-08T05:00:00Z', deployer: 'system', status: 'success', config_changes: '更新系统提示词，调整 temperature 参数' },
-      { version: 'v0.9.2', deployed_at: '2026-08-05T14:00:00Z', deployer: 'zhangming', status: 'success', config_changes: '添加 change-reviewer 技能' },
-      { version: 'v0.9.1', deployed_at: '2026-08-01T10:00:00Z', deployer: 'liqiang', status: 'success', config_changes: '初始部署' },
+      { version: 'v0.9.3', deployed_at: '2026-09-27T05:00:00Z', deployer: 'system', status: 'success', config_changes: '更新系统提示词，调整 temperature 参数' },
+      { version: 'v0.9.2', deployed_at: '2026-09-24T14:00:00Z', deployer: 'zhangming', status: 'success', config_changes: '添加 change-reviewer 技能' },
+      { version: 'v0.9.1', deployed_at: '2026-09-20T10:00:00Z', deployer: 'liqiang', status: 'success', config_changes: '初始部署' },
     ];
     return { versions };
   },
@@ -932,14 +933,14 @@ export const mockApi = {
   getAgentLogs: async (_agentId: string) => {
     await randomDelay();
     const logs: DeploymentLog[] = [
-      { timestamp: '2026-08-08T09:12:01Z', level: 'info', message: '[agent] Execution completed: aexec-001, route=multi, duration=1230ms' },
-      { timestamp: '2026-08-08T09:12:00Z', level: 'info', message: '[selector] Route decision: multi (confidence=0.91)' },
-      { timestamp: '2026-08-08T09:11:59Z', level: 'info', message: '[hook] pre_execution: compaction completed in 12ms' },
-      { timestamp: '2026-08-08T09:05:00Z', level: 'error', message: '[agent] Execution failed: change-management-api timeout after 30s' },
-      { timestamp: '2026-08-08T09:00:00Z', level: 'info', message: '[memory] Loaded 12 messages from conversation conv-001' },
-      { timestamp: '2026-08-08T08:30:00Z', level: 'info', message: '[agent] Execution completed: aexec-002, route=multi, duration=1540ms' },
-      { timestamp: '2026-08-08T05:00:00Z', level: 'info', message: '[deploy] Agent restarted: v0.9.2 → v0.9.3' },
-      { timestamp: '2026-08-08T04:59:00Z', level: 'warn', message: '[runtime] Memory usage 256MB approaching 300MB threshold' },
+      { timestamp: '2026-09-27T09:12:01Z', level: 'info', message: '[agent] Execution completed: aexec-001, route=multi, duration=1230ms' },
+      { timestamp: '2026-09-27T09:12:00Z', level: 'info', message: '[selector] Route decision: multi (confidence=0.91)' },
+      { timestamp: '2026-09-27T09:11:59Z', level: 'info', message: '[hook] pre_execution: compaction completed in 12ms' },
+      { timestamp: '2026-09-27T09:05:00Z', level: 'error', message: '[agent] Execution failed: change-management-api timeout after 30s' },
+      { timestamp: '2026-09-27T09:00:00Z', level: 'info', message: '[memory] Loaded 12 messages from conversation conv-001' },
+      { timestamp: '2026-09-27T08:30:00Z', level: 'info', message: '[agent] Execution completed: aexec-002, route=multi, duration=1540ms' },
+      { timestamp: '2026-09-27T05:00:00Z', level: 'info', message: '[deploy] Agent restarted: v0.9.2 → v0.9.3' },
+      { timestamp: '2026-09-27T04:59:00Z', level: 'warn', message: '[runtime] Memory usage 256MB approaching 300MB threshold' },
     ];
     return { logs };
   },
@@ -978,11 +979,11 @@ export const mockApi = {
   listCollaborationSessions: async () => {
     await randomDelay();
     const sessions: CollaborationSession[] = [
-      { id: 'collab-001', name: '跨系统故障联合诊断', pattern: 'fan_out_fan_in', agents: ['agent-mega-001', 'agent-fta-002', 'agent-rag-003'], status: 'completed', started_at: '2026-08-31T08:00:00Z', completed_at: '2026-08-31T08:05:00Z', duration_ms: 300000 },
-      { id: 'collab-002', name: 'K8s + RDS 关联分析', pattern: 'sequential', agents: ['agent-fta-002', 'agent-fta-007'], status: 'completed', started_at: '2026-08-30T16:00:00Z', completed_at: '2026-08-30T16:10:00Z', duration_ms: 600000 },
-      { id: 'collab-003', name: '大促容量保障巡检', pattern: 'fan_out_fan_in', agents: ['agent-mega-001', 'agent-mega-006', 'agent-custom-005'], status: 'running', started_at: '2026-08-31T09:30:00Z', completed_at: null, duration_ms: 0 },
-      { id: 'collab-004', name: '工单批量归档流水线', pattern: 'supervisor_worker', agents: ['agent-mega-006', 'agent-skill-004'], status: 'failed', started_at: '2026-08-29T14:20:00Z', completed_at: '2026-08-29T14:26:40Z', duration_ms: 400000 },
-      { id: 'collab-005', name: '变更窗口合规预审', pattern: 'debate', agents: ['agent-mega-006', 'agent-fta-002', 'agent-rag-003'], status: 'completed', started_at: '2026-08-28T20:00:00Z', completed_at: '2026-08-28T20:07:30Z', duration_ms: 450000 },
+      { id: 'collab-001', name: '跨系统故障联合诊断', pattern: 'fan_out_fan_in', agents: ['agent-mega-001', 'agent-fta-002', 'agent-rag-003'], status: 'completed', started_at: '2026-10-20T08:00:00Z', completed_at: '2026-10-20T08:05:00Z', duration_ms: 300000 },
+      { id: 'collab-002', name: 'K8s + RDS 关联分析', pattern: 'sequential', agents: ['agent-fta-002', 'agent-fta-007'], status: 'completed', started_at: '2026-10-19T16:00:00Z', completed_at: '2026-10-19T16:10:00Z', duration_ms: 600000 },
+      { id: 'collab-003', name: '大促容量保障巡检', pattern: 'fan_out_fan_in', agents: ['agent-mega-001', 'agent-mega-006', 'agent-custom-005'], status: 'running', started_at: '2026-10-20T09:30:00Z', completed_at: null, duration_ms: 0 },
+      { id: 'collab-004', name: '工单批量归档流水线', pattern: 'supervisor_worker', agents: ['agent-mega-006', 'agent-skill-004'], status: 'failed', started_at: '2026-10-18T14:20:00Z', completed_at: '2026-10-18T14:26:40Z', duration_ms: 400000 },
+      { id: 'collab-005', name: '变更窗口合规预审', pattern: 'debate', agents: ['agent-mega-006', 'agent-fta-002', 'agent-rag-003'], status: 'completed', started_at: '2026-10-17T20:00:00Z', completed_at: '2026-10-17T20:07:30Z', duration_ms: 450000 },
     ];
     return { sessions, total: sessions.length };
   },
@@ -991,10 +992,10 @@ export const mockApi = {
   listAccessRules: async (agentId: string) => {
     await randomDelay();
     const rules: AccessRule[] = [
-      { id: 'acl-001', agent_id: agentId, user_or_role: 'admin', role: 'admin', permissions: { view: true, execute: true, edit: true, admin: true }, created_at: '2026-07-01T08:00:00Z' },
-      { id: 'acl-002', agent_id: agentId, user_or_role: 'sre-team', role: 'operator', permissions: { view: true, execute: true, edit: false, admin: false }, created_at: '2026-07-05T10:00:00Z' },
-      { id: 'acl-003', agent_id: agentId, user_or_role: 'dev-team', role: 'viewer', permissions: { view: true, execute: false, edit: false, admin: false }, created_at: '2026-07-10T14:00:00Z' },
-      { id: 'acl-004', agent_id: agentId, user_or_role: 'platform-team', role: 'developer', permissions: { view: true, execute: true, edit: true, admin: false }, created_at: '2026-07-18T09:30:00Z' },
+      { id: 'acl-001', agent_id: agentId, user_or_role: 'admin', role: 'admin', permissions: { view: true, execute: true, edit: true, admin: true }, created_at: '2026-08-20T08:00:00Z' },
+      { id: 'acl-002', agent_id: agentId, user_or_role: 'sre-team', role: 'operator', permissions: { view: true, execute: true, edit: false, admin: false }, created_at: '2026-08-24T10:00:00Z' },
+      { id: 'acl-003', agent_id: agentId, user_or_role: 'dev-team', role: 'viewer', permissions: { view: true, execute: false, edit: false, admin: false }, created_at: '2026-08-29T14:00:00Z' },
+      { id: 'acl-004', agent_id: agentId, user_or_role: 'platform-team', role: 'developer', permissions: { view: true, execute: true, edit: true, admin: false }, created_at: '2026-09-06T09:30:00Z' },
     ];
     return { rules, total: rules.length };
   },
@@ -1002,9 +1003,9 @@ export const mockApi = {
   getAuditLog: async (_agentId: string) => {
     await randomDelay();
     const entries: AuditLogEntry[] = [
-      { id: 'audit-001', agent_id: _agentId, user: 'zhangming', action: 'execute', detail: '执行了故障排查任务', timestamp: '2026-08-08T09:12:00Z' },
-      { id: 'audit-002', agent_id: _agentId, user: 'system', action: 'deploy', detail: '自动部署 v0.9.3', timestamp: '2026-08-08T05:00:00Z' },
-      { id: 'audit-003', agent_id: _agentId, user: 'liqiang', action: 'edit', detail: '修改系统提示词', timestamp: '2026-08-05T14:00:00Z' },
+      { id: 'audit-001', agent_id: _agentId, user: 'zhangming', action: 'execute', detail: '执行了故障排查任务', timestamp: '2026-09-27T09:12:00Z' },
+      { id: 'audit-002', agent_id: _agentId, user: 'system', action: 'deploy', detail: '自动部署 v0.9.3', timestamp: '2026-09-27T05:00:00Z' },
+      { id: 'audit-003', agent_id: _agentId, user: 'liqiang', action: 'edit', detail: '修改系统提示词', timestamp: '2026-09-24T14:00:00Z' },
     ];
     return { entries, total: entries.length };
   },

@@ -6,7 +6,7 @@ import {
   Loader2,
   Trash2,
 } from 'lucide-react';
-import { DEV_CODE_ANALYSIS_MOCKS_ENABLED } from '@/api/mockRuntime';
+import { CODE_ANALYSIS_FORCE_MOCK } from '@/api/mockRuntime';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -300,14 +300,14 @@ function MetricTile({
 }
 
 function CodeAnalysisMockBanner() {
-  if (!DEV_CODE_ANALYSIS_MOCKS_ENABLED) {
+  if (!CODE_ANALYSIS_FORCE_MOCK) {
     return null;
   }
 
   return (
     <div className="flex items-center gap-2 rounded-lg border border-dashed border-primary/40 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
       <GitBranch className="h-4 w-4 text-primary" />
-      Running in development mock mode for Code Analysis data.
+      当前为无后端演示模式，展示的是本地模拟数据。
     </div>
   );
 }

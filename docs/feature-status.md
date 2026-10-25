@@ -40,9 +40,9 @@
 | `watch_registry` 实时变更流 | 架构 | 需 Go 服务端先提供 WebSocket/SSE 变更端点（尚不存在），客户端单侧实现无意义 |
 | workflow 按注册定义执行 | 架构 | registry 存 FTA 故障树（`Tree`），与执行引擎的 nodes/edges 图不同构；树→图转换未实现前，执行流会如实披露 `definition_pending` 后走开发回退 |
 | `resolveagent.api` 包 | 功能 | 21 行空壳，待 REST 客户端能力落地 |
-| Web code-analysis 6 方法接真实后端 | 功能 | 前端目前永远走 mock 数据 |
 | `pkg/event/nats.go` / `AgentExecutionServer` 接线 | 架构 | NATS JetStream 总线可用但零调用方；后者指向不存在的服务（刻意保留待 v0.6.0 分布式阶段） |
 | Milvus delete-by-filter 端到端验证 | 验证 | 代码已落地并有单测（fake client），对真实 Milvus 实例的集成验证待环境 |
 | Go 覆盖率阈值重标定 | 流程 | 阈值 17.0% 对实测 17.1% 仅 0.1pt 余量，且随 Go 工具链版本剧变（go1.25→17.5%，go1.27→32.2%）；**任何 Go minor 升级必须重标基线** |
 
 > 已关闭项（2026-10-04/05 四轮修复）：ReAct/troubleshoot/BaseAgent/Milvus-delete 四处占位真实接线、engine 诚实门、零测试模块补测（382→480）、CI 三根因、脚本执行位、action 版本漂移、vitest 2→5 对齐 vite 8。
+> 已关闭项（2026-10-25 发布整改）：RAG collection 删除联动向量库、Web code-analysis 六方法接真实端点（默认走真实 API，mock 仅无后端演示部署抢先启用、后端不可用时统一回退）。
